@@ -2,7 +2,10 @@ package com.example.edu.sports_predict_live.user.service;
 
 import com.example.edu.sports_predict_live.global.exception.CustomException;
 import com.example.edu.sports_predict_live.global.exception.ErrorCode;
+import com.example.edu.sports_predict_live.global.jwt.JwtProvider;
+import com.example.edu.sports_predict_live.user.dto.request.LoginRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.request.SignupRequestDTO;
+import com.example.edu.sports_predict_live.user.dto.response.TokenResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
 import com.example.edu.sports_predict_live.user.entity.EmailVerify;
 import com.example.edu.sports_predict_live.user.entity.User;
@@ -21,6 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final EmailVerifyRepository emailVerifyRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtProvider jwtProvider;
 
     public UserResponseDTO signup(SignupRequestDTO dto) {
         // 이메일 인증 완료 여부 확인
@@ -50,5 +54,34 @@ public class UserService {
                 .build();
 
         return UserResponseDTO.from(userRepository.save(user));
+    }
+
+    public TokenResponseDTO login(LoginRequestDTO dto) {
+        // 회원 조회
+        User user = userRepository.findByLoginIdAndDeletedAtIsNull(dto.getLoginId())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 비밀번호 확인
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword()))
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+
+        // 토큰 발급
+        String accessToken  = jwtProvider.createAccessToken(user.getUserId());
+        String refreshToken = jwtProvider.createRefreshToken(user.getUserId());
+
+        return new TokenResponseDTO(
+                accessToken,
+                refreshToken,
+                user.getUserId(),
+                user.getNickname(),
+                user.getLoginId()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDTO getMe(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return UserResponseDTO.from(user);
     }
 }

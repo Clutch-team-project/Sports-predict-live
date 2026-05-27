@@ -1,14 +1,16 @@
 (function () {
 
   var files = {
-    home:        '%EC%A0%84%EC%B2%B4_%ED%99%88.html',
-    football:    'AI.MATCH%20-%20%EC%B6%95%EA%B5%AC%20%EA%B2%BD%EA%B8%B0%20%EC%A4%91%EA%B3%84.html',
-    baseball:    'AI.MATCH%20-%20%EC%95%BC%EA%B5%AC%20%EA%B2%BD%EA%B8%B0%20%EC%A4%91%EA%B3%84.html',
-    news:        '%EB%89%B4%EC%8A%A4.html',
-    schedule:    '%EC%95%BC%EA%B5%AC_%EC%9D%BC%EC%A0%95.html',
-    teamRanking: '%ED%8C%80_%EC%88%9C%EC%9C%84.html',
-    board:       '%EA%B2%8C%EC%8B%9C%ED%8C%90.html',
-    member:      '%ED%9A%8C%EC%9B%90%EB%A1%9C%EA%B7%B8%EC%9D%B8.html'
+    home:        '/home',
+    football:    '/football',
+    baseball:    '/baseball',
+    news:        '/news',
+    schedule:    '/schedule',
+    teamRanking: '/team-ranking',
+    board:       '/board',
+    member:      '/login',
+    loginSuccess: '/login-success',
+    userInfo:     '/user-info'
   };
 
   var current = decodeURIComponent((location.pathname.split('/').pop() || '').toLowerCase());
@@ -101,7 +103,19 @@
           sportItem('LOL',  null,           false,      sportMenu) +
         '</div>' +
         '<div class="fl-actions">' +
-          '<span data-fl-member="1">로그인</span>' +
+          (localStorage.getItem('accessToken')
+            ? (function() {
+                var nickname = localStorage.getItem('nickname');
+                var loginId  = localStorage.getItem('loginId') || '';
+                var display  = nickname
+                  ? nickname
+                  : (loginId.length > 3
+                      ? loginId.substring(0, 3) + '*'.repeat(loginId.length - 3)
+                      : loginId);
+                return '<span id="fl-nickname" data-fl-go="' + files.userInfo + '" style="cursor:pointer">' + display + '</span>' +
+                       '<span id="fl-logout" style="cursor:pointer;color:#ef4444;">로그아웃</span>';
+              })()
+            : '<span data-fl-member="1">로그인</span>') +
           '<span>사이트맵</span>' +
         '</div>' +
       '</div>';
@@ -114,8 +128,28 @@
     shell.querySelectorAll('[data-fl-member]').forEach(function (el) {
       on(el, files.member);
     });
+
+    // 닉네임 클릭 → 내 정보
+    var nicknameEl = shell.querySelector('#fl-nickname');
+    if (nicknameEl) {
+      on(nicknameEl, files.userInfo);
+    }
+
+    // 로그아웃 클릭
+    var logoutEl = shell.querySelector('#fl-logout');
+    if (logoutEl) {
+      logoutEl.style.cursor = 'pointer';
+      logoutEl.addEventListener('click', function() {
+        localStorage.clear();
+        location.href = files.member;
+      });
+    }
   }
 
-  installTopbar();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installTopbar);
+  } else {
+    installTopbar();
+  }
 
 })();

@@ -498,8 +498,8 @@
       <div class="card p-3 w-48 flex-shrink-0 h-fit">
         <p class="text-xs text-slate-400 font-bold px-2 mb-2 uppercase tracking-wider">메뉴</p>
         <hr class="section-divider" style="margin: 8px 0">
-        <div class="sidebar-menu-item active" onclick="location.href='user-info.html'">내 정보</div>
-        <div class="sidebar-menu-item" onclick="location.href='prediction-history.html'">승부예측 기록</div>
+        <div class="sidebar-menu-item active" onclick="location.href='/user-info'">내 정보</div>
+        <div class="sidebar-menu-item" onclick="location.href='/prediction-history'">승부예측 기록</div>
         <div class="sidebar-menu-item" style="color:#ef4444" onclick="alert('회원 탈퇴 확인 모달')">회원 탈퇴</div>
       </div>
       <!-- 메인 콘텐츠 -->
@@ -509,18 +509,18 @@
         <div class="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label class="field-label">아이디</label>
-            <input class="input-field" type="text" value="user123" readonly style="color:#94a3b8;background:#f1f5f9">
+            <input class="input-field" type="text" id="inp-login-id" value="" readonly style="color:#94a3b8;background:#f1f5f9">
           </div>
           <div>
             <label class="field-label">이메일</label>
-            <input class="input-field" type="email" value="user@email.com">
+            <input class="input-field" id="inp-email" type="email" value="">
           </div>
         </div>
         <div class="mb-3">
           <label class="field-label">비밀번호</label>
           <div class="flex gap-2">
             <input class="input-field" type="password" value="••••••••" readonly style="color:#94a3b8;background:#f1f5f9">
-            <button class="btn-sm" onclick="location.href='change-password.html'">변경</button>
+            <button class="btn-sm" onclick="location.href='/change-password'">변경</button>
           </div>
         </div>
         <hr class="section-divider">
@@ -528,19 +528,19 @@
         <div class="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label class="field-label">이름 <span class="required">*</span></label>
-            <input class="input-field" type="text" value="홍길동">
+            <input class="input-field" type="text" id="inp-name" value="">
           </div>
           <div>
             <label class="field-label">닉네임</label>
-            <input class="input-field" type="text" value="길동이">
+            <input class="input-field" type="text" id="inp-nickname" value="">
           </div>
           <div>
             <label class="field-label">전화번호</label>
-            <input class="input-field" type="tel" value="010-0000-0000">
+            <input class="input-field" type="tel" id="inp-phone" value="">
           </div>
           <div>
             <label class="field-label">생년월일</label>
-            <input class="input-field" type="text" value="1990-01-01">
+            <input class="input-field" type="text" id="inp-birth" value="">
           </div>
         </div>
         <div class="flex items-center gap-3 mb-4">
@@ -548,7 +548,7 @@
           <button class="btn-outline" style="width:auto;padding:8px 16px">이미지 변경</button>
         </div>
         <hr class="section-divider">
-        <p class="section-title" onmouseenter="showPanel('notify_setting')" onmouseleave="scheduleHide()" style="cursor:default">알림 설정</p>
+        <p class="section-title" style="cursor:default">알림 설정</p>
         <div class="grid grid-cols-2 gap-x-8">
           <div class="toggle-wrap border-b border-slate-200">
             <span class="toggle-label">마케팅 수신 동의</span>
@@ -586,91 +586,47 @@
 </script>
 
 
-<!-- 하단 스펙 패널 -->
-<div id="specPanel" style="position:fixed;bottom:0;left:0;right:0;z-index:200;background:white;border-top:2px solid #e2e8f0;box-shadow:0 -4px 24px rgba(0,0,0,0.10);padding:20px 32px 18px;transition:transform 0.25s ease;transform:translateY(100%)">
-  <div style="max-width:960px;margin:0 auto">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start">
-      <!-- 1단: 기능 설명 -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px">
-        <div style="font-size:10px;color:#2563eb;font-weight:900;letter-spacing:.1em;margin-bottom:6px">DETAIL SCHEMA SPEC</div>
-        <div id="panelTitle" style="font-size:14px;font-weight:900;color:#1e293b;margin-bottom:8px"></div>
-        <div id="panelDesc" style="font-size:11px;color:#64748b;line-height:1.7"></div>
-      </div>
-      <!-- 2단: SQL 코드 -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:12px;font-weight:700;color:#334155">백엔드 SQL 가이드</span>
-          <span id="panelBadges"></span>
-        </div>
-        <pre id="panelCode" style="background:#0f172a;border-radius:8px;padding:12px;font-size:11px;color:#93c5fd;font-family:monospace;line-height:1.6;overflow-x:auto;white-space:pre-wrap;margin:0"></pre>
-      </div>
-      <!-- 3단: 안내 -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:space-between">
-        <div>
-          <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:8px">컬럼 정의 명세서</div>
-          <div id="panelExtra" style="font-size:11px;color:#64748b;line-height:1.7"></div>
-        </div>
-        <div style="margin-top:10px;font-size:10px;color:#94a3b8;font-weight:700">* Query Execution Plan Optimization Verified</div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
-const SPECS = {
-  'gnb': {
-    title: 'GNB — 통합 헤더 (로그인 상태)',
-    tablesBadges: '<span style="background:#f3e8ff;color:#7e22ce;border:1px solid #d8b4fe;padding:2px 10px;border-radius:6px;font-size:11px;font-family:monospace;font-weight:700">users</span>',
-    desc: '로그인 상태의 GNB입니다. 우측에 닉네임과 마이페이지 링크가 표시됩니다.',
-    code: 'SELECT nickname, role FROM users WHERE user_id = :userId;',
-  },
-  'page_nav': {
-    title: '페이지 네비',
-    tablesBadges: '<span style="background:#f3e8ff;color:#7e22ce;border:1px solid #d8b4fe;padding:2px 10px;border-radius:6px;font-size:11px;font-family:monospace;font-weight:700">board</span>',
-    desc: '로그인 사용자도 동일한 탭 네비게이션을 사용합니다.',
-    code: 'SELECT * FROM board WHERE sport_id = :sportId LIMIT 10;',
-  },
-  'my_info_form': {
-    title: '내 정보 수정 폼',
-    tablesBadges: '<span style="background:#f3e8ff;color:#7e22ce;border:1px solid #d8b4fe;padding:2px 10px;border-radius:6px;font-size:11px;font-family:monospace;font-weight:700">users</span>',
-    desc: '이메일·이름·닉네임·전화번호·생년월일·프로필 이미지를 수정합니다. 아이디는 변경 불가(readOnly)이며, 비밀번호 변경은 별도 페이지로 분리합니다.',
-    code: 'UPDATE users SET\n  email=:email, name=:name, nickname=:nickname,\n  phone=:phone, birth=:birth, profile_img=:img\nWHERE user_id = :userId;',
-  },
-  'notify_setting': {
-    title: '알림 설정 토글',
-    tablesBadges: '<span style="background:#f3e8ff;color:#7e22ce;border:1px solid #d8b4fe;padding:2px 10px;border-radius:6px;font-size:11px;font-family:monospace;font-weight:700">users</span>',
-    desc: '마케팅·경기 시작·예측 결과 알림을 토글로 개별 제어합니다. 수정 저장 버튼 클릭 시 일괄 반영됩니다.',
-    code: 'UPDATE users SET\n  marketing_agree=:m, match_notify=:mn, predict_notify=:pn\nWHERE user_id = :userId;',
-  },
-};
+const BASE_URL = 'http://localhost:8080';
 
-const panel = document.getElementById('specPanel');
-let hideTimer = null;
+async function loadUserInfo() {
+  const accessToken = localStorage.getItem('accessToken');
+  if (!accessToken) {
+    alert('로그인이 필요합니다.');
+    location.href = '/login';
+    return;
+  }
 
-function showPanel(key) {
-  const s = SPECS[key];
-  if (!s) return;
-  clearTimeout(hideTimer);
-  document.getElementById('panelTitle').textContent = s.title;
-  document.getElementById('panelDesc').textContent = s.desc;
-  document.getElementById('panelCode').textContent = s.code;
-  document.getElementById('panelBadges').innerHTML = s.tablesBadges;
-  document.getElementById('panelExtra').innerHTML =
-    '<span style="color:#2563eb;font-weight:700">' + key + '</span> 블록의 연관 테이블 및 SQL 가이드입니다.<br><br>실제 구현 시 JPA Entity 및 Repository 레이어와 매핑하여 사용하세요.';
-  panel.style.transform = 'translateY(0)';
+  try {
+    const res = await fetch(`${BASE_URL}/api/users/me`, {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    });
+
+    if (res.status === 401) {
+      alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+      localStorage.clear();
+      location.href = '/login';
+      return;
+    }
+
+    const data = await res.json();
+
+    // 아이디: 앞 4자리 + 나머지 * 처리
+    document.getElementById('inp-login-id').value  = data.loginId  || '';
+    document.getElementById('inp-email').value     = data.email    || '';
+    document.getElementById('inp-name').value      = data.name     || '';
+    document.getElementById('inp-nickname').value  = data.nickname || '';
+    document.getElementById('inp-phone').value     = data.phone    || '';
+    document.getElementById('inp-birth').value     = data.birthDate || '';
+
+  } catch (e) {
+    console.error('내 정보 조회 실패:', e);
+  }
 }
 
-function scheduleHide() {
-  hideTimer = setTimeout(() => { panel.style.transform = 'translateY(100%)'; }, 300);
-}
-
-panel.addEventListener('mouseenter', () => clearTimeout(hideTimer));
-panel.addEventListener('mouseleave', scheduleHide);
-
-// 초기 로드 시 기본 패널 표시
-showPanel('my_info_form');
+// 페이지 로드 시 실행
+window.addEventListener('DOMContentLoaded', loadUserInfo);
 </script>
-
-<script src="../static/script.js"></script>
+<script src="/script.js"></script>
 </body>
 </html>

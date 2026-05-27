@@ -4,6 +4,7 @@ import com.example.edu.sports_predict_live.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -17,6 +18,13 @@ public class UserResponseDTO {
     private String nickname;
     private LocalDateTime createdAt;
 
+    private String phone;
+    private LocalDate birthDate;
+    private boolean marketingAgreed;
+    private boolean matchStartAlert;
+    private boolean predictionResultAlert;
+    private int alertBeforeMinutes;
+
     public static UserResponseDTO from(User user) {
         return UserResponseDTO.builder()
                 .userId(user.getUserId())
@@ -24,6 +32,12 @@ public class UserResponseDTO {
                 .email(user.getEmail())
                 .name(user.getName())
                 .nickname(user.getNickname())
+                .phone(user.getPhone())
+                .birthDate(user.getBirthDate())
+                .marketingAgreed(user.isMarketingAgreed())
+                .matchStartAlert(user.isMatchStartAlert())
+                .predictionResultAlert(user.isPredictionResultAlert())
+                .alertBeforeMinutes(user.getAlertBeforeMinutes())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

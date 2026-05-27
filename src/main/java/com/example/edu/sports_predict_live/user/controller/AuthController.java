@@ -2,7 +2,9 @@ package com.example.edu.sports_predict_live.user.controller;
 
 import com.example.edu.sports_predict_live.user.dto.request.EmailSendRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.request.EmailVerifyCheckDTO;
+import com.example.edu.sports_predict_live.user.dto.request.LoginRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.request.SignupRequestDTO;
+import com.example.edu.sports_predict_live.user.dto.response.TokenResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
 import com.example.edu.sports_predict_live.user.service.EmailVerifyService;
 import com.example.edu.sports_predict_live.user.service.UserService;
@@ -44,5 +46,12 @@ public class AuthController {
             @Valid @RequestBody SignupRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.signup(dto));
+    }
+
+    // 로그인
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponseDTO> login(
+            @Valid @RequestBody LoginRequestDTO dto) {
+        return ResponseEntity.ok(userService.login(dto));
     }
 }

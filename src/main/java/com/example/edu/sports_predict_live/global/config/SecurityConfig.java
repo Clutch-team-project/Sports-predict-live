@@ -1,5 +1,8 @@
 package com.example.edu.sports_predict_live.global.config;
 
+import com.example.edu.sports_predict_live.global.jwt.JwtFilter;
+import com.example.edu.sports_predict_live.global.jwt.JwtProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -8,13 +11,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtProvider jwtProvider;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -30,8 +37,17 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(
+                                "/", "/login", "/signup", "/notification-agreement",
+                                "/signup-success", "/login-success", "/find-id",
+                                "/find-password", "/change-password", "/prediction-history",
+                                "/user-info"   // ← 추가
+                        ).permitAll()
+                        .requestMatchers("/script.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .anyRequest().authenticated()
-                );
+                )
+                .addFilterBefore(new JwtFilter(jwtProvider),
+                        UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
