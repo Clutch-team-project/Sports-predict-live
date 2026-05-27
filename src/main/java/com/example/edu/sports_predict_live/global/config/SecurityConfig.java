@@ -43,7 +43,7 @@ public class SecurityConfig {
                                 "/find-password", "/change-password", "/prediction-history",
                                 "/user-info"   // ← 추가
                         ).permitAll()
-                        .requestMatchers("/script.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
+                        .requestMatchers("/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtFilter(jwtProvider),

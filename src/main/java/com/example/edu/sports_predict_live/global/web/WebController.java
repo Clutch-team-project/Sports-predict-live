@@ -1,4 +1,4 @@
-package com.example.edu.sports_predict_live.global.config;
+package com.example.edu.sports_predict_live.global.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
