@@ -1,0 +1,11 @@
+package com.example.edu.sports_predict_live.repository;
+
+import com.example.edu.sports_predict_live.entity.AiPredEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AiPredRepository
+        extends JpaRepository<AiPredEntity, Long> {
+
+    boolean existsByMatchId(Long matchId); //ai예측 같은경기 중복예측 방지
+    AiPredEntity findByMatchId(Long matchId);
+}

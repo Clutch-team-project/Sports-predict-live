@@ -1,0 +1,50 @@
+package com.example.edu.sports_predict_live.controller;
+
+import com.example.edu.sports_predict_live.entity.PredictionEntity;
+import com.example.edu.sports_predict_live.service.PredictionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/prediction")
+@RequiredArgsConstructor
+public class PredictionController {
+
+    private final PredictionService predictionService;
+
+    @GetMapping("/save")
+    public PredictionEntity savePrediction(
+            @RequestParam Long userId,
+            @RequestParam Long matchId,
+            @RequestParam String predictedResult
+    ) {
+
+        return predictionService.savePrediction(
+                userId,
+                matchId,
+                predictedResult
+        );
+    }
+
+    @GetMapping("/user")
+    public List<PredictionEntity> getUserPredictions(
+            @RequestParam Long userId
+    ) {
+
+        return predictionService.getUserPredictions(userId);
+    }
+
+    @GetMapping("/result")
+    public PredictionEntity updatePredictionResult(
+            @RequestParam Long predictionId,
+            @RequestParam boolean isCorrect
+    ) {
+
+        return predictionService.updatePredictionResult(
+                predictionId,
+                isCorrect
+        );
+    }
+}
