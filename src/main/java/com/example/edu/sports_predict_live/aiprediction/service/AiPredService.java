@@ -1,7 +1,8 @@
-package com.example.edu.sports_predict_live.service;
+package com.example.edu.sports_predict_live.aiprediction.service;
 
-import com.example.edu.sports_predict_live.entity.AiPredEntity;
-import com.example.edu.sports_predict_live.repository.AiPredRepository;
+import com.example.edu.sports_predict_live.aiprediction.entity.AiPredEntity;
+
+import com.example.edu.sports_predict_live.aiprediction.repository.AiPredRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

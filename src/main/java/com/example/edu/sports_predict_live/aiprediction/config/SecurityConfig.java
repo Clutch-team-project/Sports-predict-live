@@ -1,4 +1,4 @@
-package com.example.edu.sports_predict_live.config;
+package com.example.edu.sports_predict_live.aiprediction.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

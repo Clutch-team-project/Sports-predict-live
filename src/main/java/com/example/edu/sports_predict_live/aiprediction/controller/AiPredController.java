@@ -1,21 +1,18 @@
-package com.example.edu.sports_predict_live.controller;
+package com.example.edu.sports_predict_live.aiprediction.controller;
 
-import com.example.edu.sports_predict_live.entity.AiPredEntity;
-import com.example.edu.sports_predict_live.service.AiPredService;
+import com.example.edu.sports_predict_live.aiprediction.entity.AiPredEntity;
+import com.example.edu.sports_predict_live.aiprediction.service.AiPredService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/ai-pred")
+@RequestMapping("/ai-prediction")
 @RequiredArgsConstructor
 public class AiPredController {
 
     private final AiPredService aiPredService;
 
-    @GetMapping("/save")
+    @PostMapping("/save")
     public AiPredEntity saveAiPrediction(
 
             @RequestParam Long matchId,
@@ -32,9 +29,9 @@ public class AiPredController {
         );
     }
 
-    @GetMapping("/match")
+    @GetMapping("/{matchId}")
     public AiPredEntity getAiPrediction(
-            @RequestParam Long matchId
+            @PathVariable Long matchId
     ) {
 
         return aiPredService.getAiPrediction(matchId);

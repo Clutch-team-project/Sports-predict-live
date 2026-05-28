@@ -1,4 +1,4 @@
-package com.example.edu.sports_predict_live.entity;
+package com.example.edu.sports_predict_live.aiprediction.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class MatchEntity {
+    private String homeTeam;
+    private String awayTeam;
+
+    private LocalDateTime matchDate;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
