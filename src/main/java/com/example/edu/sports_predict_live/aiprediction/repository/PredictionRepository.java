@@ -15,4 +15,6 @@ public interface PredictionRepository
     List<PredictionEntity> findByUserId(Long userId);
 
     PredictionEntity findByPredictionId(Long predictionId);
+
+    List<PredictionEntity> findByMatchId(Long matchId);
 }
