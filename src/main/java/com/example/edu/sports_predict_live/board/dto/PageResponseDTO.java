@@ -1,0 +1,48 @@
+package com.example.edu.sports_predict_live.board.dto;
+
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
+import org.springframework.data.domain.PageRequest;
+
+import java.util.List;
+
+@Getter
+@ToString
+public class PageResponseDTO <E>{
+    private int page;
+    private int size;
+    private int total;
+
+    private int start;
+    private int end;
+    private boolean prev;
+    private boolean next;
+
+    private List<E> dtoList; // 조회된 결과 리스트 제네릭으로
+
+    @Builder(builderMethodName = "withAll")
+    public PageResponseDTO(PageRequestDTO pageRequestDTO, List<E> dtoList, int total) {
+        if(total <= 0) {
+            return;
+        }
+
+        // Request 정보
+        this.page = pageRequestDTO.getPage();
+        this.size = pageRequestDTO.getSize();
+        this.total = total;
+        this.dtoList = dtoList;
+
+        this.end = (int)(Math.ceil(this.page/10.0)) * 10; // 화면 끝 번호 10개 단위
+        this.start = this.end - 9; // 화면 시작 번호
+
+        int last = (int)(Math.ceil((total / (double)size)));
+
+        if(this.end > last) {
+            this.end = last;
+        }
+        this.prev = this.start > 1;
+        this.next = total> this.end * this.size;
+    }
+
+}
