@@ -1,5 +1,46 @@
 (function () {
 
+    /* ── 인증 API 공통 fetch (토큰 만료 시 자동 재발급) ── */
+    window.authFetch = async function (url, options) {
+        options = options || {};
+        options.headers = options.headers || {};
+        options.headers['Authorization'] = 'Bearer ' + localStorage.getItem('accessToken');
+
+        var res = await fetch(url, options);
+
+        // Access Token 만료 시 재발급 시도
+        if (res.status === 401) {
+            var refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+                localStorage.clear();
+                location.href = '/login';
+                return res;
+            }
+
+            var reissueRes = await fetch('http://localhost:8080/api/auth/reissue', {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + refreshToken}
+            });
+
+            if (!reissueRes.ok) {
+                // Refresh Token도 만료 → 로그아웃
+                localStorage.clear();
+                location.href = '/login';
+                return res;
+            }
+
+            var data = await reissueRes.json();
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+
+            // 원래 요청 재시도
+            options.headers['Authorization'] = 'Bearer ' + data.accessToken;
+            return await fetch(url, options);
+        }
+
+        return res;
+    };
+
     var files = {
         home: '/home',
         football: '/football',

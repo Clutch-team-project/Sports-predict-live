@@ -5,6 +5,7 @@ import com.example.edu.sports_predict_live.global.exception.ErrorCode;
 import com.example.edu.sports_predict_live.global.jwt.JwtProvider;
 import com.example.edu.sports_predict_live.user.dto.request.LoginRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.request.SignupRequestDTO;
+import com.example.edu.sports_predict_live.user.dto.response.ReissueResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.TokenResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
 import com.example.edu.sports_predict_live.user.entity.EmailVerify;
@@ -83,5 +84,26 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return UserResponseDTO.from(user);
+    }
+
+    public ReissueResponseDTO reissue(String refreshToken) {
+        // 토큰 유효성 검사
+        if (!jwtProvider.validateToken(refreshToken))
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+
+        // Refresh Token 타입 확인
+        if (!jwtProvider.isRefreshToken(refreshToken))
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+
+        // 회원 조회
+        Long userId = jwtProvider.getUserId(refreshToken);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 새 토큰 발급
+        String newAccessToken  = jwtProvider.createAccessToken(userId);
+        String newRefreshToken = jwtProvider.createRefreshToken(userId);
+
+        return new ReissueResponseDTO(newAccessToken, newRefreshToken);
     }
 }

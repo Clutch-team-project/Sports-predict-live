@@ -74,4 +74,8 @@ public class JwtProvider {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+    public boolean isRefreshToken(String token) {
+        return "refresh".equals(getTokenType(token));
+    }
 }
