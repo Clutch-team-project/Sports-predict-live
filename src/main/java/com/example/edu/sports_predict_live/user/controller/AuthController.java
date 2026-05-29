@@ -54,4 +54,12 @@ public class AuthController {
             @Valid @RequestBody LoginRequestDTO dto) {
         return ResponseEntity.ok(userService.login(dto));
     }
+
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout() {
+        // JWT 방식 — 클라이언트에서 토큰 삭제
+        // 추후 Refresh Token 블랙리스트 적용 가능
+        return ResponseEntity.ok(Map.of("message", "로그아웃 완료"));
+    }
 }
