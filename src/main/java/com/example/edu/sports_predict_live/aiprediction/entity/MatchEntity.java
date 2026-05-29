@@ -1,4 +1,4 @@
-package com.example.edu.sports_predict_live.entity;
+package com.example.edu.sports_predict_live.aiprediction.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

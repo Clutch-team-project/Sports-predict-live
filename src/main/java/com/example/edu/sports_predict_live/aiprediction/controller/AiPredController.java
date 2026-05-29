@@ -1,7 +1,7 @@
-package com.example.edu.sports_predict_live.controller;
+package com.example.edu.sports_predict_live.aiprediction.controller;
 
-import com.example.edu.sports_predict_live.entity.AiPredEntity;
-import com.example.edu.sports_predict_live.service.AiPredService;
+import com.example.edu.sports_predict_live.aiprediction.entity.AiPredEntity;
+import com.example.edu.sports_predict_live.aiprediction.service.AiPredService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

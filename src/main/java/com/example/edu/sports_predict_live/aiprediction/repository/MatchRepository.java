@@ -1,6 +1,6 @@
-package com.example.edu.sports_predict_live.repository;
+package com.example.edu.sports_predict_live.aiprediction.repository;
 
-import com.example.edu.sports_predict_live.entity.MatchEntity;
+import com.example.edu.sports_predict_live.aiprediction.entity.MatchEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MatchRepository
