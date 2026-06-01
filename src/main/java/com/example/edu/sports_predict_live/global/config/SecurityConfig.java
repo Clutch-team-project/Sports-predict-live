@@ -40,9 +40,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",
-                                "/find-password", "/change-password", "/prediction-history"
+                                "/find-password", "/change-password", "/prediction-history",
+                                "/user-info"
                         ).permitAll()
-                        .requestMatchers("/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
+                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtFilter(jwtProvider),

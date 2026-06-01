@@ -4,6 +4,7 @@ import com.example.edu.sports_predict_live.global.exception.CustomException;
 import com.example.edu.sports_predict_live.global.exception.ErrorCode;
 import com.example.edu.sports_predict_live.global.jwt.JwtProvider;
 import com.example.edu.sports_predict_live.user.dto.request.LoginRequestDTO;
+import com.example.edu.sports_predict_live.user.dto.request.ResetPasswordRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.request.SignupRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.response.ReissueResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.TokenResponseDTO;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -67,7 +70,7 @@ public class UserService {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
 
         // 토큰 발급
-        String accessToken  = jwtProvider.createAccessToken(user.getUserId());
+        String accessToken = jwtProvider.createAccessToken(user.getUserId());
         String refreshToken = jwtProvider.createRefreshToken(user.getUserId());
 
         return new TokenResponseDTO(
@@ -101,9 +104,43 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 새 토큰 발급
-        String newAccessToken  = jwtProvider.createAccessToken(userId);
+        String newAccessToken = jwtProvider.createAccessToken(userId);
         String newRefreshToken = jwtProvider.createRefreshToken(userId);
 
         return new ReissueResponseDTO(newAccessToken, newRefreshToken);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, String> findLoginId(String email, String code) {
+        // 이메일 인증 확인
+        EmailVerify verify = emailVerifyRepository
+                .findTopByEmailAndPurposeOrderByCreatedAtDesc(email, "find_id")
+                .orElseThrow(() -> new CustomException(ErrorCode.VERIFY_NOT_FOUND));
+
+        if (!verify.isVerified())
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+
+        // 회원 조회
+        User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
+
+        return Map.of("loginId", user.getLoginId());
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDTO dto) {
+        // 이메일 인증 확인
+        EmailVerify verify = emailVerifyRepository
+                .findTopByEmailAndPurposeOrderByCreatedAtDesc(dto.getEmail(), "reset_pw")
+                .orElseThrow(() -> new CustomException(ErrorCode.VERIFY_NOT_FOUND));
+
+        if (!verify.isVerified())
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+
+        // 회원 조회 후 비밀번호 변경
+        User user = userRepository.findByEmailAndDeletedAtIsNull(dto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
+
+        user.updatePassword(passwordEncoder.encode(dto.getNewPassword()));
     }
 }

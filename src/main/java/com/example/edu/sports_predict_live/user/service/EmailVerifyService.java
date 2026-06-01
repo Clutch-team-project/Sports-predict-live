@@ -5,6 +5,7 @@ import com.example.edu.sports_predict_live.global.exception.ErrorCode;
 import com.example.edu.sports_predict_live.user.entity.EmailVerify;
 import com.example.edu.sports_predict_live.user.repository.EmailVerifyRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public class EmailVerifyService {
@@ -21,6 +23,7 @@ public class EmailVerifyService {
     private final JavaMailSender mailSender;
 
     public void sendCode(String email, String purpose) {
+        log.info("이메일 발송 요청 - email: {}, purpose: {}", email, purpose);
         String code = generateCode();
 
         EmailVerify verify = EmailVerify.builder()
