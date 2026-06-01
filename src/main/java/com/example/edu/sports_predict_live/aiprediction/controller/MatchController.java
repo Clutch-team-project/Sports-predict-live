@@ -17,17 +17,23 @@ public class MatchController {
     @PostMapping("/save")
     public MatchEntity saveMatch(
 
-            @RequestParam String homeTeam,
-            @RequestParam String awayTeam,
+            @RequestParam Long sportId,
+            @RequestParam Long homeTeamId,
+            @RequestParam Long awayTeamId,
             @RequestParam Integer homeScore,
-            @RequestParam Integer awayScore
+            @RequestParam Integer awayScore,
+            @RequestParam String status,
+            @RequestParam String venue
     ) {
 
         return matchService.saveMatch(
-                homeTeam,
-                awayTeam,
+                sportId,
+                homeTeamId,
+                awayTeamId,
                 homeScore,
-                awayScore
+                awayScore,
+                status,
+                venue
         );
     }
 

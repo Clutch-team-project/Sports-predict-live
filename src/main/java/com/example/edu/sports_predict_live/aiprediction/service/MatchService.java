@@ -16,21 +16,28 @@ public class MatchService {
 
     public MatchEntity saveMatch(
 
-            String homeTeam,
-            String awayTeam,
+            Long sportId,
+            Long homeTeamId,
+            Long awayTeamId,
             Integer homeScore,
-            Integer awayScore
+            Integer awayScore,
+            String status,
+            String venue
     ) {
 
         MatchEntity match = new MatchEntity();
 
-        match.setHomeTeam(homeTeam);
-        match.setAwayTeam(awayTeam);
+        match.setSportId(sportId);
+        match.setHomeTeamId(homeTeamId);
+        match.setAwayTeamId(awayTeamId);
 
         match.setHomeScore(homeScore);
         match.setAwayScore(awayScore);
 
-        match.setMatchDate(LocalDateTime.now());
+        match.setStatus(status);
+        match.setVenue(venue);
+
+        match.setScheduledAt(LocalDateTime.now());
 
         return matchRepository.save(match);
     }
