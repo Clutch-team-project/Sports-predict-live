@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface BoardRepository extends JpaRepository<Board, Long>, BoardSearch {
+public interface BoardRepository extends JpaRepository<Board, Long> {
 
     @Query(value = "select now()", nativeQuery = true)
     String getTime();
