@@ -324,43 +324,6 @@
 </head>
 <body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
 
-<!-- GNB -->
-<div id="gnbWrap" class="w-full mb-6">
-
-  <!-- 첫 번째 줄: 로고 + 종목 + 로그인 -->
-  <div class="w-full border border-slate-300 bg-white px-6 py-3 flex justify-between items-center shadow-md rounded-2xl">
-    <!-- 로고 -->
-    <div class="flex items-center shrink-0">
-      <span class="text-blue-600 font-black tracking-tighter text-xl">AI.MATCH</span>
-    </div>
-    <!-- 종목 네비 -->
-    <div class="flex-grow flex justify-center px-4">
-      <div class="flex items-center gap-10 text-base font-extrabold" id="sportNav">
-        <span class="sport-btn active-sport" data-sport="home"    onclick="selectSport(this)">홈</span>
-        <span class="sport-btn"              data-sport="soccer"  onclick="selectSport(this)">축구</span>
-        <span class="sport-btn"              data-sport="baseball" onclick="selectSport(this)">야구</span>
-        <span class="sport-btn"              data-sport="lol"     onclick="selectSport(this)">LOL</span>
-      </div>
-    </div>
-    <!-- 로그인 / 사이트맵 -->
-    <div class="flex items-center gap-6 text-sm font-black shrink-0">
-      <span class="text-slate-700 hover:text-slate-900 cursor-pointer transition-colors">로그인</span>
-      <span class="text-slate-700 hover:text-slate-900 cursor-pointer transition-colors">사이트맵</span>
-    </div>
-  </div>
-
-  <!-- 두 번째 줄: 페이지 탭 — 선택한 종목에 따라 슬라이드 다운 -->
-  <div id="pageNavBar"
-       style="max-height:0;opacity:0;overflow:hidden;transition:max-height 0.25s ease,opacity 0.2s ease;margin-top:6px;">
-    <div class="w-full border border-slate-300 bg-white px-6 py-2 flex items-center shadow-md rounded-2xl">
-      <div class="flex items-center gap-10 font-extrabold" id="pageTabList">
-        <!-- JS로 채워짐 -->
-      </div>
-    </div>
-  </div>
-
-</div>
-
 <style>
   .sport-btn {
     color: #64748b;

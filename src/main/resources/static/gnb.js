@@ -42,7 +42,7 @@
     };
 
     var files = {
-        home: '/home',
+        home: '/',
         football: '/football',
         baseball: '/baseball',
         news: '/news',
