@@ -42,4 +42,40 @@ public class MatchController {
 
         return matchService.getAllMatches();
     }
+
+    @GetMapping("/dummy")
+    public MatchEntity dummySave() {
+
+        return matchService.saveMatch(
+                1L,
+                1L,
+                2L,
+                2,
+                1,
+                "FINISHED",
+                "Seoul"
+        ); //테스트 코드
+    }
+
+    @GetMapping("/{id}")
+    public MatchEntity getMatch(@PathVariable Long id) {
+        return matchService.getMatch(id);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteMatch(@PathVariable Long id) {
+
+        matchService.deleteMatch(id);
+
+        return "삭제 완료";
+    }
+
+    @PutMapping("/update/{id}")
+    public MatchEntity updateMatch(
+            @PathVariable Long id,
+            @RequestBody MatchEntity match
+    ) {
+
+        return matchService.updateMatch(id, match);
+    }
 } //전체 조회 GET /match/list 단건 조회 GET /match/detail?matchId=1

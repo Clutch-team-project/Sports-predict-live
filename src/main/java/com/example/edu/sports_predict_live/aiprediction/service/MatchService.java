@@ -46,4 +46,26 @@ public class MatchService {
 
         return matchRepository.findAll();
     }
+
+    public MatchEntity getMatch(Long id) {
+        return matchRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("경기 없음"));
+    }
+
+    public void deleteMatch(Long id) {
+        matchRepository.deleteById(id);
+    }
+
+    public MatchEntity updateMatch(Long id, MatchEntity match) {
+
+        MatchEntity existing = matchRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("경기 없음"));
+
+        existing.setStatus(match.getStatus());
+        existing.setHomeScore(match.getHomeScore());
+        existing.setAwayScore(match.getAwayScore());
+        existing.setVenue(match.getVenue());
+
+        return matchRepository.save(existing);
+    }
 } //실제 db 연결 시 /match/list, /match/detail 같은 API 바로 붙일 수 있게 기본 구조 미리 만드는 단계

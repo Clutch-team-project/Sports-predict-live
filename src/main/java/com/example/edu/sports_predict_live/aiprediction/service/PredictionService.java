@@ -1,11 +1,11 @@
 package com.example.edu.sports_predict_live.aiprediction.service;
 
-import com.example.edu.sports_predict_live.aiprediction.entity.AiPredEntity;
+import com.example.edu.sports_predict_live.aiprediction.entity.MatchEntity;
 import com.example.edu.sports_predict_live.aiprediction.entity.PredictionEntity;
-
 import com.example.edu.sports_predict_live.aiprediction.repository.PredictionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,54 +16,79 @@ public class PredictionService {
 
     private final PredictionRepository predictionRepository;
 
+    /**
+     * 사용자 승부 예측 등록
+     */
     public PredictionEntity savePrediction(
             Long userId,
             Long matchId,
             String predictedResult
     ) {
-
         // 이미 예측한 경기인지 확인
-        boolean exists =
-                predictionRepository.existsByUserIdAndMatchId(
-                        userId,
-                        matchId
-                );
+        boolean exists = predictionRepository.existsByUserIdAndMatchId(userId, matchId);
 
         if (exists) {
             throw new RuntimeException("이미 예측한 경기입니다.");
         }
 
         PredictionEntity prediction = new PredictionEntity();
-
         prediction.setUserId(userId);
         prediction.setMatchId(matchId);
         prediction.setPredictedResult(predictedResult);
 
-        // 경기 끝나기 전이라 기본 false
-        prediction.setIsCorrect(false);
+        // 🛠️ [수정] 기본값을 false가 아닌 null로 처리해야 명세서의 'NULL: 미정' 규칙에 맞습니다.
+        prediction.setIsCorrect(null);
 
         prediction.setCreatedAt(LocalDateTime.now());
 
         return predictionRepository.save(prediction);
     }
 
-    public List<PredictionEntity> getUserPredictions(
-            Long userId
-    ) {
-
+    /**
+     * 특정 사용자의 예측 내역 전체 조회
+     */
+    public List<PredictionEntity> getUserPredictions(Long userId) {
         return predictionRepository.findByUserId(userId);
     }
 
-    public PredictionEntity updatePredictionResult(
-            Long predictionId,
-            boolean isCorrect
-    ) {
-
-        PredictionEntity prediction =
-                predictionRepository.findByPredictionId(predictionId);
-
+    /**
+     * 단건 예측 결과 직접 업데이트 (기존 유지)
+     */
+    public PredictionEntity updatePredictionResult(Long predictionId, boolean isCorrect) {
+        PredictionEntity prediction = predictionRepository.findByPredictionId(predictionId);
         prediction.setIsCorrect(isCorrect);
-
         return predictionRepository.save(prediction);
+    }
+
+    /**
+     * 💡 [추가] 경기 종료 후 해당 경기의 모든 사용자 예측 데이터를 일괄 정산합니다.
+     */
+    @Transactional
+    public void settlePredictionsForMatch(MatchEntity match) {
+        // 해당 경기 ID로 참여한 모든 유저의 예측 데이터 가져오기
+        List<PredictionEntity> predictions = predictionRepository.findByMatchId(match.getMatchId());
+
+        if (predictions.isEmpty()) {
+            return; // 투표한 사용자가 없으면 바로 종료
+        }
+
+        // 실제 경기 스코어 비교 후 결과 문자열 도출 ('home' | 'draw' | 'away')
+        String actualResult;
+        if (match.getHomeScore() > match.getAwayScore()) {
+            actualResult = "home";
+        } else if (match.getHomeScore() < match.getAwayScore()) {
+            actualResult = "away";
+        } else {
+            actualResult = "draw";
+        }
+
+        // 유저들의 예측값과 실제 결과를 비교하여 성공(true)/실패(false)로 정산 변경
+        for (PredictionEntity prediction : predictions) {
+            boolean isCorrect = prediction.getPredictedResult().equals(actualResult);
+            prediction.setIsCorrect(isCorrect);
+        }
+
+        // 변경된 정산 결과를 DB에 일괄 저장
+        predictionRepository.saveAll(predictions);
     }
 }
