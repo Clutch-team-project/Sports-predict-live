@@ -4,15 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
 @Getter
-public class ResetPasswordRequestDTO {
+public class ChangePasswordRequestDTO {
 
     @NotBlank
-    private String email;
-
-    @NotBlank
-    private String code;
+    private String currentPassword;
 
     @NotBlank
     private String newPassword;
-
 }

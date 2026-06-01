@@ -3,9 +3,7 @@ package com.example.edu.sports_predict_live.user.service;
 import com.example.edu.sports_predict_live.global.exception.CustomException;
 import com.example.edu.sports_predict_live.global.exception.ErrorCode;
 import com.example.edu.sports_predict_live.global.jwt.JwtProvider;
-import com.example.edu.sports_predict_live.user.dto.request.LoginRequestDTO;
-import com.example.edu.sports_predict_live.user.dto.request.ResetPasswordRequestDTO;
-import com.example.edu.sports_predict_live.user.dto.request.SignupRequestDTO;
+import com.example.edu.sports_predict_live.user.dto.request.*;
 import com.example.edu.sports_predict_live.user.dto.response.ReissueResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.TokenResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
@@ -140,6 +138,38 @@ public class UserService {
         // 회원 조회 후 비밀번호 변경
         User user = userRepository.findByEmailAndDeletedAtIsNull(dto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
+
+        user.updatePassword(passwordEncoder.encode(dto.getNewPassword()));
+    }
+
+    @Transactional
+    public UserResponseDTO updateMe(Long userId, UserUpdateDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (dto.getNickname() != null && !dto.getNickname().equals(user.getNickname())) {
+            if (userRepository.existsByNickname(dto.getNickname()))
+                throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+        }
+
+        user.updateProfile(dto.getNickname(), dto.getPhone(),
+                dto.getBirthDate(), dto.getProfileImage());
+        user.updateAlertSettings(dto.getMarketingAgreed(), dto.getMatchStartAlert(),
+                dto.getPredictionResultAlert(), dto.getAlertBeforeMinutes());
+
+        return UserResponseDTO.from(user);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequestDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword()))
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+
+        if (passwordEncoder.matches(dto.getNewPassword(), user.getPassword()))
+            throw new CustomException(ErrorCode.SAME_PASSWORD);
 
         user.updatePassword(passwordEncoder.encode(dto.getNewPassword()));
     }

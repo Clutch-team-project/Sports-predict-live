@@ -5,7 +5,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -80,4 +79,21 @@ public class User {
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+
+    public void updateAlertSettings(Boolean marketingAgreed, Boolean matchStartAlert,
+                                    Boolean predictionResultAlert, Integer alertBeforeMinutes) {
+        if (marketingAgreed != null) this.marketingAgreed = marketingAgreed;
+        if (matchStartAlert != null) this.matchStartAlert = matchStartAlert;
+        if (predictionResultAlert != null) this.predictionResultAlert = predictionResultAlert;
+        if (alertBeforeMinutes != null) this.alertBeforeMinutes = alertBeforeMinutes;
+    }
+
+    public void updateProfile(String nickname, String phone,
+                              LocalDate birthDate, String profileImage) {
+        if (nickname != null) this.nickname = nickname;
+        if (phone != null) this.phone = phone;
+        if (birthDate != null) this.birthDate = birthDate;
+        if (profileImage != null) this.profileImage = profileImage;
+    }
+
 }
