@@ -57,6 +57,12 @@ public class BoardServiceImpl implements BoardService{
 
     @Override
     public void remove(Long boardId) {
-        boardRepository.deleteById(boardId);
+        // 게시글 데이터 조회
+        Optional<Board> result = boardRepository.findById(boardId);
+        Board board = result.orElseThrow();
+
+        board.softDelete();
+
+        boardRepository.save(board);
     }
 }

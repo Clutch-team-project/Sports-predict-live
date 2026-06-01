@@ -2,6 +2,9 @@ package com.example.edu.sports_predict_live.board.service;
 
 import com.example.edu.sports_predict_live.board.domain.Board;
 import com.example.edu.sports_predict_live.board.dto.BoardDTO;
+import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
+import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
+import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,6 +14,8 @@ public interface BoardService {
     BoardDTO readOne(Long boardId); // 글 상세 조회
     void modify(BoardDTO boardDTO); // 글 수정
     void remove(Long boardID); // 글 삭제
+
+    PageResponseDTO<BoardListAllDTO> list(PageRequestDTO pageRequestDTO);
 
     default Board dtoToEntity(BoardDTO boardDTO) {
         Board board = Board.builder()
@@ -55,6 +60,4 @@ public interface BoardService {
                 .fileNames(fileNames)
                 .build();
     }
-
-    // commit testsadf
 }

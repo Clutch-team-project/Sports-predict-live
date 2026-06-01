@@ -61,6 +61,10 @@ public class Board extends BaseEntity {
         this.isNotice = isNotice;
     }
 
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
     public void addImage(String uuid, String fileName) {
 
         if(this.imageSet.size() >= 5) {

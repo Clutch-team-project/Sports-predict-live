@@ -15,6 +15,6 @@ public interface BoardRepository extends JpaRepository<Board, Long>, BoardSearch
     String getTime();
 
     @EntityGraph(attributePaths = {"imageSet"})
-    @Query("select b from Board b where b.boardId = :boardId")
+    @Query("select b from Board b where b.boardId = :boardId and b.deletedAt is null")
     Optional<Board> findByIdWithImages(@Param("boardId") Long boardId);
 }

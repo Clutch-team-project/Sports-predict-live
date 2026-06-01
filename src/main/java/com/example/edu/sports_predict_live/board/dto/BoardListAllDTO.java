@@ -21,6 +21,7 @@ public class BoardListAllDTO {
     private int likeCount;
     private boolean isNotice;
     private boolean isBlinded;
+    private boolean isDeleted;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
