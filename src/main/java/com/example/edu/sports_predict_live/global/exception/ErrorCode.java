@@ -15,13 +15,17 @@ public enum ErrorCode {
     EMAIL_NOT_VERIFIED(400, "이메일 인증이 완료되지 않았습니다."),
 
     // 회원
+    SAME_PASSWORD(400, "현재 비밀번호와 동일합니다."),
+    ALREADY_DELETED(400, "이미 탈퇴한 회원입니다."),
+
     DUPLICATE_LOGIN_ID(409, "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(409, "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME(409, "이미 사용 중인 닉네임입니다."),
+
     USER_NOT_FOUND(404, "존재하지 않는 회원입니다."),
-    INVALID_PASSWORD(401, "비밀번호가 일치하지 않습니다."),
     EMAIL_NOT_FOUND(404, "가입된 이메일이 없습니다."),
-    SAME_PASSWORD(400, "현재 비밀번호와 동일합니다."),
+
+    INVALID_PASSWORD(401, "비밀번호가 일치하지 않습니다."),
 
     INVALID_TOKEN(401, "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(401, "만료된 토큰입니다."),

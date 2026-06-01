@@ -1,6 +1,7 @@
 package com.example.edu.sports_predict_live.user.controller;
 
 import com.example.edu.sports_predict_live.user.dto.request.ChangePasswordRequestDTO;
+import com.example.edu.sports_predict_live.user.dto.request.DeleteUserRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.request.ResetPasswordRequestDTO;
 import com.example.edu.sports_predict_live.user.dto.request.UserUpdateDTO;
 import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
@@ -31,6 +32,14 @@ public class UserController {
             @AuthenticationPrincipal Long userId,
             @RequestBody UserUpdateDTO dto) {
         return ResponseEntity.ok(userService.updateMe(userId, dto));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Map<String, String>> deleteMe(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody DeleteUserRequestDTO dto) {
+        userService.deleteMe(userId, dto);
+        return ResponseEntity.ok(Map.of("message", "탈퇴가 완료되었습니다."));
     }
 
     @GetMapping("/findId")

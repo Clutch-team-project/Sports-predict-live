@@ -173,4 +173,21 @@ public class UserService {
 
         user.updatePassword(passwordEncoder.encode(dto.getNewPassword()));
     }
+
+    @Transactional
+    public void deleteMe(Long userId, DeleteUserRequestDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getDeletedAt() != null)
+            throw new CustomException(ErrorCode.ALREADY_DELETED);
+
+        // 소셜 전용 계정이 아니면 비밀번호 확인
+        if (user.getPassword() != null) {
+            if (dto.getPassword() == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword()))
+                throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        user.delete();
+    }
 }

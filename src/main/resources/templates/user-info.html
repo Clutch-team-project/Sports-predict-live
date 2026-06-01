@@ -701,7 +701,7 @@
                 <hr class="section-divider" style="margin: 8px 0">
                 <div class="sidebar-menu-item active" onclick="location.href='/user-info'">내 정보</div>
                 <div class="sidebar-menu-item" onclick="location.href='/prediction-history'">승부예측 기록</div>
-                <div class="sidebar-menu-item" style="color:#ef4444" onclick="alert('회원 탈퇴 확인 모달')">회원 탈퇴</div>
+                <div class="sidebar-menu-item" style="color:#ef4444" onclick="confirmDelete()">회원 탈퇴</div>
             </div>
             <!-- 메인 콘텐츠 -->
             <div class="card p-5 flex-1">
@@ -865,6 +865,33 @@
             // 닉네임 변경 시 localStorage 업데이트
             if (data.nickname) localStorage.setItem('nickname', data.nickname);
             showMsg('수정되었습니다.', false);
+        } catch (e) {
+            showMsg('서버 연결에 실패했습니다.', true);
+        }
+    }
+
+    async function confirmDelete() {
+        const confirmed = confirm('정말 탈퇴하시겠습니까?\n탈퇴 후 계정 복구가 불가능합니다.');
+        if (!confirmed) return;
+
+        const password = prompt('비밀번호를 입력해주세요. (소셜 전용 계정은 비워두세요)');
+        if (password === null) return;  // 취소 클릭
+
+        try {
+            const res = await authFetch(BASE_URL + '/api/users/me', {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: password || null})
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showMsg(data.message || '탈퇴 실패', true);
+                return;
+            }
+
+            alert('탈퇴가 완료되었습니다.');
+            localStorage.clear();
+            location.href = '/login';
         } catch (e) {
             showMsg('서버 연결에 실패했습니다.', true);
         }

@@ -96,4 +96,10 @@ public class User {
         if (profileImage != null) this.profileImage = profileImage;
     }
 
+    public void delete() {
+        this.email    = "deleted_" + this.userId + "@deleted.com";
+        this.loginId  = "deleted_" + this.userId;
+        this.nickname = null;
+        this.deletedAt = LocalDateTime.now();
+    }
 }
