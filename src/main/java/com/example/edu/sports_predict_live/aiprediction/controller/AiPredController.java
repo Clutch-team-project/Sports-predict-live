@@ -29,4 +29,10 @@ public class AiPredController {
     public AiPredEntity getAiPrediction(@PathVariable Long matchId) {
         return aiPredService.getAiPrediction(matchId);
     }
+
+    @GetMapping("/latest")
+    public AiPredEntity getLatestPrediction() {
+
+        return aiPredService.getLatestPrediction();
+    } //메인 화면용 최신 ai 예측 조회
 }

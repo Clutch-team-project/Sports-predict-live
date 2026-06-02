@@ -4,6 +4,8 @@ import com.example.edu.sports_predict_live.aiprediction.entity.PredictionEntity;
 import com.example.edu.sports_predict_live.aiprediction.service.PredictionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import com.example.edu.sports_predict_live.aiprediction.dto.PredictionRankingDto;
+
 
 import java.util.List;
 
@@ -50,5 +52,27 @@ public class PredictionController {
         );
     }
 
+    @GetMapping("/all")
+    public List<PredictionEntity> getAllPredictions() {
+
+        return predictionService.getAllPredictions();
+
+
+    }
+
+    @GetMapping("/{predictionId}")
+    public PredictionEntity getPrediction(
+            @PathVariable Long predictionId
+    ) {
+
+        return predictionService.getPrediction(predictionId);
+
+    }
+
+    @GetMapping("/ranking")
+    public List getPredictionRanking() {
+
+        return predictionService.getPredictionRanking();
+    }
 
 }

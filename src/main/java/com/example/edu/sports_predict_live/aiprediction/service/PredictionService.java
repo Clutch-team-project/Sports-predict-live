@@ -6,6 +6,9 @@ import com.example.edu.sports_predict_live.aiprediction.repository.PredictionRep
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.edu.sports_predict_live.aiprediction.dto.PredictionRankingDto;
+import java.util.ArrayList;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -91,4 +94,40 @@ public class PredictionService {
         // 변경된 정산 결과를 DB에 일괄 저장
         predictionRepository.saveAll(predictions);
     }
+
+    public List<PredictionEntity> getAllPredictions() {
+        return predictionRepository.findAll();
+    }
+
+    public PredictionEntity getPrediction(Long predictionId) {
+        return predictionRepository.findByPredictionId(predictionId);
+    }
+
+    public List getPredictionRanking() {
+
+        List<Object[]> results = predictionRepository.getPredictionRanking();
+
+        List rankingList = new ArrayList<>();
+
+        for (Object[] row : results) {
+
+            Long userId = ((Number) row[0]).longValue();
+            Long totalPredictions = ((Number) row[1]).longValue();
+            Long correctPredictions = ((Number) row[2]).longValue();
+            Double accuracy = ((Number) row[3]).doubleValue();
+
+            PredictionRankingDto dto = new PredictionRankingDto(
+                    userId,
+                    totalPredictions,
+                    correctPredictions,
+                    accuracy
+            );
+
+            rankingList.add(dto);
+
+        }
+
+        return rankingList;
+    } //예측랭킹 매서드
+
 }

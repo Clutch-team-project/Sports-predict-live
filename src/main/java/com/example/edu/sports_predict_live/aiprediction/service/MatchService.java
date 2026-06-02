@@ -13,6 +13,8 @@ import java.util.List;
 public class MatchService {
 
     private final MatchRepository matchRepository;
+    private final PredictionService predictionService;
+
 
     public MatchEntity saveMatch(
 
@@ -66,6 +68,14 @@ public class MatchService {
         existing.setAwayScore(match.getAwayScore());
         existing.setVenue(match.getVenue());
 
-        return matchRepository.save(existing);
+        MatchEntity updatedMatch = matchRepository.save(existing);
+
+        // 경기 종료 시 자동 정산
+        if ("FINISHED".equalsIgnoreCase(updatedMatch.getStatus())) {
+            predictionService.settlePredictionsForMatch(updatedMatch);
+        }
+
+        return updatedMatch;
+
     }
 } //실제 db 연결 시 /match/list, /match/detail 같은 API 바로 붙일 수 있게 기본 구조 미리 만드는 단계
