@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/", "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
-                                "/user-info"   // ← 추가
+                                "/user-info"
+                                , "/board", "/board/list", "/board/read", "/templates/**" // ← 추가
                         ).permitAll()
                         .requestMatchers("/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .anyRequest().authenticated()
@@ -50,6 +51,7 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

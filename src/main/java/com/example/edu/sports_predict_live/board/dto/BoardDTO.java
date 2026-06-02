@@ -19,6 +19,9 @@ public class BoardDTO {
     private Long boardId; // 게시글 ID
     private Long userId; // 작성한 유저 ID
 
+    private String loginId; // 작성자 표시용 로그인 아이디
+    private String nickname; // 작성자 표시용 닉네임
+
     @NotEmpty
     private String category; // 카테고리
 
@@ -31,8 +34,11 @@ public class BoardDTO {
 
     private int viewCount; // 조회수
     private int likeCount; // 좋아요수
+    private int replyCount; // 댓글 개수
+
     private boolean isNotice; // 공지 고정 여부
     private boolean isBlinded; // 블라인드 여부
+    private boolean isDeleted; // 소프트 딜리트용
 
     // BaseEntity에서 자동으로 채워지는 것들
     private LocalDateTime createdAt; // 생성일시

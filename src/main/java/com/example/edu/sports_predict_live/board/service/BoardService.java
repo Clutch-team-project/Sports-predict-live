@@ -12,10 +12,11 @@ import java.util.stream.Collectors;
 public interface BoardService {
     Long register(BoardDTO boardDTO); // 글 등록
     BoardDTO readOne(Long boardId); // 글 상세 조회
+    BoardDTO getBoardOnly(Long boardId); // 글 수정용(조회수 증가 X)
     void modify(BoardDTO boardDTO); // 글 수정
     void remove(Long boardID); // 글 삭제
 
-    PageResponseDTO<BoardListAllDTO> list(PageRequestDTO pageRequestDTO);
+    PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 
     default Board dtoToEntity(BoardDTO boardDTO) {
         Board board = Board.builder()

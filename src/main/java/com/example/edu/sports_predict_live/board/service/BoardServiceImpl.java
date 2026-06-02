@@ -2,10 +2,17 @@ package com.example.edu.sports_predict_live.board.service;
 
 import com.example.edu.sports_predict_live.board.domain.Board;
 import com.example.edu.sports_predict_live.board.dto.BoardDTO;
+import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
+import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
+import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
 import com.example.edu.sports_predict_live.board.repository.BoardRepository;
+import com.example.edu.sports_predict_live.user.entity.User;
+import com.example.edu.sports_predict_live.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,23 +25,49 @@ import java.util.Optional;
 public class BoardServiceImpl implements BoardService{
     private final ModelMapper modelMapper;
     private final BoardRepository boardRepository;
+    private final UserRepository userRepository;
 
+    // 게시글 생성
     @Override
     public Long register(BoardDTO boardDTO) {
-        // 기본 게시글 엔티티 생성
         Board board = dtoToEntity(boardDTO);
         Long boardId = boardRepository.save(board).getBoardId();
         return boardId;
     }
-
+    // 게시글 상세 확인(조회수 증가)
     @Override
     public BoardDTO readOne(Long boardId){
         Optional<Board> result = boardRepository.findByIdWithImages(boardId);
         Board board = result.orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. id=" + boardId));
+        board.changeViewCount(board.getViewCount() + 1);
         BoardDTO boardDTO = entityToDTO(board);
+
+        Optional<User> userOptional = userRepository.findById(board.getUserId());
+        if(userOptional.isPresent()) {
+            User user = userOptional.get();
+            boardDTO.setLoginId(user.getLoginId());
+            boardDTO.setNickname(user.getNickname());
+        }
+
         return boardDTO;
     }
+    // 게시글 수정용 게시글 상세확인(조회수 증가 X)
+    @Override
+    public BoardDTO getBoardOnly(Long boardId) {
+        Optional<Board> result = boardRepository.findByIdWithImages(boardId);
+        Board board = result.orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. id=" + boardId));
+        BoardDTO boardDTO = entityToDTO(board);
 
+        Optional<User> userOptional = userRepository.findById(board.getUserId());
+        if(userOptional.isPresent()) {
+            User user = userOptional.get();
+            boardDTO.setLoginId(user.getLoginId());
+            boardDTO.setNickname(user.getNickname());
+        }
+
+        return boardDTO;
+    }
+    // 게시글 수정
     @Override
     public void modify(BoardDTO boardDTO) {
         Optional<Board> result = boardRepository.findByIdWithImages(boardDTO.getBoardId());
@@ -54,15 +87,26 @@ public class BoardServiceImpl implements BoardService{
         }
         boardRepository.save(board);
     }
-
+    // 게시글 삭제
     @Override
     public void remove(Long boardId) {
-        // 게시글 데이터 조회
         Optional<Board> result = boardRepository.findById(boardId);
         Board board = result.orElseThrow();
-
         board.softDelete();
 
         boardRepository.save(board);
+    }
+
+    @Override
+    public PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO) {
+        String[] types = pageRequestDTO.getTypes();
+        String keyword = pageRequestDTO.getKeyword();
+        Pageable pageable = pageRequestDTO.getPageable("boardId");
+        Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, pageable);
+        return PageResponseDTO.<BoardListAllDTO>withAll()
+                .pageRequestDTO(pageRequestDTO)
+                .dtoList(result.getContent())
+                .total((int)result.getTotalElements())
+                .build();
     }
 }
