@@ -25,6 +25,7 @@ public class BoardController {
         log.info("게시판 목록 조회 요청 : " + pageRequestDTO);
         PageResponseDTO<BoardListAllDTO> responseDTO = boardService.listWithAll(pageRequestDTO);
         model.addAttribute("responseDTO", responseDTO);
+        model.addAttribute("pageRequestDTO", pageRequestDTO);
         log.info("프론트에 넘기는 데이터 : " + responseDTO);
     }
 

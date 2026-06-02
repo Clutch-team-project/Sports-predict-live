@@ -22,7 +22,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
     }
 
     @Override
-    public Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, Pageable pageable) {
+    public Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, String category, String sort, Pageable pageable) {
         QBoard board = QBoard.board;
         QUser user = QUser.user; // 작성자 정보 조회를 위한 QUser 추가
 //        QReply reply = QReply.reply; // 댓글기능 추가 후 주석 해제
@@ -50,6 +50,28 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             }
             query.where(booleanBuilder);
         }
+
+        if(category != null && !category.isEmpty()) {
+            query.where(board.category.eq(category));
+        }
+
+        if(sort != null) {
+            switch (sort) {
+                case "view": // 조회순
+                    query.orderBy(board.viewCount.desc(), board.boardId.desc());
+                    break;
+                case "like": // 좋아요순
+                    query.orderBy(board.likeCount.desc(), board.boardId.desc());
+                    break;
+                case "latest": // 최신순
+                default:
+                    query.orderBy(board.boardId.desc());
+                    break;
+            }
+        } else {
+            query.orderBy(board.boardId.desc());
+        }
+
         query.where(board.boardId.gt(0L));
         query.where(board.deletedAt.isNull());
 

@@ -9,24 +9,9 @@
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; }
 
-        /* 전체_홈 기준 라이트 배경 */
-        .light-portal-bg {
-            background-color: #e2e8f0;
-            background-image:
-                    linear-gradient(rgba(59,130,246,0.15) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(59,130,246,0.15) 1px, transparent 1px);
-            background-size: 24px 24px;
-        }
-
         .card { background: rgba(255,255,255,0.9); border: 2px solid rgba(59,130,246,0.55); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .gnb { background: white; border-bottom: 1px solid #cbd5e1; }
 
-        /* 네비 탭 */
-        .nav-tab { padding: 8px 18px; font-size: 13px; font-weight: 500; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
-        .nav-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
-        .nav-tab:hover:not(.active) { color: #334155; }
-
-        /* 게시글 상세 */
+        /* 게시글 상세 스타일 */
         .btn-back {
             display: inline-flex; align-items: center; gap: 6px;
             background: white; border: 1px solid #cbd5e1; border-radius: 8px;
@@ -59,27 +44,11 @@
         .action-btn:hover { border-color: #2563eb; color: #2563eb; }
         .action-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* 댓글 */
-        .comment-item { padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
-        .comment-item:last-child { border-bottom: none; }
-        .comment-author { font-size: 13px; font-weight: 700; color: #334155; }
-        .comment-meta { font-size: 11px; color: #94a3b8; }
-        .comment-meta .meta-action { cursor: pointer; transition: color .15s; }
-        .comment-meta .meta-action:hover { color: #2563eb; }
-        .comment-content { font-size: 13px; color: #475569; margin-top: 4px; line-height: 1.6; }
-        .comment-blinded { font-size: 13px; color: #94a3b8; font-style: italic; }
-        .comment-deleted { font-size: 13px; color: #cbd5e1; font-style: italic; }
-        .reply-indent { margin-left: 24px; padding-left: 14px; border-left: 2px solid #e2e8f0; }
-
-        /* 사이드바 */
+        /* 사이드바 및 레이아웃 조정 */
         .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
         .stat-row:last-child { border-bottom: none; }
         .stat-label { font-size: 12px; color: #64748b; }
         .stat-val { font-size: 14px; font-weight: 700; color: #334155; }
-
-        .related-item { padding: 10px 0; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 13px; color: #64748b; transition: color .15s; }
-        .related-item:last-child { border-bottom: none; }
-        .related-item:hover { color: #2563eb; }
 
         .divider { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
         .section-title { font-size: 11px; font-weight: 700; color: #2563eb; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
@@ -94,44 +63,13 @@
         .input-field:focus { border-color: #2563eb; }
 
         .comment-author, .stat-val { color: #1e293b; font-weight: 800; }
-        [style*="color:#94a3b8"], [style*="color:#cbd5e1"] { color: #64748b !important; }
-        [style*="color:#e2e8f0"] { color: #94a3b8 !important; }
-
-        /* ── 🛠️ front-links.js 변조 방지 보호 장치 ── */
-        body {
-            background-color: #e2e8f0 !important;
-            background-image:
-                    linear-gradient(rgba(59,130,246,0.15) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(59,130,246,0.15) 1px, transparent 1px) !important;
-            background-size: 24px 24px !important;
-        }
-        body > header, body > nav.gnb { display: flex !important; }
-        body > nav.gnb:last-of-type { display: flex !important; margin-bottom: 24px !important; }
-        #frontUnifiedTopbar { display: none !important; }
     </style>
 </head>
-<body class="light-portal-bg min-h-screen text-slate-800">
-
-<header class="gnb px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-sm">
-    <span class="text-blue-600 font-black text-lg tracking-tight">AI.MATCH</span>
-    <div class="flex gap-6 text-sm font-semibold text-slate-500">
-        <span class="hover:text-slate-800 cursor-pointer transition-colors">로그인</span>
-        <span class="hover:text-slate-800 cursor-pointer transition-colors">사이트맵</span>
-    </div>
-</header>
-<nav class="gnb px-6 py-2 flex justify-center gap-1 border-b border-slate-200">
-    <span class="nav-tab active">홈</span>
-    <span class="nav-tab">축구</span>
-    <span class="nav-tab">야구</span>
-    <span class="nav-tab">LOL</span>
-</nav>
-<nav class="gnb px-6 py-2 flex justify-center gap-1 border-b border-slate-200 mb-6">
-    <span class="nav-tab">뉴스</span>
-    <span class="nav-tab">일정</span>
-    <span class="nav-tab active">게시판</span>
-</nav>
+<body class="min-h-screen text-slate-800">
 
 <main class="max-w-6xl mx-auto px-6 pb-28">
+
+    <div class="h-6"></div>
 
     <button class="btn-back mb-4"
             th:onclick="|location.href='@{/board/list(page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">
@@ -142,14 +80,14 @@
         <div class="card p-6 flex-1 min-w-0">
 
             <div class="flex items-center gap-2 mb-3">
-        <span class="article-cat-badge"
-              th:classappend="${
-                dto.category == '공지' ? 'cat-notice' :
-                (dto.category == '분석' ? 'cat-analysis' :
-                (dto.category == '응원' ? 'cat-cheer' :
-                (dto.category == '예측후기' ? 'cat-predict' : 'cat-free')))
-              }"
-              th:text="${dto.category ?: '자유'}">자유</span>
+                <span class="article-cat-badge"
+                      th:classappend="${
+                        dto.category == '공지' ? 'cat-notice' :
+                        (dto.category == '분석' ? 'cat-analysis' :
+                        (dto.category == '응원' ? 'cat-cheer' :
+                        (dto.category == '예측후기' ? 'cat-predict' : 'cat-free')))
+                      }"
+                      th:text="${dto.category ?: '자유'}">자유</span>
             </div>
 
             <h1 style="font-size:20px;font-weight:900;color:#0f172a;line-height:1.45;margin-bottom:10px" th:text="${dto.title}">오늘 경기 진짜 너무 재밌었다</h1>
@@ -160,13 +98,13 @@
                       th:text="${dto.nickname != null and dto.nickname != '' ? dto.nickname :
                         (dto.loginId != null and #strings.length(dto.loginId) >= 3 ? #strings.substring(dto.loginId, 0, 3) + '***' : '익명***')}">닉네임</span>
 
-                <span style="color:#e2e8f0">·</span>
+                <span style="color:#cbd5e1">·</span>
                 <span th:text="${#temporals.format(dto.createdAt, 'yyyy.MM.dd HH:mm')}">2026.05.20 14:32</span>
-                <span style="color:#e2e8f0">·</span>
+                <span style="color:#cbd5e1">·</span>
                 <span th:text="|조회 ${dto.viewCount}|">조회 312</span>
 
                 <th:block th:if="${dto.updatedAt != null and dto.updatedAt != dto.createdAt}">
-                    <span style="color:#e2e8f0">·</span>
+                    <span style="color:#cbd5e1">·</span>
                     <span style="color:#2563eb;" th:text="|수정됨 ${#temporals.format(dto.updatedAt, 'HH:mm')}|">수정됨 14:55</span>
                 </th:block>
             </div>
