@@ -1,4 +1,4 @@
-(function () {
+x(function () {
 
     /* 인증 API 공통 fetch (토큰 만료 시 자동 재발급) */
     window.authFetch = async function (url, options) {
