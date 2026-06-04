@@ -36,8 +36,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/standings/**", "/api/records/**").permitAll()
                         .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
+                        .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
                         .requestMatchers(
                                 "/", "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",

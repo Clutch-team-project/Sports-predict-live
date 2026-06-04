@@ -718,7 +718,7 @@
 <script>
     const BASE_URL = 'http://localhost:8080';
 
-    // ── 에러 메시지 ───────────────────────────────────────────────
+    // 에러 메시지
     function showMsg(msg, isError) {
         let box = document.getElementById('msg-box');
         if (!box) {
@@ -734,7 +734,7 @@
         box.style.color = isError ? '#dc2626' : '#16a34a';
     }
 
-    // ── 회원가입 API 호출 ─────────────────────────────────────────
+    // 회원가입 API 호출
     async function submitSignup() {
         const raw = sessionStorage.getItem('signupData');
         if (!raw) {

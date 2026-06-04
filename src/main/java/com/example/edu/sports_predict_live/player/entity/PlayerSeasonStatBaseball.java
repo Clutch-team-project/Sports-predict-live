@@ -22,7 +22,7 @@ public class PlayerSeasonStatBaseball {
     @JoinColumn(name = "player_season_stat_id")
     private PlayerSeasonStat playerSeasonStat;
 
-    // ── 타자 전용 (투수는 NULL) ──────────────────────────
+    // 타자 전용 (투수는 NULL)
     @Column(name = "batting_avg", precision = 5, scale = 3)
     private BigDecimal battingAvg;
 
@@ -35,7 +35,7 @@ public class PlayerSeasonStatBaseball {
     @Column(name = "rbi")
     private Integer rbi;
 
-    // ── 투수 전용 (타자는 NULL) ──────────────────────────
+    // 투수 전용 (타자는 NULL)
     @Column(name = "era", precision = 5, scale = 2)
     private BigDecimal era;
 

@@ -546,7 +546,7 @@ let emailVerified = false;
 let verifyTimerInterval = null;
 let _panelHideTimer = null; // hideTimer 중복 방지용 별칭
 
-// ── 메시지 표시 ───────────────────────────────────────────────
+// 메시지 표시
 function showMsg(msg, isError) {
   const box = document.getElementById('msg-box');
   box.textContent = msg;
@@ -556,7 +556,7 @@ function showMsg(msg, isError) {
   box.style.color      = isError ? '#dc2626' : '#16a34a';
 }
 
-// ── 인증코드 발송 ─────────────────────────────────────────────
+// 인증코드 발송
 async function sendEmailCode() {
   const email = document.getElementById('inp-email').value.trim();
   if (!email) { showMsg('이메일을 입력해주세요.', true); return; }
@@ -594,7 +594,7 @@ async function sendEmailCode() {
   }
 }
 
-// ── 타이머 ────────────────────────────────────────────────────
+// 타이머
 function startVerifyTimer(seconds) {
   clearInterval(verifyTimerInterval);
   const timerEl = document.getElementById('verify-timer');
@@ -615,7 +615,7 @@ function formatTime(s) {
   return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 }
 
-// ── 인증코드 확인 ─────────────────────────────────────────────
+// 인증코드 확인
 async function verifyEmailCode() {
   const email = document.getElementById('inp-email').value.trim();
   const code  = document.getElementById('inp-code').value.trim();
@@ -645,7 +645,7 @@ async function verifyEmailCode() {
   }
 }
 
-// ── 다음 단계 (입력 유효성 검사 후 sessionStorage 저장) ──────
+// 다음 단계 (입력 유효성 검사 후 sessionStorage 저장)
 function goToNotification() {
   const loginId  = document.getElementById('inp-login-id').value.trim();
   const email    = document.getElementById('inp-email').value.trim();

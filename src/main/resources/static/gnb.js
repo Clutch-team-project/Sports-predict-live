@@ -1,6 +1,6 @@
 (function () {
 
-    /* ── 인증 API 공통 fetch (토큰 만료 시 자동 재발급) ── */
+    /* 인증 API 공통 fetch (토큰 만료 시 자동 재발급) */
     window.authFetch = async function (url, options) {
         options = options || {};
         options.headers = options.headers || {};
@@ -60,7 +60,7 @@
 
     var current = decodeURIComponent((location.pathname.split('/').pop() || '').toLowerCase());
 
-    /* ── 유틸 ── */
+    /* 유틸 */
     function go(file) {
         if (file) location.href = file;
     }
@@ -75,7 +75,7 @@
         });
     }
 
-    /* ── 스타일 주입 ── */
+    /* 스타일 주입 */
     function injectStyles() {
         var s = document.createElement('style');
         s.textContent = [
@@ -101,7 +101,7 @@
         document.head.appendChild(s);
     }
 
-    /* ── 종목 아이템 HTML ── */
+    /* 종목 아이템 HTML */
     function sportItem(label, target, active, menuItems) {
         var cls = 'fl-sport' + (active ? ' is-active' : '');
         var goAttr = target ? ' data-fl-go="' + target + '"' : '';
@@ -116,7 +116,7 @@
         return '<div class="' + cls + '"' + goAttr + '><span>' + label + '</span>' + menuHtml + '</div>';
     }
 
-    /* ── GNB 주입 ── */
+    /* GNB 주입 */
     function installTopbar() {
         if (document.getElementById('flTopbar')) return;
         injectStyles();
