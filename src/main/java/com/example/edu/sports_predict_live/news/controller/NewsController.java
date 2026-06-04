@@ -81,4 +81,20 @@ public class NewsController {
 
         return newsApiService.searchSportsNews(keyword);
     }
+
+    /**
+     * 종목 + 카테고리 뉴스 조회
+     */
+    @GetMapping("/filter")
+    public List<NewsEntity> getFilteredNews(
+
+            @RequestParam Long sportId,
+            @RequestParam String category
+    ) {
+
+        return newsService.getFilteredNews(
+                sportId,
+                category
+        );
+    }
 }

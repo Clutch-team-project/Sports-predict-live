@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -63,6 +66,39 @@ public class NewsApiService {
 
                 String pubDate = item.get("pubDate").asText();
 
+                Long sportId = 1L;
+
+// 축구
+                if (keyword.contains("축구")) {
+
+                    sportId = 1L;
+                }
+
+// 야구
+                else if (keyword.contains("야구")) {
+
+                    sportId = 2L;
+                }
+
+// LOL
+                else if (
+                        keyword.contains("LOL")
+                                || keyword.contains("롤")
+                ) {
+
+                    sportId = 3L;
+                }
+
+                String source = item.get("originallink")
+                        .asText()
+                        .split("/")[2];
+
+                LocalDateTime publishedAt =
+                        ZonedDateTime.parse(
+                                pubDate,
+                                DateTimeFormatter.RFC_1123_DATE_TIME
+                        ).toLocalDateTime();
+
                 // 중복 뉴스 방지
                 boolean exists =
                         newsRepository.existsByNewsUrl(link);
@@ -74,6 +110,8 @@ public class NewsApiService {
                 // 뉴스 엔티티 생성
                 NewsEntity news = new NewsEntity();
 
+                news.setSportId(sportId);
+
                 news.setCategory(keyword);
 
                 news.setTitle(title);
@@ -82,7 +120,11 @@ public class NewsApiService {
 
                 news.setNewsUrl(link);
 
-                news.setSource("NAVER");
+                news.setSource(source);
+
+                news.setPublishedAt(publishedAt);
+
+                news.setCreatedAt(LocalDateTime.now());
 
                 // 저장
                 newsRepository.save(news);

@@ -19,4 +19,10 @@ public interface NewsRepository
 
     // URL 중복 체크
     boolean existsByNewsUrl(String newsUrl);
+
+    // 종목 + 팀 조회
+    List<NewsEntity> findBySportIdAndCategoryOrderByPublishedAtDesc(
+            Long sportId,
+            String category
+    );
 }

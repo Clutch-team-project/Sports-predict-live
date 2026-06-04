@@ -40,4 +40,7 @@ public class NewsEntity {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(length = 100)
+    private String team;
 }

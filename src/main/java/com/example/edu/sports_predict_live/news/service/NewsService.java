@@ -72,4 +72,19 @@ public class NewsService {
 
         return newsRepository.findByCategoryOrderByPublishedAtDesc(category);
     }
+
+    /**
+     * 종목 + 카테고리 뉴스 조회
+     */
+    public List<NewsEntity> getFilteredNews(
+            Long sportId,
+            String category
+    ) {
+
+        return newsRepository
+                .findBySportIdAndCategoryOrderByPublishedAtDesc(
+                        sportId,
+                        category
+                );
+    }
 }
