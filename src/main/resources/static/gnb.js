@@ -43,15 +43,19 @@
 
     var files = {
         home: '/',
-        football: '/football',
+        football: '/soccer',
         baseball: '/baseball',
+        lol: '/lol',
         news: '/news',
         schedule: '/schedule',
-        teamRanking: '/team-ranking',
         board: '/board',
         member: '/login',
         loginSuccess: '/login-success',
-        userInfo: '/user-info'
+        userInfo: '/user-info',
+        // 종목별 순위 페이지
+        baseballStandings: '/baseball/standings',
+        soccerStandings: '/soccer/standings',
+        lolStandings: '/lol/standings',
     };
 
     var current = decodeURIComponent((location.pathname.split('/').pop() || '').toLowerCase());
@@ -124,17 +128,30 @@
             {label: '게시판', file: files.board}
         ];
 
-        /* 축구·야구·LOL: 뉴스 / 일정 / 순위 / 게시판 */
-        var sportMenu = [
+        /* 종목별 서브메뉴 */
+        var baseballMenu = [
             {label: '뉴스', file: files.news},
             {label: '일정', file: files.schedule},
-            {label: '순위', file: files.teamRanking},
+            {label: '순위', file: files.baseballStandings},
+            {label: '게시판', file: files.board}
+        ];
+        var soccerMenu = [
+            {label: '뉴스', file: files.news},
+            {label: '일정', file: files.schedule},
+            {label: '순위', file: files.soccerStandings},
+            {label: '게시판', file: files.board}
+        ];
+        var lolMenu = [
+            {label: '뉴스', file: files.news},
+            {label: '일정', file: files.schedule},
+            {label: '순위', file: files.lolStandings},
             {label: '게시판', file: files.board}
         ];
 
-        var isHome = current.indexOf('전체_홈') !== -1 || current === '';
-        var isFootball = current.indexOf('축구') !== -1;
-        var isBaseball = current.indexOf('야구') !== -1 || current.indexOf('팀_') !== -1 || current.indexOf('선수') !== -1;
+        var isHome = current === '' || current === '/' || current.indexOf('home') !== -1;
+        var isFootball = current.indexOf('soccer') !== -1;
+        var isBaseball = current.indexOf('baseball') !== -1;
+        var isLol = current.indexOf('lol') !== -1;
 
         var shell = document.createElement('div');
         shell.id = 'flTopbar';
@@ -144,9 +161,9 @@
             '<div class="fl-logo" data-fl-go="' + files.home + '">AI.MATCH</div>' +
             '<div class="fl-sports">' +
             sportItem('홈', files.home, isHome, homeMenu) +
-            sportItem('축구', files.football, isFootball, sportMenu) +
-            sportItem('야구', files.baseball, isBaseball, sportMenu) +
-            sportItem('LOL', null, false, sportMenu) +
+            sportItem('축구', files.football, isFootball, soccerMenu) +
+            sportItem('야구', files.baseball, isBaseball, baseballMenu) +
+            sportItem('LOL', files.lol, isLol, lolMenu) +
             '</div>' +
             '<div class="fl-actions">' +
             (localStorage.getItem('accessToken')
