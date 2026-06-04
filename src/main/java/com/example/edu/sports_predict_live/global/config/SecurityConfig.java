@@ -23,6 +23,30 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
 
+    // ── 공개 API 경로 ──────────────────────────────────────
+    private static final String[] PUBLIC_API = {
+            "/api/auth/**",          // 인증 (이메일 인증, 로그인, 회원가입 등)
+            "/api/standings/**",     // 팀 순위
+            "/api/records/**",       // 선수 기록
+            "/api/players/**",       // 선수 목록
+    };
+
+    // ── 공개 페이지 경로 ───────────────────────────────────
+    private static final String[] PUBLIC_PAGES = {
+            "/",
+            "/login", "/signup", "/signup-success", "/login-success",
+            "/notification-agreement",
+            "/find-id", "/find-password", "/change-password",
+            "/prediction-history", "/user-info",
+            "/baseball/**", "/soccer/**", "/lol/**",
+    };
+
+    // ── 공개 정적 리소스 ────────────────────────────────────
+    private static final String[] PUBLIC_STATIC = {
+            "/gnb.js", "/script.js", "/favicon.ico",
+            "/*.js", "/*.css", "/*.png",
+    };
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -36,17 +60,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
-                        .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
-                        .requestMatchers(
-                                "/", "/login", "/signup", "/notification-agreement",
-                                "/signup-success", "/login-success", "/find-id",
-                                "/find-password", "/change-password", "/prediction-history",
-                                "/user-info"
-                                , "/board", "/board/list", "/board/read", "/templates/**" // ← 추가
-                        ).permitAll()
-                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
+                        .requestMatchers(PUBLIC_API).permitAll()
+                        .requestMatchers(PUBLIC_PAGES).permitAll()
+                        .requestMatchers(PUBLIC_STATIC).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtFilter(jwtProvider),
@@ -57,7 +73,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");   // 모든 출처 허용 (개발용)
+        config.addAllowedOriginPattern("*");  // 개발용 — 배포 시 도메인 지정 필요
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);
