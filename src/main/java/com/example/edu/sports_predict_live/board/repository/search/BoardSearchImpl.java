@@ -34,8 +34,9 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
         // 검색 조건 처리
         if((types != null && types.length > 0) && keyword != null) {
             BooleanBuilder booleanBuilder = new BooleanBuilder();
-            for(String type : types) {
-                switch (type) {
+            for(String typeStr : types) {
+                String[] typeArr = typeStr.split("");
+                switch (typeStr) {
                     case "t":
                         booleanBuilder.or(board.title.contains(keyword));
                         break;

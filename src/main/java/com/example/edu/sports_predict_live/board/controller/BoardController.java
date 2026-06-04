@@ -20,6 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class BoardController {
     private final BoardService boardService;
 
+    @GetMapping({"", "/"})
+    public String index() {
+        return "redirect:/board/list";
+    }
+
     @GetMapping("/list")
     public void list(PageRequestDTO pageRequestDTO, Model model) {
         log.info("게시판 목록 조회 요청 : " + pageRequestDTO);

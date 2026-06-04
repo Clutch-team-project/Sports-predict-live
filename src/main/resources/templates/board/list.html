@@ -9,15 +9,7 @@
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; }
 
-        .page { display: none; }
-        .page.active { display: flex; flex-direction: column; }
-
         .card { background: rgba(255,255,255,0.9); border: 2px solid rgba(59,130,246,0.55); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .gnb { background: white; border-bottom: 1px solid #cbd5e1; }
-
-        .nav-tab { padding: 8px 18px; font-size: 13px; font-weight: 500; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
-        .nav-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
-        .nav-tab:hover:not(.active) { color: #334155; }
 
         .cat-tab {
             padding: 6px 18px; font-size: 13px; font-weight: 600;
@@ -67,8 +59,6 @@
         .cat-predict { background: #ede9fe; color: #7c3aed; }
         .cat-cheer   { background: #fee2e2; color: #dc2626; }
 
-        .tag { display: inline-block; font-size: 11px; color: #2563eb; margin-right: 6px; }
-
         .pag-btn {
             width: 32px; height: 32px; border-radius: 6px; font-size: 12px; font-weight: 700;
             border: 1px solid #cbd5e1; background: white; color: #64748b; text-decoration: none;
@@ -76,8 +66,6 @@
         }
         .pag-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
         .pag-btn:hover:not(.active) { border-color: #2563eb; color: #2563eb; }
-
-        .page-label { font-size: 10px; color: #2563eb; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
 
         main { font-size: 14px; color: #334155; }
         .card { border: 1px solid #cbd5e1; box-shadow: 0 8px 22px rgba(15,23,42,.12); }
@@ -103,9 +91,7 @@
 
     <div class="h-6"></div>
 
-    <div class="page active" id="page-01">
-        <p class="page-label">01 · 게시글 목록</p>
-
+    <div>
         <div class="flex items-center gap-2 mb-3 flex-wrap">
             <button class="cat-tab" th:classappend="${pageRequestDTO.category == null or pageRequestDTO.category == ''} ? 'active' : ''" onclick="chgCategory('')">전체</button>
             <button class="cat-tab" th:classappend="${pageRequestDTO.category == '자유'} ? 'active' : ''" onclick="chgCategory('자유')">자유</button>
@@ -118,14 +104,14 @@
             <input type="hidden" name="category" id="formCategory" th:value="${pageRequestDTO.category ?: ''}">
             <input type="hidden" name="sort" id="formSort" th:value="${pageRequestDTO.sort ?: 'latest'}">
 
-            <select name="types" style="appearance:none; background:white; border:1px solid #cbd5e1; border-radius:8px; padding:9px 12px; font-size:13px; color:#475569; outline:none; cursor:pointer; font-family:'Noto Sans KR',sans-serif;">
-                <option value="tc" th:selected="${pageRequestDTO.types != null && #arrays.contains(pageRequestDTO.types, 't') && #arrays.contains(pageRequestDTO.types, 'c')}">제목+내용</option>
-                <option value="t" th:selected="${pageRequestDTO.types != null && pageRequestDTO.types.length == 1 && pageRequestDTO.types[0] == 't'}">제목</option>
-                <option value="c" th:selected="${pageRequestDTO.types != null && pageRequestDTO.types.length == 1 && pageRequestDTO.types[0] == 'c'}">내용</option>
-                <option value="w" th:selected="${pageRequestDTO.types != null && pageRequestDTO.types.length == 1 && pageRequestDTO.types[0] == 'w'}">작성자</option>
+            <select name="type" id="searchType" onchange="updatePlaceholder()" style="appearance:none; background:white; border:1px solid #cbd5e1; border-radius:8px; padding:9px 12px; font-size:13px; color:#475569; outline:none; cursor:pointer; font-family:'Noto Sans KR',sans-serif;">
+                <option value="tc" th:selected="${pageRequestDTO.type == 'tc'}">제목+내용</option>
+                <option value="t"  th:selected="${pageRequestDTO.type == 't'}">제목</option>
+                <option value="c"  th:selected="${pageRequestDTO.type == 'c'}">내용</option>
+                <option value="w"  th:selected="${pageRequestDTO.type == 'w'}">작성자</option>
             </select>
 
-            <input type="text" name="keyword" th:value="${pageRequestDTO != null ? pageRequestDTO.keyword : ''}" class="search-input" placeholder="🔍  제목, 내용 검색">
+            <input type="text" name="keyword" id="searchKeyword" th:value="${pageRequestDTO != null ? pageRequestDTO.keyword : ''}" class="search-input" placeholder="🔍  제목+내용 검색">
 
             <div class="flex items-center gap-4 flex-shrink-0">
                 <span class="text-xs text-slate-600 font-bold">정렬:</span>
@@ -153,20 +139,20 @@
                     <th style="width:80px">카테고리</th>
                     <th class="title-col">제목</th>
                     <th style="width:100px">작성자</th>
-                    <th style="width:96px">작성일</th> <th style="width:56px">조회</th>
+                    <th style="width:96px">작성일</th>
+                    <th style="width:56px">조회</th>
                     <th style="width:44px">♥</th>
                     <th style="width:44px">💬</th>
                 </tr>
                 </thead>
                 <tbody>
-
                 <th:block th:if="${responseDTO != null}">
                     <tr th:each="dto : ${responseDTO.dtoList}"
                         th:classappend="${dto.isNotice ? 'notice-row' : ''}"
                         th:onclick="|location.href='@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">
 
                         <td th:if="${dto.isNotice}"><span style="font-size:15px">📌</span></td>
-                        <td th:unless="${dto.isNotice}" style="color:#334155" th:text="${dto.boardId}">1042</td>
+                        <td th:unless="${dto.isNotice}" style="color:#334155" th:text="${dto.boardId}">1</td>
 
                         <td>
                             <span class="cat-badge"
@@ -195,46 +181,15 @@
                         <td style="color:#4a5568">
                             <span th:if="${dto.isNotice}">관리자</span>
                             <th:block th:unless="${dto.isNotice}">
-                                <span th:if="${dto.nickname != null and dto.nickname != ''}"
-                                      th:text="${dto.nickname}">
-                                </span>
-                                <span th:unless="${dto.nickname != null and dto.nickname != ''}"
-                                      th:text="${dto.loginId != null and #strings.length(dto.loginId) >= 3 ? #strings.substring(dto.loginId, 0, 3) + '***' : (dto.loginId != null ? dto.loginId + '***' : '익명***')}">
-                                </span>
+                                <span th:if="${dto.nickname != null and dto.nickname != ''}" th:text="${dto.nickname}"></span>
+                                <span th:unless="${dto.nickname != null and dto.nickname != ''}" th:text="'익명'"></span>
                             </th:block>
                         </td>
 
                         <td th:text="${dto.isDeleted ? '—' : #temporals.format(dto.createdAt, 'yyyy.MM.dd')}">2026.05.20</td>
-
-                        <td th:text="${dto.isDeleted ? '—' : dto.viewCount}">312</td>
-                        <td th:text="${dto.isDeleted ? '—' : dto.likeCount}">21</td>
-                        <td th:text="${dto.isDeleted ? '—' : dto.replyCount}">8</td>
-                    </tr>
-                </th:block>
-
-                <th:block th:if="${responseDTO == null}">
-                    <tr class="notice-row">
-                        <td><span style="font-size:15px">📌</span></td>
-                        <td><span class="cat-badge cat-notice">공지</span></td>
-                        <td class="title-col" style="color:#93c5fd;font-weight:700">[공지] 게시판 이용 규칙 안내</td>
-                        <td style="color:#4a5568">관리자</td>
-                        <td>2026.05.20</td>
-                        <td>1,204</td>
-                        <td>48</td>
-                        <td>3</td>
-                    </tr>
-                    <tr>
-                        <td style="color:#334155">1042</td>
-                        <td><span class="cat-badge cat-free">자유</span></td>
-                        <td class="title-col">
-                            <span style="color:#e2e8f0;font-weight:600">오늘 경기 진짜 너무 재밌었다</span>
-                            <span style="font-size:13px;margin-left:4px">🖼</span>
-                        </td>
-                        <td style="color:#4a5568">닉네임123</td>
-                        <td>2026.05.20</td>
-                        <td>312</td>
-                        <td>21</td>
-                        <td>8</td>
+                        <td th:text="${dto.isDeleted ? '—' : dto.viewCount}">0</td>
+                        <td th:text="${dto.isDeleted ? '—' : dto.likeCount}">0</td>
+                        <td th:text="${dto.isDeleted ? '—' : dto.replyCount}">0</td>
                     </tr>
                 </th:block>
 
@@ -262,13 +217,6 @@
                class="pag-btn">&gt;</a>
         </div>
 
-        <div class="flex justify-center gap-1" th:if="${responseDTO == null}">
-            <button class="pag-btn">&lt;</button>
-            <button class="pag-btn active">1</button>
-            <button class="pag-btn">2</button>
-            <button class="pag-btn">&gt;</button>
-        </div>
-
     </div>
 </main>
 
@@ -278,15 +226,29 @@
         document.getElementById('boardActionForm').submit();
     }
 
-    // 정렬 전송 함수 추가
     function chgSort(sortValue) {
-        // 히든 필드에 기준 세팅 (latest, view, like)
         document.getElementById('formSort').value = sortValue;
-        // 메인 폼 전송
         document.getElementById('boardActionForm').submit();
     }
+
+    function updatePlaceholder() {
+        const typeSelect = document.getElementById('searchType');
+        const keywordInput = document.getElementById('searchKeyword');
+
+        switch(typeSelect.value) {
+            case 'tc': keywordInput.placeholder = "🔍  제목+내용 검색"; break;
+            case 't':  keywordInput.placeholder = "🔍  제목 검색"; break;
+            case 'c':  keywordInput.placeholder = "🔍  내용 검색"; break;
+            case 'w':  keywordInput.placeholder = "🔍  작성자 검색"; break;
+            default:   keywordInput.placeholder = "🔍  검색어 입력"; break;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        updatePlaceholder();
+    });
 </script>
 
-<script th:src="@{/front-links.js}"></script>
+<script th:src="@{/board.js}"></script>
 </body>
 </html>
