@@ -1,6 +1,6 @@
-x(function () {
+(function () {
 
-    /* 인증 API 공통 fetch (토큰 만료 시 자동 재발급) */
+    /* ── 인증 API 공통 fetch (토큰 만료 시 자동 재발급) ── */
     window.authFetch = async function (url, options) {
         options = options || {};
         options.headers = options.headers || {};
@@ -8,7 +8,6 @@ x(function () {
 
         var res = await fetch(url, options);
 
-        // Access Token 만료 시 재발급 시도
         if (res.status === 401) {
             var refreshToken = localStorage.getItem('refreshToken');
             if (!refreshToken) {
@@ -23,7 +22,6 @@ x(function () {
             });
 
             if (!reissueRes.ok) {
-                // Refresh Token도 만료 → 로그아웃
                 localStorage.clear();
                 location.href = '/login';
                 return res;
@@ -33,7 +31,6 @@ x(function () {
             localStorage.setItem('accessToken', data.accessToken);
             localStorage.setItem('refreshToken', data.refreshToken);
 
-            // 원래 요청 재시도
             options.headers['Authorization'] = 'Bearer ' + data.accessToken;
             return await fetch(url, options);
         }
@@ -54,13 +51,21 @@ x(function () {
         userInfo: '/user-info',
         // 종목별 순위 페이지
         baseballStandings: '/baseball/standings',
-        soccerStandings: '/soccer/standings',
-        lolStandings: '/lol/standings',
+        soccerStandings:   '/soccer/standings',
+        lolStandings:      '/lol/standings',
+        // 경기 중계 (다른 팀원 담당)
+        baseballLive: '/baseball-live-match',
+        soccerLive:   '/soccer-live-match',
+        // 팀/선수 상세 (다른 팀원 담당)
+        playerProfile: '/player-profile',
+        playerStat:    '/player-stats',
+        teamProfile:   '/team-page',
+        teamStat:      '/team-stats',
     };
 
     var current = decodeURIComponent((location.pathname.split('/').pop() || '').toLowerCase());
 
-    /* 유틸 */
+    /* ── 유틸 ── */
     function go(file) {
         if (file) location.href = file;
     }
@@ -75,7 +80,7 @@ x(function () {
         });
     }
 
-    /* 스타일 주입 */
+    /* ── 스타일 주입 ── */
     function injectStyles() {
         var s = document.createElement('style');
         s.textContent = [
@@ -101,7 +106,7 @@ x(function () {
         document.head.appendChild(s);
     }
 
-    /* 종목 아이템 HTML */
+    /* ── 종목 아이템 HTML ── */
     function sportItem(label, target, active, menuItems) {
         var cls = 'fl-sport' + (active ? ' is-active' : '');
         var goAttr = target ? ' data-fl-go="' + target + '"' : '';
@@ -116,42 +121,40 @@ x(function () {
         return '<div class="' + cls + '"' + goAttr + '><span>' + label + '</span>' + menuHtml + '</div>';
     }
 
-    /* GNB 주입 */
+    /* ── GNB 주입 ── */
     function installTopbar() {
         if (document.getElementById('flTopbar')) return;
         injectStyles();
 
-        /* 홈: 뉴스 / 일정 / 게시판 */
         var homeMenu = [
             {label: '뉴스', file: files.news},
             {label: '일정', file: files.schedule},
             {label: '게시판', file: files.board}
         ];
 
-        /* 종목별 서브메뉴 */
         var baseballMenu = [
-            {label: '뉴스', file: files.news},
-            {label: '일정', file: files.schedule},
-            {label: '순위', file: files.baseballStandings},
+            {label: '뉴스',  file: files.news},
+            {label: '일정',  file: files.schedule},
+            {label: '순위',  file: files.baseballStandings},
             {label: '게시판', file: files.board}
         ];
         var soccerMenu = [
-            {label: '뉴스', file: files.news},
-            {label: '일정', file: files.schedule},
-            {label: '순위', file: files.soccerStandings},
+            {label: '뉴스',  file: files.news},
+            {label: '일정',  file: files.schedule},
+            {label: '순위',  file: files.soccerStandings},
             {label: '게시판', file: files.board}
         ];
         var lolMenu = [
-            {label: '뉴스', file: files.news},
-            {label: '일정', file: files.schedule},
-            {label: '순위', file: files.lolStandings},
+            {label: '뉴스',  file: files.news},
+            {label: '일정',  file: files.schedule},
+            {label: '순위',  file: files.lolStandings},
             {label: '게시판', file: files.board}
         ];
 
-        var isHome = current === '' || current === '/' || current.indexOf('home') !== -1;
-        var isFootball = current.indexOf('soccer') !== -1;
-        var isBaseball = current.indexOf('baseball') !== -1;
-        var isLol = current.indexOf('lol') !== -1;
+        var isHome     = current === '' || current === '/' || current.indexOf('home') !== -1;
+        var isFootball = location.pathname.indexOf('/soccer') === 0;
+        var isBaseball = location.pathname.indexOf('/baseball') === 0;
+        var isLol      = location.pathname.indexOf('/lol') === 0;
 
         var shell = document.createElement('div');
         shell.id = 'flTopbar';
@@ -160,10 +163,10 @@ x(function () {
             '<div class="fl-bar">' +
             '<div class="fl-logo" data-fl-go="' + files.home + '">AI.MATCH</div>' +
             '<div class="fl-sports">' +
-            sportItem('홈', files.home, isHome, homeMenu) +
+            sportItem('홈',  files.home,     isHome,     homeMenu) +
             sportItem('축구', files.football, isFootball, soccerMenu) +
             sportItem('야구', files.baseball, isBaseball, baseballMenu) +
-            sportItem('LOL', files.lol, isLol, lolMenu) +
+            sportItem('LOL', files.lol,      isLol,      lolMenu) +
             '</div>' +
             '<div class="fl-actions">' +
             (localStorage.getItem('accessToken')
@@ -192,13 +195,9 @@ x(function () {
             on(el, files.member);
         });
 
-        // 닉네임 클릭 → 내 정보
         var nicknameEl = shell.querySelector('#fl-nickname');
-        if (nicknameEl) {
-            on(nicknameEl, files.userInfo);
-        }
+        if (nicknameEl) on(nicknameEl, files.userInfo);
 
-        // 로그아웃 클릭
         var logoutEl = shell.querySelector('#fl-logout');
         if (logoutEl) {
             logoutEl.style.cursor = 'pointer';
