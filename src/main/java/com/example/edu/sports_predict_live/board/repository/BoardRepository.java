@@ -1,6 +1,6 @@
 package com.example.edu.sports_predict_live.board.repository;
 
-import com.example.edu.sports_predict_live.board.domain.Board;
+import com.example.edu.sports_predict_live.board.entity.Board;
 import com.example.edu.sports_predict_live.board.repository.search.BoardSearch;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

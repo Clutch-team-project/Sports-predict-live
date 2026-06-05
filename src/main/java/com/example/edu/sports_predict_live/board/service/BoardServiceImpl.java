@@ -1,6 +1,6 @@
 package com.example.edu.sports_predict_live.board.service;
 
-import com.example.edu.sports_predict_live.board.domain.Board;
+import com.example.edu.sports_predict_live.board.entity.Board;
 import com.example.edu.sports_predict_live.board.dto.BoardDTO;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
@@ -110,5 +110,17 @@ public class BoardServiceImpl implements BoardService{
                 .dtoList(result.getContent())
                 .total((int)result.getTotalElements())
                 .build();
+    }
+
+    @Override
+    public void addLike(Long boardId) {
+        // 게시글 조회
+        Optional<Board> result = boardRepository.findById(boardId);
+        Board board = result.orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
+
+        // 좋아요수 증가
+        board.changeLikeCount(board.getLikeCount() + 1);
+
+        boardRepository.save(board);
     }
 }

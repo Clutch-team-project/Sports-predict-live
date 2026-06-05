@@ -1,6 +1,6 @@
 package com.example.edu.sports_predict_live.board.service;
 
-import com.example.edu.sports_predict_live.board.domain.Board;
+import com.example.edu.sports_predict_live.board.entity.Board;
 import com.example.edu.sports_predict_live.board.dto.BoardDTO;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
@@ -15,6 +15,7 @@ public interface BoardService {
     BoardDTO getBoardOnly(Long boardId); // 글 수정용(조회수 증가 X)
     void modify(BoardDTO boardDTO); // 글 수정
     void remove(Long boardID); // 글 삭제
+    void addLike(Long boardId); // 좋아요수 증가
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 

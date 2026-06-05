@@ -1,6 +1,5 @@
 package com.example.edu.sports_predict_live.board.repository.search;
 
-import com.example.edu.sports_predict_live.board.domain.Board;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

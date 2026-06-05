@@ -42,13 +42,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
                         .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
                         .requestMatchers(
                                 "/", "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
                                 "/user-info"
-                                , "/board", "/board/list", "/board/read", "/templates/**" // ← 추가
+                                , "/board", "/board/list", "/board/read/**", "/templates/**" // ← 추가
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .anyRequest().authenticated()

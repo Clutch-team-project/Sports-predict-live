@@ -124,16 +124,16 @@
             <hr class="divider">
 
             <div class="flex items-center gap-2 mb-5 flex-wrap">
-                <button class="like-btn">♥ 좋아요 <span th:text="${dto.likeCount}">21</span></button>
+                <button type="button" id="btnLike" class="like-btn">♥ 좋아요 <span th:text="${dto.likeCount}">21</span></button>
 
-                <button class="action-btn"
-                        th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">수정</button>
+                <th:block th:if="${currentUserId != null and currentUserId == dto.userId}">
+                    <button type="button" class="action-btn"
+                            th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">수정</button>
 
-                <form th:action="@{/board/remove}" method="post" style="display:inline;">
-                    <input type="hidden" name="boardId" th:value="${dto.boardId}">
-                    <button type="submit" class="action-btn danger" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
-                </form>
-                <button class="action-btn danger">신고</button>
+                    <button type="button" class="action-btn danger" onclick="removePost()">삭제</button>
+                </th:block>
+
+                <button type="button" id="btnReport" class="action-btn danger">신고</button>
             </div>
 
             <hr class="divider">
@@ -142,7 +142,7 @@
 
             <div class="flex gap-2 mb-5">
                 <input class="input-field flex-1" type="text" placeholder="댓글을 입력하세요 (로그인 필요)">
-                <button class="btn-primary" style="padding:10px 20px;white-space:nowrap">등록</button>
+                <button class="btn-primary" style="padding:10px 20px;white-space:nowrap; background:#2563eb; color:white; border-radius:8px; font-weight:700;">등록</button>
             </div>
 
             <hr class="divider">
@@ -171,6 +171,62 @@
     </div>
 </main>
 
+<input type="hidden" id="currentBoardId" th:value="${dto.boardId}">
+
 <script th:src="@{/gnb.js}"></script>
+
+<script>
+    document.getElementById('btnLike').addEventListener('click', function() {
+        if (!token) {
+            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
+            return;
+        }
+
+        const boardId = document.getElementById('currentBoardId').value;
+        const formData = new URLSearchParams();
+        formData.append('boardId', boardId);
+
+        window.authFetch('/board/like', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+            .then(async res => {
+                const msg = await res.text();
+                if (res.ok) {
+                    alert(msg); // "좋아요가 반영되었습니다." 출력
+                    location.reload(); // 좋아요 숫자 갱신을 위해 페이지 새로고침
+                } else {
+                    alert(msg || '오류가 발생했습니다.');
+                }
+            })
+            .catch(err => console.error(err));
+    });
+
+    // 삭제 요청
+    function removePost() {
+        if(!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
+
+        const boardId = document.getElementById('currentBoardId').value;
+        const formData = new URLSearchParams();
+        formData.append('boardId', boardId);
+
+        window.authFetch('/board/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+            .then(async res => {
+                if (res.ok) {
+                    alert('게시글이 삭제되었습니다.');
+                    location.href = '/board/list';
+                } else {
+                    const errorMessage = await res.text();
+                    alert(errorMessage || '삭제 권한이 없거나 실패했습니다.');
+                }
+            })
+            .catch(err => console.error(err));
+    }
+</script>
 </body>
 </html>

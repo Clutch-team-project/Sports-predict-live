@@ -1,4 +1,4 @@
-package com.example.edu.sports_predict_live.board.domain;
+package com.example.edu.sports_predict_live.board.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -66,6 +66,10 @@ public class Board extends BaseEntity {
         this.viewCount = viewCount;
     }
 
+    public void changeLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
     }
@@ -91,3 +95,4 @@ public class Board extends BaseEntity {
         this.imageSet.clear();
     }
 }
+

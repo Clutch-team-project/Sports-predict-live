@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI.MATCH — 글쓰기</title>
+    <title>AI.MATCH — 게시글 수정</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -31,102 +31,91 @@
         .btn-cancel:hover { border-color: #94a3b8; color: #0f172a; background: #f1f5f9; }
     </style>
 </head>
-<body class="min-h-screen text-slate-800">
+<body class="min-h-screen text-slate-800 bg-slate-50">
 
-<main class="max-w-4xl mx-auto px-6 pb-28">
+<main class="max-w-4xl mx-auto px-6 pb-28 pt-8">
     <div class="h-6"></div>
 
     <div class="flex items-center justify-between mb-4">
-        <h1 style="font-size:22px; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">게시글 작성</h1>
+        <h1 style="font-size:22px; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">게시글 수정</h1>
     </div>
 
     <div class="card p-8">
-        <form id="registerForm">
+        <form id="modifyForm">
+            <input type="hidden" id="boardId" name="boardId" th:value="${dto.boardId}">
 
             <div class="mb-6">
                 <label class="input-label" for="category">카테고리</label>
                 <select name="category" id="category" class="input-field" style="appearance:none; cursor:pointer;" required>
-                    <option value="" disabled selected>카테고리를 선택하세요</option>
-                    <option value="자유">자유</option>
-                    <option value="분석">분석</option>
-                    <option value="응원">응원</option>
-                    <option value="예측후기">예측후기</option>
+                    <option value="자유" th:selected="${dto.category == '자유'}">자유</option>
+                    <option value="분석" th:selected="${dto.category == '분석'}">분석</option>
+                    <option value="응원" th:selected="${dto.category == '응원'}">응원</option>
+                    <option value="예측후기" th:selected="${dto.category == '예측후기'}">예측후기</option>
                 </select>
             </div>
 
             <div class="mb-6">
                 <label class="input-label" for="title">제목</label>
-                <input type="text" name="title" id="title" class="input-field" placeholder="제목을 입력하세요 (최대 100자)" required>
+                <input type="text" name="title" id="title" class="input-field" th:value="${dto.title}" required>
             </div>
 
             <div class="mb-8">
                 <label class="input-label" for="content">내용</label>
-                <textarea name="content" id="content" class="input-field" rows="12" placeholder="내용을 입력하세요" style="resize:none;" required></textarea>
+                <textarea name="content" id="content" class="input-field" rows="12" style="resize:none;" required th:text="${dto.content}"></textarea>
             </div>
 
             <div class="flex gap-3 justify-end">
-                <button type="button" class="btn-cancel" onclick="location.href='/board/list'">취소</button>
-                <button type="submit" class="btn-submit">등록하기</button>
+                <button type="button" class="btn-cancel" th:onclick="|location.href='@{/board/read(boardId=${dto.boardId})}'|">취소</button>
+                <button type="submit" class="btn-submit">수정완료</button>
             </div>
         </form>
     </div>
 </main>
 
-<script th:src="@{/board.js}"></script>
+<script th:src="@{/gnb.js}"></script>
 
 <script>
-    // 페이지 접속 시 로그인(JWT 토큰) 검사 로직
+    // 로그인 안 된 유저가 주소창 쳐서 들어오는 것 방지
     const token = localStorage.getItem('accessToken');
-
     if (!token) {
-        // 토큰이 없으면 confirm 창 출력
-        const isLoginIntent = confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?');
-        if (isLoginIntent) {
-            location.href = '/login'; // 확인 누르면 로그인 창으로
-        } else {
-            location.href = '/board/list'; // 취소 누르면 리스트로
-        }
+        alert('로그인 후 이용 가능합니다.');
+        location.href = '/login';
     }
 
-    // 폼 제출 시 JWT 헤더에 담아서 API 통신
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // 새로고침 방지
+    // 수정 완료 폼 제출
+    document.getElementById('modifyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
 
+        const boardId = document.getElementById('boardId').value;
         const category = document.getElementById('category').value;
         const title = document.getElementById('title').value.trim();
         const content = document.getElementById('content').value.trim();
 
-        if(!category) { alert('카테고리를 선택해주세요.'); return; }
         if(!title) { alert('제목을 입력해주세요.'); return; }
         if(!content) { alert('내용을 입력해주세요.'); return; }
 
-        // Spring Controller (기존 폼 데이터 방식) 에 맞게 데이터 조립
         const formData = new URLSearchParams();
+        formData.append('boardId', boardId);
         formData.append('category', category);
         formData.append('title', title);
         formData.append('content', content);
 
-        // Fetch API를 사용해 Authorization 헤더에 토큰을 담아 보냄
-        fetch('/board/register', {
+        // 서버로 데이터 전송
+        window.authFetch('/board/modify', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Bearer ' + token
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: formData.toString()
         })
-            .then(response => {
-                // 스프링 부트 컨트롤러가 'redirect:/board/list'를 반환하면 response.redirected가 true가 됨
-                if (response.redirected) {
-                    location.href = response.url;
-                } else if (response.status === 401 || response.status === 403) {
-                    alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-                    location.href = '/login';
-                } else if (response.ok) {
-                    alert('게시글이 등록되었습니다.');
-                    location.href = '/board/list';
+            .then(async res => {
+                if (res.ok) {
+                    alert('게시글이 성공적으로 수정되었습니다.');
+                    location.href = '/board/read?boardId=' + boardId;
                 } else {
-                    alert('게시글 등록에 실패했습니다.');
+                    // 실패 시 백엔드가 보내준 정확한 실패 이유를 알림창에 띄움
+                    const errorMessage = await res.text();
+                    alert(errorMessage || '수정 중 오류가 발생했습니다.');
                 }
             })
             .catch(error => {
@@ -135,7 +124,5 @@
             });
     });
 </script>
-
-<script th:src="@{/gnb.js}"></script>
 </body>
 </html>

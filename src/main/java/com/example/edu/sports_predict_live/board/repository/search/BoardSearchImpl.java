@@ -1,7 +1,7 @@
 package com.example.edu.sports_predict_live.board.repository.search;
 
-import com.example.edu.sports_predict_live.board.domain.Board;
-import com.example.edu.sports_predict_live.board.domain.QBoard;
+import com.example.edu.sports_predict_live.board.entity.Board;
+import com.example.edu.sports_predict_live.board.entity.QBoard;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.user.entity.QUser;
 import com.example.edu.sports_predict_live.user.entity.User;
