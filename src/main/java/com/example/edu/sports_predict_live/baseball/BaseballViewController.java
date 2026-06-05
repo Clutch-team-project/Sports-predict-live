@@ -13,4 +13,9 @@ public class BaseballViewController {
     public String standings() {
         return "baseball/standings";
     }
+
+    @GetMapping("/schedule")
+    public String schedule() {
+        return "baseball/schedule";
+    }
 }

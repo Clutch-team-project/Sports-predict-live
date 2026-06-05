@@ -12,4 +12,9 @@ public class LolViewController {
     public String standings() {
         return "lol/standings";
     }
+
+    @GetMapping("/schedule")
+    public String schedule() {
+        return "lol/schedule";
+    }
 }

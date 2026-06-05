@@ -12,4 +12,9 @@ public class SoccerViewController {
     public String standings() {
         return "soccer/standings";
     }
+
+    @GetMapping("/schedule")
+    public String schedule() {
+        return "soccer/schedule";
+    }
 }

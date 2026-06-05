@@ -23,15 +23,16 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
 
-    // ── 공개 API 경로 ──────────────────────────────────────
+    // 공개 API 경로
     private static final String[] PUBLIC_API = {
-            "/api/auth/**",          // 인증 (이메일 인증, 로그인, 회원가입 등)
-            "/api/standings/**",     // 팀 순위
-            "/api/records/**",       // 선수 기록
-            "/api/players/**",       // 선수 목록
+            "/api/auth/**",         // 인증 (이메일 인증, 로그인, 회원가입 등)
+            "/api/standings/**",    // 팀 순위
+            "/api/records/**",      // 선수 기록
+            "/api/players/**",      // 선수 목록
+            "/api/schedule/**"      // 경기 일정
     };
 
-    // ── 공개 페이지 경로 ───────────────────────────────────
+    // 공개 페이지 경로
     private static final String[] PUBLIC_PAGES = {
             "/",
             "/login", "/signup", "/signup-success", "/login-success",
@@ -41,7 +42,7 @@ public class SecurityConfig {
             "/baseball/**", "/soccer/**", "/lol/**",
     };
 
-    // ── 공개 정적 리소스 ────────────────────────────────────
+    // 공개 정적 리소스
     private static final String[] PUBLIC_STATIC = {
             "/gnb.js", "/script.js", "/favicon.ico",
             "/*.js", "/*.css", "/*.png",
