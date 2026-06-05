@@ -18,6 +18,9 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AiPredService {
 
+    // 종목 ID 기준
+    // 1 = 축구, 2 = 야구, 3 = LOL
+    private static final Long SPORT_LOL = 3L;
     private final AiPredRepository aiPredRepository;
     private final ObjectMapper objectMapper;
     private final MatchRepository matchRepository;
@@ -51,7 +54,7 @@ public class AiPredService {
         double drawWeight = 0.7;
 
         // LoL 같은 무승부 없는 종목 처리
-        if (match.getSportId() != null && match.getSportId() == 2L) {
+        if (SPORT_LOL.equals(match.getSportId())) {
             drawWeight = 0.0;
         }
 

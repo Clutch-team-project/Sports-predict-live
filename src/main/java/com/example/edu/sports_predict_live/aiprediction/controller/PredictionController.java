@@ -70,7 +70,7 @@ public class PredictionController {
     }
 
     @GetMapping("/ranking")
-    public List getPredictionRanking() {
+    public List<PredictionRankingDto> getPredictionRanking() {
 
         return predictionService.getPredictionRanking();
     }

@@ -7,15 +7,15 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PredictionRankingDto {
 
+    // TODO
+    // users.nickname 연동 후 추가 예정
+    // private String nickname;
+
     private Long userId;
 
-    // 총 예측 수
     private Long totalPredictions;
 
-    // 맞춘 수
     private Long correctPredictions;
 
-    // 적중률
     private Double accuracy;
-
 }

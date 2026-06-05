@@ -54,7 +54,7 @@ public class MatchController {
                 1,
                 "FINISHED",
                 "Seoul"
-        ); //테스트 코드
+        ); //테스트 코드 테스트 종료 후 삭제
     }
 
     @GetMapping("/{id}")

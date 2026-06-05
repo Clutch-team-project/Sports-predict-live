@@ -2,6 +2,7 @@ package com.example.edu.sports_predict_live.aiprediction.service;
 
 import com.example.edu.sports_predict_live.aiprediction.entity.MatchEntity;
 import com.example.edu.sports_predict_live.aiprediction.entity.PredictionEntity;
+import com.example.edu.sports_predict_live.aiprediction.repository.MatchRepository;
 import com.example.edu.sports_predict_live.aiprediction.repository.PredictionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.List;
 public class PredictionService {
 
     private final PredictionRepository predictionRepository;
+    private final MatchRepository matchRepository;
 
     /**
      * 사용자 승부 예측 등록
@@ -27,6 +29,22 @@ public class PredictionService {
             Long matchId,
             String predictedResult
     ) {
+        MatchEntity match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("경기 없음"));
+
+        if (predictedResult == null
+                || (!predictedResult.equals("home")
+                && !predictedResult.equals("draw")
+                && !predictedResult.equals("away"))) {
+
+            throw new RuntimeException("예측값은 home, draw, away 중 하나여야 합니다.");
+        }
+
+        // LOL은 무승부 예측 불가
+        if (Long.valueOf(3L).equals(match.getSportId())
+                && predictedResult.equals("draw")) {
+            throw new RuntimeException("LOL 경기는 무승부 예측이 불가능합니다.");
+        }
         // 이미 예측한 경기인지 확인
         boolean exists = predictionRepository.existsByUserIdAndMatchId(userId, matchId);
 
@@ -58,8 +76,16 @@ public class PredictionService {
      * 단건 예측 결과 직접 업데이트 (기존 유지)
      */
     public PredictionEntity updatePredictionResult(Long predictionId, boolean isCorrect) {
-        PredictionEntity prediction = predictionRepository.findByPredictionId(predictionId);
+
+        PredictionEntity prediction =
+                predictionRepository.findByPredictionId(predictionId);
+
+        if (prediction == null) {
+            throw new RuntimeException("예측 데이터가 존재하지 않습니다.");
+        }
+
         prediction.setIsCorrect(isCorrect);
+
         return predictionRepository.save(prediction);
     }
 
@@ -100,14 +126,21 @@ public class PredictionService {
     }
 
     public PredictionEntity getPrediction(Long predictionId) {
-        return predictionRepository.findByPredictionId(predictionId);
-    }
 
-    public List getPredictionRanking() {
+        PredictionEntity prediction =
+                predictionRepository.findByPredictionId(predictionId);
+
+        if (prediction == null) {
+            throw new RuntimeException("예측 데이터가 존재하지 않습니다.");
+        }
+
+        return prediction;
+    }
+    public List<PredictionRankingDto> getPredictionRanking() {
 
         List<Object[]> results = predictionRepository.getPredictionRanking();
 
-        List rankingList = new ArrayList<>();
+        List<PredictionRankingDto> rankingList = new ArrayList<>();
 
         for (Object[] row : results) {
 
@@ -124,7 +157,6 @@ public class PredictionService {
             );
 
             rankingList.add(dto);
-
         }
 
         return rankingList;
