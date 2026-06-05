@@ -114,6 +114,27 @@ public class NewsApiService {
 
                 news.setCategory(keyword);
 
+                String team = "기타";
+
+                if (
+                        title.contains("손흥민")
+                                || title.contains("토트넘")
+                ) {
+                    team = "토트넘";
+                }
+                else if (
+                        title.contains("이강인")
+                                || title.contains("PSG")
+                ) {
+                    team = "PSG";
+                }
+                else if (
+                        title.contains("페이커")
+                                || title.contains("T1")
+                ) {
+                    team = "T1";
+                }
+
                 news.setTitle(title);
 
                 news.setSummary(description);
@@ -125,6 +146,8 @@ public class NewsApiService {
                 news.setPublishedAt(publishedAt);
 
                 news.setCreatedAt(LocalDateTime.now());
+
+                news.setTeam(team);
 
                 // 저장
                 newsRepository.save(news);

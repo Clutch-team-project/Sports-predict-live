@@ -82,19 +82,29 @@ public class NewsController {
         return newsApiService.searchSportsNews(keyword);
     }
 
-    /**
-     * 종목 + 카테고리 뉴스 조회
-     */
-    @GetMapping("/filter")
-    public List<NewsEntity> getFilteredNews(
-
-            @RequestParam Long sportId,
-            @RequestParam String category
+    @GetMapping("/search-filter")
+    public JsonNode searchFilteredNews(
+            @RequestParam(required = false) String sport,
+            @RequestParam(required = false) String team
     ) {
+        String keyword = "";
 
-        return newsService.getFilteredNews(
-                sportId,
-                category
-        );
+        if (sport != null && !sport.isBlank()) {
+            keyword += sport;
+        }
+
+        if (team != null && !team.isBlank()) {
+            if (!keyword.isBlank()) {
+                keyword += " ";
+            }
+            keyword += team;
+        }
+
+        if (keyword.isBlank()) {
+            keyword = "스포츠";
+        }
+
+        return newsApiService.searchSportsNews(keyword);
     }
+
 }

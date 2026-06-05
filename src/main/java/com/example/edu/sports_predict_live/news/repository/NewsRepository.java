@@ -25,4 +25,9 @@ public interface NewsRepository
             Long sportId,
             String category
     );
+
+    List<NewsEntity> findBySportIdAndTeamOrderByPublishedAtDesc(
+            Long sportId,
+            String team
+    );
 }

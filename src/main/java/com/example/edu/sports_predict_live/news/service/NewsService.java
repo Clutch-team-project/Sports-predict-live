@@ -87,4 +87,16 @@ public class NewsService {
                         category
                 );
     }
+
+    public List<NewsEntity> getNewsBySportAndTeam(
+            Long sportId,
+            String team
+    ) {
+
+        return newsRepository
+                .findBySportIdAndTeamOrderByPublishedAtDesc(
+                        sportId,
+                        team
+                );
+    }
 }

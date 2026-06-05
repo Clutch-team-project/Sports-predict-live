@@ -16,7 +16,7 @@ public interface NewsScrapRepository
             Long userId,
             Long newsId
     );
-
+    //스크랩 삭제
     void deleteByUserIdAndNewsId(
             Long userId,
             Long newsId
