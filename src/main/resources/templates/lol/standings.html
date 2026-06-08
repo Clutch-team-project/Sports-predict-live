@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH - LCK 순위</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .light-portal-view {
+            background-color: #cbd5e1;
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .table-row:hover { background: rgba(59, 130, 246, 0.05); transition: 0.2s; }
+        .recent-w { background: #14532d; color: #86efac; }
+        .recent-l { background: #7f1d1d; color: #fca5a5; }
+        .recent-d { background: #1e3a5f; color: #93c5fd; }
+        .tab-active { color: #2563eb; border-bottom: 2px solid #3b82f6; padding-bottom: 6px; font-weight: 900; }
+        .tab-inactive { color: #64748b; }
+        .tab-inactive:hover { color: #1e293b; }
+        .rank-1 { color: #d97706; }
+        .rank-2 { color: #6b7280; }
+        .rank-3 { color: #b45309; }
+    </style>
+</head>
+<body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
+
+<!-- GNB -->
+<header class="bg-white border-b border-slate-300 p-4 shadow-sm">
+    <div class="max-w-5xl mx-auto w-full flex justify-between items-center">
+        <div class="flex items-center shrink-0">
+            <span class="text-blue-600 font-black tracking-tighter text-xl cursor-pointer"
+                  onclick="location.href='/'">AI.MATCH</span>
+        </div>
+        <div class="flex-grow flex justify-center px-4">
+            <div class="flex items-center gap-10 text-base md:text-lg text-slate-500 font-extrabold">
+                <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/'">홈</span>
+                <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/soccer'">축구</span>
+                <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/baseball'">야구</span>
+                <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">LOL</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-6 text-sm md:text-base font-black shrink-0">
+            <span class="text-slate-700 hover:text-slate-900 cursor-pointer"
+                  onclick="location.href='/login'">로그인</span>
+            <span class="text-slate-700 hover:text-slate-900 cursor-pointer">사이트맵</span>
+        </div>
+    </div>
+</header>
+
+<!-- SUB NAV -->
+<nav class="w-full border-b border-slate-300 bg-white p-2.5 flex items-center justify-center shadow-sm">
+    <div class="max-w-5xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
+        <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/lol/news'">뉴스</span>
+        <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/lol/schedule'">일정</span>
+        <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">순위</span>
+        <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/lol/board'">게시판</span>
+    </div>
+</nav>
+
+<!-- MAIN -->
+<main class="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-6">
+
+    <!-- 시즌 타이틀 + 탭 -->
+    <div class="flex flex-col items-center mb-4">
+        <div class="flex items-center gap-6 mb-4">
+            <div class="bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold shadow-sm">
+                LCK 스플릿 2
+            </div>
+            <div class="text-4xl md:text-5xl font-black text-slate-800">2026</div>
+        </div>
+        <div class="flex gap-10 md:gap-14 border-b border-slate-300 pb-3 text-sm md:text-base font-bold w-full justify-center">
+            <button id="tab-standing" class="tab-active" onclick="switchTab('standing')">팀 순위</button>
+            <button id="tab-record"   class="tab-inactive transition" onclick="switchTab('record')">선수 기록</button>
+            <button id="tab-player"   class="tab-inactive transition" onclick="switchTab('player')">선수 목록</button>
+        </div>
+    </div>
+
+    <!-- 팀 순위 탭 -->
+    <section id="section-standing">
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800">2026 LCK 스플릿 2 순위표</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">승패 기준 공식 순위</p>
+                </div>
+                <div class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-3.5 py-1.5 rounded-xl font-extrabold">LCK_RANKING</div>
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-xs md:text-sm min-w-[500px]">
+                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                        <tr>
+                            <th class="p-3.5 text-left pl-6">순위</th>
+                            <th class="p-3.5 text-left">팀</th>
+                            <th class="p-3.5 text-center">승</th>
+                            <th class="p-3.5 text-center">패</th>
+                            <th class="p-3.5 text-center">승률</th>
+                            <th class="p-3.5 text-center">최근5경기</th>
+                        </tr>
+                    </thead>
+                    <tbody id="standing-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                        <tr><td colspan="6" class="p-8 text-center text-slate-400">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 선수 기록 탭 -->
+    <section id="section-record" class="hidden">
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800">LCK 선수 기록 랭킹</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">KDA 기준 내림차순 정렬</p>
+                </div>
+                <input type="text" id="record-search" placeholder="선수명 검색"
+                       class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-xs md:text-sm min-w-[620px]">
+                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                        <tr>
+                            <th class="p-3.5 text-left pl-6">순위</th>
+                            <th class="p-3.5 text-left">선수명</th>
+                            <th class="p-3.5 text-left">팀</th>
+                            <th class="p-3.5 text-center">포지션</th>
+                            <th class="p-3.5 text-center">KDA</th>
+                            <th class="p-3.5 text-center">평균 킬</th>
+                            <th class="p-3.5 text-center">평균 데스</th>
+                            <th class="p-3.5 text-center">평균 어시</th>
+                            <th class="p-3.5 text-center">승률</th>
+                            <th class="p-3.5 text-center">출전</th>
+                        </tr>
+                    </thead>
+                    <tbody id="record-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                        <tr><td colspan="10" class="p-8 text-center text-slate-400">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 선수 목록 탭 -->
+    <section id="section-player" class="hidden">
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800">LCK 선수 목록</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">선수 클릭 시 Riot API 기반 시즌 기록 확인</p>
+                </div>
+                <input type="text" id="player-search" placeholder="선수명 검색"
+                       class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-xs md:text-sm min-w-[400px]">
+                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                        <tr>
+                            <th class="p-3.5 text-left pl-6">선수명</th>
+                            <th class="p-3.5 text-left">팀</th>
+                            <th class="p-3.5 text-center">포지션</th>
+                        </tr>
+                    </thead>
+                    <tbody id="player-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                        <tr><td colspan="3" class="p-8 text-center text-slate-400">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script src="/gnb.js"></script>
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    let standingData = [];
+    let playerData   = [];
+    let recordData   = [];
+    let loaded = { standing: false, player: false, record: false };
+
+    // 탭 전환
+    function switchTab(tab) {
+        ['standing', 'record', 'player'].forEach(t => {
+            document.getElementById(`section-${t}`).classList.add('hidden');
+            document.getElementById(`tab-${t}`).className = 'tab-inactive transition';
+        });
+        document.getElementById(`section-${tab}`).classList.remove('hidden');
+        document.getElementById(`tab-${tab}`).className = 'tab-active';
+
+        if (!loaded[tab]) {
+            if (tab === 'standing') loadStanding();
+            if (tab === 'record')   loadRecord();
+            if (tab === 'player')   loadPlayers();
+        }
+    }
+
+    // recent_form 렌더링
+    function renderForm(form) {
+        if (!form) return '-';
+        return [...form].map(c => {
+            const cls = c === 'W' ? 'recent-w' : c === 'L' ? 'recent-l' : 'recent-d';
+            return `<span class="${cls} w-5 h-5 rounded flex items-center justify-center text-[10px] font-black">${c}</span>`;
+        }).join('');
+    }
+
+    // 순위 색상
+    function rankClass(i) {
+        if (i === 0) return 'rank-1 text-lg';
+        if (i === 1) return 'rank-2 text-base';
+        if (i === 2) return 'rank-3 text-base';
+        return 'text-blue-600';
+    }
+
+    // 팀 순위 로드
+    async function loadStanding() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/standings/lol`);
+            standingData = await res.json();
+            renderStanding();
+            loaded.standing = true;
+        } catch (e) {
+            document.getElementById('standing-tbody').innerHTML =
+                '<tr><td colspan="6" class="p-8 text-center text-red-400">데이터를 불러올 수 없습니다.</td></tr>';
+        }
+    }
+
+    function renderStanding() {
+        const tbody = document.getElementById('standing-tbody');
+        if (!standingData.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = standingData.map((t, i) => `
+            <tr class="table-row cursor-pointer" onclick="location.href='/lol/team/${t.teamId}'">
+                <td class="p-4 pl-6 font-black ${rankClass(i)}">${t.rank ?? i + 1}</td>
+                <td class="p-4 font-black text-slate-900">${t.teamName}</td>
+                <td class="p-4 text-center">${t.wins}</td>
+                <td class="p-4 text-center">${t.losses}</td>
+                <td class="p-4 text-center font-bold text-blue-600">${t.winRate ? (t.winRate * 100).toFixed(1) + '%' : '-'}</td>
+                <td class="p-4">
+                    <div class="flex gap-1 justify-center">${renderForm(t.recentForm)}</div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // 선수 기록 로드
+    async function loadRecord() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/records/lol/players`);
+            recordData = await res.json();
+            renderRecord(recordData);
+            loaded.record = true;
+        } catch (e) {
+            document.getElementById('record-tbody').innerHTML =
+                '<tr><td colspan="10" class="p-8 text-center text-red-400">데이터를 불러올 수 없습니다.</td></tr>';
+        }
+    }
+
+    function renderRecord(data) {
+        const tbody = document.getElementById('record-tbody');
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map((p, i) => `
+            <tr class="table-row cursor-pointer" onclick="location.href='/lol/player/${p.playerId}'">
+                <td class="p-4 pl-6 font-black text-blue-600">${i + 1}</td>
+                <td class="p-4 font-black text-slate-900">${p.playerName}</td>
+                <td class="p-4 text-slate-500">${p.teamName}</td>
+                <td class="p-4 text-center">
+                    <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-bold">${p.position ?? '-'}</span>
+                </td>
+                <td class="p-4 text-center text-blue-600 font-black text-base">${p.kda?.toFixed(2) ?? '-'}</td>
+                <td class="p-4 text-center">${p.avgKills?.toFixed(2) ?? '-'}</td>
+                <td class="p-4 text-center">${p.avgDeaths?.toFixed(2) ?? '-'}</td>
+                <td class="p-4 text-center">${p.avgAssists?.toFixed(2) ?? '-'}</td>
+                <td class="p-4 text-center font-bold">${p.winRate ? (p.winRate * 100).toFixed(1) + '%' : '-'}</td>
+                <td class="p-4 text-center">${p.gamesPlayed}</td>
+            </tr>
+        `).join('');
+    }
+
+    // 선수 기록 검색
+    document.getElementById('record-search').addEventListener('input', function () {
+        const keyword = this.value.trim().toLowerCase();
+        const filtered = keyword
+            ? recordData.filter(p => p.playerName.includes(keyword) || p.teamName.includes(keyword))
+            : recordData;
+        renderRecord(filtered);
+    });
+
+    // 선수 목록 로드
+    async function loadPlayers() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/players?sport=lol`);
+            playerData = await res.json();
+            renderPlayers(playerData);
+            loaded.player = true;
+        } catch (e) {
+            document.getElementById('player-tbody').innerHTML =
+                '<tr><td colspan="3" class="p-8 text-center text-red-400">데이터를 불러올 수 없습니다.</td></tr>';
+        }
+    }
+
+    function renderPlayers(data) {
+        const tbody = document.getElementById('player-tbody');
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-400">등록된 선수가 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(p => `
+            <tr class="table-row cursor-pointer" onclick="location.href='/lol/player/${p.playerId}'">
+                <td class="p-4 pl-6 font-black text-slate-900">${p.playerName}</td>
+                <td class="p-4 text-slate-500">${p.teamName}</td>
+                <td class="p-4 text-center">
+                    <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-bold">${p.position ?? '-'}</span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // 검색 필터
+    document.getElementById('player-search').addEventListener('input', function () {
+        const keyword = this.value.trim().toLowerCase();
+        const filtered = keyword
+            ? playerData.filter(p => p.playerName.includes(keyword) || p.teamName.includes(keyword))
+            : playerData;
+        renderPlayers(filtered);
+    });
+
+    // 초기 로드
+    loadStanding();
+</script>
+</body>
+</html>

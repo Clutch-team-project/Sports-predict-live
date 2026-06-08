@@ -25,6 +25,7 @@ public class PageRequestDTO {
     private String type;
     private String keyword;
     private String category;
+    private String sort;
 
     public String[] getTypes() {
         if(type == null || type.isEmpty()) {
@@ -43,7 +44,7 @@ public class PageRequestDTO {
         if (link == null) {
            StringBuilder builder = new StringBuilder();
            builder.append("page=").append(this.page);
-           builder.append("%size=").append(this.size);
+           builder.append("＆size=").append(this.size);
 
            if(type != null && !type.isEmpty()) {
                builder.append("&type=").append(this.type);

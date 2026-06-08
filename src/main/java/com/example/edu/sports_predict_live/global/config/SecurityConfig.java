@@ -38,16 +38,22 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+<<<<<<< HEAD
                         .requestMatchers("/prediction/**", "/ai-pred/**", "/match/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/games/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
+=======
+                        .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
+                        .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
+>>>>>>> 9fe9c7b4e2f4433654777ad84581f6a1a2ab7bfb
                         .requestMatchers(
                                 "/", "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
-                                "/user-info"   // ← 추가
+                                "/user-info"
+                                , "/board", "/board/list", "/board/read", "/templates/**" // ← 추가
                         ).permitAll()
-                        .requestMatchers("/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
+                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtFilter(jwtProvider),

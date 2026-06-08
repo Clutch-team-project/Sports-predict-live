@@ -75,4 +75,31 @@ public class User {
         this.phone = phone;
         this.birthDate = birthDate;
     }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    public void updateAlertSettings(Boolean marketingAgreed, Boolean matchStartAlert,
+                                    Boolean predictionResultAlert, Integer alertBeforeMinutes) {
+        if (marketingAgreed != null) this.marketingAgreed = marketingAgreed;
+        if (matchStartAlert != null) this.matchStartAlert = matchStartAlert;
+        if (predictionResultAlert != null) this.predictionResultAlert = predictionResultAlert;
+        if (alertBeforeMinutes != null) this.alertBeforeMinutes = alertBeforeMinutes;
+    }
+
+    public void updateProfile(String nickname, String phone,
+                              LocalDate birthDate, String profileImage) {
+        if (nickname != null) this.nickname = nickname;
+        if (phone != null) this.phone = phone;
+        if (birthDate != null) this.birthDate = birthDate;
+        if (profileImage != null) this.profileImage = profileImage;
+    }
+
+    public void delete() {
+        this.email    = "deleted_" + this.userId + "@deleted.com";
+        this.loginId  = "deleted_" + this.userId;
+        this.nickname = null;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

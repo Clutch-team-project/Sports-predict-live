@@ -15,12 +15,15 @@ import java.util.List;
 public class BoardListAllDTO {
     private Long boardId;
     private Long userId;
+    private String loginId;
+    private String nickname;
     private String category;
     private String title;
     private int viewCount;
     private int likeCount;
     private boolean isNotice;
     private boolean isBlinded;
+    private boolean isDeleted;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

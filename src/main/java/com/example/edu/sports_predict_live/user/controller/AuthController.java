@@ -1,9 +1,7 @@
 package com.example.edu.sports_predict_live.user.controller;
 
-import com.example.edu.sports_predict_live.user.dto.request.EmailSendRequestDTO;
-import com.example.edu.sports_predict_live.user.dto.request.EmailVerifyCheckDTO;
-import com.example.edu.sports_predict_live.user.dto.request.LoginRequestDTO;
-import com.example.edu.sports_predict_live.user.dto.request.SignupRequestDTO;
+import com.example.edu.sports_predict_live.user.dto.request.*;
+import com.example.edu.sports_predict_live.user.dto.response.ReissueResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.TokenResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
 import com.example.edu.sports_predict_live.user.service.EmailVerifyService;
@@ -53,5 +51,35 @@ public class AuthController {
     public ResponseEntity<TokenResponseDTO> login(
             @Valid @RequestBody LoginRequestDTO dto) {
         return ResponseEntity.ok(userService.login(dto));
+    }
+
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout() {
+        // JWT 방식 — 클라이언트에서 토큰 삭제
+        // 추후 Refresh Token 블랙리스트 적용 가능
+        return ResponseEntity.ok(Map.of("message", "로그아웃 완료"));
+    }
+
+    // 토큰 재발급
+    @PostMapping("/reissue")
+    public ResponseEntity<ReissueResponseDTO> reissue(
+            @RequestHeader("Authorization") String bearerToken) {
+        String refreshToken = bearerToken.replace("Bearer ", "");
+        return ResponseEntity.ok(userService.reissue(refreshToken));
+    }
+
+    @PostMapping("/find-id")
+    public ResponseEntity<Map<String, String>> findId(
+            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(
+                userService.findLoginId(body.get("email"), body.get("code")));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequestDTO dto) {
+        userService.resetPassword(dto);
+        return ResponseEntity.ok(Map.of("message", "비밀번호가 재설정되었습니다."));
     }
 }

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH - KBO 순위</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .light-portal-view {
+            background-color: #cbd5e1;
+            background-image: linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .table-row:hover {
+            background: rgba(59, 130, 246, 0.05);
+            transition: 0.2s;
+        }
+
+        .recent-w {
+            background: #14532d;
+            color: #86efac;
+        }
+
+        .recent-l {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .recent-d {
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+
+        .tab-active {
+            color: #2563eb;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 6px;
+            font-weight: 900;
+        }
+
+        .tab-inactive {
+            color: #64748b;
+        }
+
+        .tab-inactive:hover {
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
+
+<!-- GNB -->
+<header class="bg-white border-b border-slate-300 p-4 shadow-sm">
+    <div class="max-w-5xl mx-auto w-full flex justify-between items-center">
+        <div class="flex items-center shrink-0">
+            <span class="text-blue-600 font-black tracking-tighter text-xl cursor-pointer"
+                  onclick="location.href='/'">AI.MATCH</span>
+        </div>
+        <div class="flex-grow flex justify-center px-4">
+            <div class="flex items-center gap-10 text-base md:text-lg text-slate-500 font-extrabold">
+                <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/'">홈</span>
+                <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/soccer'">축구</span>
+                <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">야구</span>
+                <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/lol'">LOL</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-6 text-sm md:text-base font-black shrink-0" id="gnb-auth">
+            <span class="text-slate-700 hover:text-slate-900 cursor-pointer"
+                  onclick="location.href='/login'">로그인</span>
+            <span class="text-slate-700 hover:text-slate-900 cursor-pointer">사이트맵</span>
+        </div>
+    </div>
+</header>
+
+<!-- SUB NAV -->
+<nav class="w-full border-b border-slate-300 bg-white p-2.5 flex items-center justify-center shadow-sm">
+    <div class="max-w-5xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
+        <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/baseball/news'">뉴스</span>
+        <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/baseball/schedule'">일정</span>
+        <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">순위</span>
+        <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/baseball/board'">게시판</span>
+    </div>
+</nav>
+
+<!-- MAIN -->
+<main class="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-6">
+
+    <!-- 시즌 타이틀 + 탭 -->
+    <div class="flex flex-col items-center mb-4">
+        <div class="flex items-center gap-6 mb-4">
+            <div class="bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold shadow-sm">
+                정규시즌
+            </div>
+            <div class="text-4xl md:text-5xl font-black text-slate-800">2026</div>
+        </div>
+        <div class="flex gap-10 md:gap-14 border-b border-slate-300 pb-3 text-sm md:text-base font-bold w-full justify-center">
+            <button id="tab-standing" class="tab-active" onclick="switchTab('standing')">팀 순위</button>
+            <button id="tab-team" class="tab-inactive transition" onclick="switchTab('team')">팀 기록</button>
+            <button id="tab-hitter" class="tab-inactive transition" onclick="switchTab('hitter')">타자 기록</button>
+            <button id="tab-pitcher" class="tab-inactive transition" onclick="switchTab('pitcher')">투수 기록</button>
+        </div>
+    </div>
+
+    <!-- 팀 순위 탭 -->
+    <section id="section-standing">
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800">2026 KBO 정규리그 공식 순위표</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">매일 경기 종료 직후 실시간 집계 연동 반영</p>
+                </div>
+                <div class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-3.5 py-1.5 rounded-xl font-extrabold">
+                    TEAM_RANKING
+                </div>
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-xs md:text-sm min-w-[600px]">
+                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                    <tr>
+                        <th class="p-3.5 text-left pl-6">순위</th>
+                        <th class="p-3.5 text-left">팀</th>
+                        <th class="p-3.5 text-center">승률</th>
+                        <th class="p-3.5 text-center">승</th>
+                        <th class="p-3.5 text-center">패</th>
+                        <th class="p-3.5 text-center">무</th>
+                        <th class="p-3.5 text-center">최근5경기</th>
+                    </tr>
+                    </thead>
+                    <tbody id="standing-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                    <tr>
+                        <td colspan="7" class="p-8 text-center text-slate-400">불러오는 중...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 팀 기록 탭 -->
+    <section id="section-team" class="hidden">
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800">팀 시즌 누적 기록</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">득점, 실점 기준 팀 공격/수비 종합 지표</p>
+                </div>
+                <div class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-3.5 py-1.5 rounded-xl font-extrabold">
+                    TEAM_RECORD
+                </div>
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-xs md:text-sm min-w-[600px]">
+                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                    <tr>
+                        <th class="p-3.5 text-left pl-6">순위</th>
+                        <th class="p-3.5 text-left">팀</th>
+                        <th class="p-3.5 text-center">승률</th>
+                        <th class="p-3.5 text-center">득점</th>
+                        <th class="p-3.5 text-center">실점</th>
+                        <th class="p-3.5 text-center">득실차</th>
+                    </tr>
+                    </thead>
+                    <tbody id="team-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                    <tr>
+                        <td colspan="6" class="p-8 text-center text-slate-400">불러오는 중...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 타자 기록 탭 -->
+    <section id="section-hitter" class="hidden">
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800">KBO 타자 스펙 랭킹</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">시즌 개인 누적 타격 기록 랭킹</p>
+                </div>
+                <input type="text" id="hitter-search" placeholder="선수명 검색"
+                       class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-xs md:text-sm min-w-[600px]">
+                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                    <tr>
+                        <th class="p-3.5 text-left pl-6">순위</th>
+                        <th class="p-3.5 text-left">선수명</th>
+                        <th class="p-3.5 text-left">팀</th>
+                        <th class="p-3.5 text-center">타율</th>
+                        <th class="p-3.5 text-center">경기</th>
+                        <th class="p-3.5 text-center">안타</th>
+                        <th class="p-3.5 text-center">홈런</th>
+                        <th class="p-3.5 text-center">타점</th>
+                    </tr>
+                    </thead>
+                    <tbody id="hitter-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                    <tr>
+                        <td colspan="8" class="p-8 text-center text-slate-400">불러오는 중...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 투수 기록 탭 -->
+    <section id="section-pitcher" class="hidden">
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800">KBO 투수 스펙 랭킹</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">시즌 개인 누적 투구 기록 랭킹</p>
+                </div>
+                <input type="text" id="pitcher-search" placeholder="선수명 검색"
+                       class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+            </div>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-xs md:text-sm min-w-[600px]">
+                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                    <tr>
+                        <th class="p-3.5 text-left pl-6">순위</th>
+                        <th class="p-3.5 text-left">선수명</th>
+                        <th class="p-3.5 text-left">팀</th>
+                        <th class="p-3.5 text-center">방어율</th>
+                        <th class="p-3.5 text-center">경기</th>
+                        <th class="p-3.5 text-center">승</th>
+                        <th class="p-3.5 text-center">패</th>
+                        <th class="p-3.5 text-center">탈삼진</th>
+                        <th class="p-3.5 text-center">세이브</th>
+                        <th class="p-3.5 text-center">홀드</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pitcher-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                    <tr>
+                        <td colspan="10" class="p-8 text-center text-slate-400">불러오는 중...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script src="/gnb.js"></script>
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    let standingData = [];
+    let hitterData = [];
+    let pitcherData = [];
+    let loaded = {standing: false, team: false, hitter: false, pitcher: false};
+
+    // 탭 전환
+    function switchTab(tab) {
+        ['standing', 'team', 'hitter', 'pitcher'].forEach(t => {
+            document.getElementById(`section-${t}`).classList.add('hidden');
+            document.getElementById(`tab-${t}`).className = 'tab-inactive transition';
+        });
+        document.getElementById(`section-${tab}`).classList.remove('hidden');
+        document.getElementById(`tab-${tab}`).className = 'tab-active';
+
+        if (!loaded[tab]) {
+            if (tab === 'standing' || tab === 'team') loadStanding();
+            if (tab === 'hitter') loadHitters();
+            if (tab === 'pitcher') loadPitchers();
+        }
+    }
+
+    // recent_form 렌더링
+    function renderForm(form) {
+        if (!form) return '-';
+        return [...form].map(c => {
+            const cls = c === 'W' ? 'recent-w' : c === 'L' ? 'recent-l' : 'recent-d';
+            return `<span class="${cls} w-5 h-5 rounded flex items-center justify-center text-[10px] font-black">${c}</span>`;
+        }).join('');
+    }
+
+    // 팀 순위 로드
+    async function loadStanding() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/standings/baseball`);
+            standingData = await res.json();
+            renderStanding();
+            renderTeam();
+            loaded.standing = true;
+            loaded.team = true;
+        } catch (e) {
+            document.getElementById('standing-tbody').innerHTML =
+                '<tr><td colspan="7" class="p-8 text-center text-red-400">데이터를 불러올 수 없습니다.</td></tr>';
+        }
+    }
+
+    function renderStanding() {
+        const tbody = document.getElementById('standing-tbody');
+        if (!standingData.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = standingData.map((t, i) => `
+            <tr class="table-row cursor-pointer" onclick="location.href='/baseball/team/${t.teamId}'">
+                <td class="p-4 pl-6 font-black text-blue-600 text-base">${t.rank ?? i + 1}</td>
+                <td class="p-4 font-black text-slate-900">${t.teamName}</td>
+                <td class="p-4 text-center font-bold">${t.winRate?.toFixed(3) ?? '-'}</td>
+                <td class="p-4 text-center">${t.wins}</td>
+                <td class="p-4 text-center">${t.losses}</td>
+                <td class="p-4 text-center">${t.draws}</td>
+                <td class="p-4">
+                    <div class="flex gap-1 justify-center">${renderForm(t.recentForm)}</div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderTeam() {
+        const tbody = document.getElementById('team-tbody');
+        if (!standingData.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
+            return;
+        }
+        // 득실차 기준 정렬
+        const sorted = [...standingData].sort((a, b) =>
+            (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst));
+        tbody.innerHTML = sorted.map((t, i) => `
+            <tr class="table-row cursor-pointer" onclick="location.href='/baseball/team/${t.teamId}'">
+                <td class="p-4 pl-6 font-black text-blue-600 text-base">${i + 1}</td>
+                <td class="p-4 font-black text-slate-900">${t.teamName}</td>
+                <td class="p-4 text-center font-bold">${t.winRate?.toFixed(3) ?? '-'}</td>
+                <td class="p-4 text-center">${t.pointsFor}</td>
+                <td class="p-4 text-center">${t.pointsAgainst}</td>
+                <td class="p-4 text-center font-bold ${(t.pointsFor - t.pointsAgainst) >= 0 ? 'text-blue-600' : 'text-red-500'}">
+                    ${t.pointsFor - t.pointsAgainst >= 0 ? '+' : ''}${t.pointsFor - t.pointsAgainst}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // 타자 기록 로드
+    async function loadHitters() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/records/baseball/hitters`);
+            hitterData = await res.json();
+            renderHitters(hitterData);
+            loaded.hitter = true;
+        } catch (e) {
+            document.getElementById('hitter-tbody').innerHTML =
+                '<tr><td colspan="8" class="p-8 text-center text-red-400">데이터를 불러올 수 없습니다.</td></tr>';
+        }
+    }
+
+    function renderHitters(data) {
+        const tbody = document.getElementById('hitter-tbody');
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map((p, i) => `
+            <tr class="table-row cursor-pointer" onclick="location.href='/baseball/player/${p.playerId}'">
+                <td class="p-4 pl-6 font-black text-blue-600">${i + 1}</td>
+                <td class="p-4 font-black text-slate-900">${p.playerName}</td>
+                <td class="p-4 text-slate-500">${p.teamName}</td>
+                <td class="p-4 text-center text-blue-600 font-bold">${p.battingAvg?.toFixed(3) ?? '-'}</td>
+                <td class="p-4 text-center">${p.gamesPlayed}</td>
+                <td class="p-4 text-center">${p.hits ?? '-'}</td>
+                <td class="p-4 text-center">${p.homeRuns ?? '-'}</td>
+                <td class="p-4 text-center">${p.rbi ?? '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    // 투수 기록 로드
+    async function loadPitchers() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/records/baseball/pitchers`);
+            pitcherData = await res.json();
+            renderPitchers(pitcherData);
+            loaded.pitcher = true;
+        } catch (e) {
+            document.getElementById('pitcher-tbody').innerHTML =
+                '<tr><td colspan="10" class="p-8 text-center text-red-400">데이터를 불러올 수 없습니다.</td></tr>';
+        }
+    }
+
+    function renderPitchers(data) {
+        const tbody = document.getElementById('pitcher-tbody');
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map((p, i) => `
+            <tr class="table-row cursor-pointer" onclick="location.href='/baseball/player/${p.playerId}'">
+                <td class="p-4 pl-6 font-black text-blue-600">${i + 1}</td>
+                <td class="p-4 font-black text-slate-900">${p.playerName}</td>
+                <td class="p-4 text-slate-500">${p.teamName}</td>
+                <td class="p-4 text-center text-blue-600 font-bold">${p.era?.toFixed(2) ?? '-'}</td>
+                <td class="p-4 text-center">${p.gamesPlayed}</td>
+                <td class="p-4 text-center">${p.wins ?? '-'}</td>
+                <td class="p-4 text-center">${p.losses ?? '-'}</td>
+                <td class="p-4 text-center">${p.strikeouts ?? '-'}</td>
+                <td class="p-4 text-center">${p.saves ?? '-'}</td>
+                <td class="p-4 text-center">${p.holds ?? '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    // 검색 필터
+    document.getElementById('hitter-search').addEventListener('input', function () {
+        const keyword = this.value.trim().toLowerCase();
+        const filtered = keyword
+            ? hitterData.filter(p => p.playerName.includes(keyword) || p.teamName.includes(keyword))
+            : hitterData;
+        renderHitters(filtered);
+    });
+
+    document.getElementById('pitcher-search').addEventListener('input', function () {
+        const keyword = this.value.trim().toLowerCase();
+        const filtered = keyword
+            ? pitcherData.filter(p => p.playerName.includes(keyword) || p.teamName.includes(keyword))
+            : pitcherData;
+        renderPitchers(filtered);
+    });
+
+    // 초기 로드
+    loadStanding();
+</script>
+</body>
+</html>
