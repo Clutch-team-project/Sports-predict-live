@@ -100,7 +100,7 @@
     function renderWeek() {
         const weekStart = getWeekStart(currentDate);
         document.getElementById('week-label').textContent =
-            `📅 ${weekStart.getFullYear()}년 ${weekStart.getMonth() + 1}월 LCK`;
+            `📅 ${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 LCK`;
 
         const container = document.getElementById('week-days');
         container.innerHTML = '';

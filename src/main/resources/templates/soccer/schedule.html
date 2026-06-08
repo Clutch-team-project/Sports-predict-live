@@ -96,10 +96,10 @@
 
     function renderWeek() {
         const weekStart = getWeekStart(currentDate);
-        const year = weekStart.getFullYear();
-        const month = weekStart.getMonth() + 1;
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth() + 1;
         document.getElementById('week-label').textContent =
-            `📅 ${year}년 ${month}월 K리그리그`;
+            `📅 ${year}년 ${month}월 K리그`;
 
         const container = document.getElementById('week-days');
         container.innerHTML = '';

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI.MATCH - LCK 일정</title>
+    <title>AI.MATCH - KBO 일정</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
@@ -51,7 +51,7 @@
     <!-- 경기 목록 -->
     <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
-            <span class="text-xs font-black text-blue-600">LCK 경기 일정</span>
+            <span class="text-xs font-black text-blue-600">KBO 경기 일정</span>
             <span id="match-date-label" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-xl text-xs font-bold"></span>
         </div>
         <div id="match-list" class="space-y-3">
@@ -96,10 +96,10 @@
 
     function renderWeek() {
         const weekStart = getWeekStart(currentDate);
-        const year = weekStart.getFullYear();
-        const month = weekStart.getMonth() + 1;
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth() + 1;
         document.getElementById('week-label').textContent =
-            `📅 ${year}년 ${month}월 LCK`;
+            `📅 ${year}년 ${month}월 KBO`;
 
         const container = document.getElementById('week-days');
         container.innerHTML = '';
