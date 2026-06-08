@@ -10,4 +10,6 @@ public class AiPredBasisDto {
     private Double away_season;
     private Double head_to_head;
     private Double home_advantage;
+    private Long sport_id;
+    private Double draw_weight;
 }

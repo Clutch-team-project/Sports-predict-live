@@ -16,7 +16,7 @@ public class PredictionController {
 
     private final PredictionService predictionService;
 
-    @PostMapping("/save")
+    @GetMapping("/save") //실제 db연결 시 포스트 변경
     public PredictionEntity savePrediction(
 
             @RequestParam Long userId,

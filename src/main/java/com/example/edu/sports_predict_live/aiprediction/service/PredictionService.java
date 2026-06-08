@@ -20,6 +20,7 @@ public class PredictionService {
 
     private final PredictionRepository predictionRepository;
     private final MatchRepository matchRepository;
+    private static final String STATUS_SCHEDULED = "SCHEDULED";
 
     /**
      * 사용자 승부 예측 등록
@@ -31,6 +32,13 @@ public class PredictionService {
     ) {
         MatchEntity match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("경기 없음"));
+
+        if (!STATUS_SCHEDULED.equals(match.getStatus())) {
+
+            throw new RuntimeException(
+                    "경기 시작 후에는 예측할 수 없습니다."
+            );
+        }
 
         if (predictedResult == null
                 || (!predictedResult.equals("home")

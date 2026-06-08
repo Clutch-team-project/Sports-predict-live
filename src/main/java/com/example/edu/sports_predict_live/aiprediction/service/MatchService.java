@@ -14,6 +14,7 @@ public class MatchService {
 
     private final MatchRepository matchRepository;
     private final PredictionService predictionService;
+    private static final String STATUS_FINISHED = "FINISHED";
 
 
     public MatchEntity saveMatch(
@@ -71,7 +72,7 @@ public class MatchService {
         MatchEntity updatedMatch = matchRepository.save(existing);
 
         // 경기 종료 시 자동 정산
-        if ("FINISHED".equalsIgnoreCase(updatedMatch.getStatus())) {
+        if (STATUS_FINISHED.equalsIgnoreCase(updatedMatch.getStatus())) {
             predictionService.settlePredictionsForMatch(updatedMatch);
         }
 

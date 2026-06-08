@@ -19,8 +19,19 @@ import java.time.LocalDateTime;
 public class AiPredService {
 
     // 종목 ID 기준
-    // 1 = 축구, 2 = 야구, 3 = LOL
+    private static final Long SPORT_SOCCER = 1L;
+    private static final Long SPORT_BASEBALL = 2L;
     private static final Long SPORT_LOL = 3L;
+
+    // 통계 DB 연동 전 임시 기본값
+    private static final double DEFAULT_HOME_SEASON_SCORE = 0.55;
+    private static final double DEFAULT_AWAY_SEASON_SCORE = 0.55;
+    private static final double DEFAULT_HEAD_TO_HEAD_SCORE = 0.15;
+    private static final double DEFAULT_HOME_ADVANTAGE = 0.10;
+
+    // 무승부 기본 가중치
+    private static final double DEFAULT_DRAW_WEIGHT = 0.7;
+
     private final AiPredRepository aiPredRepository;
     private final ObjectMapper objectMapper;
     private final MatchRepository matchRepository;
@@ -29,10 +40,11 @@ public class AiPredService {
     public AiPredEntity calculateAndSaveAiPrediction(Long matchId) {
 
         // 1. 경기당 AI 예측 1개만 허용
-        boolean exists = aiPredRepository.existsByMatchId(matchId);
+        AiPredEntity existingPrediction =
+                aiPredRepository.findByMatchId(matchId);
 
-        if (exists) {
-            throw new RuntimeException("이미 AI 예측이 존재합니다.");
+        if (existingPrediction != null) {
+            return existingPrediction;
         }
 
         // 2. 경기 정보 조회
@@ -40,18 +52,17 @@ public class AiPredService {
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 경기입니다."));
 
         // 3. 임시 더미 통계값
-        Double homeSeasonScore = 0.55;
-        Double awaySeasonScore = 0.55;
+        Double homeSeasonScore = DEFAULT_HOME_SEASON_SCORE;
+        Double awaySeasonScore = DEFAULT_AWAY_SEASON_SCORE;
 
-        Double headToHeadScore = 0.15;
-        Double homeAdvantage = 0.10;
-
+        Double headToHeadScore = DEFAULT_HEAD_TO_HEAD_SCORE;
+        Double homeAdvantage = DEFAULT_HOME_ADVANTAGE;
         // 가중치 계산
         double homeWeight = 1.0 + homeSeasonScore + headToHeadScore + homeAdvantage;
         double awayWeight = 1.0 + awaySeasonScore;
 
         // 무승부 가중치
-        double drawWeight = 0.7;
+        double drawWeight = DEFAULT_DRAW_WEIGHT;
 
         // LoL 같은 무승부 없는 종목 처리
         if (SPORT_LOL.equals(match.getSportId())) {
@@ -81,6 +92,8 @@ public class AiPredService {
             basisDto.setAway_season(awaySeasonScore);
             basisDto.setHead_to_head(headToHeadScore);
             basisDto.setHome_advantage(homeAdvantage);
+            basisDto.setSport_id(match.getSportId());
+            basisDto.setDraw_weight(drawWeight);
 
             basisJson = objectMapper.writeValueAsString(basisDto);
 
@@ -108,7 +121,14 @@ public class AiPredService {
      */
     public AiPredEntity getAiPrediction(Long matchId) {
 
-        return aiPredRepository.findByMatchId(matchId);
+        AiPredEntity prediction =
+                aiPredRepository.findByMatchId(matchId);
+
+        if (prediction == null) {
+            throw new RuntimeException("AI 예측 데이터가 존재하지 않습니다.");
+        }
+
+        return prediction;
     }
 
     /**
@@ -116,6 +136,13 @@ public class AiPredService {
      */
     public AiPredEntity getLatestPrediction() {
 
-        return aiPredRepository.findTopByOrderByCreatedAtDesc();
+        AiPredEntity prediction =
+                aiPredRepository.findTopByOrderByCreatedAtDesc();
+
+        if (prediction == null) {
+            throw new RuntimeException("AI 예측 데이터가 존재하지 않습니다.");
+        }
+
+        return prediction;
     }
 }
