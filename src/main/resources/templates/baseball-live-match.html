@@ -1,0 +1,2304 @@
+﻿<!DOCTYPE html>
+<!-- saved from url=(0122)http://localhost:63342/Team_Project/baseball_live_broadcast.html?_ijt=l8tt5sagsk5h05i4qc5sbjo8cb&_ij_reload=RELOAD_ON_SAVE -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH - 야구 경기 중계</title>
+    <style>
+        :root {
+            --bg: #070b14;
+            --panel: #101827;
+            --panel-2: #151f31;
+            --line: #26344d;
+            --text: #edf3ff;
+            --muted: #8ea0bd;
+            --blue: #5c8dff;
+            --blue-2: #2f6cff;
+            --red: #ff5b66;
+            --orange: #ff9b45;
+            --green: #38d878;
+            --yellow: #ffd45a;
+            --dirt: #b79b6d;
+            --dirt-dark: #8e7148;
+            --grass: #1f713c;
+            --grass-dark: #13522c;
+            --card: #0d1422;
+            --shadow: 0 18px 40px rgba(0,0,0,.32);
+            --radius: 18px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: radial-gradient(circle at top, #101a2e 0%, var(--bg) 48%, #05070c 100%);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+            line-height: 1.35;
+        }
+
+        .page {
+            width: min(1440px, calc(100% - 24px));
+            margin: 0 auto;
+            padding: 18px 0 44px;
+        }
+
+        .topbar {
+            height: 58px;
+            border: 1px solid var(--line);
+            background: rgba(16, 24, 39, .86);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 22px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            font-weight: 900;
+            letter-spacing: .7px;
+            font-size: 20px;
+            color: #72a2ff;
+        }
+
+        .top-actions { display: flex; align-items: center; gap: 12px; color: var(--muted); font-weight: 800; font-size: 14px; }
+        .top-actions strong { color: var(--text); }
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: #0c1322;
+            border: 1px solid #314563;
+            color: #eaf1ff;
+        }
+        .user-avatar {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--blue);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 950;
+        }
+
+        .sport-nav,
+        .sub-nav {
+            margin-top: 14px;
+            border: 1px solid var(--line);
+            background: rgba(16, 24, 39, .74);
+            border-radius: 12px;
+            padding: 0 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 42px;
+            height: 54px;
+            color: #b9c8e2;
+            font-weight: 800;
+        }
+
+        .sub-nav { height: 48px; gap: 38px; }
+        .sport-nav .active, .sub-nav .active { color: var(--blue); position: relative; }
+        .sport-nav .active::after, .sub-nav .active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -17px;
+            height: 3px;
+            background: var(--blue);
+            border-radius: 10px;
+        }
+
+        .layout {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .main-stack { display: grid; gap: 14px; min-width: 0; }
+        .side-stack { display: grid; gap: 14px; position: sticky; top: 16px; }
+
+        .scoreboard {
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, #12203a 0%, #0f1728 100%);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .score-head {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 20px 24px 16px;
+            gap: 18px;
+        }
+
+        .team { display: flex; align-items: center; gap: 14px; }
+        .team.away { justify-content: flex-end; text-align: right; }
+        .team-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            font-size: 28px;
+            font-weight: 950;
+            background: #1d2b44;
+            border: 1px solid #334564;
+            padding: 0;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+        }
+        .team-logo.home { color: #ffb0a5; background: linear-gradient(145deg, #4a1f16, #171d2c); }
+        .team-logo.away { color: #9de0ff; background: linear-gradient(145deg, #16345a, #0e1b31); }
+        .team-name { font-size: 16px; font-weight: 900; }
+        .team-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+        .score-core { text-align: center; min-width: 170px; }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 900;
+            color: #fff;
+            background: rgba(255,91,102,.2);
+            border: 1px solid rgba(255,91,102,.55);
+            border-radius: 999px;
+            padding: 5px 11px;
+            margin-bottom: 8px;
+        }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 5px rgba(255,91,102,.14); }
+        .score-number { font-size: 38px; font-weight: 950; letter-spacing: 6px; }
+        .score-caption { margin-top: 5px; color: #9fb0cc; font-size: 12px; font-weight: 800; letter-spacing: 0; }
+        .inning-board {
+            border-top: 1px solid var(--line);
+            background: #0c1322;
+            padding: 10px 16px 14px;
+            overflow-x: auto;
+        }
+        table { border-collapse: collapse; width: 100%; }
+        .inning-board th, .inning-board td {
+            padding: 6px 8px;
+            text-align: center;
+            color: #c6d3ea;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255,255,255,.04);
+            white-space: nowrap;
+        }
+        .inning-board th:first-child, .inning-board td:first-child { text-align: left; font-weight: 900; color: #fff; }
+        .inning-board .total { color: var(--blue); font-weight: 900; }
+        .state-note { margin-top: 8px; color: #96a9c8; font-size: 12px; font-weight: 800; }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            border: 1px solid var(--line);
+            background: rgba(16,24,39,.72);
+            border-radius: 14px;
+            padding: 8px;
+        }
+        .tab {
+            flex: 1;
+            height: 42px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .tab.active { background: #1c2b46; color: #fff; box-shadow: inset 0 0 0 1px #36517a; }
+
+        .relay-card {
+            border: 1px solid var(--line);
+            background: rgba(16,24,39,.88);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .relay-toolbar {
+            background: rgba(16,24,39,.78);
+            border-bottom: 1px solid var(--line);
+            padding: 14px 17px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .relay-toolbar strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .relay-body {
+            display: grid;
+            grid-template-columns: minmax(0, 1.18fr) minmax(340px, .82fr);
+            gap: 0;
+            align-items: stretch;
+        }
+
+        .relay-section { min-width: 0; }
+        .relay-section + .relay-section { border-left: 1px solid var(--line); }
+        .relay-section .panel-head { background: rgba(12,19,34,.55); }
+        .relay-play {
+            display: flex;
+            flex-direction: column;
+            min-height: 506px;
+            height: auto;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            background: rgba(16,24,39,.88);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 15px 17px;
+            border-bottom: 1px solid var(--line);
+        }
+        .panel-title { font-weight: 950; }
+        .panel-sub { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+        .field-wrap { padding: 14px; }
+        .field {
+            position: relative;
+            height: 430px;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 18px;
+            overflow: hidden;
+            background:
+                    linear-gradient(33deg, rgba(255,255,255,.05) 0 1px, transparent 1px 42px) 0 0/78px 78px,
+                    linear-gradient(147deg, rgba(255,255,255,.04) 0 1px, transparent 1px 42px) 0 0/78px 78px,
+                    radial-gradient(circle at 50% 100%, #287c46 0%, var(--grass) 38%, var(--grass-dark) 100%);
+        }
+        .outfield-arc {
+            position: absolute;
+            left: 50%;
+            top: 28px;
+            width: 86%;
+            height: 270px;
+            transform: translateX(-50%);
+            border: 2px solid rgba(255,255,255,.18);
+            border-bottom: 0;
+            border-radius: 50% 50% 0 0;
+            z-index: 1;
+        }
+        .foul-line {
+            position: absolute;
+            left: 50%;
+            bottom: 72px;
+            width: 2px;
+            height: 280px;
+            background: rgba(255,255,255,.45);
+            transform-origin: bottom center;
+            z-index: 3;
+        }
+        .foul-line.left { transform: rotate(-46deg); }
+        .foul-line.right { transform: rotate(46deg); }
+        .infield-dirt {
+            position: absolute;
+            left: 50%;
+            bottom: 50px;
+            width: 310px;
+            height: 310px;
+            transform: translateX(-50%) rotate(45deg);
+            border-radius: 54px;
+            background: linear-gradient(145deg, var(--dirt), var(--dirt-dark));
+            border: 2px solid rgba(255,255,255,.18);
+            box-shadow: inset 0 0 35px rgba(58, 36, 18, .25);
+            z-index: 2;
+        }
+        .infield-grass {
+            position: absolute;
+            left: 50%;
+            bottom: 108px;
+            width: 168px;
+            height: 168px;
+            transform: translateX(-50%) rotate(45deg);
+            border-radius: 28px;
+            background: linear-gradient(145deg, #1d6b38, #12492a);
+            border: 1px solid rgba(255,255,255,.12);
+            z-index: 3;
+        }
+        .home-circle {
+            position: absolute;
+            left: 50%;
+            bottom: 31px;
+            width: 98px;
+            height: 58px;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            background: var(--dirt);
+            border: 1px solid rgba(255,255,255,.16);
+            z-index: 4;
+        }
+        .mound {
+            position: absolute;
+            left: 50%;
+            bottom: 158px;
+            width: 78px;
+            height: 48px;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            background: #c3aa7c;
+            z-index: 5;
+            box-shadow: inset 0 0 0 8px rgba(255,255,255,.06), 0 8px 22px rgba(0,0,0,.22);
+        }
+        .mound::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 22px;
+            width: 32px;
+            height: 4px;
+            transform: translateX(-50%);
+            border-radius: 999px;
+            background: rgba(255,255,255,.78);
+        }
+        .plate {
+            position: absolute;
+            left: 50%;
+            bottom: 55px;
+            width: 30px;
+            height: 24px;
+            transform: translateX(-50%);
+            background: #fff;
+            clip-path: polygon(0 0, 100% 0, 82% 65%, 50% 100%, 18% 65%);
+            z-index: 8;
+        }
+        .base {
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            background: #fff;
+            transform: rotate(45deg);
+            border-radius: 3px;
+            z-index: 8;
+            box-shadow: 0 5px 14px rgba(0,0,0,.25);
+        }
+        .base.first { left: calc(50% + 144px); bottom: 166px; }
+        .base.second { left: calc(50% - 10px); bottom: 300px; }
+        .base.third { left: calc(50% - 165px); bottom: 166px; }
+        .base.home { left: calc(50% - 10px); bottom: 61px; transform: rotate(0); clip-path: polygon(0 0,100% 0,84% 70%,50% 100%,16% 70%); }
+        .runner {
+            position: absolute;
+            z-index: 12;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            background: #fff;
+            color: #172033;
+            border: 2px solid var(--orange);
+            white-space: nowrap;
+            box-shadow: 0 5px 12px rgba(0,0,0,.22);
+        }
+        .runner.r1 { left: calc(50% + 158px); bottom: 180px; }
+        .runner.r2 { left: calc(50% - 30px); bottom: 326px; }
+        .runner.r3 { left: calc(50% - 218px); bottom: 180px; }
+        .runner.empty {
+            color: #9facbf;
+            background: rgba(255,255,255,.1);
+            border-color: rgba(255,255,255,.22);
+        }
+        .player-label {
+            position: absolute;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: rgba(6,10,18,.78);
+            border: 1px solid rgba(255,255,255,.16);
+            font-size: 12px;
+            font-weight: 900;
+            color: #dce8ff;
+            z-index: 13;
+            white-space: nowrap;
+        }
+        .pl-c { left: 50%; bottom: 18px; transform: translateX(-50%); }
+        .pl-p { left: 50%; bottom: 206px; transform: translateX(-50%); }
+        .pl-1b { left: calc(50% + 170px); bottom: 206px; }
+        .pl-2b { left: calc(50% + 34px); bottom: 258px; }
+        .pl-3b { left: calc(50% - 234px); bottom: 206px; }
+        .pl-ss { left: calc(50% - 118px); bottom: 252px; }
+        .pl-lf { left: 126px; top: 72px; }
+        .pl-cf { left: 50%; top: 34px; transform: translateX(-50%); }
+        .pl-rf { right: 58px; top: 70px; }
+
+        .count-box {
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 98px;
+            background: rgba(7,11,20,.86);
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 13px;
+            padding: 10px;
+            z-index: 16;
+        }
+        .count-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #dce8ff;
+            font-size: 12px;
+            margin: 6px 0;
+            font-weight: 900;
+        }
+        .dots { display: flex; gap: 4px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #41506a; }
+        .dot.on.green { background: var(--green); }
+        .dot.on.yellow { background: var(--yellow); }
+        .dot.on.red { background: var(--red); }
+        .field-note {
+            position: absolute;
+            right: 14px;
+            bottom: 14px;
+            display: grid;
+            gap: 4px;
+            color: #e4edff;
+            font-size: 12px;
+            font-weight: 900;
+            z-index: 16;
+            background: rgba(7,11,20,.58);
+            border: 1px solid rgba(255,255,255,.12);
+            padding: 9px 10px;
+            border-radius: 12px;
+        }
+        .inning-history {
+            margin-top: 12px;
+            border: 1px solid var(--line);
+            background: #0c1322;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .inning-history-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 13px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .inning-history-title {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 950;
+        }
+        .inning-switcher {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 6px;
+            padding: 10px 12px 0;
+        }
+        .inning-btn {
+            min-width: 0;
+            height: 34px;
+            border: 1px solid #31486d;
+            background: #121d30;
+            color: #b9c8e2;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 950;
+            cursor: pointer;
+        }
+        .inning-btn.active {
+            border-color: rgba(92,141,255,.74);
+            background: #1c2b46;
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(92,141,255,.18);
+        }
+        .inning-timeline {
+            display: grid;
+            gap: 8px;
+            padding: 12px;
+        }
+        .inning-event {
+            display: grid;
+            grid-template-columns: 58px minmax(0, 1fr);
+            gap: 9px;
+            align-items: start;
+            padding: 9px 10px;
+            border: 1px solid rgba(255,255,255,.07);
+            background: rgba(255,255,255,.035);
+            border-radius: 11px;
+        }
+        .inning-event b {
+            color: #8fb1ff;
+            font-size: 12px;
+            font-weight: 950;
+        }
+        .inning-event strong {
+            display: block;
+            color: #eef4ff;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        .inning-event span {
+            color: #9fb0cc;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .inning-half {
+            display: grid;
+            gap: 7px;
+        }
+        .inning-event-line {
+            display: grid;
+            grid-template-columns: 64px minmax(0, 1fr);
+            gap: 8px;
+            color: #b9c8e2;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+        .inning-event-line em {
+            color: #eef4ff;
+            font-style: normal;
+            font-weight: 950;
+            white-space: nowrap;
+        }
+        .refresh-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #dce8ff;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .refresh-icon {
+            width: 24px;
+            height: 24px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            border: 1px solid #38537e;
+            color: var(--green);
+            background: #14223a;
+        }
+
+        .atbat-list {
+            padding: 14px;
+            display: grid;
+            gap: 12px;
+            overflow-y: visible;
+            flex: initial;
+            min-height: auto;
+            align-content: start;
+        }
+        .atbat-list::-webkit-scrollbar { width: 8px; }
+        .atbat-list::-webkit-scrollbar-thumb {
+            background: #334765;
+            border-radius: 999px;
+        }
+        .atbat-card {
+            border: 1px solid var(--line);
+            background: #0c1322;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .current-atbat {
+            position: relative;
+            border-color: rgba(92,141,255,.72);
+            background: linear-gradient(180deg, #13243f 0%, #0c1322 100%);
+            box-shadow: inset 0 0 0 1px rgba(92,141,255,.18), 0 10px 26px rgba(31,90,210,.16);
+        }
+        .current-atbat::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: var(--blue);
+        }
+        .batter-head {
+            display: grid;
+            grid-template-columns: 54px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 14px;
+            cursor: pointer;
+        }
+        .avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #2c3d5c, #15223a);
+            display: grid;
+            place-items: center;
+            font-weight: 950;
+            color: #94b7ff;
+            border: 1px solid #3a4d70;
+        }
+        .avatar.small {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            font-size: 13px;
+            flex: 0 0 auto;
+        }
+        .pitcher-summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,155,69,.28);
+            background: linear-gradient(135deg, rgba(255,155,69,.22), rgba(74,38,24,.7));
+            box-shadow: inset 3px 0 0 rgba(255,155,69,.85);
+        }
+        .pitcher-summary .avatar { background: linear-gradient(135deg, #ff9b45, #7a3e19); color: #fff; border-color: rgba(255,196,126,.48); }
+        .pitcher-summary strong {
+            display: block;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .pitcher-summary span {
+            color: #ffd7b4;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .batter-name { font-size: 17px; font-weight: 950; }
+        .batter-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+        .current-stat-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 7px;
+            padding: 0 14px 13px;
+        }
+        .current-stat-row span {
+            min-width: 0;
+            border: 1px solid rgba(92,141,255,.18);
+            background: rgba(92,141,255,.08);
+            border-radius: 10px;
+            padding: 8px 6px;
+            text-align: center;
+            color: #eef4ff;
+            font-size: 13px;
+            font-weight: 950;
+        }
+        .current-stat-row b {
+            display: block;
+            color: #8ea0bd;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+        .pitch-btn {
+            border: 1px solid #31486d;
+            background: #121d30;
+            color: #d9e6ff;
+            border-radius: 999px;
+            padding: 10px 13px;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .status-tag {
+            border: 1px solid rgba(255,91,102,.58);
+            background: rgba(255,91,102,.16);
+            color: #fff;
+            border-radius: 999px;
+            padding: 9px 12px;
+            font-size: 12px;
+            font-weight: 950;
+            white-space: nowrap;
+            box-shadow: 0 0 0 4px rgba(255,91,102,.08);
+        }
+        .play-detail {
+            border-top: 1px solid var(--line);
+            padding: 13px 14px 15px;
+            background: #0f1829;
+        }
+        .atbat-card.collapsed .play-detail { display: none; }
+        .atbat-summary {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 11px;
+            padding: 9px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(255,255,255,.04);
+            color: #aebdd6;
+            font-size: 12px;
+            font-weight: 900;
+        }
+        .atbat-summary strong { color: #fff; font-size: 13px; }
+        .atbat-summary span { color: #aebdd6; }
+        .event-stack {
+            display: grid;
+            gap: 7px;
+            margin-top: 12px;
+            padding-left: 12px;
+            border-left: 2px solid rgba(92,141,255,.5);
+            color: #dbe6f8;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .review-line {
+            color: #ffd7b4;
+            background: rgba(255,155,69,.09);
+            border: 1px solid rgba(255,155,69,.2);
+            border-radius: 10px;
+            padding: 8px 9px;
+            margin-left: -12px;
+        }
+        .review-line span,
+        .review-line strong,
+        .review-line em {
+            display: block;
+        }
+        .review-line span {
+            color: #ffbd82;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+        .review-line strong {
+            color: #fff;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        .review-line em {
+            color: #ffd7b4;
+            font-style: normal;
+            font-size: 12px;
+        }
+        .play-line {
+            display: grid;
+            gap: 4px;
+            color: #e9f1ff;
+            margin-bottom: 10px;
+            font-weight: 800;
+            line-height: 1.42;
+        }
+        .play-line strong {
+            color: #fff;
+            font-size: 14px;
+        }
+        .play-line span {
+            color: #b9c8e2;
+            font-size: 13px;
+        }
+        .pitch-seq { display: grid; gap: 7px; color: #bdcae0; font-size: 13px; }
+        .pitch-seq b { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; margin-right: 8px; color: #06101f; }
+        .pitch-change {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        .pitch-change div {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,155,69,.22);
+            background: rgba(255,155,69,.08);
+        }
+        .pitch-change span {
+            color: #ffd7b4;
+            font-size: 12px;
+            font-weight: 900;
+        }
+        .pitch-change strong {
+            color: #fff;
+            font-size: 13px;
+            font-weight: 950;
+        }
+        .pitch-change em {
+            min-width: 34px;
+            border-radius: 999px;
+            padding: 3px 7px;
+            background: #19263c;
+            color: #dce8ff;
+            font-size: 11px;
+            font-style: normal;
+            font-weight: 950;
+            text-align: center;
+        }
+        .pitch-change div:first-child em {
+            background: rgba(255,91,102,.18);
+            color: #ffb8bd;
+        }
+        .pitch-change div:last-child em {
+            background: rgba(56,216,120,.16);
+            color: #bff5d4;
+        }
+        .pitch-timeline {
+            display: grid;
+            gap: 8px;
+        }
+        .timeline-title {
+            color: #d9e6ff;
+            font-size: 13px;
+            font-weight: 950;
+            margin-bottom: 1px;
+        }
+        .pitch-step {
+            display: grid;
+            grid-template-columns: 46px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 11px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.07);
+            background: rgba(255,255,255,.035);
+        }
+        .pitch-step.highlight {
+            border-color: rgba(92,141,255,.36);
+            background: rgba(92,141,255,.11);
+        }
+        .pitch-step b {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 26px;
+            border-radius: 999px;
+            color: #06101f;
+            font-size: 12px;
+            font-weight: 950;
+        }
+        .pitch-step b.blue { background: #5c8dff; }
+        .pitch-step b.orange { background: #ffb044; }
+        .pitch-step b.green { background: #3ddc84; }
+        .pitch-step strong {
+            display: block;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .pitch-step span {
+            color: #9fb0cc;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .pitch-step em {
+            color: #dbe7ff;
+            font-style: normal;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .current-seq { gap: 8px; }
+        .current-seq div {
+            display: grid;
+            grid-template-columns: 30px 76px 1fr auto;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.06);
+        }
+        .current-seq b { margin-right: 0; }
+        .current-seq span { color: #eef4ff; font-weight: 900; }
+        .current-seq em { color: #9fb0cc; font-style: normal; }
+        .current-seq strong { color: #dbe7ff; font-size: 12px; text-align: right; }
+        .pitch-seq .blue { background: #5c8dff; }
+        .pitch-seq .orange { background: #ffb044; }
+        .pitch-seq .green { background: #3ddc84; }
+
+        #record .panel {
+            background: #f4f7fb;
+            border-color: #d8e0ec;
+            box-shadow: 0 16px 36px rgba(10, 24, 48, .12);
+        }
+        #record .panel-head {
+            border-bottom-color: #d8e0ec;
+        }
+        #record .panel-title {
+            color: #13223a;
+        }
+        #record .panel-sub {
+            color: #60728f;
+        }
+        .record-table { padding: 14px; display: grid; gap: 16px; min-width: 0; }
+        .record-team {
+            border: 1px solid #d5deea;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 13px;
+            display: grid;
+            gap: 14px;
+            box-shadow: 0 10px 24px rgba(18, 37, 66, .08);
+        }
+        .record-team-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 11px;
+            border-bottom: 1px solid #e1e7f0;
+        }
+        .record-team-head h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #13223a;
+        }
+        .record-team-head span {
+            color: #60728f;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .record-summary {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 7px;
+        }
+        .record-summary span {
+            min-width: 0;
+            border: 1px solid #d5deea;
+            background: #f6f8fc;
+            border-radius: 10px;
+            padding: 8px 6px;
+            text-align: center;
+            color: #13223a;
+            font-size: 13px;
+            font-weight: 950;
+        }
+        .home-record .record-summary span {
+            border-color: #f4d1af;
+            background: #fff7ed;
+        }
+        .record-summary b {
+            display: block;
+            color: #60728f;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+        .record-group {
+            overflow-x: auto;
+        }
+        .record-group h4 {
+            margin: 0 0 9px;
+            font-size: 14px;
+            color: #13223a;
+        }
+        .record-group table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 780px;
+        }
+        .record-table table th, .record-table table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e1e7f0;
+            text-align: center;
+            font-size: 13px;
+            color: #30425d;
+            white-space: nowrap;
+        }
+        .record-table table th {
+            color: #60728f;
+            background: #f6f8fc;
+        }
+        .record-table table th:first-child, .record-table table td:first-child { text-align: left; font-weight: 900; color: #13223a; }
+        .record-table .sum { background: #eef4ff; font-weight: 900; }
+
+        .lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
+        .lineup-team { border: 1px solid var(--line); background: #0c1322; border-radius: 14px; padding: 13px; }
+        .lineup-team h4 { margin: 0 0 10px; }
+        .lineup-item { display: grid; grid-template-columns: 28px 34px 1fr auto; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.06); color: #d6e1f5; font-size: 13px; gap: 8px; }
+        .lineup-item:last-child { border-bottom: 0; }
+        .player-face {
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e2b45, #101827);
+            border: 1px solid #324767;
+            font-size: 17px;
+            line-height: 1;
+        }
+        .lineup-item em { color: #9fb0cc; font-style: normal; font-weight: 900; }
+
+        .side-panel {
+            border: 1px solid var(--line);
+            background: rgba(16,24,39,.9);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .prediction { padding: 15px; }
+        .prediction.side-panel {
+            background: #f4f7fb;
+            border-color: #d8e0ec;
+            box-shadow: 0 16px 36px rgba(10, 24, 48, .12);
+        }
+        .vote-title { font-size: 15px; font-weight: 950; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .vote-title { color: #13223a; }
+        .vote-title small { color: #60728f; font-size: 11px; white-space: nowrap; }
+        .vote-match { margin-top: 14px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+        .vote-team { padding: 12px; border-radius: 12px; background: #ffffff; border: 1px solid #d5deea; text-align: center; box-shadow: 0 8px 18px rgba(18, 37, 66, .08); }
+        .vote-team strong { display: block; font-size: 17px; margin-bottom: 3px; }
+        .vote-team span { color: #60728f; font-size: 12px; }
+        .vs { color: #60728f; font-weight: 950; }
+        .bar-wrap { margin-top: 14px; height: 12px; background: #e6edf6; border-radius: 999px; overflow: hidden; border: 1px solid #d5deea; display: flex; }
+        .bar-blue { width: 42%; background: var(--blue); }
+        .bar-orange { flex: 1; background: var(--orange); }
+        .closed-note {
+            margin-top: 10px;
+            padding: 9px 10px;
+            border-radius: 12px;
+            border: 1px solid #d5deea;
+            background: #ffffff;
+            color: #60728f;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .chat { display: flex; flex-direction: column; height: 680px; }
+        .chat-list { padding: 12px; display: grid; gap: 8px; overflow-y: auto; flex: 1; align-content: start; scrollbar-width: none; -ms-overflow-style: none; }
+        .chat-list::-webkit-scrollbar { width: 0; height: 0; }
+        .chat-msg { background: #0c1322; border: 1px solid rgba(255,255,255,.07); border-radius: 12px; padding: 9px 10px; }
+        .chat-user { display: flex; justify-content: space-between; color: #8fb1ff; font-size: 12px; font-weight: 950; margin-bottom: 5px; }
+        .chat-user span:last-child { color: #6f819e; }
+        .chat-text { color: #dce6f7; font-size: 13px; line-height: 1.32; }
+        .auto-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #9fb0cc;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .auto-toggle input { display: none; }
+        .auto-toggle i {
+            position: relative;
+            width: 34px;
+            height: 18px;
+            border-radius: 999px;
+            background: #31415d;
+            border: 1px solid rgba(255,255,255,.14);
+        }
+        .auto-toggle i::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #d8e3f7;
+            transition: transform .18s ease;
+        }
+        .auto-toggle input:checked + i { background: #1b8a4a; }
+        .auto-toggle input:checked + i::after { transform: translateX(16px); }
+        .cleanbot-note {
+            margin: 12px 12px 0;
+            padding: 10px 11px;
+            border: 1px solid rgba(56,216,120,.2);
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .cleanbot-note b { color: #16a34a; }
+        .chat-text.collapsed {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .more-btn {
+            margin-top: 6px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #8fb1ff;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .chat-form { border-top: 1px solid var(--line); padding: 12px; display: flex; gap: 8px; }
+        .chat-form input { flex: 1; min-width: 0; border: 1px solid #304563; background: #0c1322; color: #fff; border-radius: 10px; padding: 10px; outline: none; }
+        .chat-form button { border: 0; background: var(--blue); color: #fff; font-weight: 950; border-radius: 10px; padding: 0 14px; cursor: pointer; }
+
+        body {
+            background: #eef3f8;
+            color: #172033;
+        }
+        .topbar,
+        .sport-nav,
+        .scoreboard,
+        .panel,
+        .side-panel,
+        .relay-section,
+        .record-team,
+        .lineup-team,
+        .vote-team,
+        .chat-msg,
+        .atbat-card,
+        .batter-card,
+        .pitcher-card,
+        .pitcher-summary,
+        .batter-summary,
+        .live-box,
+        .field-card,
+        .current-seq,
+        .inning-board,
+        .record-table,
+        .record-group,
+        .play-detail,
+        .cleanbot-note {
+            background: #ffffff;
+            border-color: #d5deea;
+            color: #172033;
+            box-shadow: 0 10px 24px rgba(18, 37, 66, .08);
+        }
+        .panel-head,
+        .relay-section .panel-head,
+        .score-head,
+        .record-team-head,
+        .chat-form {
+            background: #f6f8fc;
+            border-color: #d8e0ec;
+            color: #172033;
+        }
+        .tab,
+        .pitch-btn,
+        .status-tag,
+        .event-type,
+        .inning-board th,
+        .inning-board td,
+        .record-table table th,
+        .record-table table td,
+        .lineup-item,
+        .current-seq,
+        .pitch-step,
+        .atbat-summary,
+        .runner.empty,
+        .closed-note {
+            background: #f8fafc;
+            border-color: #d5deea;
+            color: #30425d;
+        }
+        .tab.active,
+        .pitch-btn.active,
+        .status-tag.active {
+            background: #e8f0ff;
+            border-color: #9db9ff;
+            color: #1d4ed8;
+            box-shadow: inset 0 0 0 1px rgba(92,141,255,.24);
+        }
+        .logo,
+        .sport-nav .active,
+        .sub-nav .active,
+        .chat-user,
+        .more-btn {
+            color: #1d4ed8;
+        }
+        .top-actions,
+        .team-meta,
+        .score-caption,
+        .state-note,
+        .panel-sub,
+        .chat-user span:last-child,
+        .auto-toggle,
+        .vote-team span,
+        .vs,
+        .closed-note,
+        .record-team-head span,
+        .record-summary b,
+        .lineup-item em,
+        .current-seq em,
+        .pitch-step small,
+        .atbat-summary span,
+        .batter-meta {
+            color: #60728f;
+        }
+        .top-actions strong,
+        .user-chip,
+        .team,
+        .score-number,
+        .panel-title,
+        .timeline-title,
+        .batter-name,
+        .pitcher-summary strong,
+        .batter-summary strong,
+        .record-team-head h3,
+        .record-group h4,
+        .record-table table th:first-child,
+        .record-table table td:first-child,
+        .lineup-team h4,
+        .lineup-item,
+        .vote-title,
+        .chat-text,
+        .current-seq span,
+        .current-seq strong,
+        .atbat-summary strong {
+            color: #13223a;
+        }
+        .user-chip,
+        .chat-form input {
+            background: #ffffff;
+            border-color: #cbd8e7;
+            color: #172033;
+        }
+        .scoreboard {
+            background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+        }
+        .score-live {
+            background: #ffe8eb;
+            color: #c91f34;
+        }
+        .inning-board {
+            background: #ffffff;
+            border: 1px solid #d5deea;
+        }
+        .inning-board th:first-child,
+        .inning-board td:first-child {
+            color: #13223a;
+        }
+        .relay-body,
+        .relay-section + .relay-section {
+            border-color: #d8e0ec;
+        }
+        .ballpark {
+            background:
+                    radial-gradient(circle at 50% 62%, rgba(231, 247, 232, .95) 0 16%, transparent 17%),
+                    linear-gradient(135deg, #d8efdc 0%, #eff8f1 46%, #d7ebda 100%);
+            border-color: #c8dccd;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.8), 0 14px 30px rgba(18, 37, 66, .12);
+        }
+        .diamond,
+        .infield,
+        .mound,
+        .basepath {
+            filter: saturate(.72) brightness(1.15);
+        }
+        .player-label {
+            background: #ffffff;
+            border-color: #cbd8e7;
+            color: #172033;
+            box-shadow: 0 5px 12px rgba(18, 37, 66, .12);
+        }
+        .count-board,
+        .live-card,
+        .pitch-card,
+        .record-summary span {
+            background: #f8fafc;
+            border-color: #d5deea;
+            color: #172033;
+        }
+        .home-record .record-summary span {
+            background: #fff7ed;
+            border-color: #f4d1af;
+        }
+        .record-table .sum {
+            background: #eef4ff;
+            color: #13223a;
+        }
+        .bar-wrap {
+            background: #e6edf6;
+            border-color: #d5deea;
+        }
+        .auto-toggle i {
+            background: #d8e3f7;
+            border-color: #b9c8da;
+        }
+        .auto-toggle i::after {
+            background: #ffffff;
+            border: 1px solid #b9c8da;
+        }
+        .chat-msg {
+            box-shadow: none;
+        }
+        .chat-form {
+            border-top: 1px solid #d8e0ec;
+        }
+        body .page .team-logo,
+        body .page .avatar,
+        body .page .player-face,
+        body .page .count-box,
+        body .page .field-note,
+        body .page .inning-history,
+        body .page .inning-btn,
+        body .page .inning-event,
+        body .page .refresh-icon,
+        body .page .current-atbat,
+        body .page .pitcher-summary,
+        body .page .pitcher-summary .avatar,
+        body .page .current-stat-row span,
+        body .page .play-detail,
+        body .page .review-line,
+        body .page .pitch-change div,
+        body .page .pitch-change em,
+        body .page .pitch-step,
+        body .page .pitch-step.highlight,
+        body .page .current-seq div,
+        body .page .lineup-team,
+        body .page .player-face {
+            background: #ffffff;
+            border-color: #d5deea;
+            color: #172033;
+            box-shadow: 0 8px 18px rgba(18, 37, 66, .08);
+        }
+        body .page .team-logo.home {
+            background: #fff1eb;
+            color: #c2410c;
+            border-color: #fed7aa;
+        }
+        body .page .team-logo.away {
+            background: #eaf2ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+        body .page .inning-btn.active,
+        body .page .current-atbat,
+        body .page .pitch-step.highlight {
+            background: #e8f0ff;
+            border-color: #9db9ff;
+            color: #1d4ed8;
+        }
+        body .page .status-tag {
+            background: #ffe8eb;
+            border-color: #ffc2c9;
+            color: #c91f34;
+            box-shadow: none;
+        }
+        body .page .pitcher-summary {
+            background: #fff7ed;
+            border-color: #fed7aa;
+            box-shadow: inset 3px 0 0 #ff9b45, 0 8px 18px rgba(18, 37, 66, .08);
+        }
+        body .page .pitcher-summary .avatar {
+            background: #ffffff;
+            color: #c2410c;
+            border-color: #fed7aa;
+        }
+        body .page .review-line,
+        body .page .pitch-change div {
+            background: #fff7ed;
+            border-color: #fed7aa;
+            color: #7c2d12;
+        }
+        body .page .pitch-change em {
+            background: #f8fafc;
+            color: #30425d;
+        }
+        body .page .pitch-change div:first-child em {
+            background: #ffe8eb;
+            color: #c91f34;
+        }
+        body .page .pitch-change div:last-child em {
+            background: #e8f8ef;
+            color: #15803d;
+        }
+        body .page .count-row,
+        body .page .field-note,
+        body .page .inning-history-title,
+        body .page .inning-event strong,
+        body .page .inning-event-line,
+        body .page .inning-event-line em,
+        body .page .refresh-label,
+        body .page .pitcher-summary strong,
+        body .page .current-stat-row span,
+        body .page .play-line,
+        body .page .play-line strong,
+        body .page .review-line strong,
+        body .page .pitch-change strong,
+        body .page .timeline-title,
+        body .page .pitch-step strong,
+        body .page .pitch-step em {
+            color: #13223a;
+        }
+        body .page .inning-event span,
+        body .page .pitcher-summary span,
+        body .page .current-stat-row b,
+        body .page .play-line span,
+        body .page .pitch-seq,
+        body .page .event-stack,
+        body .page .review-line span,
+        body .page .review-line em,
+        body .page .pitch-change span,
+        body .page .pitch-step span {
+            color: #60728f;
+        }
+        body .page .lineup-item {
+            border-bottom-color: #e1e7f0;
+        }
+        body .page .atbat-list::-webkit-scrollbar-thumb {
+            background: #b8c5d8;
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 1100px) {
+            .layout { grid-template-columns: 1fr; }
+            .side-stack { position: static; grid-template-columns: 1fr 1fr; }
+            .relay-body { grid-template-columns: 1fr; }
+            .relay-section + .relay-section { border-left: 0; border-top: 1px solid var(--line); }
+            .relay-play { height: 520px; }
+        }
+        @media (max-width: 720px) {
+            .page { width: min(100% - 18px, 1440px); }
+            .sport-nav, .sub-nav { gap: 18px; overflow-x: auto; justify-content: flex-start; }
+            .score-head { grid-template-columns: 1fr; text-align: center; }
+            .team, .team.away { justify-content: center; text-align: center; }
+            .side-stack { grid-template-columns: 1fr; }
+            .lineup-grid { grid-template-columns: 1fr; }
+            .record-team-head { display: grid; }
+            .record-team-head span { white-space: normal; }
+            .record-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .batter-head { grid-template-columns: 54px 1fr; }
+            .pitch-btn, .status-tag { grid-column: 1 / -1; text-align: center; }
+            .current-stat-row { grid-template-columns: repeat(3, 1fr); }
+            .current-seq div { grid-template-columns: 30px 1fr; }
+            .current-seq strong { text-align: left; }
+            .pitch-step { grid-template-columns: 46px 1fr; }
+            .pitch-step em { grid-column: 2; }
+            .atbat-summary { display: grid; }
+            .pitch-change { grid-template-columns: 1fr; }
+            .inning-history-head { display: grid; }
+            .inning-switcher { grid-template-columns: repeat(5, 1fr); }
+            .inning-event { grid-template-columns: 1fr; }
+            .field { height: 350px; }
+            .infield-dirt { width: 250px; height: 250px; bottom: 54px; }
+            .infield-grass { width: 136px; height: 136px; bottom: 104px; }
+            .base.first { left: calc(50% + 112px); bottom: 152px; }
+            .base.second { bottom: 262px; }
+            .base.third { left: calc(50% - 133px); bottom: 152px; }
+            .runner.r2 { bottom: 286px; }
+            .runner.r3 { left: calc(50% - 168px); bottom: 166px; }
+            .pl-1b, .pl-2b, .pl-3b, .pl-ss { display: none; }
+        }
+
+    </style>
+</head>
+<body>
+<div class="page" id="livePage">
+    <header class="topbar">
+        <div class="logo">AI.MATCH</div>
+        <div class="top-actions">
+            <span class="user-chip"><span class="user-avatar">명</span>명균님</span>
+            <span>마이페이지</span>
+            <strong>로그아웃</strong>
+        </div>
+    </header>
+
+    <nav class="sport-nav">
+        <span>홈</span><span>축구</span><span class="active">야구</span><span>LoL</span>
+    </nav>
+    <nav class="sub-nav">
+        <span>뉴스</span><span class="active">일정</span><span>순위</span><span>게시판</span>
+    </nav>
+
+    <main class="layout">
+        <section class="main-stack">
+            <section class="scoreboard">
+                <div class="score-head">
+                    <div class="team">
+                        <div class="team-logo home">한</div>
+                        <div><div class="team-name">한화 이글스</div><div class="team-meta">원정 · 6회말 수비</div></div>
+                    </div>
+                    <div class="score-core">
+                        <div class="status-pill"><span class="status-dot"></span><span id="liveStatusText">LIVE · 6회말</span></div>
+                        <div class="score-number"><span id="homeScore">3</span> : <span id="awayScore">4</span></div>
+                        <div class="score-caption" id="scoreCaption">방금 반영</div>
+                    </div>
+                    <div class="team away">
+                        <div><div class="team-name">삼성 라이온즈</div><div class="team-meta">홈 · 6회말 공격</div></div>
+                        <div class="team-logo away">삼</div>
+                    </div>
+                </div>
+                <div class="inning-board">
+                    <table>
+                        <thead><tr><th>팀</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th><th>B</th></tr></thead>
+                        <tbody>
+                        <tr><td>한화</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>-</td><td>-</td><td>-</td><td class="total">3</td><td>7</td><td>0</td><td>3</td></tr>
+                        <tr><td>삼성</td><td>1</td><td>0</td><td>0</td><td>2</td><td>0</td><td>1</td><td>-</td><td>-</td><td>-</td><td class="total">4</td><td>8</td><td>1</td><td>4</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="state-note">스코어와 R/H/E/B는 경기 진행 상황에 따라 반영됩니다.</div>
+                </div>
+            </section>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="relay">중계</button>
+                <button class="tab" data-tab="record">기록</button>
+                <button class="tab" data-tab="lineup">라인업</button>
+            </div>
+
+            <section id="relay" class="tab-view relay-card">
+                <div class="relay-toolbar">
+                    <div><strong>경기 중계</strong><span class="panel-sub">그라운드와 타석 기록을 한 화면에서 확인합니다</span></div>
+                    <div class="refresh-label"><span class="refresh-icon">↻</span> 새로고침</div>
+                </div>
+                <div class="relay-body">
+                    <section class="relay-section">
+                        <div class="panel-head">
+                            <div><div class="panel-title">그라운드</div><div class="panel-sub">수비 위치 · 주자 현황</div></div>
+                        </div>
+                        <div class="field-wrap">
+                            <div class="field" aria-label="야구장 그라운드">
+                                <span class="outfield-arc"></span>
+                                <span class="foul-line left"></span><span class="foul-line right"></span>
+                                <span class="infield-dirt"></span><span class="infield-grass"></span><span class="home-circle"></span>
+                                <span class="base first"></span><span class="base second"></span><span class="base third"></span><span class="base home"></span>
+                                <span class="mound"></span><span class="plate"></span>
+                                <div class="runner r1">이주자</div><div class="runner r2">김지찬</div><div class="runner r3">이재현</div>
+                                <div class="count-box">
+                                    <div class="count-row"><span>B</span><span class="dots"><i class="dot on green"></i><i class="dot"></i><i class="dot"></i></span></div>
+                                    <div class="count-row"><span>S</span><span class="dots"><i class="dot on yellow"></i><i class="dot on yellow"></i></span></div>
+                                    <div class="count-row"><span>O</span><span class="dots"><i class="dot on red"></i><i class="dot"></i></span></div>
+                                </div>
+                                <span class="player-label pl-p">후라도 P</span>
+                                <span class="player-label pl-c">최재훈 C</span>
+                                <span class="player-label pl-1b">채은성 1B</span>
+                                <span class="player-label pl-2b">문현빈 2B</span>
+                                <span class="player-label pl-3b">노시환 3B</span>
+                                <span class="player-label pl-ss">하주석 SS</span>
+                                <span class="player-label pl-lf">김인환 LF</span>
+                                <span class="player-label pl-cf">이진영 CF</span>
+                                <span class="player-label pl-rf">이원석 RF</span>
+                                <div class="field-note"><span>대기타석: 김헌곤</span><span id="fieldCurrentBatter">현재 타자: 장승현</span><span id="fieldSituation">상황: 1사 2·3루</span></div>
+                            </div>
+                            <div class="inning-history">
+                                <div class="inning-history-head">
+                                    <div>
+                                        <div class="inning-history-title">이전 이닝 타임라인</div>
+                                        <div class="panel-sub">1회부터 5회까지 지난 흐름을 조회합니다</div>
+                                    </div>
+                                    <span class="panel-sub" id="inningHistoryLabel">1회 타석 흐름</span>
+                                </div>
+                                <div class="inning-switcher" aria-label="이전 이닝 선택">
+                                    <button class="inning-btn active" type="button" data-inning="1">1회</button>
+                                    <button class="inning-btn" type="button" data-inning="2">2회</button>
+                                    <button class="inning-btn" type="button" data-inning="3">3회</button>
+                                    <button class="inning-btn" type="button" data-inning="4">4회</button>
+                                    <button class="inning-btn" type="button" data-inning="5">5회</button>
+                                </div>
+                                <div class="inning-timeline" id="inningTimeline" aria-live="polite"><div class="inning-event"><b>1회초</b><div class="inning-half"><strong>한화 공격</strong><div class="inning-event-line"><em>이진영</em><span>중견수 뜬공</span></div><div class="inning-event-line"><em>문현빈</em><span>좌전 안타</span></div><div class="inning-event-line"><em>노시환</em><span>헛스윙 삼진</span></div><div class="inning-event-line"><em>채은성</em><span>유격수 땅볼</span></div></div></div><div class="inning-event"><b>1회말</b><div class="inning-half"><strong>삼성 공격</strong><div class="inning-event-line"><em>김지찬</em><span>볼넷 출루</span></div><div class="inning-event-line"><em>구자욱</em><span>우전 안타, 김지찬 3루</span></div><div class="inning-event-line"><em>강민호</em><span>유격수 땅볼, 김지찬 홈인</span></div><div class="inning-event-line"><em>이성규</em><span>중견수 뜬공</span></div></div></div></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="relay-section relay-play">
+                        <div class="panel-head"><div><div class="panel-title" id="currentPlayTitle">6회말 삼성 공격</div><div class="panel-sub">현재 타석과 주요 플레이</div></div><span class="panel-sub" id="currentOutCount">1 OUT</span></div>
+                        <div class="pitcher-summary">
+                            <span class="avatar small" id="currentPitcherInitial">후</span>
+                            <div><strong id="currentPitcherName">후라도</strong><span id="currentPitcherMeta">한화 투수 · 5.2이닝 91구 · 7피안타 5K</span></div>
+                        </div>
+                        <div class="atbat-list">
+                            <article class="atbat-card current-atbat">
+                                <div class="batter-head">
+                                    <div class="avatar" id="currentBatterInitial">장</div>
+                                    <div><div class="batter-name"><span id="currentBatterName">장승현</span> <span class="panel-sub">선수 페이지</span></div><div class="batter-meta" id="currentBatterMeta">8번 타자 · 지명타자 · 타율 .125</div></div>
+                                    <span class="status-tag">현재 타석</span>
+                                </div>
+                                <div class="current-stat-row">
+                                    <span><b>타석</b>2</span>
+                                    <span><b>타수</b>1</span>
+                                    <span><b>안타</b>0</span>
+                                    <span><b>득점</b>0</span>
+                                    <span><b>타점</b>1</span>
+                                    <span><b>홈런</b>0</span>
+                                    <span><b>볼넷</b>0</span>
+                                    <span><b>삼진</b>1</span>
+                                    <span><b>타율</b>.125</span>
+                                </div>
+                                <div class="play-detail">
+                                    <div class="atbat-summary"><strong id="currentAtbatSummaryTitle">6회말 8번 타순</strong><span id="currentAtbatSummaryText">희생플라이 · 2사 3루</span></div>
+                                    <div class="pitch-timeline" id="currentPitchTimeline">
+                                        <div class="timeline-title">이번 타석 투구 기록</div>
+                                        <div class="pitch-step">
+                                            <b class="blue">1구</b>
+                                            <div><strong>스트라이크</strong><span>138km/h 직구</span></div>
+                                            <em>볼카운트 0 - 1</em>
+                                        </div>
+                                        <div class="pitch-step">
+                                            <b class="green">2구</b>
+                                            <div><strong>볼</strong><span>132km/h 체인지업</span></div>
+                                            <em>볼카운트 1 - 1</em>
+                                        </div>
+                                        <div class="pitch-step">
+                                            <b class="orange">3구</b>
+                                            <div><strong>파울</strong><span>141km/h 커터</span></div>
+                                            <em>볼카운트 1 - 2</em>
+                                        </div>
+                                        <div class="pitch-step highlight">
+                                            <b class="blue">4구</b>
+                                            <div><strong>타격</strong><span>좌익수 희생플라이</span></div>
+                                            <em>2사 3루</em>
+                                        </div>
+                                    </div>
+                                    <div class="event-stack" id="currentEventStack">
+                                        <div class="review-line"><span>21:44 ~ 21:44</span><strong>한화 요청 비디오 판독</strong><em>3루 주자 이재현 홈 태그 · 세이프 판정 유지</em></div>
+                                        <div>3루주자 이재현 : 홈인</div>
+                                        <div>2루주자 김지찬 : 3루까지 진루</div>
+                                        <div>장승현 : 좌익수 희생플라이 아웃</div>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article class="atbat-card collapsed">
+                                <div class="batter-head">
+                                    <div class="avatar">박</div>
+                                    <div><div class="batter-name">박병호 <span class="panel-sub">7번 타자 · 1루수 · 타율 .233</span></div></div>
+                                    <button class="pitch-btn detail-toggle" type="button">기록 더보기</button>
+                                </div>
+                                <div class="play-detail">
+                                    <div class="play-line"><strong>박병호 : 삼진</strong><span>1사 2·3루 상황 유지</span></div>
+                                    <div class="pitch-seq">
+                                        <div><b class="blue">1</b> 스트라이크 · 141km/h 직구 · 0-1</div>
+                                        <div><b class="orange">2</b> 파울 · 136km/h 슬라이더 · 0-2</div>
+                                        <div><b class="green">3</b> 볼 · 132km/h 체인지업 · 1-2</div>
+                                        <div><b class="blue">4</b> 헛스윙 · 139km/h 커터 · 삼진</div>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article class="atbat-card collapsed">
+                                <div class="batter-head">
+                                    <div class="avatar">이</div>
+                                    <div><div class="batter-name">이재현 <span class="panel-sub">6번 타자 · 유격수 · 타율 .262</span></div></div>
+                                    <button class="pitch-btn detail-toggle" type="button">기록 더보기</button>
+                                </div>
+                                <div class="play-detail">
+                                    <div class="play-line"><strong>이재현 : 좌전 안타</strong><span>1루 주자 김지찬 2루 진루</span></div>
+                                    <div class="pitch-seq">
+                                        <div><b class="orange">1</b> 파울 · 139km/h 커터 · 0-1</div>
+                                        <div><b class="green">2</b> 볼 · 128km/h 커브 · 1-1</div>
+                                        <div><b class="blue">3</b> 인플레이 · 좌전 안타 · 무사 1·2루</div>
+                                        <div class="pitch-change">
+                                            <div><span>투수</span><strong>후라도</strong><em>OUT</em></div>
+                                            <div><span>투수</span><strong>김범수</strong><em>IN</em></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article class="atbat-card collapsed">
+                                <div class="batter-head">
+                                    <div class="avatar">김</div>
+                                    <div><div class="batter-name">김영웅 <span class="panel-sub">5번 타자 · 3루수 · 타율 .274</span></div></div>
+                                    <button class="pitch-btn detail-toggle" type="button">기록 더보기</button>
+                                </div>
+                                <div class="play-detail">
+                                    <div class="play-line"><strong>김영웅 : 볼넷</strong><span>무사 1루 출루</span></div>
+                                    <div class="pitch-seq">
+                                        <div><b class="green">1</b> 볼 · 136km/h 슬라이더 · 1-0</div>
+                                        <div><b class="blue">2</b> 스트라이크 · 142km/h 직구 · 1-1</div>
+                                        <div><b class="green">3</b> 볼 · 132km/h 체인지업 · 2-1</div>
+                                        <div><b class="green">4</b> 볼 · 141km/h 직구 · 3-1</div>
+                                        <div><b class="green">5</b> 볼 · 133km/h 체인지업 · 볼넷</div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section id="record" class="tab-view hidden">
+                <section class="panel">
+                    <div class="panel-head"><div><div class="panel-title">경기 기록</div><div class="panel-sub">경기 종료 후 제공되는 공식 기록</div></div></div>
+                    <div class="record-table">
+                        <div class="record-team">
+                            <div class="record-team-head">
+                                <h3>한화 이글스</h3>
+                                <span>원정 · 3득점 7안타</span>
+                            </div>
+                            <div class="record-summary">
+                                <span><b>득점</b>3</span><span><b>안타</b>7</span><span><b>홈런</b>1</span><span><b>도루</b>0</span><span><b>실책</b>0</span><span><b>잔루</b>6</span><span><b>볼넷</b>3</span>
+                            </div>
+                            <div class="record-group">
+                                <h4>타자 기록</h4>
+                                <table>
+                                    <thead><tr><th>선수명</th><th>포지션</th><th>타수</th><th>안타</th><th>타점</th><th>득점</th><th>삼진</th><th>볼넷</th><th>타율</th></tr></thead>
+                                    <tbody>
+                                    <tr><td>이진영</td><td>CF</td><td>4</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>.271</td></tr>
+                                    <tr><td>문현빈</td><td>2B</td><td>4</td><td>2</td><td>1</td><td>0</td><td>0</td><td>0</td><td>.296</td></tr>
+                                    <tr><td>노시환</td><td>3B</td><td>4</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>.284</td></tr>
+                                    <tr><td>채은성</td><td>1B</td><td>3</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>.263</td></tr>
+                                    <tr><td>김인환</td><td>LF</td><td>4</td><td>1</td><td>0</td><td>0</td><td>2</td><td>0</td><td>.242</td></tr>
+                                    <tr><td>하주석</td><td>SS</td><td>3</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>.251</td></tr>
+                                    <tr><td>이원석</td><td>RF</td><td>3</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>.238</td></tr>
+                                    <tr><td>최재훈</td><td>C</td><td>3</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>.219</td></tr>
+                                    <tr><td>김태연</td><td>DH</td><td>3</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>.247</td></tr>
+                                    <tr class="sum"><td>합계</td><td>-</td><td>31</td><td>7</td><td>3</td><td>3</td><td>7</td><td>3</td><td>-</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="record-group">
+                                <h4>투수 기록</h4>
+                                <table>
+                                    <thead><tr><th>투수명</th><th>이닝</th><th>피안타</th><th>실점</th><th>자책</th><th>삼진</th><th>볼넷</th><th>투구수</th></tr></thead>
+                                    <tbody>
+                                    <tr><td>후라도</td><td>5.2</td><td>7</td><td>4</td><td>3</td><td>5</td><td>2</td><td>91</td></tr>
+                                    <tr><td>김범수</td><td>0.1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>14</td></tr>
+                                    <tr><td>이민우</td><td>1.0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>12</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="record-team home-record">
+                            <div class="record-team-head">
+                                <h3>삼성 라이온즈</h3>
+                                <span>홈 · 4득점 8안타</span>
+                            </div>
+                            <div class="record-summary">
+                                <span><b>득점</b>4</span><span><b>안타</b>8</span><span><b>홈런</b>0</span><span><b>도루</b>1</span><span><b>실책</b>1</span><span><b>잔루</b>7</span><span><b>볼넷</b>4</span>
+                            </div>
+                            <div class="record-group">
+                                <h4>타자 기록</h4>
+                                <table>
+                                    <thead><tr><th>선수명</th><th>포지션</th><th>타수</th><th>안타</th><th>타점</th><th>득점</th><th>삼진</th><th>볼넷</th><th>타율</th></tr></thead>
+                                    <tbody>
+                                    <tr><td>김지찬</td><td>2B</td><td>4</td><td>2</td><td>0</td><td>1</td><td>0</td><td>1</td><td>.287</td></tr>
+                                    <tr><td>구자욱</td><td>RF</td><td>4</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>.301</td></tr>
+                                    <tr><td>강민호</td><td>C</td><td>3</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>.268</td></tr>
+                                    <tr><td>장승현</td><td>DH</td><td>2</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>.125</td></tr>
+                                    <tr><td>이성규</td><td>LF</td><td>4</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>.255</td></tr>
+                                    <tr><td>김영웅</td><td>3B</td><td>3</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>.274</td></tr>
+                                    <tr><td>이재현</td><td>SS</td><td>3</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>.262</td></tr>
+                                    <tr><td>박병호</td><td>1B</td><td>3</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>.233</td></tr>
+                                    <tr><td>김헌곤</td><td>CF</td><td>3</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>.241</td></tr>
+                                    <tr class="sum"><td>합계</td><td>-</td><td>29</td><td>8</td><td>4</td><td>4</td><td>6</td><td>4</td><td>-</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="record-group">
+                                <h4>투수 기록</h4>
+                                <table>
+                                    <thead><tr><th>투수명</th><th>이닝</th><th>피안타</th><th>실점</th><th>자책</th><th>삼진</th><th>볼넷</th><th>투구수</th></tr></thead>
+                                    <tbody>
+                                    <tr><td>원태인</td><td>6.0</td><td>6</td><td>3</td><td>3</td><td>6</td><td>2</td><td>88</td></tr>
+                                    <tr><td>이승현</td><td>1.0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>18</td></tr>
+                                    <tr><td>김재윤</td><td>1.0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>11</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <section id="lineup" class="tab-view hidden">
+                <section class="panel">
+                    <div class="panel-head"><div><div class="panel-title">라인업</div><div class="panel-sub">양 팀 선발 명단</div></div></div>
+                    <div class="lineup-grid">
+                        <div class="lineup-team">
+                            <h4>한화 이글스</h4>
+                            <div class="lineup-item"><b>1</b><span class="player-face">🦊</span><span>이진영</span><em>CF</em></div>
+                            <div class="lineup-item"><b>2</b><span class="player-face">🐻</span><span>문현빈</span><em>2B</em></div>
+                            <div class="lineup-item"><b>3</b><span class="player-face">🐯</span><span>노시환</span><em>3B</em></div>
+                            <div class="lineup-item"><b>4</b><span class="player-face">🦁</span><span>채은성</span><em>1B</em></div>
+                            <div class="lineup-item"><b>5</b><span class="player-face">🐶</span><span>김인환</span><em>LF</em></div>
+                            <div class="lineup-item"><b>6</b><span class="player-face">🐱</span><span>하주석</span><em>SS</em></div>
+                            <div class="lineup-item"><b>7</b><span class="player-face">🐼</span><span>이원석</span><em>RF</em></div>
+                            <div class="lineup-item"><b>8</b><span class="player-face">🐹</span><span>최재훈</span><em>C</em></div>
+                            <div class="lineup-item"><b>9</b><span class="player-face">🐰</span><span>김태연</span><em>DH</em></div>
+                        </div>
+                        <div class="lineup-team">
+                            <h4>삼성 라이온즈</h4>
+                            <div class="lineup-item"><b>1</b><span class="player-face">🐨</span><span>김지찬</span><em>2B</em></div>
+                            <div class="lineup-item"><b>2</b><span class="player-face">🦝</span><span>구자욱</span><em>RF</em></div>
+                            <div class="lineup-item"><b>3</b><span class="player-face">🐻</span><span>강민호</span><em>C</em></div>
+                            <div class="lineup-item"><b>4</b><span class="player-face">🦊</span><span>이성규</span><em>LF</em></div>
+                            <div class="lineup-item"><b>5</b><span class="player-face">🐯</span><span>김영웅</span><em>3B</em></div>
+                            <div class="lineup-item"><b>6</b><span class="player-face">🐶</span><span>이재현</span><em>SS</em></div>
+                            <div class="lineup-item"><b>7</b><span class="player-face">🐼</span><span>박병호</span><em>1B</em></div>
+                            <div class="lineup-item"><b>8</b><span class="player-face">🐹</span><span>장승현</span><em>DH</em></div>
+                            <div class="lineup-item"><b>9</b><span class="player-face">🐰</span><span>김헌곤</span><em>CF</em></div>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </section>
+
+        <aside class="side-stack">
+            <section class="side-panel prediction">
+                <div class="vote-title">경기 전 승부 예측 결과 <small id="predictionClosedLabel">투표 마감</small></div>
+                <div class="vote-match">
+                    <div class="vote-team"><strong id="predictionHomeName">한화</strong><span id="predictionHomeMeta">42% · 405표</span></div><div class="vs">VS</div><div class="vote-team"><strong id="predictionAwayName">삼성</strong><span id="predictionAwayMeta">58% · 562표</span></div>
+                </div>
+                <div class="bar-wrap"><div class="bar-blue" id="predictionHomeBar"></div><div class="bar-orange" id="predictionAwayBar"></div></div>
+                <div class="closed-note" id="predictionNote">경기 시작 전 참여한 예측 결과입니다.</div>
+            </section>
+
+            <section class="side-panel chat">
+                <div class="panel-head">
+                    <div><div class="panel-title">실시간 댓글</div><div class="panel-sub"><span id="chatCount">30</span>개 댓글</div></div>
+                    <label class="auto-toggle"><span>자동 업데이트</span><input id="autoUpdateToggle" type="checkbox" checked=""><i></i></label>
+                </div>
+                <div class="cleanbot-note"><b>클린봇</b>이 악성 표현을 감지합니다.</div>
+                <div class="chat-list" id="chatList"><div class="chat-msg" data-ready="true"><div class="chat-user"><b>line_drive</b><span>방금</span></div><div class="chat-text">지금은 한 점 차라서 주자 하나만 나가도 분위기 바로 바뀜</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>line_drive</b><span>방금</span></div><div class="chat-text">지금은 한 점 차라서 주자 하나만 나가도 분위기 바로 바뀜</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>kbo_today</b><span>방금</span></div><div class="chat-text">후라도 투구수가 올라가서 다음 이닝까지 볼지는 애매하네</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>eagle_eye</b><span>방금</span></div><div class="chat-text">외야 깊숙한 타구였고 3루 주자는 당연히 들어오는 장면</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>scorebook</b><span>방금</span></div><div class="chat-text collapsed">방금 타구는 결과만 보면 희생플라이지만 앞선 볼카운트에서 파울로 버틴 게 컸고, 최소한 외야로 보낸 타석이라 득점까지 연결된 장면으로 봐야 함</div><button type="button" class="more-btn">더보기</button></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>kbo_today</b><span>방금</span></div><div class="chat-text">후라도 투구수가 올라가서 다음 이닝까지 볼지는 애매하네</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>eagle_eye</b><span>방금</span></div><div class="chat-text">외야 깊숙한 타구였고 3루 주자는 당연히 들어오는 장면</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>bluepark</b><span>방금</span></div><div class="chat-text">불펜 타이밍이 오늘 경기 승부처일 듯</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>line_drive</b><span>방금</span></div><div class="chat-text">지금은 한 점 차라서 주자 하나만 나가도 분위기 바로 바뀜</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>bluepark</b><span>방금</span></div><div class="chat-text">불펜 타이밍이 오늘 경기 승부처일 듯</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>bluepark</b><span>방금</span></div><div class="chat-text">불펜 타이밍이 오늘 경기 승부처일 듯</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>bluepark</b><span>방금</span></div><div class="chat-text">불펜 타이밍이 오늘 경기 승부처일 듯</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>scorebook</b><span>방금</span></div><div class="chat-text collapsed">방금 타구는 결과만 보면 희생플라이지만 앞선 볼카운트에서 파울로 버틴 게 컸고, 최소한 외야로 보낸 타석이라 득점까지 연결된 장면으로 봐야 함</div><button type="button" class="more-btn">더보기</button></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>eagle_eye</b><span>방금</span></div><div class="chat-text">외야 깊숙한 타구였고 3루 주자는 당연히 들어오는 장면</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>samsung_21</b><span>방금</span></div><div class="chat-text">장승현이 최소한 해준 타석이라 다음 타자 부담이 좀 줄었다</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>scorebook</b><span>방금</span></div><div class="chat-text collapsed">방금 타구는 결과만 보면 희생플라이지만 앞선 볼카운트에서 파울로 버틴 게 컸고, 최소한 외야로 보낸 타석이라 득점까지 연결된 장면으로 봐야 함</div><button type="button" class="more-btn">더보기</button></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>cleanup_4</b><span>방금</span></div><div class="chat-text">이 상황이면 벤치에서 대타 카드도 슬슬 생각할 수밖에 없음</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>cleanup_4</b><span>방금</span></div><div class="chat-text">이 상황이면 벤치에서 대타 카드도 슬슬 생각할 수밖에 없음</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>eagle_eye</b><span>방금</span></div><div class="chat-text">외야 깊숙한 타구였고 3루 주자는 당연히 들어오는 장면</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>cleanup_4</b><span>방금</span></div><div class="chat-text">이 상황이면 벤치에서 대타 카드도 슬슬 생각할 수밖에 없음</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>kbo_today</b><span>방금</span></div><div class="chat-text">후라도 투구수가 올라가서 다음 이닝까지 볼지는 애매하네</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>line_drive</b><span>방금</span></div><div class="chat-text">지금은 한 점 차라서 주자 하나만 나가도 분위기 바로 바뀜</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>cleanup_4</b><span>방금</span></div><div class="chat-text">이 상황이면 벤치에서 대타 카드도 슬슬 생각할 수밖에 없음</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>cleanup_4</b><span>방금</span></div><div class="chat-text">이 상황이면 벤치에서 대타 카드도 슬슬 생각할 수밖에 없음</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>kbo_today</b><span>방금</span></div><div class="chat-text">후라도 투구수가 올라가서 다음 이닝까지 볼지는 애매하네</div></div><div class="chat-msg" data-ready="true"><div class="chat-user"><b>line_drive</b><span>방금</span></div><div class="chat-text">지금은 한 점 차라서 주자 하나만 나가도 분위기 바로 바뀜</div></div>
+                    <div class="chat-msg" data-ready="true"><div class="chat-user"><b>base_love</b><span>방금</span></div><div class="chat-text">희생플라이면 1점은 확실히 크다</div></div>
+                    <div class="chat-msg" data-ready="true"><div class="chat-user"><b>eagles_99</b><span>방금</span></div><div class="chat-text">아직 한 점 차라 모름</div></div>
+                    <div class="chat-msg" data-ready="true"><div class="chat-user"><b>lion_park</b><span>1분 전</span></div><div class="chat-text">장승현 최소한은 해줬다</div></div>
+                    <div class="chat-msg" data-ready="true"><div class="chat-user"><b>pitcher_king</b><span>1분 전</span></div><div class="chat-text">후라도 투구수 슬슬 봐야 됨</div></div>
+                </div>
+                <form class="chat-form" id="chatForm"><input id="chatInput" placeholder="댓글을 입력하세요"><button>전송</button></form>
+            </section>
+        </aside>
+    </main>
+</div>
+<script th:inline="none">
+    // 탭 전환 로직
+    const tabs = document.querySelectorAll('.tab');
+    const views = document.querySelectorAll('.tab-view');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            views.forEach(v => v.classList.add('hidden'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.remove('hidden');
+        });
+    });
+
+    function getMatchIdFromPath() {
+        const matched = window.location.pathname.match(/^\/games\/([^/]+)\/baseball\/live$/);
+        return matched ? matched[1] : null;
+    }
+
+    function setText(selector, value) {
+        const target = document.querySelector(selector);
+        if (target && value !== undefined && value !== null) {
+            target.textContent = value;
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function renderCountDots(rowIndex, activeCount) {
+        const dots = document.querySelectorAll(`.count-box .count-row:nth-child(${rowIndex}) .dot`);
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('on', index < activeCount);
+        });
+    }
+
+    function renderRunner(selector, occupied, label) {
+        const runner = document.querySelector(selector);
+        if (!runner) return;
+        runner.classList.toggle('empty', !occupied);
+        runner.textContent = occupied ? label : '비어 있음';
+    }
+
+    function formatBaseSituation(runners) {
+        const bases = [];
+        if (runners?.first) bases.push('1');
+        if (runners?.second) bases.push('2');
+        if (runners?.third) bases.push('3');
+        return bases.length > 0 ? `${bases.join('·')}루` : '주자 없음';
+    }
+
+    function renderCurrentPlayEvents(events) {
+        if (!Array.isArray(events) || events.length === 0) return;
+
+        const pitchTimeline = document.getElementById('currentPitchTimeline');
+        const eventStack = document.getElementById('currentEventStack');
+        if (!pitchTimeline || !eventStack) return;
+
+        // 1. 투구 기록 (오른쪽 영역) - 타석 시작 이후의 투구들만 표시
+        const pitchEvents = events.filter(e => ['ball', 'strike', 'foul', 'hit'].includes(e.eventType));
+        pitchTimeline.innerHTML = [
+            '<div class="timeline-title">이번 타석 투구 기록</div>',
+            ...pitchEvents.map((event, index) => (
+                `<div class="pitch-step${index === pitchEvents.length - 1 ? ' highlight' : ''}">
+                    <b class="${event.eventType === 'ball' ? 'green' : event.eventType === 'foul' ? 'orange' : 'blue'}">${escapeHtml(event.eventTime)}구</b>
+                    <div>
+                        <strong>${escapeHtml(event.title)}</strong>
+                        <span class="pitch-detail">${escapeHtml(event.description)}</span>
+                    </div>
+                    <em class="ball-count-text">${escapeHtml(event.eventPeriod)}</em>
+                </div>`
+            ))
+        ].join('');
+
+        // 2. 주요 상황 기록 (왼쪽/하단 영역) - 타석 시작, 판독, 득점 등 주요 사건만 표시
+        const majorEvents = events.filter(e => !['ball', 'strike', 'foul'].includes(e.eventType));
+        eventStack.innerHTML = majorEvents.map(event => {
+            if (event.eventType === 'video_review') {
+                return `<div class="event-review-box">
+                    <div class="review-tag">비디오 판독</div>
+                    <strong>${escapeHtml(event.title)}</strong>
+                    <div>${escapeHtml(event.description)}</div>
+                </div>`;
+            }
+            if (event.eventType === 'result') {
+                return `<div class="event-result-msg">
+                    <span class="result-dot"></span>
+                    <strong>${escapeHtml(event.title)}</strong> : ${escapeHtml(event.description)}
+                </div>`;
+            }
+            return `<div class="event-common"><strong>${escapeHtml(event.title)}</strong> : ${escapeHtml(event.description)}</div>`;
+        }).join('');
+    }
+
+    function renderCommentPreviews(comments) {
+        const list = document.getElementById('chatList');
+        if (!list || !Array.isArray(comments) || comments.length === 0) return;
+
+        list.innerHTML = comments.map(comment => (
+            `<div class="chat-msg" data-ready="true">
+                <div class="chat-user"><b>${escapeHtml(comment.userName)}</b><span>${escapeHtml(comment.writtenAt)}</span></div>
+                <div class="chat-text">${escapeHtml(comment.text)}</div>
+            </div>`
+        )).join('');
+
+        const count = document.getElementById('chatCount');
+        if (count) count.textContent = comments.length;
+
+        const toggle = document.getElementById('autoUpdateToggle');
+        if (toggle) toggle.checked = false;
+    }
+
+    function renderPredictionPreview(prediction) {
+        if (!prediction) return;
+
+        const homePercent = Number(prediction.homePercent ?? 0);
+        const awayPercent = Number(prediction.awayPercent ?? 0);
+
+        setText('#predictionHomeName', prediction.homeTeamName);
+        setText('#predictionAwayName', prediction.awayTeamName);
+        setText('#predictionHomeMeta', `${homePercent}% · ${prediction.homeVoteCount ?? 0}표`);
+        setText('#predictionAwayMeta', `${awayPercent}% · ${prediction.awayVoteCount ?? 0}표`);
+        setText('#predictionClosedLabel', prediction.closed ? '투표 마감' : '투표 진행');
+        setText('#predictionNote', prediction.closed ? '경기 시작 전 참여한 예측 결과입니다.' : '아직 참여 가능한 예측입니다.');
+
+        const homeBar = document.getElementById('predictionHomeBar');
+        const awayBar = document.getElementById('predictionAwayBar');
+        if (homeBar) homeBar.style.width = `${Math.max(0, Math.min(100, homePercent))}%`;
+        if (awayBar) awayBar.style.flex = Math.max(0, Math.min(100, awayPercent));
+    }
+
+    function renderLiveData(data) {
+        if (!data) return;
+
+        const page = document.getElementById('livePage');
+        if (page) {
+            page.dataset.matchId = data.matchId ?? '';
+            page.dataset.sport = data.sport ?? '';
+            page.dataset.loggedIn = data.viewer?.loggedIn ? 'true' : 'false';
+            page.dataset.favorite = data.viewer?.favorite ? 'true' : 'false';
+            page.dataset.predictionJoined = data.viewer?.predictionJoined ? 'true' : 'false';
+        }
+
+        setText('.team:not(.away) .team-logo', data.homeTeam?.logoText);
+        setText('.team:not(.away) .team-name', data.homeTeam?.name);
+        setText('.team:not(.away) .team-meta', `${data.homeTeam?.side === 'home' ? '홈' : '원정'} · ${data.currentInning} · 팀ID ${data.homeTeam?.teamId}`);
+        setText('.team.away .team-logo', data.awayTeam?.logoText);
+        setText('.team.away .team-name', data.awayTeam?.name);
+        setText('.team.away .team-meta', `${data.awayTeam?.side === 'home' ? '홈' : '원정'} · ${data.currentInning} · 팀ID ${data.awayTeam?.teamId}`);
+        setText('#liveStatusText', `${data.status} · ${data.currentInning}`);
+        setText('#scoreCaption', `API match ${data.matchId} · ${data.sport}`);
+        setText('#homeScore', data.score?.home);
+        setText('#awayScore', data.score?.away);
+        setText('#currentPlayTitle', `${data.currentInning} ${data.awayTeam?.shortName || data.awayTeam?.name} 공격`);
+        setText('#currentOutCount', `${data.count?.outs ?? 0} OUT`);
+
+        if (Array.isArray(data.inningScores)) {
+            const scoreRows = document.querySelectorAll('.inning-board tbody tr');
+            data.inningScores.forEach((score, rowIndex) => {
+                const row = scoreRows[rowIndex];
+                if (!row) return;
+                const cells = row.querySelectorAll('td');
+                cells[0].textContent = score.teamName;
+                score.innings.forEach((inningScore, index) => {
+                    if (cells[index + 1]) cells[index + 1].textContent = inningScore;
+                });
+                if (cells[10]) cells[10].textContent = score.runs;
+                if (cells[11]) cells[11].textContent = score.hits;
+                if (cells[12]) cells[12].textContent = score.errors;
+                if (cells[13]) cells[13].textContent = score.basesOnBalls;
+            });
+        }
+
+        setText('#fieldCurrentBatter', `현재 타자: ${data.currentBatter?.name || '-'}`);
+        setText('#fieldSituation', `상황: ${data.count?.outs ?? 0}사 ${formatBaseSituation(data.runners)}`);
+        setText('#currentPitcherInitial', (data.currentPitcher?.name || '-').slice(0, 1));
+        setText('#currentPitcherName', data.currentPitcher?.name);
+        setText('#currentPitcherMeta', `${data.currentPitcher?.teamName || ''} 투수 · ${data.currentPitcher?.description || ''}`);
+        setText('#currentBatterInitial', (data.currentBatter?.name || '-').slice(0, 1));
+        setText('#currentBatterName', data.currentBatter?.name);
+        setText('#currentBatterMeta', data.currentBatter?.description);
+        setText('#currentAtbatSummaryTitle', `${data.currentInning} 현재 타석`);
+        setText('#currentAtbatSummaryText', `${data.count?.outs ?? 0}사 ${formatBaseSituation(data.runners)}`);
+
+        renderCountDots(1, data.count?.balls ?? 0);
+        renderCountDots(2, data.count?.strikes ?? 0);
+        renderCountDots(3, data.count?.outs ?? 0);
+        renderRunner('.runner.r1', data.runners?.first, '김지찬');
+        renderRunner('.runner.r2', data.runners?.second, '이재현');
+        renderRunner('.runner.r3', data.runners?.third, '이주자');
+        renderCurrentPlayEvents(data.events);
+        renderCommentPreviews(data.comments);
+        renderPredictionPreview(data.prediction);
+    }
+
+    async function loadBaseballLive() {
+        const matchId = getMatchIdFromPath();
+        if (!matchId) return;
+
+        try {
+            const response = await fetch(`/api/games/${encodeURIComponent(matchId)}/baseball-live`);
+            if (!response.ok) return;
+            renderLiveData(await response.json());
+        } catch (error) {
+            console.warn('야구 중계 더미 API 호출 실패', error);
+        }
+    }
+
+    const inningButtons = document.querySelectorAll('.inning-btn');
+    const inningTimeline = document.getElementById('inningTimeline');
+    const inningHistoryLabel = document.getElementById('inningHistoryLabel');
+    const inningHistory = {
+        1: [
+            {
+                half: '초',
+                team: '한화 공격',
+                events: [
+                    { player: '이진영', result: '중견수 뜬공' },
+                    { player: '문현빈', result: '좌전 안타' },
+                    { player: '노시환', result: '헛스윙 삼진' },
+                    { player: '채은성', result: '유격수 땅볼' }
+                ]
+            },
+            {
+                half: '말',
+                team: '삼성 공격',
+                events: [
+                    { player: '김지찬', result: '볼넷 출루' },
+                    { player: '구자욱', result: '우전 안타, 김지찬 3루' },
+                    { player: '강민호', result: '유격수 땅볼, 김지찬 홈인' },
+                    { player: '이성규', result: '중견수 뜬공' }
+                ]
+            }
+        ],
+        2: [
+            {
+                half: '초',
+                team: '한화 공격',
+                events: [
+                    { player: '김인환', result: '우익수 방면 2루타' },
+                    { player: '하주석', result: '희생번트, 김인환 3루' },
+                    { player: '이원석', result: '중전 적시타, 김인환 득점' },
+                    { player: '최재훈', result: '2루수 병살타' }
+                ]
+            },
+            {
+                half: '말',
+                team: '삼성 공격',
+                events: [
+                    { player: '김영웅', result: '볼넷' },
+                    { player: '이재현', result: '투수 앞 땅볼' },
+                    { player: '박병호', result: '유격수 병살타' }
+                ]
+            }
+        ],
+        3: [
+            {
+                half: '초',
+                team: '한화 공격',
+                events: [
+                    { player: '김태연', result: '좌익수 뜬공' },
+                    { player: '이진영', result: '우전 안타' },
+                    { player: '문현빈', result: '볼넷' },
+                    { player: '노시환', result: '3루수 직선타' },
+                    { player: '채은성', result: '루킹 삼진' }
+                ]
+            },
+            {
+                half: '말',
+                team: '삼성 공격',
+                events: [
+                    { player: '김헌곤', result: '중견수 뜬공' },
+                    { player: '김지찬', result: '2루수 땅볼' },
+                    { player: '구자욱', result: '헛스윙 삼진' }
+                ]
+            }
+        ],
+        4: [
+            {
+                half: '초',
+                team: '한화 공격',
+                events: [
+                    { player: '김인환', result: '좌중간 2루타' },
+                    { player: '하주석', result: '우익수 뜬공, 주자 3루' },
+                    { player: '이원석', result: '희생플라이, 김인환 득점' },
+                    { player: '최재훈', result: '포수 파울플라이' }
+                ]
+            },
+            {
+                half: '말',
+                team: '삼성 공격',
+                events: [
+                    { player: '강민호', result: '좌전 안타' },
+                    { player: '이성규', result: '우중간 2루타, 강민호 득점' },
+                    { player: '김영웅', result: '3루수 실책 출루' },
+                    { player: '이재현', result: '좌전 적시타, 이성규 득점' },
+                    { player: '박병호', result: '삼진' }
+                ]
+            }
+        ],
+        5: [
+            {
+                half: '초',
+                team: '한화 공격',
+                events: [
+                    { player: '김태연', result: '유격수 땅볼' },
+                    { player: '이진영', result: '볼넷' },
+                    { player: '문현빈', result: '우전 안타' },
+                    { player: '노시환', result: '좌월 솔로 홈런' },
+                    { player: '채은성', result: '1루수 파울플라이' }
+                ]
+            },
+            {
+                half: '말',
+                team: '삼성 공격',
+                events: [
+                    { player: '김헌곤', result: '투수 땅볼' },
+                    { player: '김지찬', result: '좌익수 뜬공' },
+                    { player: '구자욱', result: '중견수 뜬공' }
+                ]
+            }
+        ]
+    };
+
+    function renderInningTimeline(inning) {
+        if (!inningTimeline || !inningHistoryLabel) return;
+        inningHistoryLabel.textContent = `${inning}회 타석 흐름`;
+        inningTimeline.innerHTML = inningHistory[inning].map(({ half, team, events }) => (
+            `<div class="inning-event"><b>${inning}회${half}</b><div class="inning-half"><strong>${team}</strong>${events.map(({ player, result }) => `<div class="inning-event-line"><em>${player}</em><span>${result}</span></div>`).join('')}</div></div>`
+        )).join('');
+    }
+
+    inningButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            inningButtons.forEach(item => item.classList.remove('active'));
+            button.classList.add('active');
+            renderInningTimeline(button.dataset.inning);
+        });
+    });
+
+    renderInningTimeline('1');
+    loadBaseballLive();
+
+    function toggleAtbatCard(card) {
+        if (!card || card.classList.contains('current-atbat')) return;
+        const expanded = !card.classList.toggle('collapsed');
+        const button = card.querySelector('.detail-toggle');
+        if (button) button.textContent = expanded ? '접기' : '기록 더보기';
+    }
+
+    document.querySelectorAll('.detail-toggle').forEach(button => {
+        button.addEventListener('click', event => {
+            event.stopPropagation();
+            toggleAtbatCard(button.closest('.atbat-card'));
+        });
+    });
+
+    document.querySelectorAll('.atbat-card .batter-head').forEach(header => {
+        header.addEventListener('click', () => {
+            toggleAtbatCard(header.closest('.atbat-card'));
+        });
+    });
+
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('chatInput');
+    const list = document.getElementById('chatList');
+    const chatCount = document.getElementById('chatCount');
+    const autoUpdateToggle = document.getElementById('autoUpdateToggle');
+    const sampleComments = [
+        ['line_drive', '지금은 한 점 차라서 주자 하나만 나가도 분위기 바로 바뀜'],
+        ['samsung_21', '장승현이 최소한 해준 타석이라 다음 타자 부담이 좀 줄었다'],
+        ['eagle_eye', '외야 깊숙한 타구였고 3루 주자는 당연히 들어오는 장면'],
+        ['kbo_today', '후라도 투구수가 올라가서 다음 이닝까지 볼지는 애매하네'],
+        ['bluepark', '불펜 타이밍이 오늘 경기 승부처일 듯'],
+        ['cleanup_4', '이 상황이면 벤치에서 대타 카드도 슬슬 생각할 수밖에 없음'],
+        ['scorebook', '방금 타구는 결과만 보면 희생플라이지만 앞선 볼카운트에서 파울로 버틴 게 컸고, 최소한 외야로 보낸 타석이라 득점까지 연결된 장면으로 봐야 함']
+    ];
+
+    function prepareMessage(node) {
+        const text = node.querySelector('.chat-text');
+        if (!text || node.dataset.ready) return;
+        node.dataset.ready = 'true';
+        requestAnimationFrame(() => {
+            text.classList.add('collapsed');
+            if (text.scrollHeight <= text.clientHeight + 2) {
+                text.classList.remove('collapsed');
+                return;
+            }
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'more-btn';
+            button.textContent = '더보기';
+            button.addEventListener('click', () => {
+                const expanded = !text.classList.toggle('collapsed');
+                button.textContent = expanded ? '접기' : '더보기';
+            });
+            node.appendChild(button);
+        });
+    }
+
+    function addComment(user, text) {
+        const node = document.createElement('div');
+        node.className = 'chat-msg';
+        node.innerHTML = `<div class="chat-user"><b>${user}</b><span>방금</span></div><div class="chat-text"></div>`;
+        node.querySelector('.chat-text').textContent = text;
+        list.prepend(node);
+        prepareMessage(node);
+        const messages = list.querySelectorAll('.chat-msg');
+        messages.forEach((message, index) => {
+            if (index > 29) message.remove();
+        });
+        updateChatCount();
+    }
+
+    function updateChatCount() {
+        if (chatCount) chatCount.textContent = list.querySelectorAll('.chat-msg').length;
+    }
+
+    list.querySelectorAll('.chat-msg').forEach(prepareMessage);
+    updateChatCount();
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        addComment('me', text);
+        input.value = '';
+    });
+
+    setInterval(() => {
+        if (autoUpdateToggle && !autoUpdateToggle.checked) return;
+        const [user, text] = sampleComments[Math.floor(Math.random() * sampleComments.length)];
+        addComment(user, text);
+    }, 4800);
+
+</script>
+<script src="/front-links.js"></script>
+</body>
+</html>
