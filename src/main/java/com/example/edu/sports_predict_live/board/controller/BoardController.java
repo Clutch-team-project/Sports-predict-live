@@ -153,7 +153,7 @@ public class BoardController {
         }
     }
 
-    @PostMapping
+    @PostMapping("/like")
     @ResponseBody
     public ResponseEntity<String> like(@RequestParam("boardId") Long boardId, Authentication authentication){
         try {
@@ -179,4 +179,6 @@ public class BoardController {
 //        }
 //    }
 
-}//
+
+
+}
