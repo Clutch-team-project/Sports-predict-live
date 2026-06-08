@@ -16,10 +16,12 @@ public class BoardLike {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 좋아요를 누른 게시물
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
-    private Board board; // 좋아요를 누른 게시물
+    private Board board;
 
+    // 좋아요를 누를 사용자 ID
     @Column(nullable = false)
-    private Long userId; // 좋아요를 누를 사용자 ID
+    private Long userId;
 }

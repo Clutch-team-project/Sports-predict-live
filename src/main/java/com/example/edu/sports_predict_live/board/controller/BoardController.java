@@ -97,7 +97,6 @@ public class BoardController {
         Long currentUserId = getCurrentUserId(authentication);
         boardDTO.setUserId(currentUserId);
 
-        // DB에 Insert 후 생성된 글 번호(boardId) 반환
         Long boardId = boardService.register(boardDTO);
 
         redirectAttributes.addFlashAttribute("result", boardId);
