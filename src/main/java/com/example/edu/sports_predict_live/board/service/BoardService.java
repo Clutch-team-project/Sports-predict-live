@@ -5,6 +5,8 @@ import com.example.edu.sports_predict_live.board.dto.BoardDTO;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
 import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,7 +17,8 @@ public interface BoardService {
     BoardDTO getBoardOnly(Long boardId); // 글 수정용(조회수 증가 X)
     void modify(BoardDTO boardDTO); // 글 수정
     void remove(Long boardID); // 글 삭제
-    void addLike(Long boardId); // 좋아요수 증가
+    void toggleLike(Long boardId, Long userId); // 좋아요수 증가
+    boolean checkIsLiked(Long boardId, Long userId);
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 

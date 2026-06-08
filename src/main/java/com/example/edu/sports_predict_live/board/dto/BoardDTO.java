@@ -36,6 +36,7 @@ public class BoardDTO {
     private int likeCount; // 좋아요수
     private int replyCount; // 댓글 개수
 
+    private boolean liked; // 좋아요 눌림 여부
     private boolean isNotice; // 공지 고정 여부
     private boolean isBlinded; // 블라인드 여부
     private boolean isDeleted; // 소프트 딜리트용

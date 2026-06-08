@@ -5,6 +5,8 @@ import com.example.edu.sports_predict_live.board.dto.BoardDTO;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
 import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
+import com.example.edu.sports_predict_live.board.entity.BoardLike;
+import com.example.edu.sports_predict_live.board.repository.BoardLikeRepository;
 import com.example.edu.sports_predict_live.board.repository.BoardRepository;
 import com.example.edu.sports_predict_live.user.entity.User;
 import com.example.edu.sports_predict_live.user.repository.UserRepository;
@@ -26,6 +28,7 @@ public class BoardServiceImpl implements BoardService{
     private final ModelMapper modelMapper;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
+    private final BoardLikeRepository boardLikeRepository;
 
     // 게시글 생성
     @Override
@@ -48,7 +51,6 @@ public class BoardServiceImpl implements BoardService{
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
         }
-
         return boardDTO;
     }
     // 게시글 수정용 게시글 상세확인(조회수 증가 X)
@@ -64,7 +66,6 @@ public class BoardServiceImpl implements BoardService{
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
         }
-
         return boardDTO;
     }
     // 게시글 수정
@@ -82,7 +83,6 @@ public class BoardServiceImpl implements BoardService{
                 } else {
                     board.addImage(java.util.UUID.randomUUID().toString(), fileName);
                 }
-
             }
         }
         boardRepository.save(board);
@@ -113,14 +113,37 @@ public class BoardServiceImpl implements BoardService{
     }
 
     @Override
-    public void addLike(Long boardId) {
-        // 게시글 조회
+    public void toggleLike(Long boardId, Long userId) {
+
         Optional<Board> result = boardRepository.findById(boardId);
         Board board = result.orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
-
-        // 좋아요수 증가
-        board.changeLikeCount(board.getLikeCount() + 1);
-
+        // 유저가 좋아요를 누른지 확인
+        Optional<BoardLike> boardLikeOp = boardLikeRepository.findByBoardAndUserId(board, userId);
+        // 이미 좋아요를 누른 경우
+        if(boardLikeOp.isPresent()) {
+            boardLikeRepository.delete(boardLikeOp.get());
+            board.changeLikeCount(board.getLikeCount() - 1);
+        } else {
+            BoardLike boardLike = BoardLike.builder()
+                    .board(board)
+                    .userId(userId)
+                    .build();
+            boardLikeRepository.save(boardLike);
+            board.changeLikeCount(board.getLikeCount() + 1);
+        }
         boardRepository.save(board);
     }
+
+    @Override
+    public boolean checkIsLiked(Long boardId, Long userId) {
+        if(userId == null){
+            return false;
+        }
+        Board board = Board.builder()
+                .boardId(boardId)
+                .build();
+        return boardLikeRepository.findByBoardAndUserId(board, userId).isPresent();
+    }
+
+
 }

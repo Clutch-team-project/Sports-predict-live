@@ -77,8 +77,14 @@ public class BoardController {
                 }
             }
         }
+        // 좋아요 눌렀는지 여부 확인
+        boolean isLiked = false;
+        if(currentUserId != null) {
+            isLiked = boardService.checkIsLiked(boardId, currentUserId);
+        }
 
         model.addAttribute("currentUserId", currentUserId);
+        model.addAttribute("isLiked", isLiked);
     }
 
     @GetMapping("/register")
@@ -157,9 +163,10 @@ public class BoardController {
     @ResponseBody
     public ResponseEntity<String> like(@RequestParam("boardId") Long boardId, Authentication authentication){
         try {
+            // 현재 로그인한 사용자 id 가져오기
             Long currentUserId = getCurrentUserId(authentication);
-            // 좋아요 수 증가
-            boardService.addLike(boardId);
+            // 좋아요 수 증가 or 감소
+            boardService.toggleLike(boardId, currentUserId);
 
             return ResponseEntity.ok("");
         } catch (IllegalArgumentException e) {

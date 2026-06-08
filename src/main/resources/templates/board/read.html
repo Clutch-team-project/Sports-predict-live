@@ -36,6 +36,13 @@
         }
         .like-btn:hover { background: #2563eb; border-color: #2563eb; color: #fff; }
 
+        .like-btn.is-active {
+            background: #2563eb; border-color: #2563eb; color: #fff;
+        }
+        .like-btn.is-active:hover {
+            background: #eff6ff; border-color: #bfdbfe; color: #2563eb;
+        }
+
         .action-btn {
             padding: 8px 16px; background: white; border: 1px solid #cbd5e1;
             color: #475569; border-radius: 8px; font-size: 12px; font-weight: 600;
@@ -124,7 +131,9 @@
             <hr class="divider">
 
             <div class="flex items-center gap-2 mb-5 flex-wrap">
-                <button type="button" id="btnLike" class="like-btn">♥ 좋아요 <span th:text="${dto.likeCount}">21</span></button>
+                <button type="button" id="btnLike" class="like-btn" th:classappend="${isLiked != null and isLiked} ? 'is-active' : ''">
+                    ♥ 좋아요 <span class="like-count-text" th:text="${dto.likeCount}">0</span>
+                </button>
 
                 <th:block th:if="${currentUserId != null and currentUserId == dto.userId}">
                     <button type="button" class="action-btn"
@@ -187,6 +196,9 @@
         const formData = new URLSearchParams();
         formData.append('boardId', boardId);
 
+        const likeBtn = document.getElementById('btnLike');
+        const countSpan = likeBtn.querySelector('.like-count-text');
+
         window.authFetch('/board/like', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -195,8 +207,18 @@
             .then(async res => {
                 const msg = await res.text();
                 if (res.ok) {
-                    location.reload(); // 좋아요 숫자 갱신을 위해 페이지 새로고침
+                    let currentCount = parseInt(countSpan.innerText);
+                    if(likeBtn.classList.contains('is-active')){
+                        // 좋아요가 눌려있던 상태에서 좋아요 취소
+                        likeBtn.classList.remove('is-active');
+                        countSpan.innerText = currentCount - 1;
+                    } else {
+                        // 좋아요가 안 눌려있던 상태에서 좋아요 추가
+                        likeBtn.classList.add('is-active');
+                        countSpan.innerText = currentCount + 1;
+                    }
                 } else {
+                    const msg = await res.text();
                     alert(msg || '오류가 발생했습니다.');
                 }
             })
