@@ -476,8 +476,8 @@
       <button class="btn-primary mb-4" onclick="doLogin()">로그인</button>
       <div class="social-divider"><span>또는 소셜 로그인</span></div>
       <div class="space-y-2">
-        <button class="btn-kakao">🟡 카카오 로그인</button>
-        <button class="btn-google">🔵 구글 로그인</button>
+        <button class="btn-kakao" onclick="location.href='/oauth2/authorization/kakao'">카카오 로그인</button>
+        <button class="btn-google" onclick="location.href='/oauth2/authorization/google'">구글 로그인</button>
       </div>
       <div class="flex justify-center gap-4 mt-5">
         <button class="btn-ghost" onclick="location.href='/find-id'">아이디 찾기</button>

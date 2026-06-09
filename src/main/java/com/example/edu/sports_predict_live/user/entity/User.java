@@ -19,7 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(unique = true, nullable = false, length = 20)
+    @Column(unique = true, nullable = false, length = 50)
     private String loginId;
 
     @Column(unique = true, nullable = false, length = 255)
@@ -27,6 +27,13 @@ public class User {
 
     @Column(length = 255)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private Provider provider = Provider.LOCAL;
+
+    @Column(length = 100)
+    private String socialId;
 
     @Column(nullable = false, length = 20)
     private String name;
@@ -66,7 +73,8 @@ public class User {
 
     @Builder
     public User(String loginId, String email, String password,
-                String name, String nickname, String phone, LocalDate birthDate) {
+                String name, String nickname, String phone, LocalDate birthDate,
+                Provider provider, String socialId, String profileImage) {
         this.loginId = loginId;
         this.email = email;
         this.password = password;
@@ -74,6 +82,9 @@ public class User {
         this.nickname = nickname;
         this.phone = phone;
         this.birthDate = birthDate;
+        this.provider = provider != null ? provider : Provider.LOCAL;
+        this.socialId = socialId;
+        this.profileImage = profileImage;
     }
 
     public void updatePassword(String encodedPassword) {
@@ -94,6 +105,10 @@ public class User {
         if (phone != null) this.phone = phone;
         if (birthDate != null) this.birthDate = birthDate;
         if (profileImage != null) this.profileImage = profileImage;
+    }
+
+    public void updateSocialId(String socialId) {
+        this.socialId = socialId;
     }
 
     public void delete() {

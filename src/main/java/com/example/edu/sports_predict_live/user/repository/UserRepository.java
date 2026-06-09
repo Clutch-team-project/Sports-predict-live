@@ -1,5 +1,6 @@
 package com.example.edu.sports_predict_live.user.repository;
 
+import com.example.edu.sports_predict_live.user.entity.Provider;
 import com.example.edu.sports_predict_live.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByLoginIdAndDeletedAtIsNull(String loginId);
 
     Optional<User> findByEmailAndDeletedAtIsNull(String email);
+
+    Optional<User> findBySocialIdAndProvider(String socialId, Provider provider);
 }
