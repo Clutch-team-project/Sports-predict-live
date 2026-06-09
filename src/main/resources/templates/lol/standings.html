@@ -184,6 +184,40 @@
     const BASE_URL = 'http://localhost:8080';
     let standingData = [];
     let playerData   = [];
+
+    // ── 관심 팀 ──────────────────────────────────────────────────────────────
+    let favoriteIds = new Set();
+
+    async function loadFavoriteIds() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/ids`);
+            if (res.ok) favoriteIds = new Set(await res.json());
+        } catch (e) { /* 비로그인 시 무시 */ }
+    }
+
+    async function toggleFavorite(e, teamId) {
+        e.stopPropagation();
+        if (!localStorage.getItem('accessToken')) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+        const btn = e.currentTarget;
+        const isFav = favoriteIds.has(teamId);
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/${teamId}`, { method: isFav ? 'DELETE' : 'POST' });
+            if (res.ok) {
+                if (isFav) favoriteIds.delete(teamId); else favoriteIds.add(teamId);
+                btn.textContent = favoriteIds.has(teamId) ? '★' : '☆';
+                btn.classList.toggle('text-yellow-400', favoriteIds.has(teamId));
+                btn.classList.toggle('text-slate-300',  !favoriteIds.has(teamId));
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function starBtn(teamId) {
+        const isFav = favoriteIds.has(teamId);
+        return `<button onclick="toggleFavorite(event,${teamId})" class="text-lg leading-none ${isFav ? 'text-yellow-400' : 'text-slate-300'} hover:text-yellow-400 transition-colors">${isFav ? '★' : '☆'}</button>`;
+    }
     let recordData   = [];
     let loaded = { standing: false, player: false, record: false };
 
@@ -282,6 +316,7 @@
                 <td class="p-4 text-center">${t.losses}</td>
                 <td class="p-4 text-center font-bold text-blue-600">${t.winRate ? (t.winRate * 100).toFixed(1) + '%' : '-'}</td>
                 <td class="p-4"><div class="flex gap-1 justify-center">${renderForm(t.recentForm)}</div></td>
+                <td class="p-4 text-center">${starBtn(t.teamId)}</td>
             </tr>`).join('');
     }
 
@@ -365,7 +400,7 @@
     // ── 초기화 ───────────────────────────────────────────────────────────────
     initSort('standing', () => standingData, renderStanding, 'winRate', 'desc');
     initSort('record',   () => recordData,   renderRecord,   'kda',     'desc');
-    loadStanding();
+    loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>
 </html>

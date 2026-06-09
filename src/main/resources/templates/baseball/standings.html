@@ -136,6 +136,7 @@
                         <th class="p-3.5 text-center sort-th" data-table="standing" data-key="losses">패<span class="sort-icon">↕</span></th>
                         <th class="p-3.5 text-center sort-th" data-table="standing" data-key="draws">무<span class="sort-icon">↕</span></th>
                         <th class="p-3.5 text-center">최근5경기</th>
+                        <th class="p-3.5 text-center">관심</th>
                     </tr>
                     </thead>
                     <tbody id="standing-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
@@ -264,6 +265,48 @@
     let pitcherData  = [];
     let loaded = { standing: false, team: false, hitter: false, pitcher: false };
 
+    // ── 관심 팀 ──────────────────────────────────────────────────────────────
+    let favoriteIds = new Set();
+
+    async function loadFavoriteIds() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/ids`);
+            if (res.ok) {
+                const ids = await res.json();
+                favoriteIds = new Set(ids);
+            }
+        } catch (e) { /* 비로그인 시 무시 */ }
+    }
+
+    async function toggleFavorite(e, teamId) {
+        e.stopPropagation();
+        if (!localStorage.getItem('accessToken')) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+        const btn = e.currentTarget;
+        const isFav = favoriteIds.has(teamId);
+        const method = isFav ? 'DELETE' : 'POST';
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/${teamId}`, { method });
+            if (res.ok) {
+                if (isFav) favoriteIds.delete(teamId);
+                else       favoriteIds.add(teamId);
+                btn.textContent = favoriteIds.has(teamId) ? '★' : '☆';
+                btn.classList.toggle('text-yellow-400', favoriteIds.has(teamId));
+                btn.classList.toggle('text-slate-300',  !favoriteIds.has(teamId));
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function starBtn(teamId) {
+        const isFav = favoriteIds.has(teamId);
+        return `<button onclick="toggleFavorite(event, ${teamId})"
+            class="text-lg leading-none ${isFav ? 'text-yellow-400' : 'text-slate-300'} hover:text-yellow-400 transition-colors">
+            ${isFav ? '★' : '☆'}
+        </button>`;
+    }
+
     // ── 정렬 ────────────────────────────────────────────────────────────────
     const sortState = {};
 
@@ -354,6 +397,7 @@
                 <td class="p-4 text-center">${t.losses}</td>
                 <td class="p-4 text-center">${t.draws}</td>
                 <td class="p-4"><div class="flex gap-1 justify-center">${renderForm(t.recentForm)}</div></td>
+                <td class="p-4 text-center">${starBtn(t.teamId)}</td>
             </tr>`).join('');
     }
 
@@ -460,7 +504,7 @@
     initSort('team',     () => standingData, renderTeam,     'diff',    'desc');
     initSort('hitter',   () => hitterData,   renderHitters,  'battingAvg', 'desc');
     initSort('pitcher',  () => pitcherData,  renderPitchers, 'era',     'asc');
-    loadStanding();
+    loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>
 </html>

@@ -53,10 +53,10 @@ public class User {
     private boolean marketingAgreed = false;
 
     @Column(nullable = false)
-    private boolean matchStartAlert = true;
+    private boolean matchStartAlert = false;
 
     @Column(nullable = false)
-    private boolean predictionResultAlert = true;
+    private boolean predictionResultAlert = false;
 
     @Column(nullable = false)
     private int alertBeforeMinutes = 30;
@@ -74,7 +74,8 @@ public class User {
     @Builder
     public User(String loginId, String email, String password,
                 String name, String nickname, String phone, LocalDate birthDate,
-                Provider provider, String socialId, String profileImage) {
+                Provider provider, String socialId, String profileImage,
+                boolean marketingAgreed, boolean matchStartAlert, boolean predictionResultAlert) {
         this.loginId = loginId;
         this.email = email;
         this.password = password;
@@ -85,6 +86,9 @@ public class User {
         this.provider = provider != null ? provider : Provider.LOCAL;
         this.socialId = socialId;
         this.profileImage = profileImage;
+        this.marketingAgreed = marketingAgreed;
+        this.matchStartAlert = matchStartAlert;
+        this.predictionResultAlert = predictionResultAlert;
     }
 
     public void updatePassword(String encodedPassword) {

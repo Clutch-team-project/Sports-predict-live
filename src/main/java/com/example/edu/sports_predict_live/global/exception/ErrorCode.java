@@ -29,7 +29,12 @@ public enum ErrorCode {
 
     INVALID_TOKEN(401, "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(401, "만료된 토큰입니다."),
-    UNAUTHORIZED(401, "로그인이 필요합니다.");
+    UNAUTHORIZED(401, "로그인이 필요합니다."),
+
+    // 팀
+    TEAM_NOT_FOUND(404, "존재하지 않는 팀입니다."),
+    ALREADY_FAVORITE(409, "이미 관심 팀으로 등록되어 있습니다."),
+    FAVORITE_NOT_FOUND(404, "등록되지 않은 관심 팀입니다.");
 
     private final int status;
     private final String message;

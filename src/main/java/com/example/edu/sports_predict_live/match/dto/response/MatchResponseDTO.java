@@ -9,6 +9,8 @@ import java.time.format.DateTimeFormatter;
 public class MatchResponseDTO {
 
     private final Long   matchId;
+    private final Long   homeTeamId;
+    private final Long   awayTeamId;
     private final String homeTeamName;
     private final String awayTeamName;
     private final String homeTeamEmblem;
@@ -25,6 +27,8 @@ public class MatchResponseDTO {
 
     public MatchResponseDTO(Match match) {
         this.matchId         = match.getMatchId();
+        this.homeTeamId      = match.getHomeTeam().getTeamId();
+        this.awayTeamId      = match.getAwayTeam().getTeamId();
         this.homeTeamName    = match.getHomeTeam().getName();
         this.awayTeamName    = match.getAwayTeam().getName();
         this.homeTeamEmblem  = match.getHomeTeam().getEmblemUrl();
