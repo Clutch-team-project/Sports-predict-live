@@ -15,6 +15,14 @@
     }
     sessionStorage.setItem('sessionActive', '1');
 
+    /*  팀/선수 상세 페이지 이동 (id 없으면 무시 — LOL 미매칭 팀 방어)  */
+    window.goTeamDetail = function (teamId) {
+        if (teamId) location.href = '/team-detail?id=' + teamId;
+    };
+    window.goPlayerDetail = function (playerId) {
+        if (playerId) location.href = '/player-detail?id=' + playerId;
+    };
+
     /*  인증 API 공통 fetch (토큰 만료 시 자동 재발급)  */
     window.authFetch = async function (url, options) {
         options = options || {};

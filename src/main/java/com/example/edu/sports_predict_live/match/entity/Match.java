@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+// 경기 일정/결과 — KBO·K리그 전용 (LOL 경기는 lolesports API 실시간 조회)
 @Entity
 @Table(name = "`match`")
 @Getter

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
+// 공통 예외 처리 — {status, message} JSON 응답으로 변환
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

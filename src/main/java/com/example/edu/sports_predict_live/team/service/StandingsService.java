@@ -1,6 +1,7 @@
 package com.example.edu.sports_predict_live.team.service;
 
 import com.example.edu.sports_predict_live.team.dto.response.StandingsResponseDTO;
+import com.example.edu.sports_predict_live.team.repository.TeamRepository;
 import com.example.edu.sports_predict_live.team.repository.TeamSeasonStatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,12 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+// 팀 순위 조회 — KBO/K리그는 DB(team_season_stat), LOL은 lolesports API 실시간 호출
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StandingsService {
 
     private final TeamSeasonStatRepository teamSeasonStatRepository;
+    private final TeamRepository teamRepository;
 
     private static final String CURRENT_SEASON  = "2026";
     private static final String LOL_API_KEY      = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z";
@@ -61,6 +64,12 @@ public class StandingsService {
                 (List<Map<String, Object>>) ((Map<?, ?>) response.get("data")).get("standings");
         if (standingsList == null) return List.of();
 
+        // DB LOL 팀명 → teamId 매핑 (상세 페이지/관심 팀 연동용)
+        // DB team.name은 lolesports API의 code 값("T1", "GEN" 등)으로 저장됨
+        Map<String, Long> teamIdByCode = new java.util.HashMap<>();
+        teamRepository.findBySportCode("lol").forEach(t ->
+                teamIdByCode.put(t.getName().toLowerCase(), t.getTeamId()));
+
         List<StandingsResponseDTO> results = new ArrayList<>();
         for (Map<String, Object> tournament : standingsList) {
             List<Map<String, Object>> stages =
@@ -85,9 +94,15 @@ public class StandingsService {
                             Map<String, Object> record = (Map<String, Object>) team.get("record");
                             int wins   = record != null ? (int) record.get("wins")   : 0;
                             int losses = record != null ? (int) record.get("losses") : 0;
+                            String teamName = (String) team.get("name");
+                            String teamCode = (String) team.get("code");
+                            Long teamId = teamCode != null
+                                    ? teamIdByCode.get(teamCode.toLowerCase())
+                                    : null;
                             results.add(new StandingsResponseDTO(
+                                    teamId,
                                     ordinal,
-                                    (String) team.get("name"),
+                                    teamName,
                                     (String) team.getOrDefault("image", ""),
                                     wins,
                                     losses

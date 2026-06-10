@@ -35,9 +35,9 @@ public class StandingsResponseDTO {
         this.recentForm    = stat.getRecentForm();
     }
 
-    // lolesports API 응답으로 생성 (LoL 전용)
-    public StandingsResponseDTO(int rank, String teamName, String emblemUrl, int wins, int losses) {
-        this.teamId        = null;
+    // lolesports API 응답으로 생성 (LoL 전용) — teamId는 DB 팀명 매칭 결과 (없으면 null)
+    public StandingsResponseDTO(Long teamId, int rank, String teamName, String emblemUrl, int wins, int losses) {
+        this.teamId        = teamId;
         this.teamName      = teamName;
         this.emblemUrl     = emblemUrl;
         this.rank          = rank;

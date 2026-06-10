@@ -18,4 +18,16 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
         ORDER BY t.name ASC, p.name ASC
     """)
     List<Player> findBySportCode(@Param("sportCode") String sportCode);
+
+    // 팀 소속 선수 목록 조회 (팀 상세 페이지용)
+    List<Player> findByTeam_TeamIdOrderByNameAsc(Long teamId);
+
+    // 선수 상세 조회 (팀 + 종목 함께 로드)
+    @Query("""
+        SELECT p FROM Player p
+        JOIN FETCH p.team t
+        JOIN FETCH t.sport s
+        WHERE p.playerId = :playerId
+    """)
+    java.util.Optional<Player> findByIdWithTeam(@Param("playerId") Long playerId);
 }

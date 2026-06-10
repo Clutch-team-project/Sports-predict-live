@@ -35,6 +35,7 @@ public class SecurityConfig {
             "/api/standings/**",    // 팀 순위
             "/api/records/**",      // 선수 기록
             "/api/players/**",      // 선수 목록
+            "/api/teams/**",        // 팀 정보
             "/api/schedule/**",     // 경기 일정
             "/oauth2/**",           // OAuth2 인증
             "/login/oauth2/**"      // OAuth2 콜백
@@ -48,6 +49,7 @@ public class SecurityConfig {
             "/find-id", "/find-password", "/change-password",
             "/prediction-history", "/user-info",
             "/baseball/**", "/soccer/**", "/lol/**",
+            "/team-detail", "/player-detail",
     };
 
     // 공개 정적 리소스

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// 팀 기본 정보 — LOL 팀의 name은 lolesports 코드 값(T1, GEN 등)으로 저장
 @Entity
 @Table(name = "team")
 @Getter

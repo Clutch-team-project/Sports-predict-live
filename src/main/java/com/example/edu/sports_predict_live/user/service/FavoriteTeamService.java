@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+// 관심 팀 등록/해제/조회 (user_favorite_team — 유저:팀 다대다)
 @Service
 @RequiredArgsConstructor
 public class FavoriteTeamService {
@@ -23,7 +24,6 @@ public class FavoriteTeamService {
     private final TeamRepository teamRepository;
     private final UserFavoriteTeamRepository favoriteTeamRepository;
 
-    // 관심 팀 목록 조회
     @Transactional(readOnly = true)
     public List<FavoriteTeamResponseDTO> getFavorites(Long userId) {
         return favoriteTeamRepository.findByUserIdWithTeam(userId)
@@ -32,13 +32,11 @@ public class FavoriteTeamService {
                 .toList();
     }
 
-    // 관심 팀 ID 목록 조회 (프론트 ★ 초기화용)
     @Transactional(readOnly = true)
     public List<Long> getFavoriteTeamIds(Long userId) {
         return favoriteTeamRepository.findTeamIdsByUserId(userId);
     }
 
-    // 관심 팀 추가
     @Transactional
     public void addFavorite(Long userId, Long teamId) {
         if (favoriteTeamRepository.existsByUser_UserIdAndTeam_TeamId(userId, teamId)) {
@@ -53,7 +51,6 @@ public class FavoriteTeamService {
         favoriteTeamRepository.save(new UserFavoriteTeam(user, team));
     }
 
-    // 관심 팀 삭제
     @Transactional
     public void removeFavorite(Long userId, Long teamId) {
         UserFavoriteTeam favorite = favoriteTeamRepository

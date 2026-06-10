@@ -309,7 +309,7 @@
             return;
         }
         tbody.innerHTML = data.map((t, i) => `
-            <tr class="table-row cursor-pointer" onclick="location.href='/lol/team/${t.teamId}'">
+            <tr class="table-row cursor-pointer" onclick="goTeamDetail(${t.teamId})">
                 <td class="p-4 pl-6 font-black ${rankClass(i)}">${t.rank ?? i + 1}</td>
                 <td class="p-4 font-black text-slate-900">${t.teamName}</td>
                 <td class="p-4 text-center">${t.wins}</td>
@@ -340,7 +340,7 @@
             return;
         }
         tbody.innerHTML = data.map((p, i) => `
-            <tr class="table-row cursor-pointer" onclick="location.href='/lol/player/${p.playerId}'">
+            <tr class="table-row cursor-pointer" onclick="goPlayerDetail(${p.playerId})">
                 <td class="p-4 pl-6 font-black text-blue-600">${i + 1}</td>
                 <td class="p-4 font-black text-slate-900">${p.playerName}</td>
                 <td class="p-4 text-slate-500">${p.teamName}</td>
@@ -382,7 +382,7 @@
             return;
         }
         tbody.innerHTML = data.map(p => `
-            <tr class="table-row cursor-pointer" onclick="location.href='/lol/player/${p.playerId}'">
+            <tr class="table-row cursor-pointer" onclick="goPlayerDetail(${p.playerId})">
                 <td class="p-4 pl-6 font-black text-slate-900">${p.playerName}</td>
                 <td class="p-4 text-slate-500">${p.teamName}</td>
                 <td class="p-4 text-center">

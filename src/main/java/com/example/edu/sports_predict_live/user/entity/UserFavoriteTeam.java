@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+// 관심 팀 — 유저:팀 다대다 연결 (유저당 같은 팀 중복 등록 불가)
 @Entity
 @Table(name = "user_favorite_team",
         uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "team_id"}))

@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
+// 회원 가입/로그인/토큰 재발급/내 정보 관리 (조회·수정·비밀번호 변경·탈퇴)
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,7 +30,6 @@ public class UserService {
     private final JwtProvider jwtProvider;
 
     public UserResponseDTO signup(SignupRequestDTO dto) {
-        // 이메일 인증 완료 여부 확인
         EmailVerify verify = emailVerifyRepository
                 .findTopByEmailAndPurposeOrderByCreatedAtDesc(dto.getEmail(), "signup")
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_VERIFIED));
@@ -37,7 +37,6 @@ public class UserService {
         if (!verify.isVerified())
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
 
-        // 중복 검사
         if (userRepository.existsByLoginId(dto.getLoginId()))
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         if (userRepository.existsByEmail(dto.getEmail()))
@@ -62,15 +61,12 @@ public class UserService {
     }
 
     public TokenResponseDTO login(LoginRequestDTO dto) {
-        // 회원 조회
         User user = userRepository.findByLoginIdAndDeletedAtIsNull(dto.getLoginId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 비밀번호 확인
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword()))
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
 
-        // 토큰 발급
         String accessToken = jwtProvider.createAccessToken(user.getUserId());
         String refreshToken = jwtProvider.createRefreshToken(user.getUserId());
 
@@ -91,20 +87,16 @@ public class UserService {
     }
 
     public ReissueResponseDTO reissue(String refreshToken) {
-        // 토큰 유효성 검사
         if (!jwtProvider.validateToken(refreshToken))
             throw new CustomException(ErrorCode.INVALID_TOKEN);
 
-        // Refresh Token 타입 확인
         if (!jwtProvider.isRefreshToken(refreshToken))
             throw new CustomException(ErrorCode.INVALID_TOKEN);
 
-        // 회원 조회
         Long userId = jwtProvider.getUserId(refreshToken);
         userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 새 토큰 발급
         String newAccessToken = jwtProvider.createAccessToken(userId);
         String newRefreshToken = jwtProvider.createRefreshToken(userId);
 
@@ -113,7 +105,6 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Map<String, String> findLoginId(String email, String code) {
-        // 이메일 인증 확인
         EmailVerify verify = emailVerifyRepository
                 .findTopByEmailAndPurposeOrderByCreatedAtDesc(email, "find_id")
                 .orElseThrow(() -> new CustomException(ErrorCode.VERIFY_NOT_FOUND));
@@ -121,7 +112,6 @@ public class UserService {
         if (!verify.isVerified())
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
 
-        // 회원 조회
         User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
 
@@ -130,7 +120,6 @@ public class UserService {
 
     @Transactional
     public void resetPassword(ResetPasswordRequestDTO dto) {
-        // 이메일 인증 확인
         EmailVerify verify = emailVerifyRepository
                 .findTopByEmailAndPurposeOrderByCreatedAtDesc(dto.getEmail(), "reset_pw")
                 .orElseThrow(() -> new CustomException(ErrorCode.VERIFY_NOT_FOUND));
@@ -138,7 +127,6 @@ public class UserService {
         if (!verify.isVerified())
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
 
-        // 회원 조회 후 비밀번호 변경
         User user = userRepository.findByEmailAndDeletedAtIsNull(dto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
 

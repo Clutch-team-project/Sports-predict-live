@@ -15,9 +15,7 @@ public class StandingsController {
 
     private final StandingsService standingsService;
 
-    // GET /api/standings/baseball
-    // GET /api/standings/soccer
-    // GET /api/standings/lol
+    // GET /api/standings/{sport} — baseball/soccer는 DB, lol은 lolesports API 실시간 조회
     @GetMapping("/{sport}")
     public ResponseEntity<List<StandingsResponseDTO>> getStandings(
             @PathVariable String sport) {

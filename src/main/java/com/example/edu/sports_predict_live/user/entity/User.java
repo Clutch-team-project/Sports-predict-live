@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// 회원 — 일반(LOCAL) 및 소셜(GOOGLE/KAKAO) 계정 통합, 탈퇴는 deletedAt 소프트 삭제
 @Entity
 @Table(name = "users")
 @Getter

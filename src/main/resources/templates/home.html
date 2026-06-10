@@ -715,7 +715,9 @@ public BoardResponseDto(Board board) {
         // 3. 관심 팀 여부 판별
         function isFavoriteMatch(m) {
             if (m.sport === 'lol') {
-                return favoriteNames.has(m.homeTeamName) || favoriteNames.has(m.awayTeamName);
+                // DB 팀명은 lolesports 코드("T1", "GEN" 등)로 저장되므로 code 우선, 풀네임도 함께 비교
+                return favoriteNames.has(m.homeTeamCode) || favoriteNames.has(m.awayTeamCode)
+                    || favoriteNames.has(m.homeTeamName) || favoriteNames.has(m.awayTeamName);
             }
             return favoriteIds.has(Number(m.homeTeamId)) || favoriteIds.has(Number(m.awayTeamId));
         }

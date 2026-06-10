@@ -34,7 +34,10 @@ public enum ErrorCode {
     // 팀
     TEAM_NOT_FOUND(404, "존재하지 않는 팀입니다."),
     ALREADY_FAVORITE(409, "이미 관심 팀으로 등록되어 있습니다."),
-    FAVORITE_NOT_FOUND(404, "등록되지 않은 관심 팀입니다.");
+    FAVORITE_NOT_FOUND(404, "등록되지 않은 관심 팀입니다."),
+
+    // 선수
+    PLAYER_NOT_FOUND(404, "존재하지 않는 선수입니다.");
 
     private final int status;
     private final String message;

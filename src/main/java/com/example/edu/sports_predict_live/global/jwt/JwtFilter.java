@@ -12,6 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
+// 요청 헤더의 access 토큰을 검증해 SecurityContext에 userId를 저장하는 필터
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
@@ -26,10 +27,9 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         if (token != null && jwtProvider.validateToken(token)) {
-            // access 토큰인지 확인
+            // refresh 토큰으로는 API 인증 불가 — access 타입만 허용
             if ("access".equals(jwtProvider.getTokenType(token))) {
                 Long userId = jwtProvider.getUserId(token);
-                // SecurityContext에 인증 정보 저장
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
                                 userId, null, Collections.emptyList());
@@ -40,7 +40,6 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // Authorization: Bearer {token} 에서 토큰 추출
     private String resolveToken(HttpServletRequest request) {
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+// 이메일 인증 — 6자리 코드 발송/검증 (유효시간 10분)
 @Service
 @Slf4j
 @RequiredArgsConstructor

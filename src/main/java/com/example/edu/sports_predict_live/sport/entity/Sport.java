@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// 종목 마스터 — code: baseball / soccer / lol
 @Entity
 @Table(name = "sport")
 @Getter

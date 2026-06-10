@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+// 경기 일정 조회 — KBO/K리그는 DB(match 테이블), LOL은 lolesports API 실시간 호출
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -20,7 +21,7 @@ public class ScheduleService {
 
     private final MatchRepository matchRepository;
 
-    //  lolesports API 설정 
+    // lolesports API 설정
     private static final String LOL_API_KEY      = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z";
     private static final String LOL_API_BASE     = "https://esports-api.lolesports.com/persisted/gw";
     private static final String LCK_LEAGUE_ID    = "98767991310872058";
@@ -30,7 +31,6 @@ public class ScheduleService {
             .defaultHeader("x-api-key", LOL_API_KEY)
             .build();
 
-    //  KBO / K리그: DB 조회 
     public List<MatchResponseDTO> getSchedule(String sport, String dateStr) {
         LocalDate date = (dateStr != null)
                 ? LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"))
@@ -42,7 +42,6 @@ public class ScheduleService {
                 .toList();
     }
 
-    //  LOL: lolesports API 실시간 호출 
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getLolSchedule(String dateStr) {
         LocalDate targetDate = (dateStr != null)
@@ -68,14 +67,10 @@ public class ScheduleService {
         if (events == null) return results;
 
         for (Map<String, Object> event : events) {
-            // 날짜 필터링
-            String startTime = (String) event.get("startTime"); // "2026-04-10T10:00:00Z"
+            String startTime = (String) event.get("startTime"); // UTC, 예: "2026-04-10T10:00:00Z"
             if (startTime == null) continue;
 
-            // UTC → KST (+9) 날짜 변환
-            LocalDate eventDate = LocalDate.parse(startTime.substring(0, 10))
-                    .plusDays(startTime.contains("T1") ? 1 : 0); // 10시 이후면 KST 다음날
-            // 간단하게: startTime 앞 10자(날짜) 기준으로 KST 보정
+            // UTC → KST(+9) 날짜 변환 후 조회 날짜만 필터링
             int hour = Integer.parseInt(startTime.substring(11, 13));
             LocalDate kstDate = (hour + 9 >= 24)
                     ? LocalDate.parse(startTime.substring(0, 10)).plusDays(1)
@@ -83,7 +78,6 @@ public class ScheduleService {
 
             if (!kstDate.equals(targetDate)) continue;
 
-            // match 타입만
             if (!"match".equals(event.get("type"))) continue;
 
             Map<String, Object> match = (Map<String, Object>) event.get("match");
@@ -97,12 +91,10 @@ public class ScheduleService {
             Map<String, Object> result1 = (Map<String, Object>) team1.get("result");
             Map<String, Object> result2 = (Map<String, Object>) team2.get("result");
 
-            // KST 시간 계산
             int kstHour = (hour + 9) % 24;
             int kstMinute = Integer.parseInt(startTime.substring(14, 16));
             String kstTime = String.format("%02d:%02d", kstHour, kstMinute);
 
-            // 경기 상태
             String state = (String) event.get("state");
             String status = switch (state != null ? state : "") {
                 case "completed" -> "finished";
