@@ -697,6 +697,9 @@
             // 토큰 저장 후 URL 파라미터 제거 (보안)
             localStorage.setItem('accessToken',  accessToken);
             localStorage.setItem('refreshToken', refreshToken);
+            // 소셜 로그인은 체크박스가 없으므로 자동 로그인으로 처리
+            localStorage.setItem('autoLogin', 'true');
+            sessionStorage.setItem('sessionActive', '1');
             history.replaceState(null, '', '/login-success');
 
             // 유저 정보 조회

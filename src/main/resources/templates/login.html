@@ -551,6 +551,11 @@ async function doLogin() {
     localStorage.setItem('nickname',     data.nickname || '');
     localStorage.setItem('loginId',      data.loginId  || '');
 
+    // 자동 로그인 설정 (로그인 상태 유지 체크 여부)
+    const stayLogin = document.getElementById('stay-login').classList.contains('checked');
+    localStorage.setItem('autoLogin', stayLogin ? 'true' : 'false');
+    sessionStorage.setItem('sessionActive', '1');
+
     location.href = '/login-success';
 
   } catch (e) {

@@ -1,5 +1,20 @@
 (function () {
 
+    /*  자동 로그인 체크  */
+    // 로그인 시 "로그인 상태 유지" 미선택(autoLogin !== 'true')이면
+    // 브라우저 종료 후 재방문 시(sessionStorage 마커 소실) 토큰을 제거한다.
+    if (localStorage.getItem('accessToken')
+        && localStorage.getItem('autoLogin') !== 'true'
+        && !sessionStorage.getItem('sessionActive')) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('nickname');
+        localStorage.removeItem('loginId');
+        localStorage.removeItem('autoLogin');
+    }
+    sessionStorage.setItem('sessionActive', '1');
+
     /*  인증 API 공통 fetch (토큰 만료 시 자동 재발급)  */
     window.authFetch = async function (url, options) {
         options = options || {};
@@ -213,10 +228,12 @@
                         headers: {'Authorization': 'Bearer ' + token}
                     }).finally(function () {
                         localStorage.clear();
+                        sessionStorage.removeItem('sessionActive');
                         location.href = files.member;
                     });
                 } else {
                     localStorage.clear();
+                    sessionStorage.removeItem('sessionActive');
                     location.href = files.member;
                 }
             });
