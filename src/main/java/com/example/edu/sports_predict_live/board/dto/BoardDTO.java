@@ -30,7 +30,7 @@ public class BoardDTO {
     private String title;
 
     @NotEmpty
-    private String content; // 내용
+    private String content;
 
     private int viewCount;
     private int likeCount;

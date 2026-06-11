@@ -42,7 +42,7 @@ public class BoardController {
             return user.getUserId();
         }
     }
-
+    // board -> board/list 로 이동
     @GetMapping({"", "/"})
     public String index() {
         return "redirect:/board/list";
@@ -121,23 +121,19 @@ public class BoardController {
         }
 
         try {
-            // 현재 로그인한 유저 ID 추출
             Long currentUserId = getCurrentUserId(authentication);
             BoardDTO existingBoard = boardService.getBoardOnly(boardDTO.getBoardId());
 
-            // DB에 userId가 null인 경우의 에러 방지 처리
             if (existingBoard.getUserId() == null || !existingBoard.getUserId().equals(currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("수정 권한이 없습니다.");
             }
 
-            // 정상적으로 권한이 확인되면 수정 진행
             boardDTO.setUserId(currentUserId);
             boardService.modify(boardDTO);
             return ResponseEntity.ok("success");
 
         } catch (Exception e) {
             log.error("게시글 수정 중 오류 발생: ", e);
-            // 에러가 났을 때 정확한 이유를 프론트엔드에 전달
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
         }
     }
@@ -149,7 +145,6 @@ public class BoardController {
             Long currentUserId = getCurrentUserId(authentication);
             BoardDTO existingBoard = boardService.getBoardOnly(boardId);
 
-            // 작성자 비교
             if (!existingBoard.getUserId().equals(currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("삭제 권한이 없습니다.");
             }
@@ -166,9 +161,7 @@ public class BoardController {
     @ResponseBody
     public ResponseEntity<String> like(@RequestParam("boardId") Long boardId, Authentication authentication){
         try {
-            // 현재 로그인한 사용자 id 가져오기
             Long currentUserId = getCurrentUserId(authentication);
-            // 좋아요 수 증가 or 감소
             boardService.toggleLike(boardId, currentUserId);
 
             return ResponseEntity.ok("");

@@ -30,5 +30,5 @@ public class BoardListAllDTO {
 
     private Long replyCount;
 
-    private List<String> fileNames; // 첨부파일 이름 목록('uuid_파일명' 형태)
+    private List<String> fileNames;
 }

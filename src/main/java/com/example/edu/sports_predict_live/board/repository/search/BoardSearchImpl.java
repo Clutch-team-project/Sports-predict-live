@@ -3,6 +3,7 @@ package com.example.edu.sports_predict_live.board.repository.search;
 import com.example.edu.sports_predict_live.board.entity.Board;
 import com.example.edu.sports_predict_live.board.entity.QBoard;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
+import com.example.edu.sports_predict_live.board.entity.QBoardReply;
 import com.example.edu.sports_predict_live.user.entity.QUser;
 import com.example.edu.sports_predict_live.user.entity.User;
 import com.querydsl.core.BooleanBuilder;
@@ -25,11 +26,11 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
     public Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, String category, String sort, Pageable pageable) {
         QBoard board = QBoard.board;
         QUser user = QUser.user;
-//        QReply reply = QReply.reply; // 댓글기능 추가 후 주석 해제
+        QBoardReply reply = QBoardReply.boardReply;
 
         JPQLQuery<Board> query = from(board);
         query.leftJoin(user).on(board.userId.eq(user.userId));
-//        query.leftJoin(reply).on(reply.board.eq(board)); // 댓글기능 추가 후 주석 해제
+        query.leftJoin(reply).on(reply.board.eq(board));
 
         // 검색 조건 처리
         if((types != null && types.length > 0) && keyword != null) {
@@ -75,13 +76,11 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         query.where(board.boardId.gt(0L));
         query.where(board.deletedAt.isNull());
-
-//        query.groupBy(board); // 댓글기능 추가 후 주석 해제
+        query.groupBy(board);
 
         this.getQuerydsl().applyPagination(pageable, query);
 
-        JPQLQuery<Tuple> tupleQuery = query.select(board, user);
-//        JPQLQuery<Tuple> tupleQuery = query.select(board, user, reply.countDistinct()); // 댓글기능 추가 후 주석 해제 시 변경
+        JPQLQuery<Tuple> tupleQuery = query.select(board, user, reply.countDistinct());
 
         List<Tuple> tupleList = tupleQuery.fetch();
         long count = query.fetchCount();
@@ -89,7 +88,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
         List<BoardListAllDTO> dtoList = tupleList.stream().map(tuple -> {
             Board b = tuple.get(board);
             User u = tuple.get(user);
-//            Long replyCount = tuple.get(reply.countDistinct()); // 댓글기능 추가 후 주석 해제
+            Long replyCount = tuple.get(reply.countDistinct());
 
             List<String> fileNames = b.getImageSet().stream().sorted()
                     .map(img -> img.getUuid() + "_" + img.getFileName())
@@ -110,8 +109,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
                     .createdAt(b.getCreatedAt())
                     .updatedAt(b.getUpdatedAt())
                     .fileNames(fileNames)
-                    .replyCount(0L) // 댓글기능 추가 후 아래 코드로 대체
-//                    .replyCount(replyCount != null ? replyCount : 0L) // 댓글기능 추가 후 주석 해제
+                    .replyCount(replyCount != null ? replyCount : 0L)
                     .build();
         }).collect(Collectors.toList());
 
