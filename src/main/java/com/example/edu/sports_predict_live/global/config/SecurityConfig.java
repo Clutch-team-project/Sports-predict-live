@@ -2,6 +2,10 @@ package com.example.edu.sports_predict_live.global.config;
 
 import com.example.edu.sports_predict_live.global.jwt.JwtFilter;
 import com.example.edu.sports_predict_live.global.jwt.JwtProvider;
+import com.example.edu.sports_predict_live.global.oauth2.CustomOAuth2UserService;
+import com.example.edu.sports_predict_live.global.oauth2.OAuth2FailureHandler;
+import com.example.edu.sports_predict_live.global.oauth2.OAuth2SuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
