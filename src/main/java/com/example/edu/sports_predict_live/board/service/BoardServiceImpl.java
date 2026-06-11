@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 
 @Service
@@ -120,9 +119,7 @@ public class BoardServiceImpl implements BoardService{
     public void toggleLike(Long boardId, Long userId) {
         Optional<Board> result = boardRepository.findById(boardId);
         Board board = result.orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
-        // 유저가 좋아요를 누른지 확인
-        Optional<BoardLike> boardLikeOp = boardLikeRepository.findByBoardAndUserId(board, userId);
-        // 이미 좋아요를 누른 경우
+        Optional<BoardLike> boardLikeOp = boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId);
         if(boardLikeOp.isPresent()) {
             boardLikeRepository.delete(boardLikeOp.get());
             board.changeLikeCount(board.getLikeCount() - 1);
@@ -143,21 +140,24 @@ public class BoardServiceImpl implements BoardService{
         if(userId == null){
             return false;
         }
-        Board board = Board.builder()
-                .boardId(boardId)
-                .build();
-        return boardLikeRepository.findByBoardAndUserId(board, userId).isPresent();
+        return boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId).isPresent();
     }
-    //
+    // 신고 기능
     @Override
     @Transactional
     public void report(Long boardId, Long userId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
+        if (board.getUserId().equals(userId)) {
+            throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
+        }
+
         Optional<BoardReport> existingReport = boardReportRepository.findByBoard_BoardIdAndUserId(boardId, userId);
 
-        if(existingReport.isPresent()){
-            throw new IllegalStateException("이미 신고되었습니다.");
+        if (existingReport.isPresent()) {
+            throw new IllegalStateException("이미 신고가 접수된 게시글입니다.");
         }
-        Board board = boardRepository.findById(boardId).orElseThrow(()->new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
         BoardReport newReport = BoardReport.builder()
                 .board(board)
@@ -165,5 +165,14 @@ public class BoardServiceImpl implements BoardService{
                 .build();
 
         boardReportRepository.save(newReport);
+    }
+
+    @Override
+    public boolean checkIsReported(Long boardId, Long userId) {
+        if(userId == null) return false;
+        Board board = Board.builder()
+                .boardId(boardId)
+                .build();
+        return boardReportRepository.findByBoard_BoardIdAndUserId(board.getBoardId(), userId).isPresent();
     }
 }

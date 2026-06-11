@@ -77,14 +77,18 @@ public class BoardController {
                 }
             }
         }
-        // 좋아요 눌렀는지 여부 확인
+
         boolean isLiked = false;
+        boolean isReported = false;
+
         if(currentUserId != null) {
             isLiked = boardService.checkIsLiked(boardId, currentUserId);
+            isReported = boardService.checkIsReported(boardId, currentUserId);
         }
 
         model.addAttribute("currentUserId", currentUserId);
         model.addAttribute("isLiked", isLiked);
+        model.addAttribute("isReported", isReported);
     }
 
     @GetMapping("/register")

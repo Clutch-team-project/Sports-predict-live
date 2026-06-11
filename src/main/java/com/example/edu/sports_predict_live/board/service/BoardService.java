@@ -20,6 +20,7 @@ public interface BoardService {
     void toggleLike(Long boardId, Long userId); // 좋아요수 증가
     boolean checkIsLiked(Long boardId, Long userId);
     void report(Long boardId, Long userId);
+    boolean checkIsReported(Long boardId, Long userId);
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 
