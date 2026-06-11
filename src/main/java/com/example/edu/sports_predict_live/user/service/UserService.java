@@ -67,7 +67,7 @@ public class UserService {
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword()))
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
 
-        String accessToken = jwtProvider.createAccessToken(user.getUserId());
+        String accessToken = jwtProvider.createAccessToken(user.getUserId(), user.getRole().name());
         String refreshToken = jwtProvider.createRefreshToken(user.getUserId());
 
         return new TokenResponseDTO(
@@ -94,10 +94,10 @@ public class UserService {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
 
         Long userId = jwtProvider.getUserId(refreshToken);
-        userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        String newAccessToken = jwtProvider.createAccessToken(userId);
+        String newAccessToken = jwtProvider.createAccessToken(userId, user.getRole().name());
         String newRefreshToken = jwtProvider.createRefreshToken(userId);
 
         return new ReissueResponseDTO(newAccessToken, newRefreshToken);

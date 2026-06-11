@@ -45,8 +45,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User findOrCreate(OAuth2UserInfo info, Provider provider) {
-        // 1. socialId + provider로 조회 (정상 재로그인)
-        Optional<User> bySocial = userRepository.findBySocialIdAndProvider(info.getSocialId(), provider);
+        // 1. socialId + provider로 조회 (정상 재로그인) — 탈퇴 계정 제외
+        Optional<User> bySocial = userRepository
+                .findBySocialIdAndProviderAndDeletedAtIsNull(info.getSocialId(), provider);
         if (bySocial.isPresent()) return bySocial.get();
 
         // 2. 이메일로 조회 (socialId 미저장 등 엣지케이스 대응)

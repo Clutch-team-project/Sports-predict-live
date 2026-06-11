@@ -125,9 +125,14 @@
             '.fl-sport:hover .fl-menu{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}',
             '.fl-menu button{border:0;background:transparent;color:#64748b;font-size:14px;font-weight:900;padding:9px 16px;border-radius:10px;cursor:pointer;font-family:inherit;white-space:nowrap;}',
             '.fl-menu button:hover{background:#eff6ff;color:#2563eb;}',
-            '.fl-actions{display:flex;gap:20px;font-size:14px;font-weight:900;color:#334155;}',
+            '.fl-actions{display:flex;align-items:center;gap:14px;font-size:14px;font-weight:900;color:#334155;}',
             '.fl-actions span{cursor:pointer;}',
             '.fl-actions span:hover{color:#0f172a;}',
+            '.fl-greeting{cursor:default!important;color:#64748b;font-weight:700;}',
+            '.fl-greeting:hover{color:#64748b!important;}',
+            '.fl-mypage{display:inline-flex;align-items:center;gap:5px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 12px;background:#fff;color:#334155;transition:all .15s;}',
+            '.fl-mypage::before{content:"\\1F464";font-size:12px;}',
+            '.fl-mypage:hover{border-color:#2563eb;color:#2563eb!important;background:#eff6ff;}',
             '.page-label{visibility:hidden!important;}'
         ].join('');
         document.head.appendChild(s);
@@ -205,7 +210,8 @@
                         : (loginId.length > 3
                             ? loginId.substring(0, 3) + '*'.repeat(loginId.length - 3)
                             : loginId);
-                    return '<span id="fl-nickname" data-fl-go="' + files.userInfo + '" style="cursor:pointer">' + display + '</span>' +
+                    return '<span class="fl-greeting">' + display + '님</span>' +
+                        '<span id="fl-nickname" class="fl-mypage" data-fl-go="' + files.userInfo + '">마이페이지</span>' +
                         '<span id="fl-logout" style="cursor:pointer;color:#ef4444;">로그아웃</span>';
                 })()
                 : '<span data-fl-member="1">로그인</span>') +
