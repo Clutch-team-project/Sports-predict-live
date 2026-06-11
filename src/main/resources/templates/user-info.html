@@ -664,6 +664,7 @@
                 <hr class="section-divider" style="margin: 8px 0">
                 <div class="sidebar-menu-item active" onclick="location.href='/user-info'">내 정보</div>
                 <div class="sidebar-menu-item" onclick="location.href='/prediction-history'">승부예측 기록</div>
+                <div class="sidebar-menu-item" onclick="location.href='/favorite-teams'">관심 팀</div>
                 <div class="sidebar-menu-item" style="color:#ef4444" onclick="confirmDelete()">회원 탈퇴</div>
             </div>
             <!-- 메인 콘텐츠 -->
@@ -678,7 +679,8 @@
                     </div>
                     <div>
                         <label class="field-label">이메일</label>
-                        <input class="input-field" id="inp-email" type="email" value="">
+                        <input class="input-field" id="inp-email" type="email" value="" readonly
+                               style="color:#94a3b8;background:#f1f5f9">
                     </div>
                 </div>
                 <div class="mb-3">
@@ -736,11 +738,6 @@
                     </button>
                 </div>
 
-                <hr class="section-divider">
-                <p class="section-title">관심 팀</p>
-                <div id="favorite-team-list" class="flex flex-wrap gap-2 min-h-[40px]">
-                    <span class="text-slate-400 text-xs">불러오는 중...</span>
-                </div>
             </div>
         </div>
     </div>
@@ -806,37 +803,6 @@
         }
     }
 
-    async function loadFavoriteTeams() {
-        const container = document.getElementById('favorite-team-list');
-        try {
-            const res = await authFetch(`${BASE_URL}/api/users/me/favorites`);
-            if (!res.ok) { container.innerHTML = ''; return; }
-            const teams = await res.json();
-            if (!teams.length) {
-                container.innerHTML = '<span class="text-slate-400 text-xs">등록된 관심 팀이 없습니다.</span>';
-                return;
-            }
-            container.innerHTML = teams.map(t => `
-                <div class="flex items-center gap-1.5 bg-slate-100 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700">
-                    ${t.emblemUrl ? `<img src="${t.emblemUrl}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">` : ''}
-                    <span>${t.teamName}</span>
-                    <span class="text-slate-400">${t.sport}</span>
-                    <button onclick="removeFavorite(${t.teamId}, this.parentElement)"
-                        class="ml-1 text-slate-400 hover:text-red-500 font-black leading-none">×</button>
-                </div>
-            `).join('');
-        } catch (e) {
-            container.innerHTML = '<span class="text-slate-400 text-xs">불러오기 실패</span>';
-        }
-    }
-
-    async function removeFavorite(teamId, el) {
-        try {
-            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/${teamId}`, { method: 'DELETE' });
-            if (res.ok) el.remove();
-        } catch (e) { console.error(e); }
-    }
-
     async function saveProfile() {
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
@@ -862,8 +828,9 @@
                 showMsg(data.message || '수정 실패', true);
                 return;
             }
-            // 닉네임 변경 시 localStorage 업데이트
+            // 닉네임 변경/삭제 시 localStorage 동기화 (GNB 표시용)
             if (data.nickname) localStorage.setItem('nickname', data.nickname);
+            else localStorage.removeItem('nickname');
             showMsg('수정되었습니다.', false);
         } catch (e) {
             showMsg('서버 연결에 실패했습니다.', true);
@@ -899,7 +866,6 @@
 
     window.addEventListener('DOMContentLoaded', () => {
         loadUserInfo();
-        loadFavoriteTeams();
     });
 </script>
 

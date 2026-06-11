@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,6 +25,7 @@ import java.io.PrintWriter;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -50,7 +52,7 @@ public class SecurityConfig {
             "/login", "/signup", "/signup-success", "/login-success",
             "/notification-agreement",
             "/find-id", "/find-password", "/change-password",
-            "/prediction-history", "/user-info",
+            "/prediction-history", "/user-info", "/favorite-teams",
             "/baseball/**", "/soccer/**", "/lol/**",
             "/team-detail", "/player-detail",
     };
@@ -77,12 +79,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
                         .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
                         .requestMatchers(
                                 "/", "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
-                                "/user-info"
+                                "/user-info", "/favorite-teams"
                                 , "/board", "/board/list", "/board/read/**", "/templates/**" // ← 추가
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()

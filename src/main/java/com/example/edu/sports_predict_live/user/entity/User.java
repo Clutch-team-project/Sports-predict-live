@@ -33,6 +33,10 @@ public class User {
     @Column(nullable = false, length = 10)
     private Provider provider = Provider.LOCAL;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private Role role = Role.USER;
+
     @Column(length = 100)
     private String socialId;
 
@@ -106,9 +110,11 @@ public class User {
 
     public void updateProfile(String nickname, String phone,
                               LocalDate birthDate, String profileImage) {
-        if (nickname != null) this.nickname = nickname;
-        if (phone != null) this.phone = phone;
-        if (birthDate != null) this.birthDate = birthDate;
+        // 수정 폼은 전체 값을 보내므로 비운 값(null/공백)은 삭제로 처리
+        // profileImage는 폼에 없는 항목이라 미전송(null) 시 기존 값 유지
+        this.nickname  = (nickname != null && !nickname.isBlank()) ? nickname : null;
+        this.phone     = (phone != null && !phone.isBlank()) ? phone : null;
+        this.birthDate = birthDate;
         if (profileImage != null) this.profileImage = profileImage;
     }
 
@@ -120,6 +126,7 @@ public class User {
         this.email    = "deleted_" + this.userId + "@deleted.com";
         this.loginId  = "deleted_" + this.userId;
         this.nickname = null;
+        this.socialId = null;   // 소셜 재로그인 시 탈퇴 계정과 매칭되지 않도록 해제
         this.deletedAt = LocalDateTime.now();
     }
 }

@@ -16,6 +16,7 @@ public class UserResponseDTO {
     private String email;
     private String name;
     private String nickname;
+    private String role;
     private LocalDateTime createdAt;
 
     private String phone;
@@ -32,6 +33,7 @@ public class UserResponseDTO {
                 .email(user.getEmail())
                 .name(user.getName())
                 .nickname(user.getNickname())
+                .role(user.getRole().name())
                 .phone(user.getPhone())
                 .birthDate(user.getBirthDate())
                 .marketingAgreed(user.isMarketingAgreed())
