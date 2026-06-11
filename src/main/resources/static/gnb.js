@@ -254,4 +254,11 @@
         installTopbar();
     }
 
+    /* ── 로컬 스토리지의 토큰을 쿠키로 복사 ── */
+    if (localStorage.getItem('accessToken')) {
+        document.cookie = "accessToken=" + localStorage.getItem('accessToken') + "; path=/;";
+    } else {
+        document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
+
 })();

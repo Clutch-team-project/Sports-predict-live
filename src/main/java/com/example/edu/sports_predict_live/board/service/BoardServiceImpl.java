@@ -1,10 +1,14 @@
 package com.example.edu.sports_predict_live.board.service;
 
-import com.example.edu.sports_predict_live.board.domain.Board;
+import com.example.edu.sports_predict_live.board.entity.Board;
 import com.example.edu.sports_predict_live.board.dto.BoardDTO;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
 import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
+import com.example.edu.sports_predict_live.board.entity.BoardLike;
+import com.example.edu.sports_predict_live.board.entity.BoardReport;
+import com.example.edu.sports_predict_live.board.repository.BoardLikeRepository;
+import com.example.edu.sports_predict_live.board.repository.BoardReportRepository;
 import com.example.edu.sports_predict_live.board.repository.BoardRepository;
 import com.example.edu.sports_predict_live.user.entity.User;
 import com.example.edu.sports_predict_live.user.repository.UserRepository;
@@ -12,11 +16,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -26,6 +34,8 @@ public class BoardServiceImpl implements BoardService{
     private final ModelMapper modelMapper;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
+    private final BoardLikeRepository boardLikeRepository;
+    private final BoardReportRepository boardReportRepository;
 
     // 게시글 생성
     @Override
@@ -48,7 +58,6 @@ public class BoardServiceImpl implements BoardService{
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
         }
-
         return boardDTO;
     }
     // 게시글 수정용 게시글 상세확인(조회수 증가 X)
@@ -64,7 +73,6 @@ public class BoardServiceImpl implements BoardService{
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
         }
-
         return boardDTO;
     }
     // 게시글 수정
@@ -82,7 +90,6 @@ public class BoardServiceImpl implements BoardService{
                 } else {
                     board.addImage(java.util.UUID.randomUUID().toString(), fileName);
                 }
-
             }
         }
         boardRepository.save(board);
@@ -104,11 +111,87 @@ public class BoardServiceImpl implements BoardService{
         String category = pageRequestDTO.getCategory();
         String sort = pageRequestDTO.getSort();
         Pageable pageable = pageRequestDTO.getPageable("boardId");
+
         Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, category, sort, pageable);
+
+        List<BoardListAllDTO> dtoList = new ArrayList<>(result.getContent());
+
+        if(pageRequestDTO.getPage() == 1) {
+            PageRequest noticePageable = PageRequest.of(0, 5);
+            Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(null, null, "공지", null, noticePageable);
+            List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
+            dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
+            noticeDtoList.addAll(dtoList);
+            dtoList = noticeDtoList;
+        }
         return PageResponseDTO.<BoardListAllDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
-                .dtoList(result.getContent())
+                .dtoList(dtoList)
                 .total((int)result.getTotalElements())
                 .build();
+    }
+
+    @Override
+    public void toggleLike(Long boardId, Long userId) {
+        Optional<Board> result = boardRepository.findById(boardId);
+        Board board = result.orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
+        Optional<BoardLike> boardLikeOp = boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId);
+        if(boardLikeOp.isPresent()) {
+            boardLikeRepository.delete(boardLikeOp.get());
+            board.changeLikeCount(board.getLikeCount() - 1);
+        } else {
+            BoardLike boardLike = BoardLike.builder()
+                    .board(board)
+                    .userId(userId)
+                    .build();
+            boardLikeRepository.save(boardLike);
+            board.changeLikeCount(board.getLikeCount() + 1);
+        }
+        boardRepository.save(board);
+        boardRepository.flush();
+    }
+
+    @Override
+    public boolean checkIsLiked(Long boardId, Long userId) {
+        if(userId == null){
+            return false;
+        }
+        return boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId).isPresent();
+    }
+    // 신고 기능
+    @Override
+    @Transactional
+    public void report(Long boardId, Long userId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
+        if (board.getUserId().equals(userId)) {
+            throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
+        }
+
+        if(board.isNotice()) {
+            throw new IllegalStateException("공지글은 신고할 수 없스니다.");
+        }
+
+        Optional<BoardReport> existingReport = boardReportRepository.findByBoard_BoardIdAndUserId(boardId, userId);
+        if (existingReport.isPresent()) {
+            throw new IllegalStateException("이미 신고가 접수된 게시글입니다.");
+        }
+
+        BoardReport newReport = BoardReport.builder()
+                .board(board)
+                .userId(userId)
+                .build();
+
+        boardReportRepository.save(newReport);
+    }
+
+    @Override
+    public boolean checkIsReported(Long boardId, Long userId) {
+        if(userId == null) return false;
+        Board board = Board.builder()
+                .boardId(boardId)
+                .build();
+        return boardReportRepository.findByBoard_BoardIdAndUserId(board.getBoardId(), userId).isPresent();
     }
 }
