@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH — 선수 정보</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+
+        .light-portal-view {
+            background-color: #cbd5e1;
+            background-image: linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="light-portal-view text-slate-800 min-h-screen antialiased">
+
+<main class="max-w-5xl mx-auto px-6 py-6 space-y-4">
+
+    <!-- 선수 헤더 카드 -->
+    <div id="player-header" class="glass-card border border-slate-300 rounded-2xl shadow-md p-6">
+        <div class="text-center text-slate-400 text-sm py-10">선수 정보를 불러오는 중...</div>
+    </div>
+
+    <!-- 시즌 기록 카드 -->
+    <div id="season-record" class="hidden glass-card border border-slate-300 rounded-2xl shadow-md p-6"></div>
+
+</main>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    const playerId = new URLSearchParams(location.search).get('id');
+
+    const SPORT_LABEL = { baseball: '⚾ 야구', soccer: '⚽ 축구', lol: '🎮 LOL' };
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function fmt(v, digits) {
+        if (v == null) return '-';
+        return digits != null ? Number(v).toFixed(digits) : v;
+    }
+
+    function renderHeader(p) {
+        const photo = p.profileImage
+            ? `<img src="${esc(p.profileImage)}" alt="${esc(p.name)}" class="w-24 h-24 rounded-2xl object-cover bg-slate-100">`
+            : `<div class="w-24 h-24 rounded-2xl bg-slate-200 flex items-center justify-center text-3xl font-black text-slate-400">${esc(p.name.charAt(0))}</div>`;
+
+        const infoItems = [];
+        if (p.position)         infoItems.push(`포지션 · ${esc(p.position)}`);
+        if (p.jerseyNumber != null) infoItems.push(`등번호 · No.${p.jerseyNumber}`);
+        if (p.birthDate)        infoItems.push(`${esc(p.birthDate)} (${p.age}세)`);
+        if (p.riotGameName)     infoItems.push(`라이엇 ID · ${esc(p.riotGameName)}${p.riotTagLine ? '#' + esc(p.riotTagLine) : ''}`);
+
+        document.getElementById('player-header').innerHTML = `
+            <div class="flex items-center gap-6">
+                ${photo}
+                <div class="flex-1">
+                    <h1 class="text-2xl font-black text-slate-900">${esc(p.name)}</h1>
+                    <div class="flex items-center gap-3 mt-2">
+                        <span class="bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-0.5 rounded-lg text-xs font-black">${SPORT_LABEL[p.sportCode] || esc(p.sportName)}</span>
+                        <span class="text-sm font-black text-slate-600 flex items-center gap-1.5">
+                            ${p.teamEmblem ? `<img src="${esc(p.teamEmblem)}" class="w-5 h-5 object-contain" alt="">` : ''}
+                            ${esc(p.teamName)}
+                        </span>
+                        <button class="text-xs font-bold text-slate-500 bg-white border border-slate-300 rounded-lg px-2.5 py-1 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                                onclick="goTeamDetail(${p.teamId})">팀 정보</button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5 text-sm text-slate-500 font-bold">
+                        ${infoItems.map(i => `<span>${i}</span>`).join('')}
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function statGrid(title, items) {
+        // 값이 전부 null인 항목 제외
+        const visible = items.filter(([, v]) => v !== '-');
+        const list = visible.length ? visible : items;
+        return `
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-black text-sm text-slate-700">${title}</span>
+            </div>
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-3 text-center">
+                ${list.map(([label, value]) => `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-400 font-bold">${label}</div>
+                        <div class="text-lg font-black text-slate-800 mt-0.5">${value}</div>
+                    </div>`).join('')}
+            </div>`;
+    }
+
+    function renderRecord(p) {
+        const box = document.getElementById('season-record');
+        if (!p.season) {
+            box.classList.remove('hidden');
+            box.innerHTML = '<div class="text-center text-slate-400 text-sm py-6">이번 시즌 기록이 없습니다.</div>';
+            return;
+        }
+
+        const title = `${esc(p.season)} 시즌 기록 (${p.gamesPlayed ?? 0}경기 출장)`;
+        let html = '';
+
+        if (p.baseballStat) {
+            const s = p.baseballStat;
+            const isPitcher = s.era != null;
+            html = isPitcher
+                ? statGrid(title, [
+                    ['평균자책', fmt(s.era, 2)], ['승', fmt(s.wins)], ['패', fmt(s.losses)],
+                    ['탈삼진', fmt(s.strikeouts)], ['세이브', fmt(s.saves)], ['홀드', fmt(s.holds)],
+                ])
+                : statGrid(title, [
+                    ['타율', fmt(s.battingAvg, 3)], ['안타', fmt(s.hits)],
+                    ['홈런', fmt(s.homeRuns)], ['타점', fmt(s.rbi)],
+                ]);
+        } else if (p.soccerStat) {
+            const s = p.soccerStat;
+            html = statGrid(title, [
+                ['득점', s.goals], ['도움', s.assists],
+                ['경고', s.yellowCards], ['퇴장', s.redCards],
+                ['무실점', s.cleanSheets],
+            ]);
+        } else if (p.lolStat) {
+            const s = p.lolStat;
+            html = statGrid(title, [
+                ['KDA', fmt(s.kda, 2)], ['평균 킬', fmt(s.avgKills, 1)],
+                ['평균 데스', fmt(s.avgDeaths, 1)], ['평균 어시', fmt(s.avgAssists, 1)],
+                ['분당 CS', fmt(s.csPerMin, 1)],
+                ['승률', s.winRate != null ? (Number(s.winRate) * 100).toFixed(1) + '%' : '-'],
+            ]);
+        } else {
+            html = `<div class="text-center text-slate-400 text-sm py-4">${title} — 상세 기록이 없습니다.</div>`;
+        }
+
+        box.classList.remove('hidden');
+        box.innerHTML = html;
+    }
+
+    async function init() {
+        if (!playerId) {
+            document.getElementById('player-header').innerHTML =
+                '<div class="text-center text-red-400 text-sm py-10">잘못된 접근입니다.</div>';
+            return;
+        }
+        try {
+            const res = await fetch(`${BASE_URL}/api/players/${playerId}`);
+            if (!res.ok) throw new Error();
+            const p = await res.json();
+
+            document.title = `AI.MATCH — ${p.name}`;
+            renderHeader(p);
+            renderRecord(p);
+        } catch (e) {
+            document.getElementById('player-header').innerHTML =
+                '<div class="text-center text-red-400 text-sm py-10">선수 정보를 불러올 수 없습니다.</div>';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="/gnb.js"></script>
+</body>
+</html>
