@@ -167,13 +167,14 @@
     }
 
     function renderActionBtn(match) {
+        const liveUrl = `/games/${encodeURIComponent(match.matchId)}/baseball/live`;
         if (match.status === 'in_progress') {
-            return `<button class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-xl animate-pulse">라이브</button>`;
+            return `<button type="button" onclick="location.href='${liveUrl}'" class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-xl animate-pulse">라이브</button>`;
         }
         if (match.status === 'finished') {
-            return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">결과</button>`;
+            return `<button type="button" onclick="location.href='${liveUrl}'" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">중계보기</button>`;
         }
-        return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">전력분석</button>`;
+        return `<button type="button" onclick="location.href='${liveUrl}'" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">중계보기</button>`;
     }
 
     //  경기 목록 로드
@@ -195,7 +196,7 @@
             }
 
             container.innerHTML = matches.map(m => `
-                <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors">
+                <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-blue-300 transition-colors">
                     <div class="w-20 flex items-center gap-2">
                         <span class="font-black text-slate-500 text-sm">${m.scheduledAt}</span>
                     </div>

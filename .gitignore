@@ -41,3 +41,6 @@ out/
 
 # Local reference documents
 docs/
+
+# Local crawler scripts
+tools/
