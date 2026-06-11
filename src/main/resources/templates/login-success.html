@@ -685,10 +685,43 @@
 </div>
 
 <script>
-    // 닉네임 표시
-    const nickname = localStorage.getItem('nickname');
-    const el = document.getElementById('welcome-nickname');
-    if (el) el.textContent = nickname || '회원';
+    const BASE_URL = 'http://localhost:8080';
+
+    async function init() {
+        // 소셜 로그인 리다이렉트 시 URL 파라미터로 토큰이 전달됨
+        const params = new URLSearchParams(window.location.search);
+        const accessToken  = params.get('accessToken');
+        const refreshToken = params.get('refreshToken');
+
+        if (accessToken && refreshToken) {
+            // 토큰 저장 후 URL 파라미터 제거 (보안)
+            localStorage.setItem('accessToken',  accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+            // 소셜 로그인은 체크박스가 없으므로 자동 로그인으로 처리
+            localStorage.setItem('autoLogin', 'true');
+            sessionStorage.setItem('sessionActive', '1');
+            history.replaceState(null, '', '/login-success');
+
+            // 유저 정보 조회
+            try {
+                const res = await fetch(`${BASE_URL}/api/users/me`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (res.ok) {
+                    const user = await res.json();
+                    localStorage.setItem('userId',   String(user.userId));
+                    localStorage.setItem('nickname', user.nickname || '');
+                    localStorage.setItem('loginId',  user.loginId  || '');
+                }
+            } catch (e) { /* 닉네임 미표시만 발생, 로그인은 유지 */ }
+        }
+
+        // 닉네임 표시
+        const el = document.getElementById('welcome-nickname');
+        if (el) el.textContent = localStorage.getItem('nickname') || '회원';
+    }
+
+    init();
 </script>
 <script src="/gnb.js"></script>
 </body>

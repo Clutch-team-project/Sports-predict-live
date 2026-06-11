@@ -32,4 +32,10 @@ public class SignupRequestDTO {
     private String phone;
 
     private LocalDate birthDate;
+
+    private boolean marketingAgreed = false;
+
+    private boolean matchStartAlert = false;
+
+    private boolean predictionResultAlert = false;
 }

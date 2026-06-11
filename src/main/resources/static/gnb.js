@@ -1,6 +1,21 @@
 (function () {
 
-    /* ── 인증 API 공통 fetch (토큰 만료 시 자동 재발급) ── */
+    /*  자동 로그인 체크  */
+    // 로그인 시 "로그인 상태 유지" 미선택(autoLogin !== 'true')이면
+    // 브라우저 종료 후 재방문 시(sessionStorage 마커 소실) 토큰을 제거한다.
+    if (localStorage.getItem('accessToken')
+        && localStorage.getItem('autoLogin') !== 'true'
+        && !sessionStorage.getItem('sessionActive')) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('nickname');
+        localStorage.removeItem('loginId');
+        localStorage.removeItem('autoLogin');
+    }
+    sessionStorage.setItem('sessionActive', '1');
+
+    /*  인증 API 공통 fetch (토큰 만료 시 자동 재발급)  */
     window.authFetch = async function (url, options) {
         options = options || {};
         options.headers = options.headers || {};
@@ -53,6 +68,10 @@
         baseballStandings: '/baseball/standings',
         soccerStandings:   '/soccer/standings',
         lolStandings:      '/lol/standings',
+        // 종목별 일정 페이지
+        baseballSchedule:  '/baseball/schedule',
+        soccerSchedule:    '/soccer/schedule',
+        lolSchedule:       '/lol/schedule',
         // 경기 중계 (다른 팀원 담당)
         baseballLive: '/baseball-live-match',
         soccerLive:   '/soccer-live-match',
@@ -65,7 +84,7 @@
 
     var current = decodeURIComponent((location.pathname.split('/').pop() || '').toLowerCase());
 
-    /* ── 유틸 ── */
+    /*  유틸  */
     function go(file) {
         if (file) location.href = file;
     }
@@ -80,7 +99,7 @@
         });
     }
 
-    /* ── 스타일 주입 ── */
+    /*  스타일 주입  */
     function injectStyles() {
         var s = document.createElement('style');
         s.textContent = [
@@ -106,7 +125,7 @@
         document.head.appendChild(s);
     }
 
-    /* ── 종목 아이템 HTML ── */
+    /*  종목 아이템 HTML  */
     function sportItem(label, target, active, menuItems) {
         var cls = 'fl-sport' + (active ? ' is-active' : '');
         var goAttr = target ? ' data-fl-go="' + target + '"' : '';
@@ -121,7 +140,7 @@
         return '<div class="' + cls + '"' + goAttr + '><span>' + label + '</span>' + menuHtml + '</div>';
     }
 
-    /* ── GNB 주입 ── */
+    /*  GNB 주입  */
     function installTopbar() {
         if (document.getElementById('flTopbar')) return;
         injectStyles();
@@ -134,19 +153,19 @@
 
         var baseballMenu = [
             {label: '뉴스',  file: files.news},
-            {label: '일정',  file: files.schedule},
+            {label: '일정',  file: files.baseballSchedule},
             {label: '순위',  file: files.baseballStandings},
             {label: '게시판', file: files.board}
         ];
         var soccerMenu = [
             {label: '뉴스',  file: files.news},
-            {label: '일정',  file: files.schedule},
+            {label: '일정',  file: files.soccerSchedule},
             {label: '순위',  file: files.soccerStandings},
             {label: '게시판', file: files.board}
         ];
         var lolMenu = [
             {label: '뉴스',  file: files.news},
-            {label: '일정',  file: files.schedule},
+            {label: '일정',  file: files.lolSchedule},
             {label: '순위',  file: files.lolStandings},
             {label: '게시판', file: files.board}
         ];
@@ -209,10 +228,12 @@
                         headers: {'Authorization': 'Bearer ' + token}
                     }).finally(function () {
                         localStorage.clear();
+                        sessionStorage.removeItem('sessionActive');
                         location.href = files.member;
                     });
                 } else {
                     localStorage.clear();
+                    sessionStorage.removeItem('sessionActive');
                     location.href = files.member;
                 }
             });

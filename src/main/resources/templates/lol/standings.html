@@ -25,6 +25,10 @@
         .rank-1 { color: #d97706; }
         .rank-2 { color: #6b7280; }
         .rank-3 { color: #b45309; }
+        .sort-th { cursor: pointer; user-select: none; white-space: nowrap; }
+        .sort-th:hover { color: #1e293b; }
+        .sort-icon { margin-left: 3px; font-size: 10px; opacity: 0.4; }
+        .sort-th.sort-active .sort-icon { opacity: 1; color: #2563eb; }
     </style>
 </head>
 <body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
@@ -92,13 +96,13 @@
             </div>
             <div class="overflow-x-auto rounded-2xl border border-slate-200">
                 <table class="w-full text-xs md:text-sm min-w-[500px]">
-                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                    <thead class="bg-slate-50 text-slate-500 font-bold" data-table="standing">
                         <tr>
                             <th class="p-3.5 text-left pl-6">순위</th>
                             <th class="p-3.5 text-left">팀</th>
-                            <th class="p-3.5 text-center">승</th>
-                            <th class="p-3.5 text-center">패</th>
-                            <th class="p-3.5 text-center">승률</th>
+                            <th class="p-3.5 text-center sort-th" data-key="wins">승<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center sort-th" data-key="losses">패<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center sort-th" data-key="winRate">승률<span class="sort-icon">↕</span></th>
                             <th class="p-3.5 text-center">최근5경기</th>
                         </tr>
                     </thead>
@@ -123,18 +127,18 @@
             </div>
             <div class="overflow-x-auto rounded-2xl border border-slate-200">
                 <table class="w-full text-xs md:text-sm min-w-[620px]">
-                    <thead class="bg-slate-50 text-slate-500 font-bold">
+                    <thead class="bg-slate-50 text-slate-500 font-bold" data-table="record">
                         <tr>
                             <th class="p-3.5 text-left pl-6">순위</th>
                             <th class="p-3.5 text-left">선수명</th>
                             <th class="p-3.5 text-left">팀</th>
                             <th class="p-3.5 text-center">포지션</th>
-                            <th class="p-3.5 text-center">KDA</th>
-                            <th class="p-3.5 text-center">평균 킬</th>
-                            <th class="p-3.5 text-center">평균 데스</th>
-                            <th class="p-3.5 text-center">평균 어시</th>
-                            <th class="p-3.5 text-center">승률</th>
-                            <th class="p-3.5 text-center">출전</th>
+                            <th class="p-3.5 text-center sort-th" data-key="kda">KDA<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center sort-th" data-key="avgKills">평균 킬<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center sort-th" data-key="avgDeaths">평균 데스<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center sort-th" data-key="avgAssists">평균 어시<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center sort-th" data-key="winRate">승률<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center sort-th" data-key="gamesPlayed">출전<span class="sort-icon">↕</span></th>
                         </tr>
                     </thead>
                     <tbody id="record-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
@@ -180,10 +184,79 @@
     const BASE_URL = 'http://localhost:8080';
     let standingData = [];
     let playerData   = [];
+
+    // ── 관심 팀 ──────────────────────────────────────────────────────────────
+    let favoriteIds = new Set();
+
+    async function loadFavoriteIds() {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/ids`);
+            if (res.ok) favoriteIds = new Set(await res.json());
+        } catch (e) { /* 비로그인 시 무시 */ }
+    }
+
+    async function toggleFavorite(e, teamId) {
+        e.stopPropagation();
+        if (!localStorage.getItem('accessToken')) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+        const btn = e.currentTarget;
+        const isFav = favoriteIds.has(teamId);
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/${teamId}`, { method: isFav ? 'DELETE' : 'POST' });
+            if (res.ok) {
+                if (isFav) favoriteIds.delete(teamId); else favoriteIds.add(teamId);
+                btn.textContent = favoriteIds.has(teamId) ? '★' : '☆';
+                btn.classList.toggle('text-yellow-400', favoriteIds.has(teamId));
+                btn.classList.toggle('text-slate-300',  !favoriteIds.has(teamId));
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function starBtn(teamId) {
+        const isFav = favoriteIds.has(teamId);
+        return `<button onclick="toggleFavorite(event,${teamId})" class="text-lg leading-none ${isFav ? 'text-yellow-400' : 'text-slate-300'} hover:text-yellow-400 transition-colors">${isFav ? '★' : '☆'}</button>`;
+    }
     let recordData   = [];
     let loaded = { standing: false, player: false, record: false };
 
-    // 탭 전환
+    // ── 정렬 헬퍼 ────────────────────────────────────────────────────────────
+    const sortState = {};
+    function applySort(data, state) {
+        if (!state || !state.key) return data;
+        const { key, dir } = state;
+        return [...data].sort((a, b) => {
+            const av = a[key] ?? -Infinity;
+            const bv = b[key] ?? -Infinity;
+            return dir === 'asc' ? av - bv : bv - av;
+        });
+    }
+    function initSort(tableId, getData, renderFn, defaultKey, defaultDir = 'desc') {
+        sortState[tableId] = { key: defaultKey, dir: defaultDir };
+        const thead = document.querySelector(`thead[data-table="${tableId}"]`);
+        if (!thead) return;
+        thead.querySelectorAll('th[data-key]').forEach(th => {
+            if (th.dataset.key === defaultKey) th.classList.add('sort-active');
+            th.addEventListener('click', () => {
+                const key = th.dataset.key;
+                const cur = sortState[tableId];
+                sortState[tableId] = { key, dir: cur.key === key && cur.dir === 'desc' ? 'asc' : 'desc' };
+                thead.querySelectorAll('th[data-key]').forEach(t => {
+                    t.classList.remove('sort-active');
+                    t.querySelector('.sort-icon').textContent = '↕';
+                });
+                th.classList.add('sort-active');
+                th.querySelector('.sort-icon').textContent = sortState[tableId].dir === 'desc' ? '↓' : '↑';
+                renderFn(applySort(getData(), sortState[tableId]));
+            });
+        });
+        // 초기 아이콘
+        const initTh = thead.querySelector(`th[data-key="${defaultKey}"]`);
+        if (initTh) initTh.querySelector('.sort-icon').textContent = defaultDir === 'desc' ? '↓' : '↑';
+    }
+
+    // ── 탭 전환 ──────────────────────────────────────────────────────────────
     function switchTab(tab) {
         ['standing', 'record', 'player'].forEach(t => {
             document.getElementById(`section-${t}`).classList.add('hidden');
@@ -216,12 +289,12 @@
         return 'text-blue-600';
     }
 
-    // 팀 순위 로드
+    // ── 팀 순위 ──────────────────────────────────────────────────────────────
     async function loadStanding() {
         try {
             const res = await authFetch(`${BASE_URL}/api/standings/lol`);
             standingData = await res.json();
-            renderStanding();
+            renderStanding(applySort(standingData, sortState['standing']));
             loaded.standing = true;
         } catch (e) {
             document.getElementById('standing-tbody').innerHTML =
@@ -229,32 +302,30 @@
         }
     }
 
-    function renderStanding() {
+    function renderStanding(data = standingData) {
         const tbody = document.getElementById('standing-tbody');
-        if (!standingData.length) {
+        if (!data.length) {
             tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
             return;
         }
-        tbody.innerHTML = standingData.map((t, i) => `
+        tbody.innerHTML = data.map((t, i) => `
             <tr class="table-row cursor-pointer" onclick="location.href='/lol/team/${t.teamId}'">
                 <td class="p-4 pl-6 font-black ${rankClass(i)}">${t.rank ?? i + 1}</td>
                 <td class="p-4 font-black text-slate-900">${t.teamName}</td>
                 <td class="p-4 text-center">${t.wins}</td>
                 <td class="p-4 text-center">${t.losses}</td>
                 <td class="p-4 text-center font-bold text-blue-600">${t.winRate ? (t.winRate * 100).toFixed(1) + '%' : '-'}</td>
-                <td class="p-4">
-                    <div class="flex gap-1 justify-center">${renderForm(t.recentForm)}</div>
-                </td>
-            </tr>
-        `).join('');
+                <td class="p-4"><div class="flex gap-1 justify-center">${renderForm(t.recentForm)}</div></td>
+                <td class="p-4 text-center">${starBtn(t.teamId)}</td>
+            </tr>`).join('');
     }
 
-    // 선수 기록 로드
+    // ── 선수 기록 ────────────────────────────────────────────────────────────
     async function loadRecord() {
         try {
             const res = await authFetch(`${BASE_URL}/api/records/lol/players`);
             recordData = await res.json();
-            renderRecord(recordData);
+            renderRecord(applySort(recordData, sortState['record']));
             loaded.record = true;
         } catch (e) {
             document.getElementById('record-tbody').innerHTML =
@@ -282,20 +353,16 @@
                 <td class="p-4 text-center">${p.avgAssists?.toFixed(2) ?? '-'}</td>
                 <td class="p-4 text-center font-bold">${p.winRate ? (p.winRate * 100).toFixed(1) + '%' : '-'}</td>
                 <td class="p-4 text-center">${p.gamesPlayed}</td>
-            </tr>
-        `).join('');
+            </tr>`).join('');
     }
 
-    // 선수 기록 검색
     document.getElementById('record-search').addEventListener('input', function () {
-        const keyword = this.value.trim().toLowerCase();
-        const filtered = keyword
-            ? recordData.filter(p => p.playerName.includes(keyword) || p.teamName.includes(keyword))
-            : recordData;
-        renderRecord(filtered);
+        const kw = this.value.trim().toLowerCase();
+        const base = kw ? recordData.filter(p => p.playerName.includes(kw) || p.teamName.includes(kw)) : recordData;
+        renderRecord(applySort(base, sortState['record']));
     });
 
-    // 선수 목록 로드
+    // ── 선수 목록 ────────────────────────────────────────────────────────────
     async function loadPlayers() {
         try {
             const res = await authFetch(`${BASE_URL}/api/players?sport=lol`);
@@ -321,21 +388,19 @@
                 <td class="p-4 text-center">
                     <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-bold">${p.position ?? '-'}</span>
                 </td>
-            </tr>
-        `).join('');
+            </tr>`).join('');
     }
 
-    // 검색 필터
     document.getElementById('player-search').addEventListener('input', function () {
-        const keyword = this.value.trim().toLowerCase();
-        const filtered = keyword
-            ? playerData.filter(p => p.playerName.includes(keyword) || p.teamName.includes(keyword))
-            : playerData;
+        const kw = this.value.trim().toLowerCase();
+        const filtered = kw ? playerData.filter(p => p.playerName.includes(kw) || p.teamName.includes(kw)) : playerData;
         renderPlayers(filtered);
     });
 
-    // 초기 로드
-    loadStanding();
+    // ── 초기화 ───────────────────────────────────────────────────────────────
+    initSort('standing', () => standingData, renderStanding, 'winRate', 'desc');
+    initSort('record',   () => recordData,   renderRecord,   'kda',     'desc');
+    loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>
 </html>

@@ -735,6 +735,12 @@
                     <button class="btn-primary" style="width:auto;padding:10px 28px" onclick="saveProfile()">수정 저장
                     </button>
                 </div>
+
+                <hr class="section-divider">
+                <p class="section-title">관심 팀</p>
+                <div id="favorite-team-list" class="flex flex-wrap gap-2 min-h-[40px]">
+                    <span class="text-slate-400 text-xs">불러오는 중...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -800,6 +806,37 @@
         }
     }
 
+    async function loadFavoriteTeams() {
+        const container = document.getElementById('favorite-team-list');
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites`);
+            if (!res.ok) { container.innerHTML = ''; return; }
+            const teams = await res.json();
+            if (!teams.length) {
+                container.innerHTML = '<span class="text-slate-400 text-xs">등록된 관심 팀이 없습니다.</span>';
+                return;
+            }
+            container.innerHTML = teams.map(t => `
+                <div class="flex items-center gap-1.5 bg-slate-100 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700">
+                    ${t.emblemUrl ? `<img src="${t.emblemUrl}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">` : ''}
+                    <span>${t.teamName}</span>
+                    <span class="text-slate-400">${t.sport}</span>
+                    <button onclick="removeFavorite(${t.teamId}, this.parentElement)"
+                        class="ml-1 text-slate-400 hover:text-red-500 font-black leading-none">×</button>
+                </div>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = '<span class="text-slate-400 text-xs">불러오기 실패</span>';
+        }
+    }
+
+    async function removeFavorite(teamId, el) {
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/${teamId}`, { method: 'DELETE' });
+            if (res.ok) el.remove();
+        } catch (e) { console.error(e); }
+    }
+
     async function saveProfile() {
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
@@ -860,7 +897,10 @@
         }
     }
 
-    window.addEventListener('DOMContentLoaded', loadUserInfo);
+    window.addEventListener('DOMContentLoaded', () => {
+        loadUserInfo();
+        loadFavoriteTeams();
+    });
 </script>
 
 <script src="/gnb.js"></script>

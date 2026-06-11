@@ -169,61 +169,19 @@
         <!-- [경기 목록 및 우측 예측 랭킹] -->
         <div class="grid grid-cols-12 gap-4">
 
-            <!-- Left: 5개 라이브 매치 카드 -->
-            <div id="colMatches" onclick="clickBox('matches')"
-                 class="col-span-12 md:col-span-8 space-y-3 flex flex-col justify-between">
+            <!-- Left: 오늘의 경기 목록 (동적 로드) -->
+            <div id="colMatches"
+                 class="col-span-12 md:col-span-8 space-y-2">
 
-                <!-- Match Card 1 -->
-                <div class="border border-slate-300 bg-white p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md">
-                    <div class="w-full flex justify-between items-center text-sm px-4 text-slate-700">
-                        <span class="font-extrabold flex items-center gap-2 text-base">⚾ LG 트윈스 <span
-                                class="text-blue-600 font-black ml-1.5 text-lg">3</span></span>
-                        <span class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-xs font-black animate-pulse">4회말 LIVE</span>
-                        <span class="font-bold flex items-center gap-2 text-base"><span
-                                class="text-slate-400 mr-1.5">1</span> KIA 타이거즈</span>
-                    </div>
+                <!-- 경기 목록 헤더 -->
+                <div class="flex items-center justify-between px-1 pb-1">
+                    <span class="text-xs font-black text-slate-500 tracking-widest uppercase">오늘의 경기</span>
+                    <span id="matchDateLabel" class="text-xs text-slate-400 font-bold"></span>
                 </div>
 
-                <!-- Match Card 2 -->
-                <div class="border border-slate-300 bg-white p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md">
-                    <div class="w-full flex justify-between items-center text-sm px-4 text-slate-700">
-                        <span class="font-extrabold flex items-center gap-2 text-base">🎮 T1 <span
-                                class="text-blue-600 font-black ml-1.5 text-lg">2</span></span>
-                        <span class="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black">종료</span>
-                        <span class="font-bold flex items-center gap-2 text-base"><span
-                                class="text-slate-400 mr-1.5">0</span> GEN.G</span>
-                    </div>
-                </div>
-
-                <!-- Match Card 3 -->
-                <div class="border border-slate-300 bg-white p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md">
-                    <div class="w-full flex justify-between items-center text-sm px-4 text-slate-700">
-                        <span class="font-extrabold flex items-center gap-2 text-base">⚽ 울산 현대 <span
-                                class="text-blue-600 font-black ml-1.5 text-lg">1</span></span>
-                        <span class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-xs font-black animate-pulse">후반30 LIVE</span>
-                        <span class="font-bold flex items-center gap-2 text-base"><span
-                                class="text-slate-400 mr-1.5">1</span> 전북 현대</span>
-                    </div>
-                </div>
-
-                <!-- Match Card 4 -->
-                <div class="border border-slate-300 bg-white p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md">
-                    <div class="w-full flex justify-between items-center text-sm px-4 text-slate-600">
-                        <span class="text-slate-500 flex items-center gap-2 text-base">⚾ 한화 이글스 <span
-                                class="ml-1.5">-</span></span>
-                        <span class="bg-slate-100 text-slate-500 border border-slate-200 px-3 py-1 rounded-lg text-xs">18:30 예정</span>
-                        <span class="text-slate-500 flex items-center gap-2 text-base"><span class="mr-1.5">-</span> 두산 베어스</span>
-                    </div>
-                </div>
-
-                <!-- Match Card 5 -->
-                <div class="border border-slate-300 bg-white p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md">
-                    <div class="w-full flex justify-between items-center text-sm px-4 text-slate-600">
-                        <span class="text-slate-500 flex items-center gap-2 text-base">⚾ KT 위즈 <span
-                                class="ml-1.5">-</span></span>
-                        <span class="bg-slate-100 text-slate-500 border border-slate-200 px-3 py-1 rounded-lg text-xs">18:30 예정</span>
-                        <span class="text-slate-500 flex items-center gap-2 text-base"><span class="mr-1.5">-</span> 롯데 자이언즈</span>
-                    </div>
+                <!-- 동적 경기 카드 컨테이너 -->
+                <div id="matchList" class="space-y-2">
+                    <div class="text-center text-slate-400 text-xs py-6">경기 정보를 불러오는 중...</div>
                 </div>
 
             </div>
@@ -621,5 +579,193 @@ public BoardResponseDto(Board board) {
 </script>
 
 <script src="/gnb.js"></script>
+
+<script>
+    // ===== 오늘의 경기 동적 로드 + 관심 팀 경기 상단 표시 =====
+    const BASE_URL = 'http://localhost:8080';
+
+    // 스포츠 이모지 매핑
+    const SPORT_EMOJI = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
+
+    // 상태 표시 배지 HTML 생성
+    function statusBadge(status) {
+        if (status === 'in_progress') {
+            return `<span class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-xs font-black animate-pulse">LIVE</span>`;
+        } else if (status === 'finished') {
+            return `<span class="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black">종료</span>`;
+        } else {
+            return `<span class="bg-slate-100 text-slate-500 border border-slate-200 px-3 py-1 rounded-lg text-xs">예정</span>`;
+        }
+    }
+
+    // 경기 카드 HTML 생성
+    function matchCard(match, isFavorite) {
+        const emoji = SPORT_EMOJI[match.sport] || '';
+        const isLive = match.status === 'in_progress';
+        const isFinished = match.status === 'finished';
+        const isScheduled = match.status === 'scheduled';
+
+        const favoriteBar = isFavorite
+            ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
+            : '';
+        const favoriteBadge = isFavorite
+            ? `<span class="text-yellow-500 text-xs font-black ml-1" title="관심 팀 경기">★</span>`
+            : '';
+
+        // 스코어 또는 시간 표시
+        const homeScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} ml-1.5 text-lg">${match.homeScore}</span>` : `<span class="text-slate-400 ml-1.5">-</span>`;
+        const awayScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} mr-1.5 text-lg">${match.awayScore}</span>` : `<span class="text-slate-400 mr-1.5">-</span>`;
+
+        const textColor = isScheduled ? 'text-slate-500' : 'text-slate-700';
+
+        return `
+        <div class="relative border ${isFavorite ? 'border-yellow-300 bg-yellow-50/30' : 'border-slate-300 bg-white'} p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md overflow-hidden">
+            ${favoriteBar}
+            <div class="w-full flex justify-between items-center text-sm px-4 ${textColor}">
+                <span class="font-extrabold flex items-center gap-1 text-base">${emoji} ${match.homeTeamName}${homeScore}${favoriteBadge}</span>
+                ${statusBadge(match.status)}
+                <span class="font-${isScheduled ? 'medium' : 'bold'} flex items-center gap-1 text-base">${favoriteBadge}${awayScore}${match.awayTeamName}</span>
+            </div>
+        </div>`;
+    }
+
+    // 오늘 날짜 문자열 (yyyyMMdd)
+    function todayStr() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}${m}${day}`;
+    }
+
+    // 오늘 날짜 레이블 표시용
+    function todayLabel() {
+        const d = new Date();
+        return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (오늘)`;
+    }
+
+    // 상태 정렬 우선순위
+    function statusOrder(status) {
+        if (status === 'in_progress') return 0;
+        if (status === 'scheduled') return 1;
+        if (status === 'finished') return 2;
+        return 3;
+    }
+
+    async function loadTodayMatches() {
+        const dateStr = todayStr();
+        const accessToken = localStorage.getItem('accessToken');
+
+        // 날짜 레이블
+        const dateLabel = document.getElementById('matchDateLabel');
+        if (dateLabel) dateLabel.textContent = todayLabel();
+
+        // 1. 관심 팀 정보 로드 (로그인 시)
+        let favoriteIds = new Set();       // baseball/soccer: teamId 기반
+        let favoriteNames = new Set();     // LOL: teamName 기반
+
+        if (accessToken) {
+            try {
+                const [idsRes, namesRes] = await Promise.all([
+                    fetch(`${BASE_URL}/api/users/me/favorites/ids`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    }),
+                    fetch(`${BASE_URL}/api/users/me/favorites`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    })
+                ]);
+                if (idsRes.ok) {
+                    const ids = await idsRes.json();
+                    favoriteIds = new Set(ids.map(id => Number(id)));
+                }
+                if (namesRes.ok) {
+                    const teams = await namesRes.json();
+                    teams.forEach(t => favoriteNames.add(t.teamName));
+                }
+            } catch (e) { /* 관심 팀 로드 실패 시 무시 */ }
+        }
+
+        // 2. 오늘 경기 로드 (baseball, soccer, lol 동시)
+        let allMatches = [];
+        try {
+            const [bbRes, scRes, lolRes] = await Promise.all([
+                fetch(`${BASE_URL}/api/schedule/baseball?date=${dateStr}`),
+                fetch(`${BASE_URL}/api/schedule/soccer?date=${dateStr}`),
+                fetch(`${BASE_URL}/api/schedule/lol?date=${dateStr}`)
+            ]);
+
+            if (bbRes.ok) {
+                const data = await bbRes.json();
+                data.forEach(m => allMatches.push({ ...m, sport: 'baseball' }));
+            }
+            if (scRes.ok) {
+                const data = await scRes.json();
+                data.forEach(m => allMatches.push({ ...m, sport: 'soccer' }));
+            }
+            if (lolRes.ok) {
+                const data = await lolRes.json();
+                data.forEach(m => allMatches.push({ ...m, sport: 'lol' }));
+            }
+        } catch (e) {
+            document.getElementById('matchList').innerHTML =
+                '<div class="text-center text-slate-400 text-xs py-6">경기 정보를 불러올 수 없습니다.</div>';
+            return;
+        }
+
+        // 3. 관심 팀 여부 판별
+        function isFavoriteMatch(m) {
+            if (m.sport === 'lol') {
+                return favoriteNames.has(m.homeTeamName) || favoriteNames.has(m.awayTeamName);
+            }
+            return favoriteIds.has(Number(m.homeTeamId)) || favoriteIds.has(Number(m.awayTeamId));
+        }
+
+        // 4. 정렬: 관심 팀 경기 → 상태(LIVE > 예정 > 종료) → 시간
+        allMatches.sort((a, b) => {
+            const favA = isFavoriteMatch(a) ? 0 : 1;
+            const favB = isFavoriteMatch(b) ? 0 : 1;
+            if (favA !== favB) return favA - favB;
+            const stA = statusOrder(a.status);
+            const stB = statusOrder(b.status);
+            if (stA !== stB) return stA - stB;
+            const timeA = (a.scheduledAt || '00:00');
+            const timeB = (b.scheduledAt || '00:00');
+            return timeA.localeCompare(timeB);
+        });
+
+        // 5. 렌더링
+        const container = document.getElementById('matchList');
+        if (allMatches.length === 0) {
+            container.innerHTML = '<div class="text-center text-slate-400 text-xs py-6">오늘 예정된 경기가 없습니다.</div>';
+            return;
+        }
+
+        // 관심 팀 경기가 있을 경우 구분선 추가
+        const hasFav = allMatches.some(m => isFavoriteMatch(m));
+        const hasNonFav = allMatches.some(m => !isFavoriteMatch(m));
+
+        let html = '';
+        let dividerInserted = false;
+
+        allMatches.forEach((m, idx) => {
+            const fav = isFavoriteMatch(m);
+            // 관심팀 경기 → 일반 경기로 넘어가는 지점에 구분선
+            if (hasFav && hasNonFav && !fav && !dividerInserted) {
+                html += `<div class="flex items-center gap-2 py-1">
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                    <span class="text-[10px] text-slate-400 font-bold">기타 경기</span>
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                </div>`;
+                dividerInserted = true;
+            }
+            html += matchCard(m, fav);
+        });
+
+        container.innerHTML = html;
+    }
+
+    // 페이지 로드 시 실행
+    document.addEventListener('DOMContentLoaded', loadTodayMatches);
+</script>
 </body>
 </html>

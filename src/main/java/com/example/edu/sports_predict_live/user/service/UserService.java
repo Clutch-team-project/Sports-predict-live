@@ -53,6 +53,9 @@ public class UserService {
                 .nickname(dto.getNickname())
                 .phone(dto.getPhone())
                 .birthDate(dto.getBirthDate())
+                .marketingAgreed(dto.isMarketingAgreed())
+                .matchStartAlert(dto.isMatchStartAlert())
+                .predictionResultAlert(dto.isPredictionResultAlert())
                 .build();
 
         return UserResponseDTO.from(userRepository.save(user));
