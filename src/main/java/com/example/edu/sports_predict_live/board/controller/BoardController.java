@@ -175,15 +175,20 @@ public class BoardController {
         }
     }
 
-//    @PostMapping("/report")
-//    @ResponseBody
-//    public ResponseEntity<String> report(@RequestParam("boardId") Long boardId, Authentication authentication) {
-//        try {
-//            Long currentUserId = getCurrentUserId(authentication);
-//
-//            return ResponseEntity.ok("");
-//        }
-//    }
+    @PostMapping("/report")
+    @ResponseBody
+    public ResponseEntity<String> report(@RequestParam("boardId") Long boardId, Authentication authentication) {
+        try {
+            Long currentUserId = getCurrentUserId(authentication);
+            boardService.report(boardId, currentUserId);
+
+            return ResponseEntity.ok("신고가 접수되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류가 발생하였습니다.");
+        }
+    }
 
 
 

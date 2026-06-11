@@ -6,7 +6,9 @@ import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
 import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
 import com.example.edu.sports_predict_live.board.entity.BoardLike;
+import com.example.edu.sports_predict_live.board.entity.BoardReport;
 import com.example.edu.sports_predict_live.board.repository.BoardLikeRepository;
+import com.example.edu.sports_predict_live.board.repository.BoardReportRepository;
 import com.example.edu.sports_predict_live.board.repository.BoardRepository;
 import com.example.edu.sports_predict_live.user.entity.User;
 import com.example.edu.sports_predict_live.user.repository.UserRepository;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.text.html.Option;
 import java.util.Optional;
 
 @Service
@@ -29,6 +32,7 @@ public class BoardServiceImpl implements BoardService{
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
     private final BoardLikeRepository boardLikeRepository;
+    private final BoardReportRepository boardReportRepository;
 
     // 게시글 생성
     @Override
@@ -114,7 +118,6 @@ public class BoardServiceImpl implements BoardService{
 
     @Override
     public void toggleLike(Long boardId, Long userId) {
-
         Optional<Board> result = boardRepository.findById(boardId);
         Board board = result.orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
         // 유저가 좋아요를 누른지 확인
@@ -132,6 +135,7 @@ public class BoardServiceImpl implements BoardService{
             board.changeLikeCount(board.getLikeCount() + 1);
         }
         boardRepository.save(board);
+        boardRepository.flush();
     }
 
     @Override
@@ -144,6 +148,22 @@ public class BoardServiceImpl implements BoardService{
                 .build();
         return boardLikeRepository.findByBoardAndUserId(board, userId).isPresent();
     }
+    //
+    @Override
+    @Transactional
+    public void report(Long boardId, Long userId) {
+        Optional<BoardReport> existingReport = boardReportRepository.findByBoard_BoardIdAndUserId(boardId, userId);
 
+        if(existingReport.isPresent()){
+            throw new IllegalStateException("이미 신고되었습니다.");
+        }
+        Board board = boardRepository.findById(boardId).orElseThrow(()->new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
+        BoardReport newReport = BoardReport.builder()
+                .board(board)
+                .userId(userId)
+                .build();
+
+        boardReportRepository.save(newReport);
+    }
 }

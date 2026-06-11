@@ -19,6 +19,7 @@ public interface BoardService {
     void remove(Long boardID); // 글 삭제
     void toggleLike(Long boardId, Long userId); // 좋아요수 증가
     boolean checkIsLiked(Long boardId, Long userId);
+    void report(Long boardId, Long userId);
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 

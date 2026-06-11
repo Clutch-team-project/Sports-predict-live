@@ -173,7 +173,7 @@
             <div class="card p-4">
                 <p class="section-title">게시글 통계</p>
                 <div class="stat-row"><span class="stat-label">조회수</span><span class="stat-val" th:text="${dto.viewCount}">312</span></div>
-                <div class="stat-row"><span class="stat-label">좋아요</span><span class="stat-val" th:text="${dto.likeCount}">21</span></div>
+                <div class="stat-row"><span class="stat-label">좋아요</span><span id="sidebarLikeCount" class="stat-val" th:text="${dto.likeCount}">21</span></div>
                 <div class="stat-row"><span class="stat-label">댓글</span><span class="stat-val" th:text="${dto.replyCount ?: 0}">8</span></div>
             </div>
         </div>
@@ -186,6 +186,8 @@
 
 <script>
     const token = localStorage.getItem('accessToken');
+
+    // 좋아요 처리 로직
     document.getElementById('btnLike').addEventListener('click', function() {
         if (!token) {
             if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
@@ -198,6 +200,7 @@
 
         const likeBtn = document.getElementById('btnLike');
         const countSpan = likeBtn.querySelector('.like-count-text');
+        const sidebarCountSpan = document.getElementById('sidebarLikeCount');
 
         window.authFetch('/board/like', {
             method: 'POST',
@@ -209,23 +212,54 @@
                 if (res.ok) {
                     let currentCount = parseInt(countSpan.innerText);
                     if(likeBtn.classList.contains('is-active')){
-                        // 좋아요가 눌려있던 상태에서 좋아요 취소
                         likeBtn.classList.remove('is-active');
                         countSpan.innerText = currentCount - 1;
+                        if(sidebarCountSpan) sidebarCountSpan.innerText = currentCount - 1;
                     } else {
-                        // 좋아요가 안 눌려있던 상태에서 좋아요 추가
                         likeBtn.classList.add('is-active');
                         countSpan.innerText = currentCount + 1;
+                        if(sidebarCountSpan) sidebarCountSpan.innerText = currentCount + 1;
                     }
                 } else {
-                    const msg = await res.text();
                     alert(msg || '오류가 발생했습니다.');
                 }
             })
             .catch(err => console.error(err));
     });
 
-    // 삭제 요청
+    // 신고 처리 로직 (새로 추가됨)
+    document.getElementById('btnReport').addEventListener('click', function() {
+        if (!token) {
+            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
+            return;
+        }
+
+        // 신고 확인 창
+        if(!confirm('이 게시글을 정말로 신고하시겠습니까?')) return;
+
+        const boardId = document.getElementById('currentBoardId').value;
+        const formData = new URLSearchParams();
+        formData.append('boardId', boardId);
+
+        window.authFetch('/board/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+            .then(async res => {
+                const msg = await res.text();
+                if (res.ok) {
+                    // 성공 시 (신고가 접수되었습니다.)
+                    alert(msg);
+                } else {
+                    // 실패 및 중복 시 (이미 신고되었습니다.)
+                    alert(msg || '오류가 발생했습니다.');
+                }
+            })
+            .catch(err => console.error(err));
+    });
+
+    // 삭제 처리 로직
     function removePost() {
         if(!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
 
