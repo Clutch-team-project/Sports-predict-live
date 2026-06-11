@@ -156,6 +156,7 @@
 
                 <th:block th:unless="${currentUserId != null and currentUserId == dto.userId}">
                     <button type="button" id="btnReport" class="action-btn danger"
+                            th:if="${!dto.isNotice}"
                             th:classappend="${isReported != null and isReported} ? 'is-active' : ''">신고</button>
                 </th:block>
             </div>

@@ -16,11 +16,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -107,10 +111,22 @@ public class BoardServiceImpl implements BoardService{
         String category = pageRequestDTO.getCategory();
         String sort = pageRequestDTO.getSort();
         Pageable pageable = pageRequestDTO.getPageable("boardId");
+
         Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, category, sort, pageable);
+
+        List<BoardListAllDTO> dtoList = new ArrayList<>(result.getContent());
+
+        if(pageRequestDTO.getPage() == 1) {
+            PageRequest noticePageable = PageRequest.of(0, 5);
+            Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(null, null, "공지", null, noticePageable);
+            List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
+            dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
+            noticeDtoList.addAll(dtoList);
+            dtoList = noticeDtoList;
+        }
         return PageResponseDTO.<BoardListAllDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
-                .dtoList(result.getContent())
+                .dtoList(dtoList)
                 .total((int)result.getTotalElements())
                 .build();
     }
@@ -153,8 +169,11 @@ public class BoardServiceImpl implements BoardService{
             throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
         }
 
-        Optional<BoardReport> existingReport = boardReportRepository.findByBoard_BoardIdAndUserId(boardId, userId);
+        if(board.isNotice()) {
+            throw new IllegalStateException("공지글은 신고할 수 없스니다.");
+        }
 
+        Optional<BoardReport> existingReport = boardReportRepository.findByBoard_BoardIdAndUserId(boardId, userId);
         if (existingReport.isPresent()) {
             throw new IllegalStateException("이미 신고가 접수된 게시글입니다.");
         }

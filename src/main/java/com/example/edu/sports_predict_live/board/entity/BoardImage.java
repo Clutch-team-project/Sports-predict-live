@@ -16,8 +16,7 @@ public class BoardImage implements Comparable<BoardImage>{
     private String fileName;
     private int ord;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id")
-    private Board board;
+    @JoinColumn(name = "board_id", foreignKey = @ForeignKey(name = "fk_board_image_board"))    private Board board;
     @Override
     public int compareTo(BoardImage other) {
         return this.ord - other.ord;
