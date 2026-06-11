@@ -36,7 +36,8 @@ public class StandingsResponseDTO {
     }
 
     // lolesports API 응답으로 생성 (LoL 전용) — teamId는 DB 팀명 매칭 결과 (없으면 null)
-    public StandingsResponseDTO(Long teamId, int rank, String teamName, String emblemUrl, int wins, int losses) {
+    public StandingsResponseDTO(Long teamId, int rank, String teamName, String emblemUrl,
+                                int wins, int losses, String recentForm) {
         this.teamId        = teamId;
         this.teamName      = teamName;
         this.emblemUrl     = emblemUrl;
@@ -50,6 +51,6 @@ public class StandingsResponseDTO {
                 : BigDecimal.ZERO;
         this.pointsFor     = 0;
         this.pointsAgainst = 0;
-        this.recentForm    = null;
+        this.recentForm    = recentForm;
     }
 }

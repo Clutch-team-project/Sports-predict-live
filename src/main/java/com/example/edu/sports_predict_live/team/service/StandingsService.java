@@ -70,6 +70,9 @@ public class StandingsService {
         teamRepository.findBySportCode("lol").forEach(t ->
                 teamIdByCode.put(t.getName().toLowerCase(), t.getTeamId()));
 
+        // 순위 API에는 최근 폼이 없어 일정 API의 완료 경기에서 팀별 최근 5경기 계산
+        Map<String, String> recentFormByCode = getLolRecentForms();
+
         List<StandingsResponseDTO> results = new ArrayList<>();
         for (Map<String, Object> tournament : standingsList) {
             List<Map<String, Object>> stages =
@@ -105,7 +108,8 @@ public class StandingsService {
                                     teamName,
                                     (String) team.getOrDefault("image", ""),
                                     wins,
-                                    losses
+                                    losses,
+                                    teamCode != null ? recentFormByCode.get(teamCode) : null
                             ));
                         }
                     }
@@ -113,6 +117,57 @@ public class StandingsService {
             }
         }
         return results;
+    }
+
+    // 일정 API의 완료 경기를 시간순으로 훑어 팀 코드별 최근 5경기 W/L 문자열 생성 (왼쪽이 과거)
+    @SuppressWarnings("unchecked")
+    private Map<String, String> getLolRecentForms() {
+        Map<String, String> forms = new java.util.HashMap<>();
+        try {
+            Map<String, Object> response = webClient.get()
+                    .uri(uri -> uri.path("/getSchedule")
+                            .queryParam("hl", "ko-KR")
+                            .queryParam("leagueId", LCK_LEAGUE_ID)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response == null) return forms;
+
+            List<Map<String, Object>> events = (List<Map<String, Object>>)
+                    ((Map<?, ?>) ((Map<?, ?>) response.get("data")).get("schedule")).get("events");
+            if (events == null) return forms;
+
+            // 이벤트는 시간 오름차순으로 제공됨 — 순서대로 누적 후 마지막 5개만 사용
+            Map<String, StringBuilder> acc = new java.util.HashMap<>();
+            for (Map<String, Object> event : events) {
+                if (!"completed".equals(event.get("state"))) continue;
+                if (!"match".equals(event.get("type"))) continue;
+
+                Map<String, Object> match = (Map<String, Object>) event.get("match");
+                if (match == null) continue;
+                List<Map<String, Object>> teams = (List<Map<String, Object>>) match.get("teams");
+                if (teams == null || teams.size() < 2) continue;
+
+                for (Map<String, Object> team : teams) {
+                    String code = (String) team.get("code");
+                    Map<String, Object> result = (Map<String, Object>) team.get("result");
+                    if (code == null || result == null) continue;
+                    String outcome = (String) result.get("outcome");
+                    if (!"win".equals(outcome) && !"loss".equals(outcome)) continue;
+                    acc.computeIfAbsent(code, k -> new StringBuilder())
+                            .append("win".equals(outcome) ? 'W' : 'L');
+                }
+            }
+            acc.forEach((code, sb) -> {
+                String all = sb.toString();
+                forms.put(code, all.length() > 5 ? all.substring(all.length() - 5) : all);
+            });
+        } catch (Exception e) {
+            // 폼 계산 실패 시 순위 자체는 정상 표시되도록 빈 맵 반환
+        }
+        return forms;
     }
 
     @SuppressWarnings("unchecked")
