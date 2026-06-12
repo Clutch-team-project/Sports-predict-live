@@ -36,14 +36,18 @@ public class SecurityConfig {
 
     // 공개 API 경로
     private static final String[] PUBLIC_API = {
-            "/api/auth/**",         // 인증 (이메일 인증, 로그인, 회원가입 등)
-            "/api/standings/**",    // 팀 순위
-            "/api/records/**",      // 선수 기록
-            "/api/players/**",      // 선수 목록
-            "/api/teams/**",        // 팀 정보
-            "/api/schedule/**",     // 경기 일정
-            "/oauth2/**",           // OAuth2 인증
-            "/login/oauth2/**"      // OAuth2 콜백
+            "/api/auth/**",
+            "/api/standings/**",
+            "/api/records/**",
+            "/api/players/**",
+            "/api/teams/**",
+            "/api/schedule/**",
+
+            "/news/**",
+            "/news-scrap/**",
+
+            "/oauth2/**",
+            "/login/oauth2/**"
     };
 
     // 공개 페이지 경로
