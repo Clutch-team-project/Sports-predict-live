@@ -612,9 +612,11 @@ public BoardResponseDto(Board board) {
             ? `<span class="text-yellow-500 text-xs font-black ml-1" title="관심 팀 경기">★</span>`
             : '';
 
-        // 스코어 또는 시간 표시
-        const homeScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} ml-1.5 text-lg">${match.homeScore}</span>` : `<span class="text-slate-400 ml-1.5">-</span>`;
-        const awayScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} mr-1.5 text-lg">${match.awayScore}</span>` : `<span class="text-slate-400 mr-1.5">-</span>`;
+        // 스코어 또는 시간 표시 (LOL은 homeWins/awayWins, 그 외는 homeScore/awayScore)
+        const homeVal = match.sport === 'lol' ? match.homeWins : match.homeScore;
+        const awayVal = match.sport === 'lol' ? match.awayWins : match.awayScore;
+        const homeScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} ml-1.5 text-lg">${homeVal}</span>` : `<span class="text-slate-400 ml-1.5">-</span>`;
+        const awayScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} mr-1.5 text-lg">${awayVal}</span>` : `<span class="text-slate-400 mr-1.5">-</span>`;
 
         const textColor = isScheduled ? 'text-slate-500' : 'text-slate-700';
 
