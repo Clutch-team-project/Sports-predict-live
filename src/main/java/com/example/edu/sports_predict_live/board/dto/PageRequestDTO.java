@@ -17,11 +17,10 @@ import java.net.URLEncoder;
 @NoArgsConstructor
 public class PageRequestDTO {
     @Builder.Default
-    private int page = 1; // 페이지 기본값 1
+    private int page = 1;
 
     @Builder.Default
-    private int size = 10; // 페이지 기본 사이즈 10
-
+    private int size = 10;
     private String type;
     private String keyword;
     private String category;

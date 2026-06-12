@@ -11,7 +11,6 @@
 
         .card { background: rgba(255,255,255,0.9); border: 2px solid rgba(59,130,246,0.55); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
-        /* 게시글 상세 스타일 */
         .btn-back {
             display: inline-flex; align-items: center; gap: 6px;
             background: white; border: 1px solid #cbd5e1; border-radius: 8px;
@@ -50,20 +49,16 @@
         }
         .action-btn:hover { border-color: #2563eb; color: #2563eb; }
 
-        /* 신고 버튼 기본 hover */
         .action-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* ⭐️ 신고 완료 (is-active) 상태: 안 한 버튼에 마우스 올렸을 때(hover)와 동일한 색상 적용 */
         .action-btn.danger.is-active {
             border-color: #ef4444; color: #ef4444; background: white;
-            cursor: not-allowed; /* 이미 신고했음을 알리기 위해 마우스 커서 모양 변경 */
+            cursor: not-allowed;
         }
-        /* ⭐️ 신고 완료 상태에서 마우스 올렸을 때 살짝 연한 빨간색 배경을 주어 눌려있다는 느낌 강화 */
         .action-btn.danger.is-active:hover {
             background: #fef2f2;
         }
 
-        /* 사이드바 및 레이아웃 조정 */
         .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
         .stat-row:last-child { border-bottom: none; }
         .stat-label { font-size: 12px; color: #64748b; }
@@ -163,15 +158,24 @@
 
             <hr class="divider">
 
-            <div style="font-size:15px;font-weight:900;color:#0f172a;margin-bottom:14px">댓글 <span style="color:#2563eb" th:text="${dto.replyCount ?: 0}">0</span></div>
+            <div style="font-size:15px;font-weight:900;color:#0f172a;margin-bottom:14px">
+                댓글 <span id="replyCountMain" style="color:#2563eb" th:text="${dto.replyCount ?: 0}">0</span>
+            </div>
 
             <div class="flex gap-2 mb-5">
-                <input class="input-field flex-1" type="text" placeholder="댓글을 입력하세요 (로그인 필요)">
-                <button class="btn-primary" style="padding:10px 20px;white-space:nowrap; background:#2563eb; color:white; border-radius:8px; font-weight:700;">등록</button>
+                <input id="replyInput" class="input-field flex-1" type="text" placeholder="댓글을 입력하세요">
+                <button id="btnRegisterReply" class="btn-primary" style="padding:10px 20px;white-space:nowrap; background:#2563eb; color:white; border-radius:8px; font-weight:700;">등록</button>
             </div>
 
             <hr class="divider">
-            <div style="text-align:center; padding:24px 0; color:#94a3b8; font-size:13px;">댓글 기능은 다음 스텝에서 연동 예정입니다.</div>
+
+            <ul id="replyList" class="flex flex-col gap-2 mt-4 min-h-[100px]">
+            </ul>
+
+            <ul id="replyPaging" class="flex justify-center gap-2 mt-8 text-sm">
+            </ul>
+
+            <input type="hidden" id="loggedInUserId" th:value="${currentUserId}">
         </div>
 
         <div class="flex flex-col gap-4 w-60 flex-shrink-0">
@@ -190,7 +194,7 @@
                 <p class="section-title">게시글 통계</p>
                 <div class="stat-row"><span class="stat-label">조회수</span><span class="stat-val" th:text="${dto.viewCount}">312</span></div>
                 <div class="stat-row"><span class="stat-label">좋아요</span><span id="sidebarLikeCount" class="stat-val" th:text="${dto.likeCount}">21</span></div>
-                <div class="stat-row"><span class="stat-label">댓글</span><span class="stat-val" th:text="${dto.replyCount ?: 0}">8</span></div>
+                <div class="stat-row"><span class="stat-label">댓글</span><span id="replyCountSide" class="stat-val" th:text="${dto.replyCount ?: 0}">8</span></div>
             </div>
         </div>
     </div>
@@ -243,22 +247,20 @@
             .catch(err => console.error(err));
     });
 
-    // ⭐️ 신고 처리 로직
-    document.getElementById('btnReport').addEventListener('click', function() {
+    //
+    document.getElementById('btnReport')?.addEventListener('click', function() {
+        const reportBtn = document.getElementById('btnReport');
+        if (!reportBtn) return;
         if (!token) {
             if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
             return;
         }
 
-        const reportBtn = document.getElementById('btnReport');
-
-        // 이미 신고 버튼이 눌려있으면 백엔드로 통신하지 않고 알림만 띄움
         if (reportBtn.classList.contains('is-active')) {
             alert('이미 신고가 접수된 게시글입니다.');
             return;
         }
 
-        // 신고 확인 창
         if(!confirm('이 게시글을 정말로 신고하시겠습니까?')) return;
 
         const boardId = document.getElementById('currentBoardId').value;
@@ -274,7 +276,7 @@
                 const msg = await res.text();
                 if (res.ok) {
                     alert(msg); // 신고 성공
-                    reportBtn.classList.add('is-active'); // ⭐️ 즉시 버튼 색상 변경
+                    reportBtn.classList.add('is-active');
                 } else {
                     alert(msg || '오류가 발생했습니다.');
                 }
@@ -306,6 +308,139 @@
             })
             .catch(err => console.error(err));
     }
+    const boardId = document.getElementById('currentBoardId').value;
+    const loggedInUserId = document.getElementById('loggedInUserId').value;
+    const replyList = document.getElementById('replyList');
+    const replyPaging = document.getElementById('replyPaging');
+    const replyInput = document.getElementById('replyInput');
+    const btnRegisterReply = document.getElementById('btnRegisterReply');
+
+    let currentReplyPage = 1;
+
+    // 1. 댓글 목록 화면에 그리기 (최종본)
+    function printReplies(page = 1) {
+        currentReplyPage = page;
+
+        window.authFetch(`/replies/list/${boardId}?page=${page}&size=10`)
+            .then(res => {
+                if (!res.ok) throw new Error("서버 응답 오류");
+                return res.json();
+            })
+            .then(data => {
+                const totalCount = data.total || 0;
+                const countMain = document.getElementById('replyCountMain');
+                const countSide = document.getElementById('replyCountSide');
+
+                if (countMain) countMain.innerText = totalCount;
+                if (countSide) countSide.innerText = totalCount;
+
+                const replyList = document.getElementById('replyList');
+                if (!replyList) return; // 도화지가 없으면 여기서 멈춤 (에러 방지)
+
+                let listStr = '';
+                if (data.dtoList && data.dtoList.length > 0) {
+                    data.dtoList.forEach(reply => {
+                        const deleteBtn = (loggedInUserId == reply.userId)
+                            ? `<button onclick="removeReply(${reply.replyId})" class="text-xs text-red-500 font-semibold hover:underline">삭제</button>`
+                            : '';
+
+                        listStr += `
+                            <li class="py-3 border-b border-slate-100">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div>
+                                        <span class="font-bold text-sm text-slate-800">${reply.nickname || '익명'}</span>
+                                        <span class="text-xs text-slate-400 ml-2">${reply.createdAt}</span>
+                                    </div>
+                                    ${deleteBtn}
+                                </div>
+                                <div class="text-sm text-slate-600 break-all leading-relaxed">${reply.replyText}</div>
+                            </li>
+                        `;
+                    });
+                } else {
+                    listStr = '<div class="text-center py-10 text-slate-400 text-sm">등록된 댓글이 없습니다. 첫 댓글을 남겨보세요!</div>';
+                }
+
+                replyList.innerHTML = listStr;
+
+                let pagingStr = '';
+                if (data.prev) {
+                    pagingStr += `<li class="cursor-pointer px-3 py-1 bg-slate-50 border border-slate-200 rounded text-slate-600 hover:bg-blue-50" onclick="printReplies(${data.start - 1})">이전</li>`;
+                }
+
+                for (let i = data.start; i <= data.end; i++) {
+                    const activeClass = (data.page === i) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50';
+                    pagingStr += `<li class="cursor-pointer px-3 py-1 border rounded ${activeClass}" onclick="printReplies(${i})">${i}</li>`;
+                }
+
+                if (data.next) {
+                    pagingStr += `<li class="cursor-pointer px-3 py-1 bg-slate-50 border border-slate-200 rounded text-slate-600 hover:bg-blue-50" onclick="printReplies(${data.end + 1})">다음</li>`;
+                }
+
+                const replyPaging = document.getElementById('replyPaging');
+                if (replyPaging) {
+                    replyPaging.innerHTML = pagingStr;
+                }
+            })
+            .catch(err => console.error('댓글 로딩 에러:', err));
+    }
+
+    btnRegisterReply.addEventListener('click', function() {
+        if (!token || !loggedInUserId) {
+            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
+            return;
+        }
+
+        const text = replyInput.value.trim();
+        if (text === '') {
+            alert('댓글 내용을 입력해 주세요.');
+            replyInput.focus();
+            return;
+        }
+
+        const replyObj = {
+            boardId: boardId,
+            replyText: text,
+            userId: loggedInUserId
+        };
+
+        window.authFetch('/replies/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(replyObj)
+        })
+            .then(async res => {
+                if(res.ok) {
+                    replyInput.value = '';
+                    const totalCount = parseInt(document.getElementById('replyCountMain').innerText) + 1;
+                    const lastPage = Math.ceil(totalCount / 10); // 10개씩 나누어 올림 (예: 16개면 2페이지)
+
+                    printReplies(lastPage);
+                } else {
+                    const msg = await res.text();
+                    alert(msg || '댓글 등록에 실패했습니다.');
+                }
+            })
+            .catch(err => console.error('댓글 등록 에러:', err));
+    });
+
+    function removeReply(replyId) {
+        if(!confirm('댓글을 삭제하시겠습니까?')) return;
+
+        window.authFetch(`/replies/${replyId}`, {
+            method: 'DELETE'
+        })
+            .then(async res => {
+                if(res.ok) {
+                    printReplies(currentReplyPage);
+                } else {
+                    const msg = await res.text();
+                    alert(msg || '댓글 삭제에 실패했습니다.');
+                }
+            })
+            .catch(err => console.error('댓글 삭제 에러:', err));
+    }
+    printReplies(1);
 </script>
 </body>
 </html>
