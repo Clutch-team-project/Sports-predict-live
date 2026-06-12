@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +40,13 @@ public class BoardServiceImpl implements BoardService{
 
     // 게시글 생성
     @Override
-    public Long register(BoardDTO boardDTO) {
+    public Long register(BoardDTO boardDTO, String currentUserRole) {
+        if("공지".equals(boardDTO.getCategory()) && !currentUserRole.equals("ROLE_ADMIN")) {
+            throw new AccessDeniedException("공지사항은 관리자만 작성할 수 있습니다.");
+        }
+        boardDTO.setNotice("공지".equals(boardDTO.getCategory()));
+        boardDTO.setBlinded(false);
+
         Board board = dtoToEntity(boardDTO);
         Long boardId = boardRepository.save(board).getBoardId();
         return boardId;
@@ -96,14 +103,20 @@ public class BoardServiceImpl implements BoardService{
     }
     // 게시글 삭제
     @Override
-    public void remove(Long boardId) {
-        Optional<Board> result = boardRepository.findById(boardId);
-        Board board = result.orElseThrow();
-        board.softDelete();
+    public void remove(Long boardId, Long currentUserId, String currentUserRole) {
+        Board board = boardRepository.findById(boardId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
+        boolean isOwner = board.getUserId().equals(currentUserId);
+        boolean isAdmin = "ROLE_ADMIN".equals(currentUserRole);
+
+        if(!isOwner && !isAdmin) {
+            throw new AccessDeniedException("삭제 권한이 없습니다.");
+        }
+
+        board.softDelete();
         boardRepository.save(board);
     }
-
+    // 리스트 조회
     @Override
     public PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO) {
         String[] types = pageRequestDTO.getTypes();
@@ -130,7 +143,7 @@ public class BoardServiceImpl implements BoardService{
                 .total((int)result.getTotalElements())
                 .build();
     }
-
+    // 좋아요 토글
     @Override
     public void toggleLike(Long boardId, Long userId) {
         Optional<Board> result = boardRepository.findById(boardId);
@@ -150,7 +163,7 @@ public class BoardServiceImpl implements BoardService{
         boardRepository.save(board);
         boardRepository.flush();
     }
-
+    // 좋아요 여부 확인
     @Override
     public boolean checkIsLiked(Long boardId, Long userId) {
         if(userId == null){
@@ -185,7 +198,7 @@ public class BoardServiceImpl implements BoardService{
 
         boardReportRepository.save(newReport);
     }
-
+    // 신고 여부 확인
     @Override
     public boolean checkIsReported(Long boardId, Long userId) {
         if(userId == null) return false;
