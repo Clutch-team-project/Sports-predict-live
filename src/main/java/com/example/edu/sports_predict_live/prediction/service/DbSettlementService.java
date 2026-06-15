@@ -12,8 +12,8 @@ public class DbSettlementService {
 
     private final PredictionService predictionService;
 
-    // 10분마다 KBO·K리그 완료 경기 정산
-    @Scheduled(fixedDelay = 600_000)
+    // 1분마다 KBO·K리그 완료 경기 정산
+    @Scheduled(fixedDelay = 60_000)
     public void settle() {
         try {
             predictionService.settleDbMatches("baseball");

@@ -83,11 +83,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
                         .requestMatchers(
-                                "/", "/login", "/signup", "/notification-agreement",
+                                "/", "/schedule",
+                                "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
-                                "/user-info", "/favorite-teams"
-                                , "/board", "/board/list", "/board/read/**", "/templates/**" // ← 추가
+                                "/user-info", "/favorite-teams",
+                                "/board", "/board/list", "/board/read/**", "/templates/**"
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()
@@ -110,9 +111,9 @@ public class SecurityConfig {
                                 PrintWriter out = response.getWriter();
                                 out.println("<script>");
                                 out.println("if(confirm('로그인 후 이용 가능합니다.\\n로그인 페이지로 이동하시겠습니까?')) {");
-                                out.println("   location.href='/login';"); // 확인 누르면 로그인 창
+                                out.println("   location.href='/login';");
                                 out.println("} else {");
-                                out.println("   location.href='/board/list';"); // 취소 누르면 리스트 복귀
+                                out.println("   history.back();");
                                 out.println("}");
                                 out.println("</script>");
                                 out.flush();

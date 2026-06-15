@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH - 전체 일정</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col antialiased">
+
+<main class="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-4">
+
+    <!-- 주간 날짜 슬라이더 -->
+    <div class="bg-white border border-slate-300 rounded-3xl p-5 shadow-md">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-3 text-sm">
+            <button id="btn-prev-week"
+                    class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">&lt; 이전 주</button>
+            <span id="week-label" class="font-black text-blue-600 text-base"></span>
+            <button id="btn-next-week"
+                    class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">다음 주 &gt;</button>
+        </div>
+        <div id="week-days" class="grid grid-cols-7 gap-2 text-center text-xs md:text-sm font-bold"></div>
+    </div>
+
+    <!-- 종목 탭 + 경기 목록 -->
+    <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="filterSport(null)" id="tab-all"
+                        class="sport-tab text-xs font-black px-3 py-1.5 rounded-xl bg-blue-600 text-white">전체</button>
+                <button onclick="filterSport('baseball')" id="tab-baseball"
+                        class="sport-tab text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">⚾ KBO</button>
+                <button onclick="filterSport('soccer')" id="tab-soccer"
+                        class="sport-tab text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">⚽ K리그</button>
+                <button onclick="filterSport('lol')" id="tab-lol"
+                        class="sport-tab text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">🎮 LCK</button>
+            </div>
+            <span id="match-date-label" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-xl text-xs font-bold shrink-0 ml-2"></span>
+        </div>
+        <div id="match-list" class="space-y-3">
+            <div class="text-center text-slate-400 py-8">불러오는 중...</div>
+        </div>
+    </div>
+
+</main>
+
+<script src="/gnb.js"></script>
+<script src="/notification.js"></script>
+<script>
+    const BASE_URL     = 'http://localhost:8080';
+    const DAY_NAMES    = ['일', '월', '화', '수', '목', '금', '토'];
+    const SPORT_EMOJI  = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
+    const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
+    const STATUS_ORDER = { in_progress: 0, scheduled: 1, finished: 2 };
+
+    let currentDate      = new Date();
+    let selectedDate     = new Date();
+    let currentSport     = null;
+    let allMatches       = [];
+    const matchMap       = {};   // predId → match
+    const predCache      = {};   // predId → pred | null
+    let predictionsReady = false;
+
+    // ── 날짜 유틸 ─────────────────────────────────────────────
+    function toDateStr(d) {
+        return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function toLolDateStr(d) {
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function toDisplayDate(d) {
+        return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function isSameDay(a, b) {
+        return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+    }
+    function getWeekStart(d) {
+        const copy = new Date(d);
+        copy.setDate(copy.getDate() - copy.getDay());
+        return copy;
+    }
+
+    // 경기별 고유 ID (LOL과 DB matchId 충돌 방지)
+    function getPredId(m) {
+        return m.sport === 'lol' ? `lol-${m.matchId}` : `db-${m.matchId}`;
+    }
+
+    // ── 주간 슬라이더 ──────────────────────────────────────────
+    function renderWeek() {
+        const weekStart = getWeekStart(currentDate);
+        document.getElementById('week-label').textContent =
+            `📅 ${selectedDate.getFullYear()}년 ${selectedDate.getMonth()+1}월`;
+
+        const container = document.getElementById('week-days');
+        container.innerHTML = '';
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(weekStart);
+            d.setDate(weekStart.getDate() + i);
+            const isToday    = isSameDay(d, new Date());
+            const isSelected = isSameDay(d, selectedDate);
+
+            const div = document.createElement('div');
+            if (isSelected) {
+                div.className = 'p-2.5 bg-blue-600 rounded-2xl text-white shadow-md cursor-pointer';
+                div.innerHTML = `<div class="font-black mb-1 text-[11px]">${isToday ? '오늘' : DAY_NAMES[d.getDay()]}</div><div class="font-black text-base">${d.getDate()}</div>`;
+            } else if (isToday) {
+                div.className = 'p-2.5 bg-blue-50 border border-blue-300 rounded-2xl cursor-pointer';
+                div.innerHTML = `<div class="text-blue-600 font-black mb-1 text-[11px]">오늘</div><div class="text-blue-600 font-black">${d.getDate()}</div>`;
+            } else {
+                div.className = 'p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer';
+                div.innerHTML = `<div class="text-slate-400 mb-1 text-[11px]">${DAY_NAMES[d.getDay()]}</div><div class="text-slate-800 font-extrabold">${d.getDate()}</div>`;
+            }
+
+            const captured = new Date(d);
+            div.addEventListener('click', () => { selectedDate = captured; renderWeek(); loadMatches(); });
+            container.appendChild(div);
+        }
+    }
+
+    document.getElementById('btn-prev-week').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() - 7);
+        renderWeek();
+    });
+    document.getElementById('btn-next-week').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() + 7);
+        renderWeek();
+    });
+
+    // ── 종목 탭 ────────────────────────────────────────────────
+    function filterSport(sport) {
+        currentSport = sport;
+        document.querySelectorAll('.sport-tab').forEach(btn => {
+            btn.className = 'sport-tab text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200';
+        });
+        const activeBtn = document.getElementById(sport ? `tab-${sport}` : 'tab-all');
+        if (activeBtn) activeBtn.className = 'sport-tab text-xs font-black px-3 py-1.5 rounded-xl bg-blue-600 text-white';
+        renderMatches();
+        if (predictionsReady) applyPredictions();
+    }
+
+    // ── 경기 데이터 로드 ────────────────────────────────────────
+    async function loadMatches() {
+        const container = document.getElementById('match-list');
+        container.innerHTML = '<div class="text-center text-slate-400 py-8">불러오는 중...</div>';
+
+        document.getElementById('match-date-label').textContent =
+            `${toDisplayDate(selectedDate)} ${DAY_NAMES[selectedDate.getDay()]}요일`;
+
+        allMatches = [];
+        Object.keys(matchMap).forEach(k => delete matchMap[k]);
+        Object.keys(predCache).forEach(k => delete predCache[k]);
+        predictionsReady = false;
+
+        const dateStr = toDateStr(selectedDate);
+
+        try {
+            const [bbRes, scRes, lolRes] = await Promise.all([
+                fetch(`${BASE_URL}/api/schedule/baseball?date=${dateStr}`),
+                fetch(`${BASE_URL}/api/schedule/soccer?date=${dateStr}`),
+                fetch(`${BASE_URL}/api/schedule/lol?date=${dateStr}`)
+            ]);
+            if (bbRes.ok)  { const d = await bbRes.json();  d.forEach(m => allMatches.push({ ...m, sport: 'baseball' })); }
+            if (scRes.ok)  { const d = await scRes.json();  d.forEach(m => allMatches.push({ ...m, sport: 'soccer' })); }
+            if (lolRes.ok) { const d = await lolRes.json(); d.forEach(m => allMatches.push({ ...m, sport: 'lol' })); }
+        } catch (e) {
+            container.innerHTML = '<div class="text-center text-red-400 py-8">데이터를 불러올 수 없습니다.</div>';
+            return;
+        }
+
+        // 상태(LIVE > 예정 > 종료) → 시간 순 정렬
+        allMatches.sort((a, b) => {
+            const oa = STATUS_ORDER[a.status] ?? 3, ob = STATUS_ORDER[b.status] ?? 3;
+            if (oa !== ob) return oa - ob;
+            return (a.scheduledAt || '').localeCompare(b.scheduledAt || '');
+        });
+        allMatches.forEach(m => { matchMap[getPredId(m)] = m; });
+
+        renderMatches();
+        fetchAllPredictions();
+    }
+
+    // ── 경기 목록 렌더링 ────────────────────────────────────────
+    function renderMatches() {
+        const container = document.getElementById('match-list');
+        const filtered  = currentSport ? allMatches.filter(m => m.sport === currentSport) : allMatches;
+
+        if (filtered.length === 0) {
+            const label = currentSport ? (SPORT_EMOJI[currentSport] + ' ' + LEAGUE_LABEL[currentSport] + ' ') : '';
+            container.innerHTML = `
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-10 text-center">
+                    <div class="text-4xl mb-3">📅</div>
+                    <p class="text-slate-700 font-black mb-1">${label}경기가 없습니다</p>
+                    <p class="text-slate-400 text-xs mb-4">다른 날짜 또는 종목을 선택해보세요</p>
+                    ${!currentSport ? `
+                    <div class="flex gap-2 justify-center">
+                        <a href="/baseball/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-colors">⚾ 야구 일정</a>
+                        <a href="/soccer/schedule"   class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-colors">⚽ 축구 일정</a>
+                        <a href="/lol/schedule"      class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-colors">🎮 LOL 일정</a>
+                    </div>` : ''}
+                </div>`;
+            return;
+        }
+
+        let html = '';
+        let lastSport = null;
+
+        filtered.forEach(m => {
+            // 전체 탭: 종목 구분선
+            if (!currentSport && m.sport !== lastSport) {
+                html += `
+                    <div class="flex items-center gap-2 py-1 ${lastSport ? 'mt-1' : ''}">
+                        <div class="flex-1 h-px bg-slate-200"></div>
+                        <span class="text-[11px] text-slate-500 font-black px-1">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</span>
+                        <div class="flex-1 h-px bg-slate-200"></div>
+                    </div>`;
+                lastSport = m.sport;
+            }
+            html += matchCardHtml(m);
+        });
+
+        container.innerHTML = html;
+    }
+
+    // ── 경기 카드 HTML ─────────────────────────────────────────
+    function matchCardHtml(m) {
+        const predId  = getPredId(m);
+        const isLive  = m.status === 'in_progress';
+        const isDone  = m.status === 'finished';
+        const homeVal = m.sport === 'lol' ? m.homeWins : m.homeScore;
+        const awayVal = m.sport === 'lol' ? m.awayWins : m.awayScore;
+
+        let centerHtml;
+        if (isLive || isDone) {
+            const color = isLive ? 'text-red-500' : 'text-slate-800';
+            const badge = isLive
+                ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
+                : `<span class="text-[10px] font-bold text-slate-400">종료</span>`;
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    ${badge}
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-black ${color}">${awayVal}</span>
+                        <span class="text-slate-300 text-sm">:</span>
+                        <span class="text-xl font-black ${color}">${homeVal}</span>
+                    </div>
+                </div>`;
+        } else {
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    <span class="text-sm font-black text-slate-700">${m.scheduledAt || '--:--'}</span>
+                    <span class="text-[10px] text-slate-400 font-bold">VS</span>
+                </div>`;
+        }
+
+        return `
+        <div class="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center px-5 py-3 gap-2">
+                <div class="flex-1 flex flex-col items-start min-w-0">
+                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</span>
+                    <span class="font-black text-slate-800 text-sm truncate">${m.awayTeamName}</span>
+                </div>
+                <div class="flex-shrink-0 w-28 flex justify-center">${centerHtml}</div>
+                <div class="flex-1 flex flex-col items-end min-w-0">
+                    <span class="text-[10px] font-bold text-transparent mb-0.5">.</span>
+                    <span class="font-black text-slate-800 text-sm truncate">${m.homeTeamName}</span>
+                </div>
+            </div>
+            <div class="border-t border-slate-100" id="pred-${predId}"></div>
+        </div>`;
+    }
+
+    // ── 예측 전체 로드 ─────────────────────────────────────────
+    async function fetchAllPredictions() {
+        const loggedIn = !!localStorage.getItem('accessToken');
+
+        for (const m of allMatches) {
+            const predId = getPredId(m);
+            if (!loggedIn) {
+                predCache[predId] = null;
+                continue;
+            }
+            try {
+                const endpoint = m.sport === 'lol'
+                    ? `${BASE_URL}/api/predictions/lol/${m.matchId}`
+                    : `${BASE_URL}/api/predictions/match/${m.matchId}`;
+                const r = await authFetch(endpoint);
+                predCache[predId] = (r.ok && r.status !== 204) ? await r.json() : null;
+            } catch (e) {
+                predCache[predId] = null;
+            }
+        }
+
+        predictionsReady = true;
+        applyPredictions();
+    }
+
+    // 현재 렌더링된 카드에 예측 데이터 적용
+    function applyPredictions() {
+        const loggedIn = !!localStorage.getItem('accessToken');
+        const filtered = currentSport ? allMatches.filter(m => m.sport === currentSport) : allMatches;
+        filtered.forEach(m => renderPrediction(getPredId(m), predCache[getPredId(m)] ?? null, loggedIn));
+    }
+
+    // ── 예측 UI 렌더링 ─────────────────────────────────────────
+    function predBtnClass(selected) {
+        return selected
+            ? 'flex-1 py-1.5 rounded-xl text-xs font-black bg-blue-600 text-white shadow-sm transition-all'
+            : 'flex-1 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all';
+    }
+
+    function renderPrediction(predId, pred, loggedIn) {
+        const el = document.getElementById(`pred-${predId}`);
+        if (!el) return;
+        const m = matchMap[predId];
+        if (!m) return;
+
+        if (m.status === 'scheduled') {
+            if (!loggedIn) {
+                el.innerHTML = `
+                    <div class="px-4 py-2 text-center">
+                        <a href="/login" class="text-[10px] text-slate-400 hover:text-blue-600 transition-colors">
+                            로그인하면 승부예측에 참여할 수 있어요
+                        </a>
+                    </div>`;
+                return;
+            }
+
+            const cur     = pred ? pred.predictedResult : null;
+            const isLol   = m.sport === 'lol';
+            const homeName = m.homeTeamName;
+            const awayName = m.awayTeamName;
+
+            const drawBtn = isLol ? '' : `
+                <button onclick="submitPrediction('${predId}', 'DRAW')"
+                        class="${predBtnClass(cur === 'DRAW')}">무승부</button>`;
+
+            el.innerHTML = `
+                <div class="px-4 pb-2.5 pt-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-400 font-bold shrink-0">승부예측</span>
+                        <button onclick="submitPrediction('${predId}', 'AWAY_WIN')"
+                                class="${predBtnClass(cur === 'AWAY_WIN')}">${awayName} 승</button>
+                        ${drawBtn}
+                        <button onclick="submitPrediction('${predId}', 'HOME_WIN')"
+                                class="${predBtnClass(cur === 'HOME_WIN')}">${homeName} 승</button>
+                    </div>
+                    ${cur ? `<p class="text-[10px] text-slate-400 text-center mt-1">경기 시작 전까지 변경 가능</p>` : ''}
+                </div>`;
+            return;
+        }
+
+        if (pred) {
+            let resultBadge;
+            if (pred.isCorrect === null || pred.isCorrect === undefined) {
+                resultBadge = `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">집계 중...</span>`;
+            } else if (pred.isCorrect) {
+                resultBadge = `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-green-50 text-green-700 border border-green-200">🎯 맞음 +100P</span>`;
+            } else {
+                resultBadge = `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-red-50 text-red-500 border border-red-200">✗ 틀림</span>`;
+            }
+            const predLabel = pred.predictedResult === 'HOME_WIN' ? `${m.homeTeamName} 승`
+                            : pred.predictedResult === 'AWAY_WIN' ? `${m.awayTeamName} 승`
+                            : '무승부';
+            el.innerHTML = `
+                <div class="flex items-center justify-center gap-2 px-4 pb-2.5 pt-2">
+                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">${predLabel}</span>
+                    ${resultBadge}
+                </div>`;
+        }
+    }
+
+    // ── 예측 제출 ──────────────────────────────────────────────
+    async function submitPrediction(predId, result) {
+        if (!localStorage.getItem('accessToken')) {
+            if (confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href = '/login';
+            return;
+        }
+        const m = matchMap[predId];
+        if (!m) return;
+
+        const body = m.sport === 'lol'
+            ? { lolMatchId: m.matchId, lolScheduledDate: toLolDateStr(selectedDate), sportCode: 'lol', predictedResult: result }
+            : { matchId: m.matchId, sportCode: m.sport, predictedResult: result };
+
+        try {
+            const res = await authFetch(`${BASE_URL}/api/predictions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || '예측 제출에 실패했습니다.');
+                return;
+            }
+            const pred = await res.json();
+            predCache[predId] = pred;
+            renderPrediction(predId, pred, true);
+        } catch (e) {
+            alert('예측 제출 중 오류가 발생했습니다.');
+        }
+    }
+
+    // ── 초기화 ─────────────────────────────────────────────────
+    renderWeek();
+    loadMatches();
+</script>
+</body>
+</html>
