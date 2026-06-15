@@ -47,7 +47,11 @@ public class SecurityConfig {
             "/news-scrap/**",
 
             "/oauth2/**",
-            "/login/oauth2/**"
+            "/login/oauth2/**",
+
+            "/ai-pred/**",
+            "/prediction/**",
+            "/match/**"
     };
 
     // 공개 페이지 경로
