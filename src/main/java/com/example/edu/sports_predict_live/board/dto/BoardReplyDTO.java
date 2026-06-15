@@ -20,5 +20,8 @@ public class BoardReplyDTO {
     private String nickname;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime createdAt;
-
+    private int likeCount;
+    private boolean isLiked;
+    private boolean isReported;
+    private boolean isBlinded;
 }

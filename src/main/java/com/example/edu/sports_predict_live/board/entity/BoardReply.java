@@ -37,6 +37,20 @@ public class BoardReply {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(columnDefinition = "integer default 0")
+    private int likeCount;
+
+    public void changeLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    @Column(columnDefinition = "boolean default false")
+    private boolean isBlinded;
+
+    public void changeBlind(boolean isBlinded) {
+        this.isBlinded = isBlinded;
+    }
+
     public void changeText(String text) {
         this.replyText = text;
     }

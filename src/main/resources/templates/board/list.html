@@ -170,7 +170,7 @@
                                 <span style="color:#334155;font-style:italic">삭제된 게시글입니다.</span>
                             </th:block>
                             <th:block th:if="${dto.isBlinded and !dto.isDeleted}">
-                                <span style="color:#334155;font-style:italic">블라인드 처리된 게시글입니다.</span>
+                                <span style="color:#94a3b8 !important; font-weight:400 !important; font-style:italic;">블라인드 처리된 게시글입니다.</span>
                             </th:block>
                             <th:block th:if="${!dto.isDeleted and !dto.isBlinded}">
                                 <span th:style="${dto.isNotice ? 'color:#93c5fd;font-weight:700' : 'color:#0f172a;font-weight:600'}" th:text="${dto.title}">제목</span>
