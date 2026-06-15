@@ -584,46 +584,62 @@ public BoardResponseDto(Board board) {
     // 스포츠 이모지 매핑
     const SPORT_EMOJI = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
 
-    // 상태 표시 배지 HTML 생성
-    function statusBadge(status) {
-        if (status === 'in_progress') {
-            return `<span class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-xs font-black animate-pulse">LIVE</span>`;
-        } else if (status === 'finished') {
-            return `<span class="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black">종료</span>`;
-        } else {
-            return `<span class="bg-slate-100 text-slate-500 border border-slate-200 px-3 py-1 rounded-lg text-xs">예정</span>`;
-        }
-    }
-
     // 경기 카드 HTML 생성
     function matchCard(match, isFavorite) {
+        const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
         const emoji = SPORT_EMOJI[match.sport] || '';
         const isLive = match.status === 'in_progress';
         const isFinished = match.status === 'finished';
-        const isScheduled = match.status === 'scheduled';
 
+        const borderClass = isFavorite ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 bg-white';
         const favoriteBar = isFavorite
             ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
             : '';
-        const favoriteBadge = isFavorite
-            ? `<span class="text-yellow-500 text-xs font-black ml-1" title="관심 팀 경기">★</span>`
+        const favBadge = isFavorite
+            ? `<span class="text-[10px] font-black text-yellow-500">★</span>`
             : '';
 
-        // 스코어 또는 시간 표시 (LOL은 homeWins/awayWins, 그 외는 homeScore/awayScore)
         const homeVal = match.sport === 'lol' ? match.homeWins : match.homeScore;
         const awayVal = match.sport === 'lol' ? match.awayWins : match.awayScore;
-        const homeScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} ml-1.5 text-lg">${homeVal}</span>` : `<span class="text-slate-400 ml-1.5">-</span>`;
-        const awayScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} mr-1.5 text-lg">${awayVal}</span>` : `<span class="text-slate-400 mr-1.5">-</span>`;
 
-        const textColor = isScheduled ? 'text-slate-500' : 'text-slate-700';
+        let centerHtml;
+        if (isLive || isFinished) {
+            const scoreColor = isLive ? 'text-red-500' : 'text-slate-800';
+            const badge = isLive
+                ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
+                : `<span class="text-[10px] font-bold text-slate-400">종료</span>`;
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    ${badge}
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-black ${scoreColor}">${awayVal}</span>
+                        <span class="text-slate-300 text-sm">:</span>
+                        <span class="text-xl font-black ${scoreColor}">${homeVal}</span>
+                    </div>
+                </div>`;
+        } else {
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    <span class="text-sm font-black text-slate-700">${match.scheduledAt || '--:--'}</span>
+                    <span class="text-[10px] text-slate-400 font-bold">VS</span>
+                </div>`;
+        }
 
         return `
-        <div class="relative border ${isFavorite ? 'border-yellow-300 bg-yellow-50/30' : 'border-slate-300 bg-white'} p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md overflow-hidden">
+        <div class="relative border ${borderClass} rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
             ${favoriteBar}
-            <div class="w-full flex justify-between items-center text-sm px-4 ${textColor}">
-                <span class="font-extrabold flex items-center gap-1 text-base">${emoji} ${match.homeTeamName}${homeScore}${favoriteBadge}</span>
-                ${statusBadge(match.status)}
-                <span class="font-${isScheduled ? 'medium' : 'bold'} flex items-center gap-1 text-base">${favoriteBadge}${awayScore}${match.awayTeamName}</span>
+            <div class="flex items-center px-5 py-3 gap-2">
+                <div class="flex-1 flex flex-col items-start min-w-0">
+                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</span>
+                    <span class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</span>
+                </div>
+                <div class="flex-shrink-0 w-28 flex justify-center">
+                    ${centerHtml}
+                </div>
+                <div class="flex-1 flex flex-col items-end min-w-0">
+                    <span class="text-[10px] font-bold text-slate-400 mb-0.5"> </span>
+                    <span class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</span>
+                </div>
             </div>
         </div>`;
     }
@@ -737,7 +753,17 @@ public BoardResponseDto(Board board) {
         // 5. 렌더링
         const container = document.getElementById('matchList');
         if (allMatches.length === 0) {
-            container.innerHTML = '<div class="text-center text-slate-400 text-xs py-6">오늘 예정된 경기가 없습니다.</div>';
+            container.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm">
+                    <div class="text-4xl mb-3">📅</div>
+                    <p class="text-slate-700 font-black mb-1">오늘은 경기가 없습니다</p>
+                    <p class="text-slate-400 text-xs mb-4">다가오는 경기 일정을 확인해보세요</p>
+                    <div class="flex gap-2 justify-center">
+                        <a href="/baseball/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">⚾ 야구</a>
+                        <a href="/soccer/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">⚽ 축구</a>
+                        <a href="/lol/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">🎮 LOL</a>
+                    </div>
+                </div>`;
             return;
         }
 
@@ -799,7 +825,7 @@ public BoardResponseDto(Board board) {
                 return `
                 <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
                     <span class="font-extrabold ${color} truncate max-w-[120px]">
-                        ${medal} ${r.nickname}
+                        ${medal} ${r.nickname || '익명'}
                     </span>
                     <div class="text-right shrink-0">
                         <span class="font-black text-blue-600">${r.totalPoints}P</span>
