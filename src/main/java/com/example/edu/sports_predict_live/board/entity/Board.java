@@ -44,6 +44,9 @@ public class Board extends BaseEntity {
 
     private LocalDateTime deletedAt;
 
+    @Column(length = 20)
+    private String boardType;
+
     // 이미지 연관관계 설정
     @OneToMany(mappedBy = "board",
     cascade = {CascadeType.ALL},
@@ -98,5 +101,7 @@ public class Board extends BaseEntity {
         imageSet.forEach(boardImage -> boardImage.changeBoard(null));
         this.imageSet.clear();
     }
+
+
 }
 

@@ -23,7 +23,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
     }
 
     @Override
-    public Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, String category, String sort, Pageable pageable) {
+    public Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, String category, String sort, Pageable pageable, String boardType) {
         QBoard board = QBoard.board;
         QUser user = QUser.user;
         QBoardReply reply = QBoardReply.boardReply;
@@ -55,6 +55,10 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         if(category != null && !category.isEmpty()) {
             query.where(board.category.eq(category));
+        }
+
+        if(boardType != null && !boardType.isEmpty()) {
+            query.where(board.boardType.eq(boardType));
         }
 
         if(sort != null) {

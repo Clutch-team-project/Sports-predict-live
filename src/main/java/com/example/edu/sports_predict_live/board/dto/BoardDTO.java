@@ -45,4 +45,6 @@ public class BoardDTO {
     private LocalDateTime updatedAt;
 
     private List<String> fileNames;
+
+    private String boardType;
 }

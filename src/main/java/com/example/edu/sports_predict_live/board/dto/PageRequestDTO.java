@@ -25,6 +25,7 @@ public class PageRequestDTO {
     private String keyword;
     private String category;
     private String sort;
+    private String boardType;
 
     public String[] getTypes() {
         if(type == null || type.isEmpty()) {
