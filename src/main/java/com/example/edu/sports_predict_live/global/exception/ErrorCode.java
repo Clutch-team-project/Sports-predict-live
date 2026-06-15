@@ -38,7 +38,15 @@ public enum ErrorCode {
     FAVORITE_NOT_FOUND(404, "등록되지 않은 관심 팀입니다."),
 
     // 선수
-    PLAYER_NOT_FOUND(404, "존재하지 않는 선수입니다.");
+    PLAYER_NOT_FOUND(404, "존재하지 않는 선수입니다."),
+
+    // 경기
+    MATCH_NOT_FOUND(404, "존재하지 않는 경기입니다."),
+    MATCH_ALREADY_STARTED(400, "이미 시작된 경기는 예측할 수 없습니다."),
+
+    // 승부 예측
+    ALREADY_PREDICTED(409, "이미 예측에 참여했습니다."),
+    INVALID_PREDICTION_RESULT(400, "유효하지 않은 예측 결과입니다.");
 
     private final int status;
     private final String message;

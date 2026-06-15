@@ -168,6 +168,92 @@
         return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">전력분석</button>`;
     }
 
+    function resultLabel(result, m) {
+        return result === 'HOME_WIN' ? `${m.homeTeamName} 승` : `${m.awayTeamName} 승`;
+    }
+
+    function predBtnClass(selected) {
+        return selected
+            ? 'flex-1 py-2 rounded-xl text-xs font-black bg-blue-600 text-white shadow-sm transition-all'
+            : 'flex-1 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all';
+    }
+
+    function renderPrediction(m, pred) {
+        const el = document.getElementById(`pred-${m.matchId}`);
+        if (!el) return;
+
+        if (m.status === 'scheduled') {
+            const cur = pred ? pred.predictedResult : null;
+            el.innerHTML = `
+                <div class="px-4 pb-3 pt-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-400 font-bold mr-1">승부예측</span>
+                        <button onclick="submitPrediction('${m.matchId}', 'AWAY_WIN', '${m.awayTeamName}', '${m.homeTeamName}')"
+                                class="${predBtnClass(cur === 'AWAY_WIN')}">
+                            ${m.awayTeamName} 승
+                        </button>
+                        <button onclick="submitPrediction('${m.matchId}', 'HOME_WIN', '${m.awayTeamName}', '${m.homeTeamName}')"
+                                class="${predBtnClass(cur === 'HOME_WIN')}">
+                            ${m.homeTeamName} 승
+                        </button>
+                    </div>
+                    ${cur ? `<p class="text-[10px] text-slate-400 text-center mt-1">경기 시작 전까지 변경 가능</p>` : ''}
+                </div>`;
+            return;
+        }
+        if (pred && m.status === 'finished') {
+            const badge = pred.isCorrect
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-500 border border-red-200';
+            const icon = pred.isCorrect ? '🎯' : '✗';
+            el.innerHTML = `
+                <div class="flex items-center justify-center gap-2 px-4 pb-3 pt-2">
+                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
+                        ${resultLabel(pred.predictedResult, m)}
+                    </span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl ${badge}">
+                        ${icon} ${pred.isCorrect ? '맞음 +100P' : '틀림'}
+                    </span>
+                </div>`;
+            return;
+        }
+        if (pred) {
+            el.innerHTML = `
+                <div class="flex items-center justify-center gap-2 px-4 pb-3 pt-2">
+                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
+                        ${resultLabel(pred.predictedResult, m)}
+                    </span>
+                </div>`;
+        }
+    }
+
+    async function submitPrediction(lolMatchId, result, awayName, homeName) {
+        if (!localStorage.getItem('accessToken')) {
+            if (confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href = '/login';
+            return;
+        }
+        const scheduledDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth()+1).padStart(2,'0')}-${String(selectedDate.getDate()).padStart(2,'0')}`;
+        try {
+            const res = await authFetch(`${BASE_URL}/api/predictions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lolMatchId, lolScheduledDate: scheduledDate, sportCode: 'lol', predictedResult: result })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || '예측 제출에 실패했습니다.');
+                return;
+            }
+            const pred = await res.json();
+            const fakeMatch = { matchId: lolMatchId, homeTeamName: homeName, awayTeamName: awayName, status: 'scheduled' };
+            renderPrediction(fakeMatch, pred);
+        } catch (e) {
+            alert('예측 제출 중 오류가 발생했습니다.');
+        }
+    }
+
     async function loadMatches() {
         const dateStr = toDateStr(selectedDate);
         document.getElementById('match-date-label').textContent =
@@ -186,30 +272,45 @@
             }
 
             container.innerHTML = matches.map(m => `
-                <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors">
-                    <div class="w-20 flex flex-col gap-0.5">
-                        <span class="font-black text-slate-500 text-sm">${m.scheduledAt}</span>
-                        <span class="text-[10px] text-slate-400">${m.blockName}</span>
-                    </div>
-                    <div class="flex-grow flex justify-around items-center px-4 text-slate-700 text-sm">
-                        <div class="w-1/3 text-right">
-                            <div class="font-bold text-slate-800">${m.awayTeamName}</div>
-                            <div class="text-[10px] text-slate-400">${m.awayTeamCode}</div>
+                <div class="bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors">
+                    <div class="flex items-center justify-between p-4">
+                        <div class="w-20 flex flex-col gap-0.5">
+                            <span class="font-black text-slate-500 text-sm">${m.scheduledAt}</span>
+                            <span class="text-[10px] text-slate-400">${m.blockName}</span>
                         </div>
-                        ${renderStatus(m)}
-                        <div class="w-1/3 text-left">
-                            <div class="font-bold text-slate-800">${m.homeTeamName}</div>
-                            <div class="text-[10px] text-slate-400">${m.homeTeamCode}</div>
+                        <div class="flex-grow flex justify-around items-center px-4 text-slate-700 text-sm">
+                            <div class="w-1/3 text-right">
+                                <div class="font-bold text-slate-800">${m.awayTeamName}</div>
+                                <div class="text-[10px] text-slate-400">${m.awayTeamCode}</div>
+                            </div>
+                            ${renderStatus(m)}
+                            <div class="w-1/3 text-left">
+                                <div class="font-bold text-slate-800">${m.homeTeamName}</div>
+                                <div class="text-[10px] text-slate-400">${m.homeTeamCode}</div>
+                            </div>
+                        </div>
+                        <div class="ml-2">
+                            ${renderActionBtn(m)}
                         </div>
                     </div>
-                    <div class="ml-2">
-                        ${renderActionBtn(m)}
-                    </div>
+                    <div class="border-t border-slate-100" id="pred-${m.matchId}"></div>
                 </div>
             `).join('');
+
+            if (localStorage.getItem('accessToken')) loadPredictions(matches);
         } catch (e) {
             container.innerHTML = '<div class="text-center text-red-400 py-8">데이터를 불러올 수 없습니다.</div>';
         }
+    }
+
+    async function loadPredictions(matches) {
+        try {
+            for (const m of matches) {
+                const r = await authFetch(`${BASE_URL}/api/predictions/lol/${m.matchId}`);
+                if (r.status === 204) { renderPrediction(m, null); continue; }
+                if (r.ok) { const pred = await r.json(); renderPrediction(m, pred); }
+            }
+        } catch (e) { /* 예측 로드 실패 시 무시 */ }
     }
 
     renderWeek();

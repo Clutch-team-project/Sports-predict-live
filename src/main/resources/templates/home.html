@@ -186,29 +186,26 @@
 
             </div>
 
-            <!-- Right: 승부 예측 적중률 랭킹 -->
-            <div id="colPrediction" onclick="clickBox('prediction')"
-                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-center items-center text-sm font-bold cursor-pointer hover:bg-slate-50 min-h-[300px] shadow-md rounded-2xl">
-                <div class="w-full h-full flex flex-col justify-between text-left">
-                    <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2.5 mb-3.5 flex items-center gap-1">
-                        🏆 실시간 예측 적중 랭킹</h4>
-                    <div class="space-y-2.5 text-xs text-slate-600 flex-1 flex flex-col justify-around">
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="font-extrabold text-amber-600">🥇 1위. faker_god</span><span
-                                class="font-mono text-blue-600 font-bold">88.5% (23/26)</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="font-extrabold text-slate-500">🥈 2위. baseball_love</span><span
-                                class="font-mono text-blue-600 font-bold">82.1% (32/39)</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="font-extrabold text-amber-800">🥉 3위. k_league_king</span><span
-                                class="font-mono text-blue-600 font-bold">79.2% (19/24)</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="text-slate-500 font-bold">4위. soccer_masta</span><span
-                                class="font-mono text-slate-500 font-bold">75.0% (15/20)</span>
-                        </div>
+            <!-- Right: 승부 예측 포인트 랭킹 -->
+            <div id="colPrediction"
+                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col min-h-[300px] shadow-md rounded-2xl">
+                <div class="w-full h-full flex flex-col text-left">
+                    <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2.5 mb-3 flex items-center gap-1">
+                        🏆 승부예측 포인트 랭킹
+                    </h4>
+                    <!-- 종목 필터 탭 -->
+                    <div class="flex gap-1.5 mb-3">
+                        <button onclick="loadRanking(null)" id="rankTab-all"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white">전체</button>
+                        <button onclick="loadRanking('baseball')" id="rankTab-baseball"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">야구</button>
+                        <button onclick="loadRanking('soccer')" id="rankTab-soccer"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">축구</button>
+                        <button onclick="loadRanking('lol')" id="rankTab-lol"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">LOL</button>
+                    </div>
+                    <div id="rankingList" class="space-y-2 text-xs flex-1">
+                        <div class="text-center text-slate-400 py-6">불러오는 중...</div>
                     </div>
                 </div>
             </div>
@@ -768,8 +765,58 @@ public BoardResponseDto(Board board) {
         container.innerHTML = html;
     }
 
+    const RANK_MEDALS = ['🥇', '🥈', '🥉'];
+    const RANK_COLORS = ['text-amber-500', 'text-slate-400', 'text-amber-700'];
+
+    async function loadRanking(sport) {
+        // 탭 스타일 업데이트
+        document.querySelectorAll('.rank-tab').forEach(btn => {
+            btn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+        });
+        const activeId = sport ? `rankTab-${sport}` : 'rankTab-all';
+        const activeBtn = document.getElementById(activeId);
+        if (activeBtn) activeBtn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white';
+
+        const container = document.getElementById('rankingList');
+        const url = `${BASE_URL}/api/predictions/ranking${sport ? `?sport=${sport}` : ''}`;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error();
+            const list = await res.json();
+
+            if (!list.length) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">아직 예측 참여자가 없습니다.</div>';
+                return;
+            }
+
+            container.innerHTML = list.slice(0, 10).map((r, i) => {
+                const medal = i < 3 ? RANK_MEDALS[i] : `${r.rank}위`;
+                const color = i < 3 ? RANK_COLORS[i] : 'text-slate-500';
+                const pct = r.totalCount > 0
+                    ? Math.round(r.correctCount / r.totalCount * 100) + '%'
+                    : '-';
+                return `
+                <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+                    <span class="font-extrabold ${color} truncate max-w-[120px]">
+                        ${medal} ${r.nickname}
+                    </span>
+                    <div class="text-right shrink-0">
+                        <span class="font-black text-blue-600">${r.totalPoints}P</span>
+                        <span class="text-slate-400 ml-1">(${pct})</span>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">랭킹을 불러올 수 없습니다.</div>';
+        }
+    }
+
     // 페이지 로드 시 실행
-    document.addEventListener('DOMContentLoaded', loadTodayMatches);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTodayMatches();
+        loadRanking(null);
+    });
 </script>
 </body>
 </html>
