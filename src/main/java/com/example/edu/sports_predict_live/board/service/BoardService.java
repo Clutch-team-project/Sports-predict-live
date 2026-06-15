@@ -21,6 +21,7 @@ public interface BoardService {
     boolean checkIsLiked(Long boardId, Long userId);
     void report(Long boardId, Long userId);
     boolean checkIsReported(Long boardId, Long userId);
+    void toggleBlind(Long boardId);
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 
@@ -67,4 +68,6 @@ public interface BoardService {
                 .fileNames(fileNames)
                 .build();
     }
+
+
 }

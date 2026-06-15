@@ -54,12 +54,11 @@ public class Board extends BaseEntity {
     private Set<BoardImage> imageSet = new HashSet<>();
 
     // 게시글 정보 수정
-    public void change(String title, String content, String category, boolean isNotice, boolean isBlinded) {
+    public void change(String title, String content, String category, boolean isNotice) {
         this.title = title;
         this.content = content;
         this.category = category;
         this.isNotice = isNotice;
-        this.isBlinded = isBlinded;
     }
 
     public void changeViewCount(int viewCount) {
@@ -69,6 +68,10 @@ public class Board extends BaseEntity {
 
     public void changeLikeCount(int likeCount) {
         this.likeCount = likeCount;
+    }
+
+    public void changeBlind(boolean isBlinded) {
+        this.isBlinded = isBlinded;
     }
 
     public void softDelete() {

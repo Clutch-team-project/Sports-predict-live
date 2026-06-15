@@ -51,6 +51,9 @@
                     <option value="분석" th:selected="${dto.category == '분석'}">분석</option>
                     <option value="응원" th:selected="${dto.category == '응원'}">응원</option>
                     <option value="예측후기" th:selected="${dto.category == '예측후기'}">예측후기</option>
+                    <option value="공지"
+                            th:if="${currentUserRole == 'ROLE_ADMIN'}"
+                            th:selected="${dto.category == '공지'}">공지</option>
                 </select>
             </div>
 

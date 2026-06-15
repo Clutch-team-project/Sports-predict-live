@@ -18,14 +18,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -206,5 +205,14 @@ public class BoardServiceImpl implements BoardService{
                 .boardId(boardId)
                 .build();
         return boardReportRepository.findByBoard_BoardIdAndUserId(board.getBoardId(), userId).isPresent();
+    }
+    // 게시글 블라인드 처리
+    @Override
+    public void toggleBlind(Long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        board.changeBlind(!board.isBlinded());
+
+        boardRepository.save(board);
     }
 }

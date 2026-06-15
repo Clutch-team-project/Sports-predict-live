@@ -142,14 +142,22 @@
                     ♥ 좋아요 <span class="like-count-text" th:text="${dto.likeCount}">0</span>
                 </button>
 
-                <th:block th:if="${currentUserId != null and currentUserId == dto.userId}">
-                    <button type="button" class="action-btn"
-                            th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">수정</button>
+                <button type="button" class="action-btn"
+                        th:if="${currentUserId != null and currentUserId == dto.userId}"
+                        th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">수정</button>
 
-                    <button type="button" class="action-btn danger" onclick="removePost()">삭제</button>
-                </th:block>
+                <button type="button" class="action-btn danger"
+                        th:if="${currentUserId != null and (currentUserId == dto.userId or currentUserRole == 'ROLE_ADMIN')}"
+                        onclick="removePost()">삭제</button>
 
-                <th:block th:unless="${currentUserId != null and currentUserId == dto.userId}">
+                <button type="button" id="btnBlind" class="action-btn"
+                        th:if="${currentUserRole == 'ROLE_ADMIN'}"
+                        th:style="${dto.isBlinded} ? 'border-color: #cbd5e1; color: #94a3b8; background: #f8fafc;' : ''"
+                        onclick="toggleBlind()">
+                    <span th:text="${dto.isBlinded} ? '블라인드 해제' : '블라인드 처리'">블라인드</span>
+                </button>
+
+                <th:block th:unless="${(currentUserId != null and currentUserId == dto.userId) or currentUserRole == 'ROLE_ADMIN'}">
                     <button type="button" id="btnReport" class="action-btn danger"
                             th:if="${!dto.isNotice}"
                             th:classappend="${isReported != null and isReported} ? 'is-active' : ''">신고</button>
@@ -307,6 +315,25 @@
                 }
             })
             .catch(err => console.error(err));
+    }
+    function toggleBlind() {
+        if(!confirm('이 게시글의 블라인드 상태를 변경하시겠습니까?')) return;
+
+        window.authFetch(`/board/admin/${boardId}/blind`, {
+            method: 'PUT'
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert('블라인드 상태가 성공적으로 변경되었습니다.');
+                    location.reload();
+                } else {
+                    alert('처리에 실패했거나 권한이 없습니다.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('서버 통신 중 오류가 발생했습니다.');
+            });
     }
     const boardId = document.getElementById('currentBoardId').value;
     const loggedInUserId = document.getElementById('loggedInUserId').value;

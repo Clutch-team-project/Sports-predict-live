@@ -15,16 +15,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.nio.file.AccessDeniedException;
 
 @Controller
 @Log4j2
@@ -63,13 +61,13 @@ public class BoardController {
 
     @GetMapping("/list")
     public void list(PageRequestDTO pageRequestDTO, Authentication authentication, Model model) {
-        log.info("게시판 목록 조회 요청 : " + pageRequestDTO);
+        log.info("게시판 목록 조회 요청 : ", pageRequestDTO);
         PageResponseDTO<BoardListAllDTO> responseDTO = boardService.listWithAll(pageRequestDTO);
         String currentUserRole = getCurrentUserRole(authentication);
         model.addAttribute("currentUserRole", currentUserRole);
         model.addAttribute("responseDTO", responseDTO);
         model.addAttribute("pageRequestDTO", pageRequestDTO);
-        log.info("프론트에 넘기는 데이터 : " + responseDTO);
+        log.info("프론트에 넘기는 데이터 : ", responseDTO);
     }
 
     @GetMapping("/read")
@@ -128,9 +126,12 @@ public class BoardController {
     }
 
     @GetMapping("/modify")
-    public void modify(Long boardId, PageRequestDTO pageRequestDTO, Model model) {
+    public void modify(Long boardId, PageRequestDTO pageRequestDTO, Model model, Authentication authentication) {
         BoardDTO boardDTO = boardService.getBoardOnly(boardId);
+        String currentUserRole = getCurrentUserRole(authentication);
+        model.addAttribute("currentUserRole", currentUserRole);
         model.addAttribute("dto", boardDTO);
+        model.addAttribute("pageRequestDTO", pageRequestDTO);
     }
 
     @PostMapping("/modify")
@@ -178,7 +179,7 @@ public class BoardController {
     @PutMapping("/admin/{boardId}/blind")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseBody
-    public ResponseEntity<String> blindPost(@PathVariable("boardId") Long boardId) {
+    public ResponseEntity<String> blindPost(@PathVariable Long boardId) {
         try {
             boardService.toggleBlind(boardId);
             return ResponseEntity.ok("success");
