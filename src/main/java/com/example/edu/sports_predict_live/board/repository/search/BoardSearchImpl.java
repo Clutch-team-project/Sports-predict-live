@@ -53,12 +53,36 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             query.where(booleanBuilder);
         }
 
-        if(category != null && !category.isEmpty()) {
-            query.where(board.category.eq(category));
+        if (category != null && !category.isEmpty()) {
+            if ("공지".equals(category)) {
+                if (boardType != null && !boardType.isEmpty()) {
+                    query.where(board.category.eq("공지")
+                            .and(board.boardType.eq(boardType).or(board.boardType.isNull())));
+                } else {
+                    query.where(board.category.eq("공지").and(board.boardType.isNull()));
+                }
+            } else {
+                query.where(board.category.eq(category));
+                if (boardType != null && !boardType.isEmpty()) {
+                    query.where(board.boardType.eq(boardType));
+                }
+            }
+        } else {
+            if (boardType != null && !boardType.isEmpty()) {
+                query.where(board.boardType.eq(boardType));
+            }
         }
 
-        if(boardType != null && !boardType.isEmpty()) {
-            query.where(board.boardType.eq(boardType));
+        if ("공지".equals(category)) {
+            if (boardType != null && !boardType.isEmpty()) {
+                query.where(board.boardType.eq(boardType).or(board.boardType.isNull()));
+            } else {
+                query.where(board.boardType.isNull());
+            }
+        } else {
+            if (boardType != null && !boardType.isEmpty()) {
+                query.where(board.boardType.eq(boardType));
+            }
         }
 
         if(sort != null) {

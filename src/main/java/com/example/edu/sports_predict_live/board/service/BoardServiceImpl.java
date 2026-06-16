@@ -137,10 +137,15 @@ public class BoardServiceImpl implements BoardService{
             noticeDtoList.addAll(dtoList);
             dtoList = noticeDtoList;
         }
+        int totalElements = (int)result.getTotalElements();
+
+        if (totalElements == 0 && !dtoList.isEmpty()) {
+            totalElements = dtoList.size();
+        }
         return PageResponseDTO.<BoardListAllDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
                 .dtoList(dtoList)
-                .total((int)result.getTotalElements())
+                .total(totalElements)
                 .build();
     }
     // 좋아요 토글

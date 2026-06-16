@@ -129,7 +129,7 @@
             </div>
 
             <button type="submit" style="display:none;"></button>
-            <button type="button" class="btn-write" th:onclick="|location.href='@{/board/register(boardType=${pageRequestDTO.boardType})}'|">+ 글쓰기</button>
+            <button type="button" class="btn-write" onclick="clickWriteBtn()">+ 글쓰기</button>
         </form>
 
         <div class="card overflow-hidden mb-4">
@@ -203,18 +203,18 @@
 
         <div class="flex justify-center gap-1" th:if="${responseDTO != null && responseDTO.total > 0}">
             <a th:if="${responseDTO.prev}"
-               th:href="@{/board/list(page=${responseDTO.start - 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types})}"
+               th:href="@{/board/list(page=${responseDTO.start - 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types}, boardType=${pageRequestDTO.boardType})}"
                class="pag-btn">&lt;</a>
 
             <th:block th:each="num : ${#numbers.sequence(responseDTO.start, responseDTO.end)}">
-                <a th:href="@{/board/list(page=${num}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types})}"
+                <a th:href="@{/board/list(page=${num}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types}, boardType=${pageRequestDTO.boardType})}"
                    class="pag-btn"
                    th:classappend="${responseDTO.page == num ? 'active' : ''}"
                    th:text="${num}">1</a>
             </th:block>
 
             <a th:if="${responseDTO.next}"
-               th:href="@{/board/list(page=${responseDTO.end + 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types})}"
+               th:href="@{/board/list(page=${responseDTO.end + 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types}, boardType=${pageRequestDTO.boardType})}"
                class="pag-btn">&gt;</a>
         </div>
 
@@ -222,6 +222,34 @@
 </main>
 
 <script>
+    // 비로그인 글쓰기 방지 및 boardType 유지
+    function clickWriteBtn() {
+        const token = localStorage.getItem('accessToken');
+        const currentBoardType = '[[${pageRequestDTO.boardType ?: ""}]]';
+
+        if (!token) {
+            // 토큰이 없으면 로그인 여부 묻기
+            const isLoginIntent = confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?');
+            if (isLoginIntent) {
+                location.href = '/login';
+            } else {
+                // ⭐️ 취소 누르면 전체로 안 가고, 내가 보던 종목 게시판 리스트를 유지하며 새로고침 합니다.
+                if (currentBoardType) {
+                    location.href = '/board/list?boardType=' + currentBoardType;
+                } else {
+                    location.href = '/board/list';
+                }
+            }
+        } else {
+            // 로그인 되어 있으면 종목 달고 글쓰기 화면으로 진입
+            if (currentBoardType) {
+                location.href = '/board/register?boardType=' + currentBoardType;
+            } else {
+                location.href = '/board/register';
+            }
+        }
+    }
+
     function chgCategory(catValue) {
         document.getElementById('formCategory').value = catValue;
         document.getElementById('boardActionForm').submit();
