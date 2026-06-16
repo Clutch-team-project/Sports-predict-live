@@ -1029,6 +1029,10 @@
             line-height: 1;
         }
         .lineup-item em { color: #9fb0cc; font-style: normal; font-weight: 900; }
+        .lineup-subtitle { margin: 12px 0 6px; color: #7fa0d8; font-size: 12px; font-weight: 900; letter-spacing: -.01em; }
+        .lineup-subtitle:first-of-type { margin-top: 4px; }
+        .lineup-candidate-note { margin-top: 10px; color: #7d8da8; font-size: 12px; line-height: 1.45; }
+        .lineup-team { max-height: 560px; overflow-y: auto; }
 
         .side-panel {
             border: 1px solid var(--line);
@@ -1510,17 +1514,17 @@
             <section class="scoreboard">
                 <div class="score-head">
                     <div class="team">
-                        <div class="team-logo home">한</div>
-                        <div><div class="team-name">한화 이글스</div><div class="team-meta">원정 · 6회말 수비</div></div>
+                        <div class="team-logo home">-</div>
+                        <div><div class="team-name">로딩중</div><div class="team-meta">DB 경기 정보 불러오는 중</div></div>
                     </div>
                     <div class="score-core">
                         <div class="status-pill"><span class="status-dot"></span><span id="liveStatusText">LIVE · 6회말</span></div>
-                        <div class="score-number"><span id="homeScore">3</span> : <span id="awayScore">4</span></div>
-                        <div class="score-caption" id="scoreCaption">방금 반영</div>
+                        <div class="score-number"><span id="homeScore">-</span> : <span id="awayScore">-</span></div>
+                        <div class="score-caption" id="scoreCaption">DB 연결 대기</div>
                     </div>
                     <div class="team away">
-                        <div><div class="team-name">삼성 라이온즈</div><div class="team-meta">홈 · 6회말 공격</div></div>
-                        <div class="team-logo away">삼</div>
+                        <div><div class="team-name">로딩중</div><div class="team-meta">DB 경기 정보 불러오는 중</div></div>
+                        <div class="team-logo away">-</div>
                     </div>
                 </div>
                 <div class="inning-board">
@@ -1573,24 +1577,20 @@
                                 <span class="player-label pl-lf">김인환 LF</span>
                                 <span class="player-label pl-cf">이진영 CF</span>
                                 <span class="player-label pl-rf">이원석 RF</span>
-                                <div class="field-note"><span>대기타석: 김헌곤</span><span id="fieldCurrentBatter">현재 타자: 장승현</span><span id="fieldSituation">상황: 1사 2·3루</span></div>
+                                <div class="field-note"><span id="fieldOnDeck">대기타석: 김헌곤</span><span id="fieldCurrentBatter">현재 타자: 장승현</span><span id="fieldSituation">상황: 1사 2·3루</span></div>
                             </div>
                             <div class="inning-history">
                                 <div class="inning-history-head">
                                     <div>
                                         <div class="inning-history-title">이전 이닝 타임라인</div>
-                                        <div class="panel-sub">1회부터 5회까지 지난 흐름을 조회합니다</div>
+                                        <div class="panel-sub" id="inningHistoryGuide">DB 이벤트 기준으로 현재 진행 중인 초/말을 제외한 흐름을 표시합니다</div>
                                     </div>
                                     <span class="panel-sub" id="inningHistoryLabel">1회 타석 흐름</span>
                                 </div>
-                                <div class="inning-switcher" aria-label="이전 이닝 선택">
+                                <div class="inning-switcher" id="inningSwitcher" aria-label="이전 이닝 선택">
                                     <button class="inning-btn active" type="button" data-inning="1">1회</button>
-                                    <button class="inning-btn" type="button" data-inning="2">2회</button>
-                                    <button class="inning-btn" type="button" data-inning="3">3회</button>
-                                    <button class="inning-btn" type="button" data-inning="4">4회</button>
-                                    <button class="inning-btn" type="button" data-inning="5">5회</button>
                                 </div>
-                                <div class="inning-timeline" id="inningTimeline" aria-live="polite"><div class="inning-event"><b>1회초</b><div class="inning-half"><strong>한화 공격</strong><div class="inning-event-line"><em>이진영</em><span>중견수 뜬공</span></div><div class="inning-event-line"><em>문현빈</em><span>좌전 안타</span></div><div class="inning-event-line"><em>노시환</em><span>헛스윙 삼진</span></div><div class="inning-event-line"><em>채은성</em><span>유격수 땅볼</span></div></div></div><div class="inning-event"><b>1회말</b><div class="inning-half"><strong>삼성 공격</strong><div class="inning-event-line"><em>김지찬</em><span>볼넷 출루</span></div><div class="inning-event-line"><em>구자욱</em><span>우전 안타, 김지찬 3루</span></div><div class="inning-event-line"><em>강민호</em><span>유격수 땅볼, 김지찬 홈인</span></div><div class="inning-event-line"><em>이성규</em><span>중견수 뜬공</span></div></div></div></div>
+                                <div class="inning-timeline" id="inningTimeline" aria-live="polite"><div class="inning-event"><b>DB 조회 대기</b><div class="inning-half"><strong>match_event를 불러오는 중입니다</strong></div></div></div>
                             </div>
                         </div>
                     </section>
@@ -1727,7 +1727,7 @@
                             <div class="record-group">
                                 <h4>타자 기록</h4>
                                 <table>
-                                    <thead><tr><th>선수명</th><th>포지션</th><th>타수</th><th>안타</th><th>타점</th><th>득점</th><th>삼진</th><th>볼넷</th><th>타율</th></tr></thead>
+                                    <thead><tr><th>선수명</th><th>포지션</th><th>경기</th><th>안타</th><th>타점</th><th>득점</th><th>삼진</th><th>볼넷</th><th>타율</th></tr></thead>
                                     <tbody>
                                     <tr><td>이진영</td><td>CF</td><td>4</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>.271</td></tr>
                                     <tr><td>문현빈</td><td>2B</td><td>4</td><td>2</td><td>1</td><td>0</td><td>0</td><td>0</td><td>.296</td></tr>
@@ -1745,7 +1745,7 @@
                             <div class="record-group">
                                 <h4>투수 기록</h4>
                                 <table>
-                                    <thead><tr><th>투수명</th><th>이닝</th><th>피안타</th><th>실점</th><th>자책</th><th>삼진</th><th>볼넷</th><th>투구수</th></tr></thead>
+                                    <thead><tr><th>투수명</th><th>경기</th><th>피안타</th><th>패</th><th>ERA</th><th>삼진</th><th>승</th><th>SV+H</th></tr></thead>
                                     <tbody>
                                     <tr><td>후라도</td><td>5.2</td><td>7</td><td>4</td><td>3</td><td>5</td><td>2</td><td>91</td></tr>
                                     <tr><td>김범수</td><td>0.1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>14</td></tr>
@@ -1766,7 +1766,7 @@
                             <div class="record-group">
                                 <h4>타자 기록</h4>
                                 <table>
-                                    <thead><tr><th>선수명</th><th>포지션</th><th>타수</th><th>안타</th><th>타점</th><th>득점</th><th>삼진</th><th>볼넷</th><th>타율</th></tr></thead>
+                                    <thead><tr><th>선수명</th><th>포지션</th><th>경기</th><th>안타</th><th>타점</th><th>득점</th><th>삼진</th><th>볼넷</th><th>타율</th></tr></thead>
                                     <tbody>
                                     <tr><td>김지찬</td><td>2B</td><td>4</td><td>2</td><td>0</td><td>1</td><td>0</td><td>1</td><td>.287</td></tr>
                                     <tr><td>구자욱</td><td>RF</td><td>4</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>.301</td></tr>
@@ -1784,7 +1784,7 @@
                             <div class="record-group">
                                 <h4>투수 기록</h4>
                                 <table>
-                                    <thead><tr><th>투수명</th><th>이닝</th><th>피안타</th><th>실점</th><th>자책</th><th>삼진</th><th>볼넷</th><th>투구수</th></tr></thead>
+                                    <thead><tr><th>투수명</th><th>경기</th><th>피안타</th><th>패</th><th>ERA</th><th>삼진</th><th>승</th><th>SV+H</th></tr></thead>
                                     <tbody>
                                     <tr><td>원태인</td><td>6.0</td><td>6</td><td>3</td><td>3</td><td>6</td><td>2</td><td>88</td></tr>
                                     <tr><td>이승현</td><td>1.0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>18</td></tr>
@@ -1801,8 +1801,8 @@
                 <section class="panel">
                     <div class="panel-head"><div><div class="panel-title">라인업</div><div class="panel-sub">양 팀 선발 명단</div></div></div>
                     <div class="lineup-grid">
-                        <div class="lineup-team">
-                            <h4>한화 이글스</h4>
+                        <div class="lineup-team" id="homeLineupTeam">
+                            <h4 id="homeLineupTitle">한화 이글스</h4>
                             <div class="lineup-item"><b>1</b><span class="player-face">🦊</span><span>이진영</span><em>CF</em></div>
                             <div class="lineup-item"><b>2</b><span class="player-face">🐻</span><span>문현빈</span><em>2B</em></div>
                             <div class="lineup-item"><b>3</b><span class="player-face">🐯</span><span>노시환</span><em>3B</em></div>
@@ -1813,8 +1813,8 @@
                             <div class="lineup-item"><b>8</b><span class="player-face">🐹</span><span>최재훈</span><em>C</em></div>
                             <div class="lineup-item"><b>9</b><span class="player-face">🐰</span><span>김태연</span><em>DH</em></div>
                         </div>
-                        <div class="lineup-team">
-                            <h4>삼성 라이온즈</h4>
+                        <div class="lineup-team" id="awayLineupTeam">
+                            <h4 id="awayLineupTitle">삼성 라이온즈</h4>
                             <div class="lineup-item"><b>1</b><span class="player-face">🐨</span><span>김지찬</span><em>2B</em></div>
                             <div class="lineup-item"><b>2</b><span class="player-face">🦝</span><span>구자욱</span><em>RF</em></div>
                             <div class="lineup-item"><b>3</b><span class="player-face">🐻</span><span>강민호</span><em>C</em></div>
@@ -1914,46 +1914,204 @@
         return bases.length > 0 ? `${bases.join('·')}루` : '주자 없음';
     }
 
-    function renderCurrentPlayEvents(events) {
+    function eventTypeOf(event) {
+        return String(event?.eventType ?? '').toLowerCase();
+    }
+
+    function eventLabel(eventType) {
+        switch (String(eventType ?? '').toLowerCase()) {
+            case 'at_bat_start': return '타석 시작';
+            case 'ball': return '볼';
+            case 'strike': return '스트라이크';
+            case 'foul': return '파울';
+            case 'hit': return '인플레이';
+            case 'single': return '안타';
+            case 'double': return '2루타';
+            case 'triple': return '3루타';
+            case 'homerun': return '홈런';
+            case 'walk': return '볼넷';
+            case 'hbp': return '몸에 맞는 공';
+            case 'bunt': return '번트';
+            case 'strikeout': return '삼진';
+            case 'groundout': return '땅볼 아웃';
+            case 'flyout': return '뜬공 아웃';
+            case 'double_play': return '병살타';
+            case 'sacrifice_fly': return '희생플라이';
+            case 'score': return '득점';
+            case 'pitcher_change': return '투수 교체';
+            case 'game_end': return '경기 종료';
+            case 'error': return '실책';
+            case 'result': return '결과';
+            default: return eventType || '이벤트';
+        }
+    }
+
+    function eventPeriodOf(event) {
+        return String(event?.eventPeriod ?? '').trim();
+    }
+
+    function parsePeriod(period) {
+        const match = String(period ?? '').match(/^(\d+)회(초|말)$/);
+        if (!match) return { inning: 0, half: '', order: 0, label: String(period ?? '') };
+        const inning = Number(match[1]);
+        const half = match[2];
+        return { inning, half, order: inning * 2 + (half === '말' ? 1 : 0), label: `${inning}회${half}` };
+    }
+
+    function eventOrderKey(event) {
+        const period = parsePeriod(eventPeriodOf(event));
+        return period.order * 100000 + numberOrZero(event?.eventTime);
+    }
+
+    function sortEvents(events) {
+        return [...(Array.isArray(events) ? events : [])].sort((a, b) => eventOrderKey(a) - eventOrderKey(b));
+    }
+
+    function rawEventsOf(data) {
+        const raw = Array.isArray(data?.rawEvents) && data.rawEvents.length > 0 ? data.rawEvents : data?.events;
+        return sortEvents(raw || []);
+    }
+
+    function latestPeriod(events, fallback) {
+        const reversed = [...(events || [])].reverse();
+        const found = reversed.find(event => parsePeriod(eventPeriodOf(event)).inning > 0);
+        return found ? eventPeriodOf(found) : String(fallback ?? 'LIVE');
+    }
+
+    function isPitchEvent(event) {
+        return ['ball', 'strike', 'foul', 'hit', 'single', 'double', 'triple', 'homerun', 'walk', 'hbp'].includes(eventTypeOf(event));
+    }
+
+    function isOffensiveEvent(event) {
+        return ['at_bat_start', 'ball', 'strike', 'foul', 'hit', 'single', 'double', 'triple', 'homerun', 'walk', 'hbp', 'bunt', 'strikeout', 'groundout', 'flyout', 'double_play', 'sacrifice_fly', 'score', 'error'].includes(eventTypeOf(event));
+    }
+
+    function cleanEventDescription(description) {
+        return String(description ?? '-')
+            .replace(/\s*\|?\s*B:\d+\s+S:\d+\s+O:\d+/g, '')
+            .replace(/\s*\|?\s*R:[0-9,·,-]+/g, '')
+            .trim() || '-';
+    }
+
+    function eventPlayer(event, playerById) {
+        return playerById?.get(String(event?.playerId)) || null;
+    }
+
+    function eventPlayerName(event, playerById) {
+        const player = eventPlayer(event, playerById);
+        if (player?.playerName) return player.playerName;
+        const titleName = String(event?.title ?? '').split(' ')[0];
+        if (titleName && titleName !== eventLabel(event?.eventType)) return titleName;
+        const descName = cleanEventDescription(event?.description).split(/[\s,]+/)[0];
+        return descName || eventLabel(event?.eventType);
+    }
+
+    function eventTeam(data, event) {
+        const teamId = String(event?.teamId ?? '');
+        if (teamId && String(data?.homeTeam?.teamId ?? '') === teamId) return data.homeTeam;
+        if (teamId && String(data?.awayTeam?.teamId ?? '') === teamId) return data.awayTeam;
+        const period = parsePeriod(eventPeriodOf(event));
+        if (period.half === '말') return data?.homeTeam;
+        if (period.half === '초') return data?.awayTeam;
+        return null;
+    }
+
+    function eventsForCurrentPeriod(data) {
+        const events = rawEventsOf(data);
+        const currentPeriod = latestPeriod(events, data?.currentInning);
+        const samePeriod = events.filter(event => eventPeriodOf(event) === currentPeriod);
+        return samePeriod.length > 0 ? samePeriod : events.slice(-8);
+    }
+
+    function groupAtBats(events) {
+        const groups = [];
+        let current = null;
+
+        events.forEach(event => {
+            const type = eventTypeOf(event);
+
+            if (!current && ['score', 'game_end', 'pitcher_change'].includes(type)) {
+                if (groups.length > 0) {
+                    groups[groups.length - 1].events.push(event);
+                } else {
+                    groups.push({ playerId: event.playerId ?? null, period: eventPeriodOf(event), events: [event] });
+                }
+                return;
+            }
+
+            const shouldStart = type === 'at_bat_start' || (!current && isOffensiveEvent(event));
+            if (shouldStart) {
+                current = { playerId: event.playerId ?? null, period: eventPeriodOf(event), events: [] };
+                groups.push(current);
+            }
+            if (!current) {
+                current = { playerId: event.playerId ?? null, period: eventPeriodOf(event), events: [] };
+                groups.push(current);
+            }
+            if (!current.playerId && event.playerId) current.playerId = event.playerId;
+            current.events.push(event);
+
+            if (['single', 'double', 'triple', 'homerun', 'walk', 'hbp', 'bunt', 'strikeout', 'groundout', 'flyout', 'double_play', 'sacrifice_fly', 'hit'].includes(type)) {
+                current = null;
+            }
+        });
+
+        return groups.filter(group => group.events.length > 0);
+    }
+
+    function summarizeAtBat(group, playerById) {
+        const decisive = [...group.events].reverse().find(event => !['ball', 'strike', 'foul', 'at_bat_start'].includes(eventTypeOf(event))) || group.events[group.events.length - 1];
+        const player = eventPlayer(decisive, playerById) || eventPlayer(group.events[0], playerById);
+        const playerName = player?.playerName || eventPlayerName(decisive, playerById);
+        return {
+            player,
+            playerName,
+            resultLabel: eventLabel(decisive?.eventType),
+            resultText: cleanEventDescription(decisive?.description),
+            period: eventPeriodOf(decisive),
+            decisive
+        };
+    }
+
+    function renderCurrentPlayEvents(events, playerById = new Map()) {
         if (!Array.isArray(events) || events.length === 0) return;
 
         const pitchTimeline = document.getElementById('currentPitchTimeline');
         const eventStack = document.getElementById('currentEventStack');
         if (!pitchTimeline || !eventStack) return;
 
-        // 1. 투구 기록 (오른쪽 영역) - 타석 시작 이후의 투구들만 표시
-        const pitchEvents = events.filter(e => ['ball', 'strike', 'foul', 'hit'].includes(e.eventType));
+        const atbatGroups = groupAtBats(events);
+        const currentGroup = atbatGroups[atbatGroups.length - 1] || { events };
+        const pitchEvents = currentGroup.events.filter(isPitchEvent);
+
         pitchTimeline.innerHTML = [
             '<div class="timeline-title">이번 타석 투구 기록</div>',
-            ...pitchEvents.map((event, index) => (
-                `<div class="pitch-step${index === pitchEvents.length - 1 ? ' highlight' : ''}">
-                    <b class="${event.eventType === 'ball' ? 'green' : event.eventType === 'foul' ? 'orange' : 'blue'}">${escapeHtml(event.eventTime)}구</b>
+            ...(pitchEvents.length > 0 ? pitchEvents : currentGroup.events).map((event, index, arr) => {
+                const type = eventTypeOf(event);
+                const colorClass = type === 'ball' || type === 'walk' || type === 'hbp' ? 'green' : type === 'foul' ? 'orange' : 'blue';
+                return `<div class="pitch-step${index === arr.length - 1 ? ' highlight' : ''}">
+                    <b class="${colorClass}">${escapeHtml(event.eventTime ?? index + 1)}구</b>
                     <div>
-                        <strong>${escapeHtml(event.title)}</strong>
-                        <span class="pitch-detail">${escapeHtml(event.description)}</span>
+                        <strong>${escapeHtml(eventPlayerName(event, playerById))} ${escapeHtml(eventLabel(event.eventType))}</strong>
+                        <span class="pitch-detail">${escapeHtml(cleanEventDescription(event.description))}</span>
                     </div>
-                    <em class="ball-count-text">${escapeHtml(event.eventPeriod)}</em>
-                </div>`
-            ))
+                    <em class="ball-count-text">${escapeHtml(eventPeriodOf(event))}</em>
+                </div>`;
+            })
         ].join('');
 
-        // 2. 주요 상황 기록 (왼쪽/하단 영역) - 타석 시작, 판독, 득점 등 주요 사건만 표시
-        const majorEvents = events.filter(e => !['ball', 'strike', 'foul'].includes(e.eventType));
+        const majorEvents = events.filter(event => !['ball', 'strike', 'foul'].includes(eventTypeOf(event)));
         eventStack.innerHTML = majorEvents.map(event => {
-            if (event.eventType === 'video_review') {
-                return `<div class="event-review-box">
-                    <div class="review-tag">비디오 판독</div>
-                    <strong>${escapeHtml(event.title)}</strong>
-                    <div>${escapeHtml(event.description)}</div>
-                </div>`;
-            }
-            if (event.eventType === 'result') {
+            const type = eventTypeOf(event);
+            const title = `${eventPlayerName(event, playerById)} ${eventLabel(event.eventType)}`;
+            const desc = cleanEventDescription(event.description);
+            if (type === 'game_end' || type === 'result') {
                 return `<div class="event-result-msg">
                     <span class="result-dot"></span>
-                    <strong>${escapeHtml(event.title)}</strong> : ${escapeHtml(event.description)}
+                    <strong>${escapeHtml(title)}</strong> : ${escapeHtml(desc)}
                 </div>`;
             }
-            return `<div class="event-common"><strong>${escapeHtml(event.title)}</strong> : ${escapeHtml(event.description)}</div>`;
+            return `<div class="event-common"><strong>${escapeHtml(title)}</strong> : ${escapeHtml(desc)}</div>`;
         }).join('');
     }
 
@@ -1994,8 +2152,566 @@
         if (awayBar) awayBar.style.flex = Math.max(0, Math.min(100, awayPercent));
     }
 
+    let baseballPlayersCache = null;
+    let baseballHittersCache = null;
+    let baseballPitchersCache = null;
+
+    async function fetchJsonOrEmpty(url) {
+        const response = await fetch(url);
+        return response.ok ? response.json() : [];
+    }
+
+    async function fetchBaseballPlayers() {
+        if (!baseballPlayersCache) {
+            baseballPlayersCache = await fetchJsonOrEmpty('/api/players?sport=baseball');
+        }
+        return baseballPlayersCache;
+    }
+
+    async function fetchBaseballHitters() {
+        if (!baseballHittersCache) {
+            baseballHittersCache = await fetchJsonOrEmpty('/api/records/baseball/hitters');
+        }
+        return baseballHittersCache;
+    }
+
+    async function fetchBaseballPitchers() {
+        if (!baseballPitchersCache) {
+            baseballPitchersCache = await fetchJsonOrEmpty('/api/records/baseball/pitchers');
+        }
+        return baseballPitchersCache;
+    }
+
+    function normalizeTeamName(value) {
+        return String(value ?? '').replace(/\s+/g, '').trim();
+    }
+
+    function sameTeamName(left, right) {
+        const a = normalizeTeamName(left);
+        const b = normalizeTeamName(right);
+        return a && b && (a === b || a.includes(b) || b.includes(a));
+    }
+
+    function playersByTeam(players, teamName) {
+        return players.filter(player => sameTeamName(player.teamName, teamName));
+    }
+
+    function recordsByTeam(records, teamName) {
+        return records.filter(record => sameTeamName(record.teamName, teamName));
+    }
+
+    function numberOrZero(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : 0;
+    }
+
+    function formatAverage(value) {
+        if (value === undefined || value === null || value === '') return '-';
+        const number = Number(value);
+        if (!Number.isFinite(number)) return String(value);
+        return number < 1 ? number.toFixed(3).replace(/^0/, '') : number.toFixed(3);
+    }
+
+    function playerInitial(player) {
+        return String(player?.playerName ?? '-').slice(0, 1) || '-';
+    }
+
+    function playerPosition(player, fallback) {
+        return player?.position || fallback;
+    }
+
+    function playerMapById(players) {
+        return new Map(players.map(player => [String(player.playerId), player]));
+    }
+
+    function hitterMapById(hitters) {
+        return new Map((hitters || []).map(hitter => [String(hitter.playerId), hitter]));
+    }
+
+    function deriveStarterPlayers(teamPlayers, events, teamId, hitterRecords = []) {
+        const teamPlayerById = playerMapById(teamPlayers);
+        const starters = [];
+        const seen = new Set();
+
+        rawEventsOf({ rawEvents: events })
+            .filter(event => String(event?.teamId ?? '') === String(teamId ?? ''))
+            .filter(isOffensiveEvent)
+            .forEach(event => {
+                const id = String(event.playerId ?? '');
+                if (!id || seen.has(id)) return;
+                const player = teamPlayerById.get(id);
+                if (!player) return;
+                starters.push(player);
+                seen.add(id);
+            });
+
+        if (starters.length >= 9) return starters.slice(0, 9);
+
+        const hitterIds = new Set((hitterRecords || []).map(record => String(record.playerId)));
+        const hitterFallback = teamPlayers
+            .filter(player => hitterIds.has(String(player.playerId)))
+            .filter(player => !seen.has(String(player.playerId)));
+        for (const player of hitterFallback) {
+            starters.push(player);
+            seen.add(String(player.playerId));
+            if (starters.length >= 9) break;
+        }
+
+        for (const player of teamPlayers) {
+            if (seen.has(String(player.playerId))) continue;
+            starters.push(player);
+            seen.add(String(player.playerId));
+            if (starters.length >= 9) break;
+        }
+
+        return starters;
+    }
+
+    function renderLineup(teamSelector, titleSelector, teamName, players, starters = []) {
+        const teamBox = document.querySelector(teamSelector);
+        if (!teamBox) return;
+
+        setText(titleSelector, teamName);
+        const starterIds = new Set(starters.map(player => String(player.playerId)));
+        const bench = players.filter(player => !starterIds.has(String(player.playerId)));
+        const lineup = starters.length > 0 ? starters : players.slice(0, 9);
+        const benchPreview = bench.slice(0, 14);
+        const remaining = Math.max(0, bench.length - benchPreview.length);
+
+        teamBox.querySelectorAll('.lineup-item, .lineup-subtitle, .lineup-candidate-note').forEach(item => item.remove());
+
+        if (lineup.length === 0) {
+            teamBox.insertAdjacentHTML('beforeend', '<div class="lineup-candidate-note">이 팀의 선수 데이터가 아직 없습니다.</div>');
+            return;
+        }
+
+        teamBox.insertAdjacentHTML('beforeend', '<div class="lineup-subtitle">선발 추정</div>');
+        teamBox.insertAdjacentHTML('beforeend', lineup.map((player, index) => (
+            `<div class="lineup-item" data-player-id="${escapeHtml(player.playerId)}">
+                <b>${index + 1}</b>
+                <span class="player-face">${escapeHtml(playerInitial(player))}</span>
+                <span>${escapeHtml(player.playerName)}</span>
+                <em>${escapeHtml(playerPosition(player, '-'))}</em>
+            </div>`
+        )).join(''));
+
+        teamBox.insertAdjacentHTML('beforeend', '<div class="lineup-subtitle">후보/로스터</div>');
+        if (benchPreview.length === 0) {
+            teamBox.insertAdjacentHTML('beforeend', '<div class="lineup-candidate-note">후보로 분리할 추가 선수가 없습니다.</div>');
+        } else {
+            teamBox.insertAdjacentHTML('beforeend', benchPreview.map(player => (
+                `<div class="lineup-item" data-player-id="${escapeHtml(player.playerId)}">
+                    <b>-</b>
+                    <span class="player-face">${escapeHtml(playerInitial(player))}</span>
+                    <span>${escapeHtml(player.playerName)}</span>
+                    <em>${escapeHtml(playerPosition(player, '-'))}</em>
+                </div>`
+            )).join(''));
+        }
+        if (remaining > 0) {
+            teamBox.insertAdjacentHTML('beforeend', `<div class="lineup-candidate-note">후보 ${remaining}명은 화면 길이 때문에 생략했습니다. 실제 라인업 테이블이 생기면 전체 명단을 별도 탭으로 분리하는 게 맞습니다.</div>`);
+        }
+    }
+
+    function renderFieldPlayers(data, homePlayers, awayPlayers) {
+        const fielders = sameTeamName(data.currentPitcher?.teamName, data.homeTeam?.name) ? homePlayers : awayPlayers;
+        const battingPlayers = sameTeamName(data.currentBatter?.teamName, data.homeTeam?.name) ? homePlayers : awayPlayers;
+        const labels = [
+            ['.pl-p', data.currentPitcher?.name, 'P'],
+            ['.pl-c', fielders[0]?.playerName, 'C'],
+            ['.pl-1b', fielders[1]?.playerName, '1B'],
+            ['.pl-2b', fielders[2]?.playerName, '2B'],
+            ['.pl-3b', fielders[3]?.playerName, '3B'],
+            ['.pl-ss', fielders[4]?.playerName, 'SS'],
+            ['.pl-lf', fielders[5]?.playerName, 'LF'],
+            ['.pl-cf', fielders[6]?.playerName, 'CF'],
+            ['.pl-rf', fielders[7]?.playerName, 'RF']
+        ];
+
+        labels.forEach(([selector, name, position]) => {
+            if (name) setText(selector, `${name} ${position}`);
+        });
+
+        const onDeck = battingPlayers.find(player => player.playerName !== data.currentBatter?.name) || battingPlayers[0];
+        if (onDeck?.playerName) setText('#fieldOnDeck', `대기타석: ${onDeck.playerName}`);
+    }
+
+    function renderRecordSummary(teamBox, data, teamSide, hitters) {
+        const summary = teamBox.querySelector('.record-summary');
+        if (!summary) return;
+
+        const score = teamSide === 'home' ? data.score?.home : data.score?.away;
+        const inningScore = teamSide === 'home' ? data.inningScores?.[1] : data.inningScores?.[0];
+        const hits = hitters.reduce((total, hitter) => total + numberOrZero(hitter.hits), 0);
+        const homeRuns = hitters.reduce((total, hitter) => total + numberOrZero(hitter.homeRuns), 0);
+        const rbi = hitters.reduce((total, hitter) => total + numberOrZero(hitter.rbi), 0);
+
+        summary.innerHTML = [
+            ['득점', score ?? 0],
+            ['안타', hits],
+            ['홈런', homeRuns],
+            ['타점', rbi],
+            ['실책', inningScore?.errors ?? 0],
+            ['잔루', '-'],
+            ['볼넷', inningScore?.basesOnBalls ?? 0]
+        ].map(([label, value]) => `<span><b>${label}</b>${value}</span>`).join('');
+    }
+
+    function renderHitterRows(tbody, hitters, playerById) {
+        if (!tbody || hitters.length === 0) return;
+
+        const rows = hitters.slice(0, 9).map(hitter => {
+            const player = playerById.get(String(hitter.playerId));
+            return `<tr data-player-id="${escapeHtml(hitter.playerId)}">
+                <td>${escapeHtml(hitter.playerName)}</td>
+                <td>${escapeHtml(playerPosition(player, '-'))}</td>
+                <td>${escapeHtml(hitter.gamesPlayed ?? '-')}</td>
+                <td>${escapeHtml(hitter.hits ?? 0)}</td>
+                <td>${escapeHtml(hitter.rbi ?? 0)}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>${escapeHtml(formatAverage(hitter.battingAvg))}</td>
+            </tr>`;
+        });
+
+        rows.push(`<tr class="sum"><td>합계</td><td>-</td><td>-</td><td>${hitters.reduce((total, hitter) => total + numberOrZero(hitter.hits), 0)}</td><td>${hitters.reduce((total, hitter) => total + numberOrZero(hitter.rbi), 0)}</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`);
+        tbody.innerHTML = rows.join('');
+    }
+
+    function renderPitcherRows(tbody, pitchers) {
+        if (!tbody || pitchers.length === 0) return;
+
+        tbody.innerHTML = pitchers.slice(0, 4).map(pitcher => (
+            `<tr data-player-id="${escapeHtml(pitcher.playerId)}">
+                <td>${escapeHtml(pitcher.playerName)}</td>
+                <td>${escapeHtml(pitcher.gamesPlayed ?? '-')}</td>
+                <td>-</td>
+                <td>${escapeHtml(pitcher.losses ?? 0)}</td>
+                <td>${escapeHtml(formatAverage(pitcher.era))}</td>
+                <td>${escapeHtml(pitcher.strikeouts ?? 0)}</td>
+                <td>${escapeHtml(pitcher.wins ?? 0)}</td>
+                <td>${escapeHtml((pitcher.saves ?? 0) + (pitcher.holds ?? 0))}</td>
+            </tr>`
+        )).join('');
+    }
+
+    function renderTeamRecord(teamBox, data, team, teamSide, hitters, pitchers, playerById) {
+        if (!teamBox) return;
+
+        const headTitle = teamBox.querySelector('.record-team-head h3');
+        const headMeta = teamBox.querySelector('.record-team-head span');
+        if (headTitle) headTitle.textContent = team?.name || '-';
+        if (headMeta) {
+            const sideLabel = team?.side === 'home' ? '홈' : '원정';
+            const score = teamSide === 'home' ? data.score?.home : data.score?.away;
+            const hitCount = hitters.reduce((total, hitter) => total + numberOrZero(hitter.hits), 0);
+            headMeta.textContent = `${sideLabel} · ${score ?? 0}득점 ${hitCount}안타 · DB 시즌기록`;
+        }
+
+        renderRecordSummary(teamBox, data, teamSide, hitters);
+        const bodies = teamBox.querySelectorAll('tbody');
+        renderHitterRows(bodies[0], hitters, playerById);
+        renderPitcherRows(bodies[1], pitchers);
+    }
+
+    function renderRecordTables(data, players, hitters, pitchers) {
+        const playerById = playerMapById(players);
+        const teamBoxes = document.querySelectorAll('#record .record-team');
+
+        renderTeamRecord(teamBoxes[0], data, data.homeTeam, 'home', recordsByTeam(hitters, data.homeTeam?.name), recordsByTeam(pitchers, data.homeTeam?.name), playerById);
+        renderTeamRecord(teamBoxes[1], data, data.awayTeam, 'away', recordsByTeam(hitters, data.awayTeam?.name), recordsByTeam(pitchers, data.awayTeam?.name), playerById);
+    }
+
+
+    function formatHitterMeta(player, hitter, orderLabel) {
+        const parts = [];
+        if (orderLabel) parts.push(orderLabel);
+        if (player?.position) parts.push(player.position);
+        if (hitter?.battingAvg !== undefined) parts.push(`타율 ${formatAverage(hitter.battingAvg)}`);
+        return parts.length > 0 ? parts.join(' · ') : 'DB 이벤트 기준 타석';
+    }
+
+    function renderAtbatCards(data, players, hitters) {
+        const list = document.querySelector('.atbat-list');
+        if (!list) return;
+
+        const playerById = playerMapById(players || []);
+        const hitterById = hitterMapById(hitters || []);
+        const periodEvents = eventsForCurrentPeriod(data);
+        const groups = groupAtBats(periodEvents);
+
+        if (groups.length === 0) {
+            renderCurrentPlayEvents(periodEvents, playerById);
+            return;
+        }
+
+        const currentGroup = groups[groups.length - 1];
+        const previousGroups = groups.slice(0, -1).reverse();
+        const currentSummary = summarizeAtBat(currentGroup, playerById);
+        const currentPlayer = currentSummary.player;
+        const currentHitter = hitterById.get(String(currentPlayer?.playerId ?? currentGroup.playerId ?? ''));
+
+        const currentHtml = `<article class="atbat-card current-atbat">
+            <div class="batter-head">
+                <div class="avatar" id="currentBatterInitial">${escapeHtml(String(currentSummary.playerName ?? '-').slice(0, 1))}</div>
+                <div>
+                    <div class="batter-name"><span id="currentBatterName">${escapeHtml(currentSummary.playerName)}</span> <span class="panel-sub">선수 페이지</span></div>
+                    <div class="batter-meta" id="currentBatterMeta">${escapeHtml(formatHitterMeta(currentPlayer, currentHitter, '현재 타석'))}</div>
+                </div>
+                <span class="status-tag">현재 타석</span>
+            </div>
+            <div class="current-stat-row">
+                <span><b>경기</b>${escapeHtml(currentHitter?.gamesPlayed ?? '-')}</span>
+                <span><b>안타</b>${escapeHtml(currentHitter?.hits ?? '-')}</span>
+                <span><b>홈런</b>${escapeHtml(currentHitter?.homeRuns ?? '-')}</span>
+                <span><b>타점</b>${escapeHtml(currentHitter?.rbi ?? '-')}</span>
+                <span><b>타율</b>${escapeHtml(formatAverage(currentHitter?.battingAvg))}</span>
+            </div>
+            <div class="play-detail">
+                <div class="atbat-summary"><strong id="currentAtbatSummaryTitle">${escapeHtml(latestPeriod(periodEvents, data.currentInning))} 현재 타석</strong><span id="currentAtbatSummaryText">${escapeHtml(currentSummary.resultLabel)} · ${escapeHtml(currentSummary.resultText)}</span></div>
+                <div class="pitch-timeline" id="currentPitchTimeline"><div class="timeline-title">이번 타석 투구 기록</div></div>
+                <div class="event-stack" id="currentEventStack"></div>
+            </div>
+        </article>`;
+
+        const previousHtml = previousGroups.map(group => {
+            const summary = summarizeAtBat(group, playerById);
+            const player = summary.player;
+            const hitter = hitterById.get(String(player?.playerId ?? group.playerId ?? ''));
+            return `<article class="atbat-card collapsed">
+                <div class="batter-head">
+                    <div class="avatar">${escapeHtml(String(summary.playerName ?? '-').slice(0, 1))}</div>
+                    <div><div class="batter-name">${escapeHtml(summary.playerName)} <span class="panel-sub">${escapeHtml(formatHitterMeta(player, hitter, '이전 타석'))}</span></div></div>
+                    <button class="pitch-btn detail-toggle" type="button">기록 더보기</button>
+                </div>
+                <div class="play-detail">
+                    <div class="play-line"><strong>${escapeHtml(summary.playerName)} : ${escapeHtml(summary.resultLabel)}</strong><span>${escapeHtml(summary.resultText)}</span></div>
+                    <div class="pitch-seq">
+                        ${group.events.map(event => `<div><b class="${eventTypeOf(event) === 'ball' || eventTypeOf(event) === 'walk' ? 'green' : eventTypeOf(event) === 'foul' ? 'orange' : 'blue'}">${escapeHtml(event.eventTime ?? '-')}</b> ${escapeHtml(eventLabel(event.eventType))} · ${escapeHtml(cleanEventDescription(event.description))}</div>`).join('')}
+                    </div>
+                </div>
+            </article>`;
+        }).join('');
+
+        list.innerHTML = currentHtml + previousHtml;
+        renderCurrentPlayEvents(currentGroup.events, playerById);
+        bindAtbatToggles();
+    }
+
+    async function renderDbBaseballData(data) {
+        try {
+            const [players, hitters, pitchers] = await Promise.all([
+                fetchBaseballPlayers(),
+                fetchBaseballHitters(),
+                fetchBaseballPitchers()
+            ]);
+            const homePlayers = playersByTeam(players, data.homeTeam?.name);
+            const awayPlayers = playersByTeam(players, data.awayTeam?.name);
+            const homeHitters = recordsByTeam(hitters, data.homeTeam?.name);
+            const awayHitters = recordsByTeam(hitters, data.awayTeam?.name);
+            const events = rawEventsOf(data);
+            const homeStarters = deriveStarterPlayers(homePlayers, events, data.homeTeam?.teamId, homeHitters);
+            const awayStarters = deriveStarterPlayers(awayPlayers, events, data.awayTeam?.teamId, awayHitters);
+
+            renderLineup('#homeLineupTeam', '#homeLineupTitle', data.homeTeam?.name, homePlayers, homeStarters);
+            renderLineup('#awayLineupTeam', '#awayLineupTitle', data.awayTeam?.name, awayPlayers, awayStarters);
+            renderFieldPlayers(data, homeStarters.length ? homeStarters : homePlayers, awayStarters.length ? awayStarters : awayPlayers);
+            renderRecordTables(data, players, hitters, pitchers);
+            renderAtbatCards(data, players, hitters);
+        } catch (error) {
+            console.warn('야구 DB 연동 API 호출 실패', error);
+        }
+    }
+
+    function isBeforeStartStatus(data) {
+        return ['scheduled', 'cancelled'].includes(String(data?.status ?? '').toLowerCase());
+    }
+
+    function clearLiveTimeline(title, message) {
+        const pitchTimeline = document.getElementById('currentPitchTimeline');
+        const eventStack = document.getElementById('currentEventStack');
+        if (pitchTimeline) {
+            pitchTimeline.innerHTML = `<div class="timeline-title">${escapeHtml(title)}</div>`;
+        }
+        if (eventStack) {
+            eventStack.innerHTML = `<div class="event-common"><strong>${escapeHtml(title)}</strong> : ${escapeHtml(message)}</div>`;
+        }
+    }
+
+    function getInningButtons() {
+        return Array.from(document.querySelectorAll('.inning-btn'));
+    }
+
+    function setInningButtonsDisabled(disabled) {
+        getInningButtons().forEach(button => {
+            button.disabled = disabled;
+            button.classList.toggle('disabled', disabled);
+        });
+    }
+
+    function clearPreviousInningTimeline(label, message) {
+        if (inningHistoryLabel) inningHistoryLabel.textContent = label;
+        if (inningTimeline) {
+            inningTimeline.innerHTML = `<div class="inning-event"><b>${escapeHtml(label)}</b><div class="inning-half"><strong>${escapeHtml(message)}</strong></div></div>`;
+        }
+        rebuildInningButtons([], null);
+        setInningButtonsDisabled(true);
+    }
+
+    function buildFinishedInningHistory(data) {
+        const away = data.inningScores?.[0];
+        const home = data.inningScores?.[1];
+        const awayName = data.awayTeam?.shortName || data.awayTeam?.name || away?.teamName || 'Away';
+        const homeName = data.homeTeam?.shortName || data.homeTeam?.name || home?.teamName || 'Home';
+        const maxInning = Math.max(9, away?.innings?.length ?? 0, home?.innings?.length ?? 0);
+        const history = {};
+
+        for (let inning = 1; inning <= maxInning; inning += 1) {
+            const awayScore = away?.innings?.[inning - 1] ?? '-';
+            const homeScore = home?.innings?.[inning - 1] ?? '-';
+            history[inning] = [
+                {
+                    half: '초',
+                    team: `${awayName} 공격`,
+                    events: [
+                        { player: awayName, result: awayScore === '-' ? '공격 없음' : `${awayScore}득점` },
+                        { player: 'DB 경기 상태', result: 'match_event가 없어서 이닝 스코어 요약만 표시' }
+                    ]
+                },
+                {
+                    half: '말',
+                    team: `${homeName} 공격`,
+                    events: [
+                        { player: homeName, result: homeScore === '-' || homeScore === 'X' ? '공격 종료' : `${homeScore}득점` },
+                        { player: '최종 스코어', result: `${data.awayTeam?.name || awayName} ${data.score?.away ?? 0} : ${data.score?.home ?? 0} ${data.homeTeam?.name || homeName}` }
+                    ]
+                }
+            ];
+        }
+
+        return history;
+    }
+
+    function buildInningHistoryFromRawEvents(data, playerById = new Map()) {
+        const events = rawEventsOf(data);
+        const currentPeriod = latestPeriod(events, data?.currentInning);
+        const currentOrder = parsePeriod(currentPeriod).order;
+        const history = {};
+
+        events.forEach(event => {
+            const period = parsePeriod(eventPeriodOf(event));
+            if (period.inning <= 0) return;
+            if (currentOrder > 0 && period.order >= currentOrder) return;
+
+            const inning = String(period.inning);
+            const battingTeam = eventTeam(data, event)?.shortName || eventTeam(data, event)?.name || (period.half === '말' ? '홈' : '원정');
+
+            if (!history[inning]) history[inning] = [];
+            let halfBlock = history[inning].find(item => item.half === period.half);
+            if (!halfBlock) {
+                halfBlock = { half: period.half, team: `${battingTeam} 공격`, events: [] };
+                history[inning].push(halfBlock);
+            }
+            halfBlock.events.push({
+                player: eventPlayerName(event, playerById),
+                result: `${eventLabel(event.eventType)} · ${cleanEventDescription(event.description)}`
+            });
+        });
+
+        Object.values(history).forEach(blocks => blocks.sort((a, b) => (a.half === '초' ? 0 : 1) - (b.half === '초' ? 0 : 1)));
+        return history;
+    }
+
+    function rebuildInningButtons(keys, selected) {
+        const switcher = document.getElementById('inningSwitcher');
+        if (!switcher) return;
+        const numericKeys = [...new Set(keys.map(key => String(key)))].sort((a, b) => Number(a) - Number(b));
+        if (numericKeys.length === 0) {
+            switcher.innerHTML = '<button class="inning-btn active disabled" type="button" data-inning="none" disabled>이전 이닝 없음</button>';
+            return;
+        }
+        switcher.innerHTML = numericKeys.map(key => `<button class="inning-btn${String(selected) === String(key) ? ' active' : ''}" type="button" data-inning="${escapeHtml(key)}">${escapeHtml(key)}회</button>`).join('');
+        getInningButtons().forEach(button => {
+            button.addEventListener('click', () => {
+                getInningButtons().forEach(item => item.classList.remove('active'));
+                button.classList.add('active');
+                renderInningTimeline(button.dataset.inning);
+            });
+        });
+    }
+
+    function applyDbEventHistory(data) {
+        const dbHistory = buildInningHistoryFromRawEvents(data);
+        const keys = Object.keys(dbHistory);
+        if (keys.length === 0) {
+            clearPreviousInningTimeline('이전 이닝 없음', '현재 진행 중인 초/말 이전의 match_event가 없습니다.');
+            return false;
+        }
+
+        activeInningHistory = dbHistory;
+        const selected = keys.sort((a, b) => Number(a) - Number(b)).at(-1);
+        rebuildInningButtons(keys, selected);
+        setInningButtonsDisabled(false);
+        renderInningTimeline(selected);
+        return true;
+    }
+
+    function renderInningScoreBoard(data) {
+        const table = document.querySelector('.inning-board table');
+        if (!table || !Array.isArray(data?.inningScores)) return;
+
+        const eventMax = rawEventsOf(data).reduce((max, event) => Math.max(max, parsePeriod(eventPeriodOf(event)).inning || 0), 0);
+        const scoreMax = data.inningScores.reduce((max, row) => Math.max(max, row?.innings?.length ?? 0), 0);
+        const maxInning = Math.max(9, eventMax, scoreMax);
+        const inningHeaders = Array.from({ length: maxInning }, (_, index) => `<th>${index + 1}</th>`).join('');
+        table.querySelector('thead').innerHTML = `<tr><th>팀</th>${inningHeaders}<th>R</th><th>H</th><th>E</th><th>B</th></tr>`;
+
+        table.querySelector('tbody').innerHTML = data.inningScores.map(score => {
+            const cells = Array.from({ length: maxInning }, (_, index) => `<td>${escapeHtml(score?.innings?.[index] ?? '-')}</td>`).join('');
+            return `<tr><td>${escapeHtml(score?.teamName ?? '-')}</td>${cells}<td class="total">${escapeHtml(score?.runs ?? 0)}</td><td>${escapeHtml(score?.hits ?? 0)}</td><td>${escapeHtml(score?.errors ?? 0)}</td><td>${escapeHtml(score?.basesOnBalls ?? 0)}</td></tr>`;
+        }).join('');
+    }
+
+    function applyMatchStatusPresentation(data) {
+        const status = String(data?.status ?? '').toLowerCase();
+
+        if (status === 'scheduled') {
+            setText('#homeScore', '-');
+            setText('#awayScore', '-');
+            setText('#scoreCaption', '경기 시작 전 · DB 일정 정보만 표시');
+            setText('#currentPlayTitle', '경기 시작 전');
+            setText('#currentOutCount', '0 OUT');
+            clearLiveTimeline('경기 시작 전', '투구 기록과 실시간 타석 타임라인은 경기 시작 후 표시됩니다.');
+            clearPreviousInningTimeline('경기 시작 전', '이전 이닝 타임라인 없음');
+            return;
+        }
+
+        if (status === 'cancelled') {
+            setText('#homeScore', '-');
+            setText('#awayScore', '-');
+            setText('#scoreCaption', '경기 취소 · 스코어 없음');
+            setText('#currentPlayTitle', '경기 취소');
+            setText('#currentOutCount', '0 OUT');
+            clearLiveTimeline('경기 취소', '취소 경기라 투구 기록과 타석 타임라인을 표시하지 않습니다.');
+            clearPreviousInningTimeline('경기 취소', '이전 이닝 타임라인 없음');
+            return;
+        }
+
+        if (applyDbEventHistory(data)) return;
+
+        activeInningHistory = buildFinishedInningHistory(data);
+        const keys = Object.keys(activeInningHistory);
+        const selected = keys[0];
+        rebuildInningButtons(keys, selected);
+        renderInningTimeline(selected);
+    }
+
     function renderLiveData(data) {
         if (!data) return;
+        const allEvents = rawEventsOf(data);
+        const currentPeriod = latestPeriod(allEvents, data.currentInning);
+        const battingTeam = String(currentPeriod).includes('말') ? data.homeTeam : data.awayTeam;
 
         const page = document.getElementById('livePage');
         if (page) {
@@ -2008,33 +2724,18 @@
 
         setText('.team:not(.away) .team-logo', data.homeTeam?.logoText);
         setText('.team:not(.away) .team-name', data.homeTeam?.name);
-        setText('.team:not(.away) .team-meta', `${data.homeTeam?.side === 'home' ? '홈' : '원정'} · ${data.currentInning} · 팀ID ${data.homeTeam?.teamId}`);
+        setText('.team:not(.away) .team-meta', `${data.homeTeam?.side === 'home' ? '홈' : '원정'} · ${currentPeriod} · 팀ID ${data.homeTeam?.teamId}`);
         setText('.team.away .team-logo', data.awayTeam?.logoText);
         setText('.team.away .team-name', data.awayTeam?.name);
-        setText('.team.away .team-meta', `${data.awayTeam?.side === 'home' ? '홈' : '원정'} · ${data.currentInning} · 팀ID ${data.awayTeam?.teamId}`);
-        setText('#liveStatusText', `${data.status} · ${data.currentInning}`);
-        setText('#scoreCaption', `API match ${data.matchId} · ${data.sport}`);
+        setText('.team.away .team-meta', `${data.awayTeam?.side === 'home' ? '홈' : '원정'} · ${currentPeriod} · 팀ID ${data.awayTeam?.teamId}`);
+        setText('#liveStatusText', `${data.status} · ${currentPeriod}`);
+        setText('#scoreCaption', `API match ${data.matchId} · ${data.sport} · match_event ${allEvents.length}건`);
         setText('#homeScore', data.score?.home);
         setText('#awayScore', data.score?.away);
-        setText('#currentPlayTitle', `${data.currentInning} ${data.awayTeam?.shortName || data.awayTeam?.name} 공격`);
+        setText('#currentPlayTitle', `${currentPeriod} ${battingTeam?.shortName || battingTeam?.name || '-'} 공격`);
         setText('#currentOutCount', `${data.count?.outs ?? 0} OUT`);
 
-        if (Array.isArray(data.inningScores)) {
-            const scoreRows = document.querySelectorAll('.inning-board tbody tr');
-            data.inningScores.forEach((score, rowIndex) => {
-                const row = scoreRows[rowIndex];
-                if (!row) return;
-                const cells = row.querySelectorAll('td');
-                cells[0].textContent = score.teamName;
-                score.innings.forEach((inningScore, index) => {
-                    if (cells[index + 1]) cells[index + 1].textContent = inningScore;
-                });
-                if (cells[10]) cells[10].textContent = score.runs;
-                if (cells[11]) cells[11].textContent = score.hits;
-                if (cells[12]) cells[12].textContent = score.errors;
-                if (cells[13]) cells[13].textContent = score.basesOnBalls;
-            });
-        }
+        renderInningScoreBoard(data);
 
         setText('#fieldCurrentBatter', `현재 타자: ${data.currentBatter?.name || '-'}`);
         setText('#fieldSituation', `상황: ${data.count?.outs ?? 0}사 ${formatBaseSituation(data.runners)}`);
@@ -2044,18 +2745,20 @@
         setText('#currentBatterInitial', (data.currentBatter?.name || '-').slice(0, 1));
         setText('#currentBatterName', data.currentBatter?.name);
         setText('#currentBatterMeta', data.currentBatter?.description);
-        setText('#currentAtbatSummaryTitle', `${data.currentInning} 현재 타석`);
+        setText('#currentAtbatSummaryTitle', `${currentPeriod} 현재 타석`);
         setText('#currentAtbatSummaryText', `${data.count?.outs ?? 0}사 ${formatBaseSituation(data.runners)}`);
 
         renderCountDots(1, data.count?.balls ?? 0);
         renderCountDots(2, data.count?.strikes ?? 0);
         renderCountDots(3, data.count?.outs ?? 0);
-        renderRunner('.runner.r1', data.runners?.first, '김지찬');
-        renderRunner('.runner.r2', data.runners?.second, '이재현');
-        renderRunner('.runner.r3', data.runners?.third, '이주자');
-        renderCurrentPlayEvents(data.events);
+        renderRunner('.runner.r1', data.runners?.first, '1루 주자');
+        renderRunner('.runner.r2', data.runners?.second, '2루 주자');
+        renderRunner('.runner.r3', data.runners?.third, '3루 주자');
+        renderCurrentPlayEvents(eventsForCurrentPeriod(data));
         renderCommentPreviews(data.comments);
         renderPredictionPreview(data.prediction);
+        applyMatchStatusPresentation(data);
+        renderDbBaseballData(data);
     }
 
     async function loadBaseballLive() {
@@ -2063,148 +2766,35 @@
         if (!matchId) return;
 
         try {
-            const response = await fetch(`/api/games/${encodeURIComponent(matchId)}/baseball-live`);
-            if (!response.ok) return;
-            renderLiveData(await response.json());
+            const [liveResponse, rawEvents] = await Promise.all([
+                fetch(`/api/games/${encodeURIComponent(matchId)}/baseball-live`),
+                fetchJsonOrEmpty(`/api/games/${encodeURIComponent(matchId)}/events`)
+            ]);
+            if (!liveResponse.ok) return;
+            const liveData = await liveResponse.json();
+            liveData.rawEvents = Array.isArray(rawEvents) ? rawEvents : [];
+            renderLiveData(liveData);
         } catch (error) {
-            console.warn('야구 중계 더미 API 호출 실패', error);
+            console.warn('야구 중계 API 호출 실패', error);
         }
     }
 
-    const inningButtons = document.querySelectorAll('.inning-btn');
     const inningTimeline = document.getElementById('inningTimeline');
     const inningHistoryLabel = document.getElementById('inningHistoryLabel');
-    const inningHistory = {
-        1: [
-            {
-                half: '초',
-                team: '한화 공격',
-                events: [
-                    { player: '이진영', result: '중견수 뜬공' },
-                    { player: '문현빈', result: '좌전 안타' },
-                    { player: '노시환', result: '헛스윙 삼진' },
-                    { player: '채은성', result: '유격수 땅볼' }
-                ]
-            },
-            {
-                half: '말',
-                team: '삼성 공격',
-                events: [
-                    { player: '김지찬', result: '볼넷 출루' },
-                    { player: '구자욱', result: '우전 안타, 김지찬 3루' },
-                    { player: '강민호', result: '유격수 땅볼, 김지찬 홈인' },
-                    { player: '이성규', result: '중견수 뜬공' }
-                ]
-            }
-        ],
-        2: [
-            {
-                half: '초',
-                team: '한화 공격',
-                events: [
-                    { player: '김인환', result: '우익수 방면 2루타' },
-                    { player: '하주석', result: '희생번트, 김인환 3루' },
-                    { player: '이원석', result: '중전 적시타, 김인환 득점' },
-                    { player: '최재훈', result: '2루수 병살타' }
-                ]
-            },
-            {
-                half: '말',
-                team: '삼성 공격',
-                events: [
-                    { player: '김영웅', result: '볼넷' },
-                    { player: '이재현', result: '투수 앞 땅볼' },
-                    { player: '박병호', result: '유격수 병살타' }
-                ]
-            }
-        ],
-        3: [
-            {
-                half: '초',
-                team: '한화 공격',
-                events: [
-                    { player: '김태연', result: '좌익수 뜬공' },
-                    { player: '이진영', result: '우전 안타' },
-                    { player: '문현빈', result: '볼넷' },
-                    { player: '노시환', result: '3루수 직선타' },
-                    { player: '채은성', result: '루킹 삼진' }
-                ]
-            },
-            {
-                half: '말',
-                team: '삼성 공격',
-                events: [
-                    { player: '김헌곤', result: '중견수 뜬공' },
-                    { player: '김지찬', result: '2루수 땅볼' },
-                    { player: '구자욱', result: '헛스윙 삼진' }
-                ]
-            }
-        ],
-        4: [
-            {
-                half: '초',
-                team: '한화 공격',
-                events: [
-                    { player: '김인환', result: '좌중간 2루타' },
-                    { player: '하주석', result: '우익수 뜬공, 주자 3루' },
-                    { player: '이원석', result: '희생플라이, 김인환 득점' },
-                    { player: '최재훈', result: '포수 파울플라이' }
-                ]
-            },
-            {
-                half: '말',
-                team: '삼성 공격',
-                events: [
-                    { player: '강민호', result: '좌전 안타' },
-                    { player: '이성규', result: '우중간 2루타, 강민호 득점' },
-                    { player: '김영웅', result: '3루수 실책 출루' },
-                    { player: '이재현', result: '좌전 적시타, 이성규 득점' },
-                    { player: '박병호', result: '삼진' }
-                ]
-            }
-        ],
-        5: [
-            {
-                half: '초',
-                team: '한화 공격',
-                events: [
-                    { player: '김태연', result: '유격수 땅볼' },
-                    { player: '이진영', result: '볼넷' },
-                    { player: '문현빈', result: '우전 안타' },
-                    { player: '노시환', result: '좌월 솔로 홈런' },
-                    { player: '채은성', result: '1루수 파울플라이' }
-                ]
-            },
-            {
-                half: '말',
-                team: '삼성 공격',
-                events: [
-                    { player: '김헌곤', result: '투수 땅볼' },
-                    { player: '김지찬', result: '좌익수 뜬공' },
-                    { player: '구자욱', result: '중견수 뜬공' }
-                ]
-            }
-        ]
-    };
+    let activeInningHistory = {};
 
     function renderInningTimeline(inning) {
         if (!inningTimeline || !inningHistoryLabel) return;
-        inningHistoryLabel.textContent = `${inning}회 타석 흐름`;
-        inningTimeline.innerHTML = inningHistory[inning].map(({ half, team, events }) => (
-            `<div class="inning-event"><b>${inning}회${half}</b><div class="inning-half"><strong>${team}</strong>${events.map(({ player, result }) => `<div class="inning-event-line"><em>${player}</em><span>${result}</span></div>`).join('')}</div></div>`
+        const history = activeInningHistory[String(inning)];
+        inningHistoryLabel.textContent = inning && inning !== 'none' ? `${inning}회 타석 흐름` : '이전 이닝 없음';
+        if (!history || history.length === 0) {
+            inningTimeline.innerHTML = `<div class="inning-event"><b>${escapeHtml(inning || '-')}회</b><div class="inning-half"><strong>표시할 DB 이벤트 없음</strong></div></div>`;
+            return;
+        }
+        inningTimeline.innerHTML = history.map(({ half, team, events }) => (
+            `<div class="inning-event"><b>${escapeHtml(inning)}회${escapeHtml(half)}</b><div class="inning-half"><strong>${escapeHtml(team)}</strong>${events.map(({ player, result }) => `<div class="inning-event-line"><em>${escapeHtml(player)}</em><span>${escapeHtml(result)}</span></div>`).join('')}</div></div>`
         )).join('');
     }
-
-    inningButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            inningButtons.forEach(item => item.classList.remove('active'));
-            button.classList.add('active');
-            renderInningTimeline(button.dataset.inning);
-        });
-    });
-
-    renderInningTimeline('1');
-    loadBaseballLive();
 
     function toggleAtbatCard(card) {
         if (!card || card.classList.contains('current-atbat')) return;
@@ -2213,33 +2803,31 @@
         if (button) button.textContent = expanded ? '접기' : '기록 더보기';
     }
 
-    document.querySelectorAll('.detail-toggle').forEach(button => {
-        button.addEventListener('click', event => {
-            event.stopPropagation();
-            toggleAtbatCard(button.closest('.atbat-card'));
+    function bindAtbatToggles() {
+        document.querySelectorAll('.detail-toggle').forEach(button => {
+            button.addEventListener('click', event => {
+                event.stopPropagation();
+                toggleAtbatCard(button.closest('.atbat-card'));
+            });
         });
-    });
 
-    document.querySelectorAll('.atbat-card .batter-head').forEach(header => {
-        header.addEventListener('click', () => {
-            toggleAtbatCard(header.closest('.atbat-card'));
+        document.querySelectorAll('.atbat-card .batter-head').forEach(header => {
+            header.addEventListener('click', () => {
+                toggleAtbatCard(header.closest('.atbat-card'));
+            });
         });
-    });
+    }
+
+    renderInningTimeline('1');
+    bindAtbatToggles();
+    loadBaseballLive();
 
     const form = document.getElementById('chatForm');
     const input = document.getElementById('chatInput');
     const list = document.getElementById('chatList');
     const chatCount = document.getElementById('chatCount');
     const autoUpdateToggle = document.getElementById('autoUpdateToggle');
-    const sampleComments = [
-        ['line_drive', '지금은 한 점 차라서 주자 하나만 나가도 분위기 바로 바뀜'],
-        ['samsung_21', '장승현이 최소한 해준 타석이라 다음 타자 부담이 좀 줄었다'],
-        ['eagle_eye', '외야 깊숙한 타구였고 3루 주자는 당연히 들어오는 장면'],
-        ['kbo_today', '후라도 투구수가 올라가서 다음 이닝까지 볼지는 애매하네'],
-        ['bluepark', '불펜 타이밍이 오늘 경기 승부처일 듯'],
-        ['cleanup_4', '이 상황이면 벤치에서 대타 카드도 슬슬 생각할 수밖에 없음'],
-        ['scorebook', '방금 타구는 결과만 보면 희생플라이지만 앞선 볼카운트에서 파울로 버틴 게 컸고, 최소한 외야로 보낸 타석이라 득점까지 연결된 장면으로 봐야 함']
-    ];
+    const sampleComments = [];
 
     function prepareMessage(node) {
         const text = node.querySelector('.chat-text');
@@ -2292,11 +2880,10 @@
         input.value = '';
     });
 
-    setInterval(() => {
-        if (autoUpdateToggle && !autoUpdateToggle.checked) return;
-        const [user, text] = sampleComments[Math.floor(Math.random() * sampleComments.length)];
-        addComment(user, text);
-    }, 4800);
+    if (autoUpdateToggle) {
+        autoUpdateToggle.checked = false;
+        autoUpdateToggle.disabled = true;
+    }
 
 </script>
 <script src="/front-links.js"></script>

@@ -1,53 +1,84 @@
 package com.example.edu.sports_predict_live.livematch.service;
 
 import com.example.edu.sports_predict_live.livematch.dto.MatchLiveDTO;
+import com.example.edu.sports_predict_live.livematch.entity.MatchEvent;
+import com.example.edu.sports_predict_live.livematch.repository.MatchEventRepository;
 import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
+import com.example.edu.sports_predict_live.player.entity.Player;
 import com.example.edu.sports_predict_live.player.entity.PlayerSeasonStatBaseball;
+import com.example.edu.sports_predict_live.player.repository.PlayerRepository;
 import com.example.edu.sports_predict_live.player.repository.PlayerSeasonStatBaseballRepository;
+import com.example.edu.sports_predict_live.team.entity.Team;
+import com.example.edu.sports_predict_live.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class MatchLiveDummyService {
 
-    private final MatchRepository matchRepository;
-    private final PlayerSeasonStatBaseballRepository baseballRecordRepository;
     private static final String CURRENT_SEASON = "2026";
+    private static final DateTimeFormatter SCHEDULE_FMT = DateTimeFormatter.ofPattern("MM-dd HH:mm");
+    private static final Pattern COUNT_PATTERN = Pattern.compile("B:(\\d+)\\s+S:(\\d+)\\s+O:(\\d+)");
+    private static final Pattern RUNNER_PATTERN = Pattern.compile("R:([0-9,·-]+)");
+    private static final Pattern INNING_PATTERN = Pattern.compile("(\\d+)회(초|말)");
 
-    /*
-     * 화면 렌더링 검증용 중계 데이터 생성.
-     * 경기 기본 정보는 크롤러가 채운 match/team 데이터를 우선 사용하고,
-     * 아직 DB 구조가 없는 현재 타석/댓글/예측 영역은 더미로 유지한다.
-     *
-     * 이 단계의 목적:
-     * - /api/games/{matchId}/baseball-live 응답이 실제 경기 ID와 연결되는지 확인
-     * - 최종 이벤트 타임라인은 match_event 기반 API로 전환
-     */
+    private final MatchRepository matchRepository;
+    private final MatchEventRepository matchEventRepository;
+    private final PlayerRepository playerRepository;
+    private final TeamRepository teamRepository;
+    private final PlayerSeasonStatBaseballRepository baseballRecordRepository;
+
     @Transactional(readOnly = true)
     public MatchLiveDTO getBaseballLive(Long matchId) {
         return matchRepository.findById(matchId)
                 .map(this::toLiveDto)
-                .orElseGet(() -> dummyLiveDto(matchId));
+                .orElseGet(() -> fallbackLiveDto(matchId));
     }
 
     private MatchLiveDTO toLiveDto(Match match) {
-        String currentInning = resolveCurrentInning(match.getStatus());
+        List<PlayerSeasonStatBaseball> hitters = baseballRecordRepository.findHittersBySportAndSeason("baseball", CURRENT_SEASON);
+        List<PlayerSeasonStatBaseball> pitchers = baseballRecordRepository.findPitchersBySportAndSeason("baseball", CURRENT_SEASON);
+        EventContext eventContext = buildEventContext(match.getMatchId());
+
+        PlayerSeasonStatBaseball homeBatter = firstByTeam(hitters, match.getHomeTeam().getTeamId());
+        PlayerSeasonStatBaseball awayBatter = firstByTeam(hitters, match.getAwayTeam().getTeamId());
+        PlayerSeasonStatBaseball homePitcher = firstByTeam(pitchers, match.getHomeTeam().getTeamId());
+        PlayerSeasonStatBaseball awayPitcher = firstByTeam(pitchers, match.getAwayTeam().getTeamId());
+
+        String status = normalizeStatus(match.getStatus());
+        MatchLiveDTO.CurrentPlayer currentBatter = "finished".equals(status)
+                ? currentPlayer(awayBatter, match.getAwayTeam().getName(), "last batter candidate")
+                : currentPlayer(homeBatter, match.getHomeTeam().getName(), "current batter candidate");
+        MatchLiveDTO.CurrentPlayer currentPitcher = "scheduled".equals(status)
+                ? currentPlayer(homePitcher, match.getHomeTeam().getName(), "probable starter")
+                : currentPlayer(awayPitcher, match.getAwayTeam().getName(), "current pitcher candidate");
+
+        if (eventContext.lastPlayer() != null && eventContext.lastTeam() != null) {
+            currentBatter = currentPlayerFromEvent(eventContext.lastPlayer(), eventContext.lastTeam());
+        }
+
+        LiveState state = liveState(match, status, currentBatter, currentPitcher, eventContext);
         String homeShortName = shortName(match.getHomeTeam().getName());
         String awayShortName = shortName(match.getAwayTeam().getName());
-        MatchLiveDTO.CurrentPlayer currentBatter = resolveCurrentBatter(match);
-        MatchLiveDTO.CurrentPlayer currentPitcher = resolveCurrentPitcher(match);
 
         return new MatchLiveDTO(
                 match.getMatchId(),
                 match.getSport().getCode(),
-                match.getStatus(),
-                currentInning,
+                status,
+                state.currentInning(),
                 new MatchLiveDTO.TeamScore(
                         match.getHomeTeam().getTeamId(),
                         match.getHomeTeam().getName(),
@@ -65,77 +96,365 @@ public class MatchLiveDummyService {
                 new MatchLiveDTO.Score(match.getHomeScore(), match.getAwayScore()),
                 currentBatter,
                 currentPitcher,
-                new MatchLiveDTO.Count(0, 0, 0),
-                new MatchLiveDTO.Runners(false, false, false),
-                List.of(
-                        new MatchLiveDTO.InningScore(awayShortName, List.of("-", "-", "-", "-", "-", "-", "-", "-", "-"), match.getAwayScore(), 0, 0, 0),
-                        new MatchLiveDTO.InningScore(homeShortName, List.of("-", "-", "-", "-", "-", "-", "-", "-", "-"), match.getHomeScore(), 0, 0, 0)
-                ),
-                List.of(
-                        new MatchLiveDTO.LiveEvent("match_loaded", 0, currentInning, "크롤링 경기 데이터 연결", "match_id " + match.getMatchId() + " · " + match.getAwayTeam().getName() + " vs " + match.getHomeTeam().getName()),
-                        new MatchLiveDTO.LiveEvent("venue", 0, "구장", "경기 장소", match.getVenue() != null ? match.getVenue() : "구장 정보 없음"),
-                        new MatchLiveDTO.LiveEvent("scheduled_at", 0, "경기 시간", "예정 시각", match.getScheduledAt().toString()),
-                        new MatchLiveDTO.LiveEvent("batter_record", 0, "크롤링 타자 기록", currentBatter.name(), currentBatter.description()),
-                        new MatchLiveDTO.LiveEvent("pitcher_record", 0, "크롤링 투수 기록", currentPitcher.name(), currentPitcher.description())
-                ),
-                List.of(
-                        new MatchLiveDTO.CommentPreview("system", "크롤러가 저장한 match/team/score 데이터로 중계 상단을 렌더링합니다.", "방금"),
-                        new MatchLiveDTO.CommentPreview("system", "크롤링된 야구 시즌 기록에서 양 팀 대표 타자·투수를 표시합니다.", "방금"),
-                        new MatchLiveDTO.CommentPreview("system", "이닝별 득점·볼카운트·주자 상황은 아직 저장 컬럼이 없어 다음 단계에서 match_event로 분리합니다.", "방금")
-                ),
-                new MatchLiveDTO.PredictionPreview(match.getHomeTeam().getName(), match.getAwayTeam().getName(), 50, 50, 0, 0, true),
+                state.count(),
+                state.runners(),
+                inningScores(match, status, homeShortName, awayShortName, eventContext.rawEvents()),
+                state.events(),
+                comments(match, state, eventContext),
+                prediction(match, status),
                 new MatchLiveDTO.ViewerState(false, false, false)
         );
     }
 
-    private MatchLiveDTO dummyLiveDto(Long matchId) {
-        return new MatchLiveDTO(
-                matchId,
-                "baseball",
-                "LIVE",
-                "9회말",
-                new MatchLiveDTO.TeamScore(101L, "코딩왕 자이언츠", "코딩왕", "💻", "away"),
-                new MatchLiveDTO.TeamScore(102L, "버그제로 이글스", "버그제로", "🛡️", "home"),
-                new MatchLiveDTO.Score(5, 4),
-                new MatchLiveDTO.CurrentPlayer(2001L, "나천재", "버그제로 이글스", "7번 타자 · 1루수 · 타율 .333"),
-                new MatchLiveDTO.CurrentPlayer(3001L, "고칠게", "코딩왕 자이언츠", "8.2이닝 115구 5실점"),
-                new MatchLiveDTO.Count(3, 2, 2),
-                new MatchLiveDTO.Runners(true, false, true),
-                List.of(
-                        new MatchLiveDTO.InningScore("코딩왕", List.of("1", "0", "2", "0", "0", "1", "0", "1", "0"), 5, 12, 0, 4),
-                        new MatchLiveDTO.InningScore("버그제로", List.of("0", "2", "0", "1", "0", "0", "1", "0", "-"), 4, 9, 1, 3)
-                ),
-                List.of(
-                        new MatchLiveDTO.LiveEvent("at_bat_start", 0, "9회말", "나천재 타석 시작", "버그제로 이글스 공격, 2사 1·3루. 역전 찬스입니다."),
-                        new MatchLiveDTO.LiveEvent("ball", 1, "볼카운트 1 - 0", "볼", "148km/h 직구"),
-                        new MatchLiveDTO.LiveEvent("strike", 2, "볼카운트 1 - 1", "스트라이크", "132km/h 슬라이더"),
-                        new MatchLiveDTO.LiveEvent("foul", 3, "볼카운트 1 - 2", "파울", "145km/h 직구"),
-                        new MatchLiveDTO.LiveEvent("ball", 4, "볼카운트 2 - 2", "볼", "128km/h 체인지업"),
-                        new MatchLiveDTO.LiveEvent("ball", 5, "볼카운트 3 - 2", "볼", "147km/h 직구"),
-                        new MatchLiveDTO.LiveEvent("foul", 6, "볼카운트 3 - 2", "파울", "142km/h 커터"),
-                        new MatchLiveDTO.LiveEvent("hit", 7, "2사 1·3루", "타격", "좌전 안타!"),
-                        new MatchLiveDTO.LiveEvent("video_review", 0, "21:55", "홈 세이프/아웃 판독", "3루 주자 이재현의 홈 태그 상황에 대한 비디오 판독이 진행 중입니다."),
-                        new MatchLiveDTO.LiveEvent("result", 0, "판독 결과", "세이프 판정 유지", "3루 주자 이재현 : 홈인 (5-5 동점)"),
-                        new MatchLiveDTO.LiveEvent("result", 0, "주자 상황", "1사 1,2루", "1루 주자 김지찬 : 2루까지 진루")
-                ),
-                List.of(
-                        new MatchLiveDTO.CommentPreview("자바장인", "와 드디어 동점!! 9회말 2사에서 이걸 해내네", "1분 전"),
-                        new MatchLiveDTO.CommentPreview("스프링초보", "비디오 판독 개떨린다 제발 세이프!!", "30초 전"),
-                        new MatchLiveDTO.CommentPreview("버그제로팬", "나천재! 나천재! 나천재!", "방금")
-                ),
-                new MatchLiveDTO.PredictionPreview("버그제로", "코딩왕", 65, 35, 2450, 1120, false),
-                new MatchLiveDTO.ViewerState(true, true, false)
+    private EventContext buildEventContext(Long matchId) {
+        List<MatchEvent> events = matchEventRepository.findByMatchIdOrderByEventTimeAscMatchEventIdAsc(matchId);
+        if (events.isEmpty()) {
+            return EventContext.empty();
+        }
+
+        Set<Long> playerIds = new HashSet<>();
+        Set<Long> teamIds = new HashSet<>();
+        for (MatchEvent event : events) {
+            if (event.getPlayerId() != null) playerIds.add(event.getPlayerId());
+            if (event.getTeamId() != null) teamIds.add(event.getTeamId());
+        }
+
+        Map<Long, Player> playerById = new HashMap<>();
+        playerRepository.findAllById(playerIds).forEach(player -> playerById.put(player.getPlayerId(), player));
+
+        Map<Long, Team> teamById = new HashMap<>();
+        teamRepository.findAllById(teamIds).forEach(team -> teamById.put(team.getTeamId(), team));
+
+        List<MatchLiveDTO.LiveEvent> liveEvents = events.stream()
+                .map(event -> toLiveEvent(event, playerById, teamById))
+                .toList();
+
+        MatchEvent lastEvent = events.get(events.size() - 1);
+        MatchLiveDTO.Count count = parseCount(lastEvent.getDescription());
+        MatchLiveDTO.Runners runners = parseRunners(lastEvent.getDescription());
+        String currentInning = valueOrDefault(lastEvent.getEventPeriod(), "LIVE");
+        Player lastPlayer = lastEvent.getPlayerId() == null ? null : playerById.get(lastEvent.getPlayerId());
+        Team lastTeam = lastEvent.getTeamId() == null ? null : teamById.get(lastEvent.getTeamId());
+
+        return new EventContext(events, liveEvents, count, runners, currentInning, lastPlayer, lastTeam);
+    }
+
+    private MatchLiveDTO.LiveEvent toLiveEvent(MatchEvent event, Map<Long, Player> playerById, Map<Long, Team> teamById) {
+        Player player = event.getPlayerId() == null ? null : playerById.get(event.getPlayerId());
+        Team team = event.getTeamId() == null ? null : teamById.get(event.getTeamId());
+        String eventType = event.getEventType();
+        String playerName = player == null ? null : player.getName();
+        String teamName = team == null ? null : team.getName();
+        String title = playerName == null
+                ? eventTypeLabel(eventType)
+                : playerName + " " + eventTypeLabel(eventType);
+        String detail = cleanDescription(event.getDescription());
+        if (teamName != null && !detail.contains(teamName)) {
+            detail = teamName + " · " + detail;
+        }
+        return new MatchLiveDTO.LiveEvent(
+                eventType,
+                event.getEventTime() == null ? 0 : event.getEventTime(),
+                valueOrDefault(event.getEventPeriod(), "-"),
+                title,
+                detail
         );
     }
 
-    private String resolveCurrentInning(String status) {
+    private LiveState liveState(Match match, String status, MatchLiveDTO.CurrentPlayer batter, MatchLiveDTO.CurrentPlayer pitcher, EventContext eventContext) {
+        if (!eventContext.events().isEmpty() && !"scheduled".equals(status) && !"cancelled".equals(status)) {
+            return new LiveState(
+                    eventContext.currentInning(),
+                    eventContext.count(),
+                    eventContext.runners(),
+                    eventContext.events()
+            );
+        }
         return switch (status) {
-            case "finished" -> "경기 종료";
-            case "in_progress" -> "경기 진행 중";
-            case "paused" -> "경기 중단";
-            case "cancelled" -> "경기 취소";
-            default -> "경기 예정";
+            case "in_progress" -> inProgressState(match, batter, pitcher);
+            case "finished" -> finishedState(match, batter, pitcher);
+            case "cancelled" -> cancelledState(match);
+            case "paused" -> pausedState(batter, pitcher);
+            default -> scheduledState(match, batter, pitcher);
         };
+    }
+
+    private LiveState scheduledState(Match match, MatchLiveDTO.CurrentPlayer batter, MatchLiveDTO.CurrentPlayer pitcher) {
+        String time = match.getScheduledAt().format(SCHEDULE_FMT);
+        return new LiveState(
+                "PRE",
+                new MatchLiveDTO.Count(0, 0, 0),
+                new MatchLiveDTO.Runners(false, false, false),
+                List.of(
+                        new MatchLiveDTO.LiveEvent("match_loaded", 0, "PREVIEW", "DB schedule loaded", match.getAwayTeam().getName() + " vs " + match.getHomeTeam().getName()),
+                        new MatchLiveDTO.LiveEvent("scheduled_at", 0, "START", "Scheduled time", time),
+                        new MatchLiveDTO.LiveEvent("venue", 0, "VENUE", "Ballpark", valueOrDefault(match.getVenue(), "venue unknown")),
+                        new MatchLiveDTO.LiveEvent("pitcher_record", 0, "PROBABLE", pitcher.name(), pitcher.description()),
+                        new MatchLiveDTO.LiveEvent("batter_record", 0, "KEY HITTER", batter.name(), batter.description())
+                )
+        );
+    }
+
+    private LiveState inProgressState(Match match, MatchLiveDTO.CurrentPlayer batter, MatchLiveDTO.CurrentPlayer pitcher) {
+        return new LiveState(
+                "LIVE",
+                new MatchLiveDTO.Count(0, 0, 0),
+                new MatchLiveDTO.Runners(false, false, false),
+                List.of(
+                        new MatchLiveDTO.LiveEvent("result", 0, "LIVE", "이벤트 없음", "match_event에 이 경기의 중계 이벤트가 아직 없습니다."),
+                        new MatchLiveDTO.LiveEvent("at_bat_start", 0, "LIVE", batter.name(), pitcher.name() + " 상대 타석 대기")
+                )
+        );
+    }
+
+    private LiveState pausedState(MatchLiveDTO.CurrentPlayer batter, MatchLiveDTO.CurrentPlayer pitcher) {
+        return new LiveState(
+                "PAUSED",
+                new MatchLiveDTO.Count(0, 0, 0),
+                new MatchLiveDTO.Runners(false, false, false),
+                List.of(
+                        new MatchLiveDTO.LiveEvent("result", 0, "PAUSED", "경기 일시중지", batter.name() + " / " + pitcher.name())
+                )
+        );
+    }
+
+    private LiveState finishedState(Match match, MatchLiveDTO.CurrentPlayer batter, MatchLiveDTO.CurrentPlayer pitcher) {
+        String winner = match.getHomeScore() >= match.getAwayScore() ? match.getHomeTeam().getName() : match.getAwayTeam().getName();
+        return new LiveState(
+                "FINAL",
+                new MatchLiveDTO.Count(0, 0, 3),
+                new MatchLiveDTO.Runners(false, false, false),
+                List.of(
+                        new MatchLiveDTO.LiveEvent("result", 0, "FINAL", "Game finished", winner + " wins"),
+                        new MatchLiveDTO.LiveEvent("result", 0, "Final score", match.getAwayTeam().getName() + " " + match.getAwayScore() + " : " + match.getHomeScore() + " " + match.getHomeTeam().getName(), "DB 경기 결과")
+                )
+        );
+    }
+
+    private LiveState cancelledState(Match match) {
+        return new LiveState(
+                "CANCELLED",
+                new MatchLiveDTO.Count(0, 0, 0),
+                new MatchLiveDTO.Runners(false, false, false),
+                List.of(
+                        new MatchLiveDTO.LiveEvent("result", 0, "CANCELLED", "Schedule status changed", match.getAwayTeam().getName() + " vs " + match.getHomeTeam().getName()),
+                        new MatchLiveDTO.LiveEvent("venue", 0, "VENUE", "Cancelled game", valueOrDefault(match.getVenue(), "venue unknown")),
+                        new MatchLiveDTO.LiveEvent("scheduled_at", 0, "ORIGINAL START", "Scheduled time", match.getScheduledAt().format(SCHEDULE_FMT))
+                )
+        );
+    }
+
+    private List<MatchLiveDTO.InningScore> inningScores(Match match, String status, String homeShortName, String awayShortName, List<MatchEvent> events) {
+        if ("scheduled".equals(status) || "cancelled".equals(status)) {
+            return List.of(
+                    new MatchLiveDTO.InningScore(awayShortName, List.of("-", "-", "-", "-", "-", "-", "-", "-", "-"), 0, 0, 0, 0),
+                    new MatchLiveDTO.InningScore(homeShortName, List.of("-", "-", "-", "-", "-", "-", "-", "-", "-"), 0, 0, 0, 0)
+            );
+        }
+
+        int inningCount = Math.max(9, events.stream()
+                .map(MatchEvent::getEventPeriod)
+                .mapToInt(this::inningNumber)
+                .max()
+                .orElse(9));
+        int[] awayRuns = new int[inningCount];
+        int[] homeRuns = new int[inningCount];
+        int awayHits = 0;
+        int homeHits = 0;
+        int awayWalks = 0;
+        int homeWalks = 0;
+        int awayErrors = 0;
+        int homeErrors = 0;
+
+        for (MatchEvent event : events) {
+            boolean awaySide = match.getAwayTeam().getTeamId().equals(event.getTeamId());
+            boolean homeSide = match.getHomeTeam().getTeamId().equals(event.getTeamId());
+            int inningIndex = inningIndex(event.getEventPeriod());
+            String type = String.valueOf(event.getEventType()).toLowerCase();
+
+            if ("score".equals(type) && inningIndex >= 0 && inningIndex < inningCount) {
+                if (awaySide) awayRuns[inningIndex] += 1;
+                if (homeSide) homeRuns[inningIndex] += 1;
+            }
+            if (List.of("hit", "single", "double", "triple", "homerun").contains(type)) {
+                if (awaySide) awayHits += 1;
+                if (homeSide) homeHits += 1;
+            }
+            if ("walk".equals(type)) {
+                if (awaySide) awayWalks += 1;
+                if (homeSide) homeWalks += 1;
+            }
+            if ("error".equals(type)) {
+                if (awaySide) awayErrors += 1;
+                if (homeSide) homeErrors += 1;
+            }
+        }
+
+        return List.of(
+                new MatchLiveDTO.InningScore(awayShortName, inningList(awayRuns), match.getAwayScore(), awayHits, awayErrors, awayWalks),
+                new MatchLiveDTO.InningScore(homeShortName, inningList(homeRuns), match.getHomeScore(), homeHits, homeErrors, homeWalks)
+        );
+    }
+
+    private List<MatchLiveDTO.CommentPreview> comments(Match match, LiveState state, EventContext eventContext) {
+        if (!eventContext.events().isEmpty()) {
+            return List.of(
+                    new MatchLiveDTO.CommentPreview("system", "match_event " + eventContext.events().size() + "건을 DB에서 불러왔습니다.", "now"),
+                    new MatchLiveDTO.CommentPreview("scorebook", state.currentInning() + " 기준 화면을 갱신했습니다.", "now")
+            );
+        }
+        return switch (state.currentInning()) {
+            case "PRE" -> List.of(new MatchLiveDTO.CommentPreview("system", "경기 시작 전입니다. 일정/팀/선수 DB만 표시합니다.", "now"));
+            case "FINAL" -> List.of(new MatchLiveDTO.CommentPreview("system", "종료 경기입니다. match_event가 없으면 상세 중계는 표시하지 않습니다.", "now"));
+            case "CANCELLED" -> List.of(new MatchLiveDTO.CommentPreview("system", "취소 경기입니다.", "now"));
+            default -> List.of(new MatchLiveDTO.CommentPreview("system", "match_event에 이 경기의 이벤트를 넣으면 중계 타임라인이 채워집니다.", "now"));
+        };
+    }
+
+    private MatchLiveDTO.PredictionPreview prediction(Match match, String status) {
+        int homePercent = Math.max(35, Math.min(65, 50 + match.getHomeScore() - match.getAwayScore()));
+        return new MatchLiveDTO.PredictionPreview(
+                match.getHomeTeam().getName(),
+                match.getAwayTeam().getName(),
+                homePercent,
+                100 - homePercent,
+                0,
+                0,
+                !"scheduled".equals(status)
+        );
+    }
+
+    private PlayerSeasonStatBaseball firstByTeam(List<PlayerSeasonStatBaseball> records, Long teamId) {
+        return records.stream()
+                .filter(stat -> stat.getPlayerSeasonStat().getPlayer().getTeam().getTeamId().equals(teamId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private MatchLiveDTO.CurrentPlayer currentPlayer(PlayerSeasonStatBaseball stat, String teamName, String fallbackRole) {
+        if (stat == null) {
+            return new MatchLiveDTO.CurrentPlayer(0L, fallbackRole, teamName, "No DB player record yet");
+        }
+
+        var player = stat.getPlayerSeasonStat().getPlayer();
+        String description = stat.getBattingAvg() != null
+                ? "AVG " + stat.getBattingAvg() + " / H " + valueOrZero(stat.getHits()) + " / HR " + valueOrZero(stat.getHomeRuns()) + " / RBI " + valueOrZero(stat.getRbi())
+                : "ERA " + valueOrDash(stat.getEra()) + " / W-L " + valueOrZero(stat.getWins()) + "-" + valueOrZero(stat.getLosses()) + " / SO " + valueOrZero(stat.getStrikeouts());
+        return new MatchLiveDTO.CurrentPlayer(player.getPlayerId(), player.getName(), teamName, description);
+    }
+
+    private MatchLiveDTO.CurrentPlayer currentPlayerFromEvent(Player player, Team team) {
+        String description = valueOrDefault(player.getPosition(), "포지션 정보 없음") + " · match_event 기준 현재 선수";
+        return new MatchLiveDTO.CurrentPlayer(player.getPlayerId(), player.getName(), team.getName(), description);
+    }
+
+    private MatchLiveDTO fallbackLiveDto(Long matchId) {
+        return new MatchLiveDTO(
+                matchId,
+                "baseball",
+                "scheduled",
+                "PRE",
+                new MatchLiveDTO.TeamScore(0L, "Home team unavailable", "Home", "H", "home"),
+                new MatchLiveDTO.TeamScore(0L, "Away team unavailable", "Away", "A", "away"),
+                new MatchLiveDTO.Score(0, 0),
+                new MatchLiveDTO.CurrentPlayer(0L, "Batter unavailable", "Home", "No match for this match_id"),
+                new MatchLiveDTO.CurrentPlayer(0L, "Pitcher unavailable", "Away", "No match for this match_id"),
+                new MatchLiveDTO.Count(0, 0, 0),
+                new MatchLiveDTO.Runners(false, false, false),
+                List.of(
+                        new MatchLiveDTO.InningScore("Away", List.of("-", "-", "-", "-", "-", "-", "-", "-", "-"), 0, 0, 0, 0),
+                        new MatchLiveDTO.InningScore("Home", List.of("-", "-", "-", "-", "-", "-", "-", "-", "-"), 0, 0, 0, 0)
+                ),
+                List.of(new MatchLiveDTO.LiveEvent("result", 0, "NO MATCH", "DB match lookup failed", "Open this page from a real schedule match_id.")),
+                List.of(new MatchLiveDTO.CommentPreview("system", "Fallback data is displayed because match_id was not found.", "now")),
+                new MatchLiveDTO.PredictionPreview("Home", "Away", 50, 50, 0, 0, false),
+                new MatchLiveDTO.ViewerState(false, false, false)
+        );
+    }
+
+    private MatchLiveDTO.Count parseCount(String description) {
+        Matcher matcher = COUNT_PATTERN.matcher(String.valueOf(description));
+        if (!matcher.find()) {
+            return new MatchLiveDTO.Count(0, 0, 0);
+        }
+        return new MatchLiveDTO.Count(
+                Integer.parseInt(matcher.group(1)),
+                Integer.parseInt(matcher.group(2)),
+                Integer.parseInt(matcher.group(3))
+        );
+    }
+
+    private MatchLiveDTO.Runners parseRunners(String description) {
+        Matcher matcher = RUNNER_PATTERN.matcher(String.valueOf(description));
+        if (!matcher.find()) {
+            return new MatchLiveDTO.Runners(false, false, false);
+        }
+        String value = matcher.group(1);
+        return new MatchLiveDTO.Runners(value.contains("1"), value.contains("2"), value.contains("3"));
+    }
+
+    private String cleanDescription(String description) {
+        if (description == null || description.isBlank()) {
+            return "-";
+        }
+        return description
+                .replaceAll("\\s*\\|?\\s*B:\\d+\\s+S:\\d+\\s+O:\\d+", "")
+                .replaceAll("\\s*\\|?\\s*R:[0-9,·-]+", "")
+                .trim();
+    }
+
+    private String eventTypeLabel(String eventType) {
+        return switch (String.valueOf(eventType).toLowerCase()) {
+            case "at_bat_start" -> "타석 시작";
+            case "ball" -> "볼";
+            case "strike" -> "스트라이크";
+            case "foul" -> "파울";
+            case "single" -> "안타";
+            case "double" -> "2루타";
+            case "triple" -> "3루타";
+            case "homerun" -> "홈런";
+            case "walk" -> "볼넷";
+            case "bunt" -> "번트";
+            case "double_play" -> "병살타";
+            case "strikeout" -> "삼진";
+            case "groundout" -> "땅볼 아웃";
+            case "flyout" -> "뜬공 아웃";
+            case "score" -> "득점";
+            case "pitcher_change" -> "투수 교체";
+            case "hit" -> "인플레이";
+            case "error" -> "실책";
+            case "game_end" -> "경기 종료";
+            default -> eventType;
+        };
+    }
+
+    private int inningIndex(String eventPeriod) {
+        int inning = inningNumber(eventPeriod);
+        return inning >= 1 ? inning - 1 : -1;
+    }
+
+    private int inningNumber(String eventPeriod) {
+        Matcher matcher = INNING_PATTERN.matcher(String.valueOf(eventPeriod));
+        if (!matcher.find()) return -1;
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private List<String> inningList(int[] scores) {
+        List<String> result = new ArrayList<>();
+        for (int score : scores) {
+            result.add(String.valueOf(score));
+        }
+        return result;
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "scheduled";
+        }
+        if ("LIVE".equalsIgnoreCase(status)) {
+            return "in_progress";
+        }
+        return status;
     }
 
     private String shortName(String teamName) {
@@ -152,59 +471,45 @@ public class MatchLiveDummyService {
         return teamName.substring(0, 1);
     }
 
-    private MatchLiveDTO.CurrentPlayer resolveCurrentBatter(Match match) {
-        Optional<PlayerSeasonStatBaseball> record = baseballRecordRepository
-                .findHittersBySportAndSeason("baseball", CURRENT_SEASON)
-                .stream()
-                .filter(stat -> stat.getPlayerSeasonStat().getPlayer().getTeam().getTeamId().equals(match.getHomeTeam().getTeamId()))
-                .findFirst();
-
-        return record.map(stat -> new MatchLiveDTO.CurrentPlayer(
-                stat.getPlayerSeasonStat().getPlayer().getPlayerId(),
-                stat.getPlayerSeasonStat().getPlayer().getName(),
-                match.getHomeTeam().getName(),
-                "크롤링 타자 기록 · 타율 " + valueOrDash(stat.getBattingAvg())
-                        + " · 안타 " + valueOrZero(stat.getHits())
-                        + " · 홈런 " + valueOrZero(stat.getHomeRuns())
-                        + " · 타점 " + valueOrZero(stat.getRbi())
-        )).orElseGet(() -> new MatchLiveDTO.CurrentPlayer(
-                0L,
-                "타자 기록 없음",
-                match.getHomeTeam().getName(),
-                "크롤링된 홈팀 타자 기록이 아직 없습니다."
-        ));
-    }
-
-    private MatchLiveDTO.CurrentPlayer resolveCurrentPitcher(Match match) {
-        Optional<PlayerSeasonStatBaseball> record = baseballRecordRepository
-                .findPitchersBySportAndSeason("baseball", CURRENT_SEASON)
-                .stream()
-                .filter(stat -> stat.getPlayerSeasonStat().getPlayer().getTeam().getTeamId().equals(match.getAwayTeam().getTeamId()))
-                .findFirst();
-
-        return record.map(stat -> new MatchLiveDTO.CurrentPlayer(
-                stat.getPlayerSeasonStat().getPlayer().getPlayerId(),
-                stat.getPlayerSeasonStat().getPlayer().getName(),
-                match.getAwayTeam().getName(),
-                "크롤링 투수 기록 · ERA " + valueOrDash(stat.getEra())
-                        + " · 승 " + valueOrZero(stat.getWins())
-                        + " · 패 " + valueOrZero(stat.getLosses())
-                        + " · 삼진 " + valueOrZero(stat.getStrikeouts())
-                        + " · 세이브 " + valueOrZero(stat.getSaves())
-                        + " · 홀드 " + valueOrZero(stat.getHolds())
-        )).orElseGet(() -> new MatchLiveDTO.CurrentPlayer(
-                0L,
-                "투수 기록 없음",
-                match.getAwayTeam().getName(),
-                "크롤링된 원정팀 투수 기록이 아직 없습니다."
-        ));
-    }
-
     private String valueOrDash(Object value) {
         return value != null ? value.toString() : "-";
     }
 
+    private String valueOrDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
+    }
+
     private int valueOrZero(Integer value) {
         return value != null ? value : 0;
+    }
+
+    private record LiveState(
+            String currentInning,
+            MatchLiveDTO.Count count,
+            MatchLiveDTO.Runners runners,
+            List<MatchLiveDTO.LiveEvent> events
+    ) {
+    }
+
+    private record EventContext(
+            List<MatchEvent> rawEvents,
+            List<MatchLiveDTO.LiveEvent> events,
+            MatchLiveDTO.Count count,
+            MatchLiveDTO.Runners runners,
+            String currentInning,
+            Player lastPlayer,
+            Team lastTeam
+    ) {
+        static EventContext empty() {
+            return new EventContext(
+                    List.of(),
+                    List.of(),
+                    new MatchLiveDTO.Count(0, 0, 0),
+                    new MatchLiveDTO.Runners(false, false, false),
+                    "LIVE",
+                    null,
+                    null
+            );
+        }
     }
 }
