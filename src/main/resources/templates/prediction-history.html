@@ -173,6 +173,7 @@
   .badge-success { color: #16a34a; font-weight: 700; }
   .badge-fail    { color: #dc2626; font-weight: 700; }
   .badge-pending { color: #d97706; font-weight: 700; }
+  .badge-void    { color: #64748b; font-weight: 700; }
   .badge-plus    { color: #16a34a; font-weight: 700; }
   .badge-minus   { color: #dc2626; font-weight: 700; }
 
@@ -558,7 +559,10 @@
       const myPick = resultLabel(p.predictedResult, p);
 
       let resultBadge, pointsBadge;
-      if (p.isCorrect === null || p.isCorrect === undefined) {
+      if (p.actualResult === 'CANCELLED') {
+        resultBadge = `<span class="badge-void">경기취소</span>`;
+        pointsBadge = '0P';
+      } else if (p.isCorrect === null || p.isCorrect === undefined) {
         resultBadge = `<span class="badge-pending">${p.matchStatus === 'in_progress' ? '진행중' : '미정산'}</span>`;
         pointsBadge = '-';
       } else if (p.isCorrect) {
