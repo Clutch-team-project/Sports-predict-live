@@ -1,7 +1,7 @@
 package com.example.edu.sports_predict_live.board.repository.search;
 
-import com.example.edu.sports_predict_live.board.domain.Board;
-import com.example.edu.sports_predict_live.board.domain.QBoard;
+import com.example.edu.sports_predict_live.board.entity.Board;
+import com.example.edu.sports_predict_live.board.entity.QBoard;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.user.entity.QUser;
 import com.example.edu.sports_predict_live.user.entity.User;
@@ -24,11 +24,11 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
     @Override
     public Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, String category, String sort, Pageable pageable) {
         QBoard board = QBoard.board;
-        QUser user = QUser.user; // 작성자 정보 조회를 위한 QUser 추가
+        QUser user = QUser.user;
 //        QReply reply = QReply.reply; // 댓글기능 추가 후 주석 해제
 
         JPQLQuery<Board> query = from(board);
-        query.leftJoin(user).on(board.userId.eq(user.userId)); // 작성자(User) 조인
+        query.leftJoin(user).on(board.userId.eq(user.userId));
 //        query.leftJoin(reply).on(reply.board.eq(board)); // 댓글기능 추가 후 주석 해제
 
         // 검색 조건 처리
@@ -58,13 +58,13 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         if(sort != null) {
             switch (sort) {
-                case "view": // 조회순
+                case "view":
                     query.orderBy(board.viewCount.desc(), board.boardId.desc());
                     break;
-                case "like": // 좋아요순
+                case "like":
                     query.orderBy(board.likeCount.desc(), board.boardId.desc());
                     break;
-                case "latest": // 최신순
+                case "latest":
                 default:
                     query.orderBy(board.boardId.desc());
                     break;
@@ -78,10 +78,8 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
 //        query.groupBy(board); // 댓글기능 추가 후 주석 해제
 
-        // applyPagination이 무조건 페이징용 count 쿼리나 정렬 기준을 잡을 수 있도록 먼저 실행
         this.getQuerydsl().applyPagination(pageable, query);
 
-        // Tuple을 사용하여 Board와 User 엔티티를 함께 조회합니다.
         JPQLQuery<Tuple> tupleQuery = query.select(board, user);
 //        JPQLQuery<Tuple> tupleQuery = query.select(board, user, reply.countDistinct()); // 댓글기능 추가 후 주석 해제 시 변경
 
@@ -90,7 +88,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         List<BoardListAllDTO> dtoList = tupleList.stream().map(tuple -> {
             Board b = tuple.get(board);
-            User u = tuple.get(user); // Tuple에서 User 객체를 꺼내어 u 변수에 할당
+            User u = tuple.get(user);
 //            Long replyCount = tuple.get(reply.countDistinct()); // 댓글기능 추가 후 주석 해제
 
             List<String> fileNames = b.getImageSet().stream().sorted()
@@ -100,8 +98,8 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             return BoardListAllDTO.builder()
                     .boardId(b.getBoardId())
                     .userId(b.getUserId())
-                    .loginId(u != null ? u.getLoginId() : null)   // 마스킹용 로그인 ID 주입
-                    .nickname(u != null ? u.getNickname() : null) // 닉네임 주입
+                    .loginId(u != null ? u.getLoginId() : null)
+                    .nickname(u != null ? u.getNickname() : null)
                     .category(b.getCategory())
                     .title(b.getTitle())
                     .viewCount(b.getViewCount())

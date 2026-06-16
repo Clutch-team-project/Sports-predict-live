@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+// 이메일 인증 코드 — purpose: signup / find_id / reset_pw
 @Entity
 @Table(name = "email_verify")
 @Getter

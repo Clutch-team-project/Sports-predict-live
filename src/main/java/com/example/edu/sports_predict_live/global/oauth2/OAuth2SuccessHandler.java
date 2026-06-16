@@ -12,6 +12,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 
+// 소셜 로그인 성공 — JWT 발급 후 /login-success로 토큰을 쿼리 파라미터로 전달
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -24,7 +25,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
         User user = oAuth2User.getUser();
 
-        String accessToken  = jwtProvider.createAccessToken(user.getUserId());
+        String accessToken  = jwtProvider.createAccessToken(user.getUserId(), user.getRole().name());
         String refreshToken = jwtProvider.createRefreshToken(user.getUserId());
 
         String redirectUrl = UriComponentsBuilder.fromUriString("/login-success")

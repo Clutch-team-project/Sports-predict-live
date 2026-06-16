@@ -59,4 +59,24 @@ public class WebController {
     public String predictionHistory() {
         return "prediction-history";
     }
+
+    @GetMapping("/schedule")
+    public String schedule() {
+        return "schedule";
+    }
+
+    @GetMapping("/favorite-teams")
+    public String favoriteTeams() {
+        return "favorite-teams";
+    }
+
+    @GetMapping("/team-detail")
+    public String teamDetail() {
+        return "team-detail";
+    }
+
+    @GetMapping("/player-detail")
+    public String playerDetail() {
+        return "player-detail";
+    }
 }

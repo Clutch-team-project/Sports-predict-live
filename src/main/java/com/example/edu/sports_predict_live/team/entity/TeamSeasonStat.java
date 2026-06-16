@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+// 팀 시즌 누적 성적 — 순위표 원본 데이터 (크롤러가 갱신)
 @Entity
 @Table(
         name = "team_season_stat",

@@ -16,8 +16,7 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    // GET /api/schedule/baseball?date=20260604
-    // GET /api/schedule/soccer?date=20260604
+    // GET /api/schedule/{sport}?date=20260604 — date 미지정 시 오늘
     @GetMapping("/{sport}")
     public ResponseEntity<List<MatchResponseDTO>> getSchedule(
             @PathVariable String sport,
@@ -25,7 +24,6 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.getSchedule(sport, date));
     }
 
-    // GET /api/schedule/lol?date=20260604
     @GetMapping("/lol")
     public ResponseEntity<List<Map<String, Object>>> getLolSchedule(
             @RequestParam(required = false) String date) {

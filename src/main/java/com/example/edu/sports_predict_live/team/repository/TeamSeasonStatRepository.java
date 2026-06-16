@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TeamSeasonStatRepository extends JpaRepository<TeamSeasonStat, Long> {
 
@@ -22,4 +23,7 @@ public interface TeamSeasonStatRepository extends JpaRepository<TeamSeasonStat, 
             @Param("sportCode") String sportCode,
             @Param("season") String season
     );
+
+    // 특정 팀 + 시즌 성적 조회 (팀 상세 페이지용)
+    Optional<TeamSeasonStat> findByTeam_TeamIdAndSeason(Long teamId, String season);
 }

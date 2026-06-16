@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// 선수 기록 API — 야구(타자/투수), 축구, LOL 시즌 기록 랭킹
 @RestController
 @RequestMapping("/api/records")
 @RequiredArgsConstructor
@@ -30,13 +31,11 @@ public class RecordController {
         return ResponseEntity.ok(recordService.getPitchers(sport));
     }
 
-    // GET /api/records/lol/players
     @GetMapping("/lol/players")
     public ResponseEntity<List<LolPlayerRecordResponseDTO>> getLolPlayers() {
         return ResponseEntity.ok(recordService.getLolPlayers());
     }
 
-    // GET /api/records/soccer/players
     @GetMapping("/soccer/players")
     public ResponseEntity<List<SoccerPlayerRecordResponseDTO>> getSoccerPlayers() {
         return ResponseEntity.ok(recordService.getSoccerPlayers());

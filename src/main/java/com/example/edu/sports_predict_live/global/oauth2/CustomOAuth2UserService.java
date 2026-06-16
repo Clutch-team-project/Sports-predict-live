@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.Optional;
 
+// 소셜 로그인 유저 로드 — 기존 계정 연결 또는 신규 가입 처리
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -44,8 +45,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User findOrCreate(OAuth2UserInfo info, Provider provider) {
-        // 1. socialId + provider로 조회 (정상 재로그인)
-        Optional<User> bySocial = userRepository.findBySocialIdAndProvider(info.getSocialId(), provider);
+        // 1. socialId + provider로 조회 (정상 재로그인) — 탈퇴 계정 제외
+        Optional<User> bySocial = userRepository
+                .findBySocialIdAndProviderAndDeletedAtIsNull(info.getSocialId(), provider);
         if (bySocial.isPresent()) return bySocial.get();
 
         // 2. 이메일로 조회 (socialId 미저장 등 엣지케이스 대응)

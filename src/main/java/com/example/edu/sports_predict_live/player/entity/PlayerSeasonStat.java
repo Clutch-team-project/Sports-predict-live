@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+// 선수 시즌 공통 기록 — 종목별 상세 스탯은 1:1 하위 테이블(baseball/soccer/lol)
 @Entity
 @Table(
     name = "player_season_stat",

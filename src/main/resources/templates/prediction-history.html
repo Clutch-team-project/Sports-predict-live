@@ -463,46 +463,57 @@
         <hr class="section-divider" style="margin: 8px 0">
         <div class="sidebar-menu-item" onclick="location.href='/user-info'">내 정보</div>
         <div class="sidebar-menu-item active" onclick="location.href='/prediction-history'">승부예측 기록</div>
-        <div class="sidebar-menu-item" style="color:#ef4444">회원 탈퇴</div>
+        <div class="sidebar-menu-item" onclick="location.href='/favorite-teams'">관심 팀</div>
+        <div class="sidebar-menu-item" style="color:#ef4444" onclick="confirmDelete()">회원 탈퇴</div>
       </div>
-      <!-- 테이블 -->
-      <div class="card flex-1 overflow-hidden">
-        <div class="p-4 border-b border-slate-200">
-          <h2 class="font-black text-slate-800 text-base">승부예측 기록</h2>
+      <!-- 예측 기록 -->
+      <div class="flex-1 flex flex-col gap-4">
+
+        <!-- 요약 통계 -->
+        <div class="card p-4 grid grid-cols-3 gap-3 text-center">
+          <div>
+            <div id="statTotal" class="text-2xl font-black text-slate-800">-</div>
+            <div class="text-xs text-slate-400 font-bold mt-0.5">총 예측</div>
+          </div>
+          <div>
+            <div id="statCorrect" class="text-2xl font-black text-blue-600">-</div>
+            <div class="text-xs text-slate-400 font-bold mt-0.5">적중</div>
+          </div>
+          <div>
+            <div id="statPoints" class="text-2xl font-black text-green-600">-</div>
+            <div class="text-xs text-slate-400 font-bold mt-0.5">총 포인트</div>
+          </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>날짜</th><th>매치</th><th>내 예측</th><th>결과</th><th>포인트</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>2026-05-20</td><td>기아 vs 삼성</td><td>기아 승</td>
-                <td><span class="badge-success">성공</span></td>
-                <td><span class="badge-plus">+100</span></td>
-              </tr>
-              <tr>
-                <td>2026-05-18</td><td>LG vs 두산</td><td>두산 패</td>
-                <td><span class="badge-fail">실패</span></td>
-                <td><span class="badge-minus">-100</span></td>
-              </tr>
-              <tr>
-                <td>2026-05-17</td><td>롯데 vs NC</td><td>무승부</td>
-                <td><span class="badge-pending">진행중</span></td>
-                <td>0</td>
-              </tr>
-              <tr>
-                <td>2026-05-15</td><td>KT vs 한화</td><td>KT 승</td>
-                <td><span class="badge-success">성공</span></td>
-                <td><span class="badge-plus">+100</span></td>
-              </tr>
-              <tr><td colspan="5" style="height:48px"></td></tr>
-              <tr><td colspan="5" style="height:48px"></td></tr>
-            </tbody>
-          </table>
+
+        <!-- 종목 필터 + 테이블 -->
+        <div class="card overflow-hidden">
+          <div class="p-4 border-b border-slate-200 flex items-center justify-between gap-3">
+            <h2 class="font-black text-slate-800 text-base">승부예측 기록</h2>
+            <div class="flex gap-1.5">
+              <button onclick="filterPredictions(null)" id="filterTab-all"
+                      class="filter-tab text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white">전체</button>
+              <button onclick="filterPredictions('baseball')" id="filterTab-baseball"
+                      class="filter-tab text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">야구</button>
+              <button onclick="filterPredictions('soccer')" id="filterTab-soccer"
+                      class="filter-tab text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">축구</button>
+              <button onclick="filterPredictions('lol')" id="filterTab-lol"
+                      class="filter-tab text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">LOL</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>날짜</th><th>종목</th><th>매치</th><th>내 예측</th><th>결과</th><th>포인트</th>
+                </tr>
+              </thead>
+              <tbody id="predictionTableBody">
+                <tr><td colspan="6" class="text-center text-slate-400 py-8">불러오는 중...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -520,6 +531,99 @@
     all.classList.toggle('checked', willCheck);
     items.forEach(id => document.getElementById(id)?.classList.toggle('checked', willCheck));
   }
+
+  const BASE_URL = 'http://localhost:8080';
+  const SPORT_LABEL = { baseball: '⚾ 야구', soccer: '⚽ 축구', lol: '🎮 LOL' };
+
+  let allPredictions = [];
+
+  function resultLabel(result, p) {
+    if (!result) return '-';
+    if (result === 'HOME_WIN') return (p.homeTeamName || '홈팀') + ' 승';
+    if (result === 'AWAY_WIN') return (p.awayTeamName || '원정팀') + ' 승';
+    return '무승부';
+  }
+
+  function renderTable(list) {
+    const tbody = document.getElementById('predictionTableBody');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 py-8">예측 기록이 없습니다.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(p => {
+      const date = p.scheduledAt ? p.scheduledAt.substring(0, 10) : p.createdAt.substring(0, 10);
+      const home = p.homeTeamName || '홈팀';
+      const away = p.awayTeamName || '원정팀';
+      const match = `${away} vs ${home}`;
+      const myPick = resultLabel(p.predictedResult, p);
+
+      let resultBadge, pointsBadge;
+      if (p.isCorrect === null || p.isCorrect === undefined) {
+        resultBadge = `<span class="badge-pending">${p.matchStatus === 'in_progress' ? '진행중' : '미정산'}</span>`;
+        pointsBadge = '-';
+      } else if (p.isCorrect) {
+        resultBadge = '<span class="badge-success">적중 </span>';
+        pointsBadge = '<span class="badge-plus">+100P</span>';
+      } else {
+        resultBadge = '<span class="badge-fail">실패</span>';
+        pointsBadge = '0P';
+      }
+
+      return `<tr>
+        <td>${date}</td>
+        <td>${SPORT_LABEL[p.sportCode] || p.sportCode}</td>
+        <td>${match}</td>
+        <td>${myPick}</td>
+        <td>${resultBadge}</td>
+        <td>${pointsBadge}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateStats(list) {
+    const total = list.length;
+    const settled = list.filter(p => p.isCorrect !== null && p.isCorrect !== undefined);
+    const correct = settled.filter(p => p.isCorrect).length;
+    const points = list.reduce((sum, p) => sum + (p.pointsEarned || 0), 0);
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statCorrect').textContent =
+      settled.length > 0 ? `${correct} (${Math.round(correct / settled.length * 100)}%)` : correct;
+    document.getElementById('statPoints').textContent = points + 'P';
+  }
+
+  function filterPredictions(sport) {
+    document.querySelectorAll('.filter-tab').forEach(btn => {
+      btn.className = 'filter-tab text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+    });
+    const activeId = sport ? `filterTab-${sport}` : 'filterTab-all';
+    document.getElementById(activeId).className =
+      'filter-tab text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white';
+
+    const filtered = sport ? allPredictions.filter(p => p.sportCode === sport) : allPredictions;
+    updateStats(filtered);
+    renderTable(filtered);
+  }
+
+  async function loadPredictions() {
+    if (!localStorage.getItem('accessToken')) {
+      document.getElementById('predictionTableBody').innerHTML =
+        '<tr><td colspan="6" class="text-center text-slate-400 py-8">로그인 후 이용 가능합니다.</td></tr>';
+      return;
+    }
+    try {
+      const res = await authFetch(`${BASE_URL}/api/predictions/me`);
+      if (!res.ok) throw new Error();
+      allPredictions = await res.json();
+      updateStats(allPredictions);
+      renderTable(allPredictions);
+    } catch (e) {
+      document.getElementById('predictionTableBody').innerHTML =
+        '<tr><td colspan="6" class="text-center text-red-400 py-8">데이터를 불러올 수 없습니다.</td></tr>';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadPredictions);
 </script>
   </div>
 </div>

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
+// JWT 생성/검증 — 만료 시간은 application.properties(jwt.*)에서 주입
 @Component
 public class JwtProvider {
 
@@ -25,18 +26,17 @@ public class JwtProvider {
         this.refreshExpiration = refreshExpiration;
     }
 
-    // Access Token 생성
-    public String createAccessToken(Long userId) {
+    public String createAccessToken(Long userId, String role) {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("type", "access")
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpiration))
                 .signWith(key)
                 .compact();
     }
 
-    // Refresh Token 생성
     public String createRefreshToken(Long userId) {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
@@ -47,17 +47,18 @@ public class JwtProvider {
                 .compact();
     }
 
-    // 토큰에서 userId 추출
     public Long getUserId(String token) {
         return Long.parseLong(getClaims(token).getSubject());
     }
 
-    // 토큰 타입 확인 (access / refresh)
     public String getTokenType(String token) {
         return (String) getClaims(token).get("type");
     }
 
-    // 토큰 유효성 검사
+    public String getRole(String token) {
+        return (String) getClaims(token).get("role");
+    }
+
     public boolean validateToken(String token) {
         try {
             getClaims(token);

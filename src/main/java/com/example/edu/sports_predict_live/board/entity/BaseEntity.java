@@ -1,4 +1,4 @@
-package com.example.edu.sports_predict_live.board.domain;
+package com.example.edu.sports_predict_live.board.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

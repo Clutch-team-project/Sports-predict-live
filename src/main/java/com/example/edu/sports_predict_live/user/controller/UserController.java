@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+// 내 정보 API — 조회/수정/비밀번호 변경/회원 탈퇴
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor

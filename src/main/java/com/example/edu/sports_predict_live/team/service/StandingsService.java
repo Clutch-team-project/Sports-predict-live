@@ -1,6 +1,7 @@
 package com.example.edu.sports_predict_live.team.service;
 
 import com.example.edu.sports_predict_live.team.dto.response.StandingsResponseDTO;
+import com.example.edu.sports_predict_live.team.repository.TeamRepository;
 import com.example.edu.sports_predict_live.team.repository.TeamSeasonStatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,12 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+// 팀 순위 조회 — KBO/K리그는 DB(team_season_stat), LOL은 lolesports API 실시간 호출
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StandingsService {
 
     private final TeamSeasonStatRepository teamSeasonStatRepository;
+    private final TeamRepository teamRepository;
 
     private static final String CURRENT_SEASON  = "2026";
     private static final String LOL_API_KEY      = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z";
@@ -61,6 +64,15 @@ public class StandingsService {
                 (List<Map<String, Object>>) ((Map<?, ?>) response.get("data")).get("standings");
         if (standingsList == null) return List.of();
 
+        // DB LOL 팀명 → teamId 매핑 (상세 페이지/관심 팀 연동용)
+        // DB team.name은 lolesports API의 code 값("T1", "GEN" 등)으로 저장됨
+        Map<String, Long> teamIdByCode = new java.util.HashMap<>();
+        teamRepository.findBySportCode("lol").forEach(t ->
+                teamIdByCode.put(t.getName().toLowerCase(), t.getTeamId()));
+
+        // 순위 API에는 최근 폼이 없어 일정 API의 완료 경기에서 팀별 최근 5경기 계산
+        Map<String, String> recentFormByCode = getLolRecentForms();
+
         List<StandingsResponseDTO> results = new ArrayList<>();
         for (Map<String, Object> tournament : standingsList) {
             List<Map<String, Object>> stages =
@@ -85,12 +97,19 @@ public class StandingsService {
                             Map<String, Object> record = (Map<String, Object>) team.get("record");
                             int wins   = record != null ? (int) record.get("wins")   : 0;
                             int losses = record != null ? (int) record.get("losses") : 0;
+                            String teamName = (String) team.get("name");
+                            String teamCode = (String) team.get("code");
+                            Long teamId = teamCode != null
+                                    ? teamIdByCode.get(teamCode.toLowerCase())
+                                    : null;
                             results.add(new StandingsResponseDTO(
+                                    teamId,
                                     ordinal,
-                                    (String) team.get("name"),
+                                    teamName,
                                     (String) team.getOrDefault("image", ""),
                                     wins,
-                                    losses
+                                    losses,
+                                    teamCode != null ? recentFormByCode.get(teamCode) : null
                             ));
                         }
                     }
@@ -98,6 +117,57 @@ public class StandingsService {
             }
         }
         return results;
+    }
+
+    // 일정 API의 완료 경기를 시간순으로 훑어 팀 코드별 최근 5경기 W/L 문자열 생성 (왼쪽이 과거)
+    @SuppressWarnings("unchecked")
+    private Map<String, String> getLolRecentForms() {
+        Map<String, String> forms = new java.util.HashMap<>();
+        try {
+            Map<String, Object> response = webClient.get()
+                    .uri(uri -> uri.path("/getSchedule")
+                            .queryParam("hl", "ko-KR")
+                            .queryParam("leagueId", LCK_LEAGUE_ID)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response == null) return forms;
+
+            List<Map<String, Object>> events = (List<Map<String, Object>>)
+                    ((Map<?, ?>) ((Map<?, ?>) response.get("data")).get("schedule")).get("events");
+            if (events == null) return forms;
+
+            // 이벤트는 시간 오름차순으로 제공됨 — 순서대로 누적 후 마지막 5개만 사용
+            Map<String, StringBuilder> acc = new java.util.HashMap<>();
+            for (Map<String, Object> event : events) {
+                if (!"completed".equals(event.get("state"))) continue;
+                if (!"match".equals(event.get("type"))) continue;
+
+                Map<String, Object> match = (Map<String, Object>) event.get("match");
+                if (match == null) continue;
+                List<Map<String, Object>> teams = (List<Map<String, Object>>) match.get("teams");
+                if (teams == null || teams.size() < 2) continue;
+
+                for (Map<String, Object> team : teams) {
+                    String code = (String) team.get("code");
+                    Map<String, Object> result = (Map<String, Object>) team.get("result");
+                    if (code == null || result == null) continue;
+                    String outcome = (String) result.get("outcome");
+                    if (!"win".equals(outcome) && !"loss".equals(outcome)) continue;
+                    acc.computeIfAbsent(code, k -> new StringBuilder())
+                            .append("win".equals(outcome) ? 'W' : 'L');
+                }
+            }
+            acc.forEach((code, sb) -> {
+                String all = sb.toString();
+                forms.put(code, all.length() > 5 ? all.substring(all.length() - 5) : all);
+            });
+        } catch (Exception e) {
+            // 폼 계산 실패 시 순위 자체는 정상 표시되도록 빈 맵 반환
+        }
+        return forms;
     }
 
     @SuppressWarnings("unchecked")

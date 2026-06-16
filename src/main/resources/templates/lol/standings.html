@@ -29,6 +29,11 @@
         .sort-th:hover { color: #1e293b; }
         .sort-icon { margin-left: 3px; font-size: 10px; opacity: 0.4; }
         .sort-th.sort-active .sort-icon { opacity: 1; color: #2563eb; }
+    
+        /* 클릭 시 상세 페이지 이동을 알리는 링크 스타일 */
+        .detail-link { color: #2563eb; cursor: pointer; }
+        .detail-link:hover { text-decoration: underline; }
+        .detail-link::after { content: ' ›'; font-size: 11px; opacity: 0.6; }
     </style>
 </head>
 <body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
@@ -104,6 +109,7 @@
                             <th class="p-3.5 text-center sort-th" data-key="losses">패<span class="sort-icon">↕</span></th>
                             <th class="p-3.5 text-center sort-th" data-key="winRate">승률<span class="sort-icon">↕</span></th>
                             <th class="p-3.5 text-center">최근5경기</th>
+                            <th class="p-3.5 text-center">관심</th>
                         </tr>
                     </thead>
                     <tbody id="standing-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
@@ -189,6 +195,8 @@
     let favoriteIds = new Set();
 
     async function loadFavoriteIds() {
+        // 비로그인 시 호출 생략 — authFetch가 401에서 로그인 페이지로 보내는 것 방지
+        if (!localStorage.getItem('accessToken')) return;
         try {
             const res = await authFetch(`${BASE_URL}/api/users/me/favorites/ids`);
             if (res.ok) favoriteIds = new Set(await res.json());
@@ -309,9 +317,9 @@
             return;
         }
         tbody.innerHTML = data.map((t, i) => `
-            <tr class="table-row cursor-pointer" onclick="location.href='/lol/team/${t.teamId}'">
+            <tr class="table-row cursor-pointer" onclick="goTeamDetail(${t.teamId})">
                 <td class="p-4 pl-6 font-black ${rankClass(i)}">${t.rank ?? i + 1}</td>
-                <td class="p-4 font-black text-slate-900">${t.teamName}</td>
+                <td class="p-4 font-black"><span class="detail-link">${t.teamName}</span></td>
                 <td class="p-4 text-center">${t.wins}</td>
                 <td class="p-4 text-center">${t.losses}</td>
                 <td class="p-4 text-center font-bold text-blue-600">${t.winRate ? (t.winRate * 100).toFixed(1) + '%' : '-'}</td>
@@ -340,9 +348,9 @@
             return;
         }
         tbody.innerHTML = data.map((p, i) => `
-            <tr class="table-row cursor-pointer" onclick="location.href='/lol/player/${p.playerId}'">
+            <tr class="table-row cursor-pointer" onclick="goPlayerDetail(${p.playerId})">
                 <td class="p-4 pl-6 font-black text-blue-600">${i + 1}</td>
-                <td class="p-4 font-black text-slate-900">${p.playerName}</td>
+                <td class="p-4 font-black"><span class="detail-link">${p.playerName}</span></td>
                 <td class="p-4 text-slate-500">${p.teamName}</td>
                 <td class="p-4 text-center">
                     <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-bold">${p.position ?? '-'}</span>
@@ -382,8 +390,8 @@
             return;
         }
         tbody.innerHTML = data.map(p => `
-            <tr class="table-row cursor-pointer" onclick="location.href='/lol/player/${p.playerId}'">
-                <td class="p-4 pl-6 font-black text-slate-900">${p.playerName}</td>
+            <tr class="table-row cursor-pointer" onclick="goPlayerDetail(${p.playerId})">
+                <td class="p-4 pl-6 font-black"><span class="detail-link">${p.playerName}</span></td>
                 <td class="p-4 text-slate-500">${p.teamName}</td>
                 <td class="p-4 text-center">
                     <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-bold">${p.position ?? '-'}</span>

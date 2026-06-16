@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH — 관심 팀</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+
+        .light-portal-view {
+            background-color: #cbd5e1;
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(59, 130, 246, 0.55);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .team-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .team-card:hover {
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
+        }
+
+        .sidebar-menu-item {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+
+        .sidebar-menu-item:hover {
+            color: #334155;
+            background: #f1f5f9;
+        }
+
+        .sidebar-menu-item.active {
+            color: white;
+            background: #2563eb;
+            font-weight: 700;
+        }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #2563eb;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .page-label {
+            font-size: 10px;
+            color: #2563eb;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-sm:hover { background: #dbeafe; color: #1d4ed8; }
+
+        .btn-danger-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #fff1f2;
+            color: #ef4444;
+            border: 1px solid #fca5a5;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-danger-sm:hover { background: #ffe4e6; color: #dc2626; }
+
+        /* 최근 폼 뱃지 */
+        .form-w  { background: #dcfce7; color: #16a34a; font-weight: 900; font-size: 11px; padding: 2px 7px; border-radius: 4px; }
+        .form-d  { background: #fef9c3; color: #a16207; font-weight: 900; font-size: 11px; padding: 2px 7px; border-radius: 4px; }
+        .form-l  { background: #fee2e2; color: #dc2626; font-weight: 900; font-size: 11px; padding: 2px 7px; border-radius: 4px; }
+
+        /* 경기 카드 */
+        .match-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .match-team {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 100px;
+        }
+
+        .match-team.right { justify-content: flex-end; }
+
+        .match-score {
+            font-size: 16px;
+            font-weight: 900;
+            color: #1e293b;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .match-date {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .stat-box {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 900;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .sport-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    </style>
+</head>
+<body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+    <p class="page-label">마이페이지 · 관심 팀</p>
+    <div class="flex gap-4">
+        <!-- 사이드바 -->
+        <div class="card p-3 w-48 flex-shrink-0 h-fit">
+            <p class="text-xs text-slate-400 font-bold px-2 mb-2 uppercase tracking-wider">메뉴</p>
+            <hr class="section-divider" style="margin: 8px 0">
+            <div class="sidebar-menu-item" onclick="location.href='/user-info'">내 정보</div>
+            <div class="sidebar-menu-item" onclick="location.href='/prediction-history'">승부예측 기록</div>
+            <div class="sidebar-menu-item active">관심 팀</div>
+            <div class="sidebar-menu-item" style="color:#ef4444" onclick="confirmDelete()">회원 탈퇴</div>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="card p-5 flex-1">
+            <h2 class="text-lg font-black text-slate-800 mb-1">관심 팀</h2>
+            <p class="text-xs text-slate-400 mb-5">즐겨찾는 팀의 최근 경기 결과와 시즌 순위를 확인할 수 있습니다.</p>
+
+            <div id="team-list" class="flex flex-col gap-4">
+                <div class="text-center text-slate-400 text-sm py-10">불러오는 중...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/gnb.js"></script>
+<script>
+    const BASE_URL = 'http://localhost:8080';
+
+    function formBadge(ch) {
+        if (ch === 'W') return `<span class="form-w">승</span>`;
+        if (ch === 'D') return `<span class="form-d">무</span>`;
+        if (ch === 'L') return `<span class="form-l">패</span>`;
+        return '';
+    }
+
+    function renderForm(recentForm) {
+        if (!recentForm) return '<span class="text-slate-400 text-xs">정보 없음</span>';
+        return recentForm.split('').map(formBadge).join('');
+    }
+
+    function renderSeasonStat(stat) {
+        if (!stat) {
+            return `<div class="text-xs text-slate-400 py-2">시즌 통계 정보가 없습니다.</div>`;
+        }
+        return `
+            <div class="grid grid-cols-4 gap-2 mb-3">
+                <div class="stat-box">
+                    <div class="stat-value">${stat.rank != null ? stat.rank + '위' : '-'}</div>
+                    <div class="stat-label">순위</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stat.wins}<span class="text-slate-300 font-normal text-sm">-</span>${stat.draws}<span class="text-slate-300 font-normal text-sm">-</span>${stat.losses}</div>
+                    <div class="stat-label">승-무-패</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stat.winRate != null ? (parseFloat(stat.winRate) * 100).toFixed(1) + '%' : '-'}</div>
+                    <div class="stat-label">승률</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value text-base" style="font-size:13px;padding-top:4px">
+                        <div class="flex gap-1 justify-center flex-wrap">${renderForm(stat.recentForm)}</div>
+                    </div>
+                    <div class="stat-label mt-1">최근 폼</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderMatches(matches, teamId) {
+        if (!matches || !matches.length) {
+            return `<div class="text-xs text-slate-400 py-1">최근 경기 정보가 없습니다.</div>`;
+        }
+        const rows = matches.slice(0, 3).map(m => {
+            const isHome = m.homeTeamId === teamId;
+            const homeStyle = isHome ? 'font-black text-slate-800' : 'text-slate-500';
+            const awayStyle = !isHome ? 'font-black text-slate-800' : 'text-slate-500';
+            const homeEmb = m.homeTeamEmblem ? `<img src="${m.homeTeamEmblem}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">` : '';
+            const awayEmb = m.awayTeamEmblem ? `<img src="${m.awayTeamEmblem}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">` : '';
+            return `
+                <div class="match-row">
+                    <div class="match-team flex-1">
+                        ${homeEmb}
+                        <span class="${homeStyle} text-xs">${m.homeTeamName}</span>
+                    </div>
+                    <div class="text-center px-3">
+                        <div class="match-score">${m.homeScore} : ${m.awayScore}</div>
+                        <div class="match-date">${m.date || ''}</div>
+                    </div>
+                    <div class="match-team right flex-1 justify-end">
+                        <span class="${awayStyle} text-xs">${m.awayTeamName}</span>
+                        ${awayEmb}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        return rows;
+    }
+
+    function renderTeamCard(fav, detail) {
+        const stat = detail?.seasonStat;
+        const recentMatches = detail?.recentMatches || [];
+        const emblem = fav.emblemUrl
+            ? `<img src="${fav.emblemUrl}" class="w-10 h-10 object-contain" onerror="this.style.display='none'">`
+            : `<div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-400 text-xs">팀</div>`;
+
+        return `
+            <div class="team-card" id="team-card-${fav.teamId}">
+                <!-- 팀 헤더 -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+                    <div class="flex items-center gap-3">
+                        ${emblem}
+                        <div>
+                            <div class="font-black text-slate-800 text-base leading-tight">${fav.teamName}</div>
+                            <span class="sport-badge">${fav.sport}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="btn-sm" onclick="location.href='/team-detail?id=${fav.teamId}'">팀 상세보기</button>
+                        <button class="btn-danger-sm" onclick="removeFavorite(${fav.teamId})">관심 해제</button>
+                    </div>
+                </div>
+
+                <!-- 시즌 통계 -->
+                <div class="px-4 py-3 border-b border-slate-200">
+                    <p class="section-title" style="margin-bottom:10px">시즌 통계</p>
+                    ${renderSeasonStat(stat)}
+                </div>
+
+                <!-- 최근 경기 -->
+                <div class="px-4 py-3">
+                    <p class="section-title" style="margin-bottom:10px">최근 경기</p>
+                    <div class="flex flex-col gap-2">
+                        ${renderMatches(recentMatches, fav.teamId)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadFavoriteTeams() {
+        const container = document.getElementById('team-list');
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            alert('로그인이 필요합니다.');
+            location.href = '/login';
+            return;
+        }
+
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites`);
+            if (res.status === 401) { localStorage.clear(); location.href = '/login'; return; }
+            if (!res.ok) { container.innerHTML = '<div class="text-center text-slate-400 text-sm py-10">불러오기 실패</div>'; return; }
+
+            const teams = await res.json();
+            if (!teams.length) {
+                container.innerHTML = `
+                    <div class="text-center py-14">
+                        <div class="text-4xl mb-3">☆</div>
+                        <p class="text-slate-500 font-bold mb-1">등록된 관심 팀이 없습니다.</p>
+                        <p class="text-slate-400 text-xs">팀 상세 페이지에서 ★ 버튼을 눌러 관심 팀을 등록해 보세요.</p>
+                    </div>`;
+                return;
+            }
+
+            // 팀별 상세 정보 병렬 로드
+            const details = await Promise.all(
+                teams.map(t =>
+                    authFetch(`${BASE_URL}/api/teams/${t.teamId}`)
+                        .then(r => r.ok ? r.json() : null)
+                        .catch(() => null)
+                )
+            );
+
+            container.innerHTML = teams.map((fav, i) => renderTeamCard(fav, details[i])).join('');
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = '<div class="text-center text-slate-400 text-sm py-10">서버 연결에 실패했습니다.</div>';
+        }
+    }
+
+    async function removeFavorite(teamId) {
+        if (!confirm('관심 팀에서 해제하시겠습니까?')) return;
+        try {
+            const res = await authFetch(`${BASE_URL}/api/users/me/favorites/${teamId}`, { method: 'DELETE' });
+            if (res.ok) {
+                const card = document.getElementById(`team-card-${teamId}`);
+                if (card) {
+                    card.style.transition = 'opacity 0.3s';
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.remove();
+                        const list = document.getElementById('team-list');
+                        if (!list.children.length) {
+                            list.innerHTML = `
+                                <div class="text-center py-14">
+                                    <div class="text-4xl mb-3">☆</div>
+                                    <p class="text-slate-500 font-bold mb-1">등록된 관심 팀이 없습니다.</p>
+                                    <p class="text-slate-400 text-xs">팀 상세 페이지에서 ★ 버튼을 눌러 관심 팀을 등록해 보세요.</p>
+                                </div>`;
+                        }
+                    }, 300);
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function confirmDelete() {
+        const confirmed = confirm('정말 탈퇴하시겠습니까?\n탈퇴 후 계정 복구가 불가능합니다.');
+        if (!confirmed) return;
+        const password = prompt('비밀번호를 입력해주세요. (소셜 전용 계정은 비워두세요)');
+        if (password === null) return;
+        try {
+            const res = await authFetch(BASE_URL + '/api/users/me', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password || null })
+            });
+            const data = await res.json();
+            if (!res.ok) { alert(data.message || '탈퇴 실패'); return; }
+            alert('탈퇴가 완료되었습니다.');
+            localStorage.clear();
+            location.href = '/login';
+        } catch (e) { alert('서버 연결에 실패했습니다.'); }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadFavoriteTeams);
+</script>
+</body>
+</html>
