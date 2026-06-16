@@ -375,6 +375,19 @@
             return;
         }
 
+        if (pred && m.status === 'in_progress') {
+            const predLabel = pred.predictedResult === 'HOME_WIN' ? `${m.homeTeamName} 승`
+                            : pred.predictedResult === 'AWAY_WIN' ? `${m.awayTeamName} 승`
+                            : '무승부';
+            el.innerHTML = `
+                <div class="flex items-center justify-center gap-2 px-4 pb-2.5 pt-2">
+                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">${predLabel}</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">진행중</span>
+                </div>`;
+            return;
+        }
+
         if (pred) {
             let resultBadge;
             if (pred.isCorrect === null || pred.isCorrect === undefined) {
