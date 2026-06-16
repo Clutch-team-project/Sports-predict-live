@@ -60,6 +60,11 @@ public class WebController {
         return "prediction-history";
     }
 
+    @GetMapping("/schedule")
+    public String schedule() {
+        return "schedule";
+    }
+
     @GetMapping("/favorite-teams")
     public String favoriteTeams() {
         return "favorite-teams";

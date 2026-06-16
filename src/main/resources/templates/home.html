@@ -186,29 +186,26 @@
 
             </div>
 
-            <!-- Right: 승부 예측 적중률 랭킹 -->
-            <div id="colPrediction" onclick="clickBox('prediction')"
-                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-center items-center text-sm font-bold cursor-pointer hover:bg-slate-50 min-h-[300px] shadow-md rounded-2xl">
-                <div class="w-full h-full flex flex-col justify-between text-left">
-                    <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2.5 mb-3.5 flex items-center gap-1">
-                        🏆 실시간 예측 적중 랭킹</h4>
-                    <div class="space-y-2.5 text-xs text-slate-600 flex-1 flex flex-col justify-around">
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="font-extrabold text-amber-600">🥇 1위. faker_god</span><span
-                                class="font-mono text-blue-600 font-bold">88.5% (23/26)</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="font-extrabold text-slate-500">🥈 2위. baseball_love</span><span
-                                class="font-mono text-blue-600 font-bold">82.1% (32/39)</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="font-extrabold text-amber-800">🥉 3위. k_league_king</span><span
-                                class="font-mono text-blue-600 font-bold">79.2% (19/24)</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
-                            <span class="text-slate-500 font-bold">4위. soccer_masta</span><span
-                                class="font-mono text-slate-500 font-bold">75.0% (15/20)</span>
-                        </div>
+            <!-- Right: 승부 예측 포인트 랭킹 -->
+            <div id="colPrediction"
+                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col min-h-[300px] shadow-md rounded-2xl">
+                <div class="w-full h-full flex flex-col text-left">
+                    <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2.5 mb-3 flex items-center gap-1">
+                        🏆 승부예측 포인트 랭킹
+                    </h4>
+                    <!-- 종목 필터 탭 -->
+                    <div class="flex gap-1.5 mb-3">
+                        <button onclick="loadRanking(null)" id="rankTab-all"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white">전체</button>
+                        <button onclick="loadRanking('baseball')" id="rankTab-baseball"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">야구</button>
+                        <button onclick="loadRanking('soccer')" id="rankTab-soccer"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">축구</button>
+                        <button onclick="loadRanking('lol')" id="rankTab-lol"
+                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">LOL</button>
+                    </div>
+                    <div id="rankingList" class="space-y-2 text-xs flex-1">
+                        <div class="text-center text-slate-400 py-6">불러오는 중...</div>
                     </div>
                 </div>
             </div>
@@ -579,6 +576,7 @@ public BoardResponseDto(Board board) {
 </script>
 
 <script src="/gnb.js"></script>
+<script src="/notification.js"></script>
 
 <script>
     // ===== 오늘의 경기 동적 로드 + 관심 팀 경기 상단 표시 =====
@@ -587,44 +585,62 @@ public BoardResponseDto(Board board) {
     // 스포츠 이모지 매핑
     const SPORT_EMOJI = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
 
-    // 상태 표시 배지 HTML 생성
-    function statusBadge(status) {
-        if (status === 'in_progress') {
-            return `<span class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-xs font-black animate-pulse">LIVE</span>`;
-        } else if (status === 'finished') {
-            return `<span class="bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black">종료</span>`;
-        } else {
-            return `<span class="bg-slate-100 text-slate-500 border border-slate-200 px-3 py-1 rounded-lg text-xs">예정</span>`;
-        }
-    }
-
     // 경기 카드 HTML 생성
     function matchCard(match, isFavorite) {
+        const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
         const emoji = SPORT_EMOJI[match.sport] || '';
         const isLive = match.status === 'in_progress';
         const isFinished = match.status === 'finished';
-        const isScheduled = match.status === 'scheduled';
 
+        const borderClass = isFavorite ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 bg-white';
         const favoriteBar = isFavorite
             ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
             : '';
-        const favoriteBadge = isFavorite
-            ? `<span class="text-yellow-500 text-xs font-black ml-1" title="관심 팀 경기">★</span>`
+        const favBadge = isFavorite
+            ? `<span class="text-[10px] font-black text-yellow-500">★</span>`
             : '';
 
-        // 스코어 또는 시간 표시
-        const homeScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} ml-1.5 text-lg">${match.homeScore}</span>` : `<span class="text-slate-400 ml-1.5">-</span>`;
-        const awayScore = (isLive || isFinished) ? `<span class="${isLive ? 'text-blue-600 font-black' : 'text-slate-700'} mr-1.5 text-lg">${match.awayScore}</span>` : `<span class="text-slate-400 mr-1.5">-</span>`;
+        const homeVal = match.sport === 'lol' ? match.homeWins : match.homeScore;
+        const awayVal = match.sport === 'lol' ? match.awayWins : match.awayScore;
 
-        const textColor = isScheduled ? 'text-slate-500' : 'text-slate-700';
+        let centerHtml;
+        if (isLive || isFinished) {
+            const scoreColor = isLive ? 'text-red-500' : 'text-slate-800';
+            const badge = isLive
+                ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
+                : `<span class="text-[10px] font-bold text-slate-400">종료</span>`;
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    ${badge}
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-black ${scoreColor}">${awayVal}</span>
+                        <span class="text-slate-300 text-sm">:</span>
+                        <span class="text-xl font-black ${scoreColor}">${homeVal}</span>
+                    </div>
+                </div>`;
+        } else {
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    <span class="text-sm font-black text-slate-700">${match.scheduledAt || '--:--'}</span>
+                    <span class="text-[10px] text-slate-400 font-bold">VS</span>
+                </div>`;
+        }
 
         return `
-        <div class="relative border ${isFavorite ? 'border-yellow-300 bg-yellow-50/30' : 'border-slate-300 bg-white'} p-3 flex items-center justify-center text-sm font-bold h-14 cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md overflow-hidden">
+        <div class="relative border ${borderClass} rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
             ${favoriteBar}
-            <div class="w-full flex justify-between items-center text-sm px-4 ${textColor}">
-                <span class="font-extrabold flex items-center gap-1 text-base">${emoji} ${match.homeTeamName}${homeScore}${favoriteBadge}</span>
-                ${statusBadge(match.status)}
-                <span class="font-${isScheduled ? 'medium' : 'bold'} flex items-center gap-1 text-base">${favoriteBadge}${awayScore}${match.awayTeamName}</span>
+            <div class="flex items-center px-5 py-3 gap-2">
+                <div class="flex-1 flex flex-col items-start min-w-0">
+                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</span>
+                    <span class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</span>
+                </div>
+                <div class="flex-shrink-0 w-28 flex justify-center">
+                    ${centerHtml}
+                </div>
+                <div class="flex-1 flex flex-col items-end min-w-0">
+                    <span class="text-[10px] font-bold text-slate-400 mb-0.5"> </span>
+                    <span class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</span>
+                </div>
             </div>
         </div>`;
     }
@@ -738,7 +754,17 @@ public BoardResponseDto(Board board) {
         // 5. 렌더링
         const container = document.getElementById('matchList');
         if (allMatches.length === 0) {
-            container.innerHTML = '<div class="text-center text-slate-400 text-xs py-6">오늘 예정된 경기가 없습니다.</div>';
+            container.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm">
+                    <div class="text-4xl mb-3">📅</div>
+                    <p class="text-slate-700 font-black mb-1">오늘은 경기가 없습니다</p>
+                    <p class="text-slate-400 text-xs mb-4">다가오는 경기 일정을 확인해보세요</p>
+                    <div class="flex gap-2 justify-center">
+                        <a href="/baseball/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">⚾ 야구</a>
+                        <a href="/soccer/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">⚽ 축구</a>
+                        <a href="/lol/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">🎮 LOL</a>
+                    </div>
+                </div>`;
             return;
         }
 
@@ -766,8 +792,58 @@ public BoardResponseDto(Board board) {
         container.innerHTML = html;
     }
 
+    const RANK_MEDALS = ['🥇', '🥈', '🥉'];
+    const RANK_COLORS = ['text-amber-500', 'text-slate-400', 'text-amber-700'];
+
+    async function loadRanking(sport) {
+        // 탭 스타일 업데이트
+        document.querySelectorAll('.rank-tab').forEach(btn => {
+            btn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+        });
+        const activeId = sport ? `rankTab-${sport}` : 'rankTab-all';
+        const activeBtn = document.getElementById(activeId);
+        if (activeBtn) activeBtn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white';
+
+        const container = document.getElementById('rankingList');
+        const url = `${BASE_URL}/api/predictions/ranking${sport ? `?sport=${sport}` : ''}`;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error();
+            const list = await res.json();
+
+            if (!list.length) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">아직 예측 참여자가 없습니다.</div>';
+                return;
+            }
+
+            container.innerHTML = list.slice(0, 10).map((r, i) => {
+                const medal = i < 3 ? RANK_MEDALS[i] : `${r.rank}위`;
+                const color = i < 3 ? RANK_COLORS[i] : 'text-slate-500';
+                const pct = r.totalCount > 0
+                    ? Math.round(r.correctCount / r.totalCount * 100) + '%'
+                    : '-';
+                return `
+                <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+                    <span class="font-extrabold ${color} truncate max-w-[120px]">
+                        ${medal} ${r.nickname || '익명'}
+                    </span>
+                    <div class="text-right shrink-0">
+                        <span class="font-black text-blue-600">${r.totalPoints}P</span>
+                        <span class="text-slate-400 ml-1">(${pct})</span>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">랭킹을 불러올 수 없습니다.</div>';
+        }
+    }
+
     // 페이지 로드 시 실행
-    document.addEventListener('DOMContentLoaded', loadTodayMatches);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTodayMatches();
+        loadRanking(null);
+    });
 </script>
 </body>
 </html>

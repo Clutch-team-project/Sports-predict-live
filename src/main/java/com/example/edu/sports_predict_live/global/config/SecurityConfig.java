@@ -42,6 +42,7 @@ public class SecurityConfig {
             "/api/players/**",      // 선수 목록
             "/api/teams/**",        // 팀 정보
             "/api/schedule/**",     // 경기 일정
+            "/api/predictions/ranking", // 포인트 순위 (비로그인도 조회 가능)
             "/oauth2/**",           // OAuth2 인증
             "/login/oauth2/**"      // OAuth2 콜백
     };
@@ -82,11 +83,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
                         .requestMatchers(
-                                "/", "/login", "/signup", "/notification-agreement",
+                                "/", "/schedule",
+                                "/login", "/signup", "/notification-agreement",
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
-                                "/user-info"
-                                , "/board", "/board/list/**", "/board/read/**", "/replies/**","/templates/**" // ← 추가
+                                "/user-info", "/favorite-teams",
+                                "/board", "/board/list/**", "/board/read/**", "/replies/**","/templates/**" // ← 추가
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()
@@ -109,9 +111,9 @@ public class SecurityConfig {
                                 PrintWriter out = response.getWriter();
                                 out.println("<script>");
                                 out.println("if(confirm('로그인 후 이용 가능합니다.\\n로그인 페이지로 이동하시겠습니까?')) {");
-                                out.println("   location.href='/login';"); // 확인 누르면 로그인 창
+                                out.println("   location.href='/login';");
                                 out.println("} else {");
-                                out.println("   location.href='/board/list';"); // 취소 누르면 리스트 복귀
+                                out.println("   history.back();");
                                 out.println("}");
                                 out.println("</script>");
                                 out.flush();
