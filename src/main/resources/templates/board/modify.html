@@ -43,6 +43,7 @@
     <div class="card p-8">
         <form id="modifyForm">
             <input type="hidden" id="boardId" name="boardId" th:value="${dto.boardId}">
+            <input type="hidden" id="boardType" name="boardType" th:value="${pageRequestDTO.boardType}">
 
             <div class="mb-6">
                 <label class="input-label" for="category">카테고리</label>
@@ -68,7 +69,7 @@
             </div>
 
             <div class="flex gap-3 justify-end">
-                <button type="button" class="btn-cancel" th:onclick="|location.href='@{/board/read(boardId=${dto.boardId})}'|">취소</button>
+                <button type="button" class="btn-cancel" th:onclick="|location.href='@{/board/read(boardId=${dto.boardId}, boardType=${pageRequestDTO.boardType})}'|">취소</button>
                 <button type="submit" class="btn-submit">수정완료</button>
             </div>
         </form>
@@ -93,6 +94,7 @@
         const category = document.getElementById('category').value;
         const title = document.getElementById('title').value.trim();
         const content = document.getElementById('content').value.trim();
+        const boardType = document.getElementById('boardType').value;
 
         if(!title) { alert('제목을 입력해주세요.'); return; }
         if(!content) { alert('내용을 입력해주세요.'); return; }
@@ -114,7 +116,7 @@
             .then(async res => {
                 if (res.ok) {
                     alert('게시글이 성공적으로 수정되었습니다.');
-                    location.href = '/board/read?boardId=' + boardId;
+                    location.href = '/board/read?boardId=' + boardId + '&boardType=' + boardType;
                 } else {
                     // 실패 시 백엔드가 보내준 정확한 실패 이유를 알림창에 띄움
                     const errorMessage = await res.text();

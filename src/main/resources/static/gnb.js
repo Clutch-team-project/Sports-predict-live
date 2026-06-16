@@ -68,7 +68,6 @@
         lol: '/lol',
         news: '/news',
         schedule: '/schedule',
-        board: '/board',
         member: '/login',
         loginSuccess: '/login-success',
         userInfo: '/user-info',
@@ -88,6 +87,11 @@
         playerStat:    '/player-stats',
         teamProfile:   '/team-page',
         teamStat:      '/team-stats',
+        // 종류별 게시판
+        boardAll: '/board/list',
+        boardFootball: '/board/list?boardType=FOOTBALL',
+        boardBaseball: '/board/list?boardType=BASEBALL',
+        boardLol: '/board/list?boardType=LOL',
     };
 
     var current = decodeURIComponent((location.pathname.split('/').pop() || '').toLowerCase());
@@ -161,26 +165,26 @@
         var homeMenu = [
             {label: '뉴스', file: files.news},
             {label: '일정', file: files.schedule},
-            {label: '게시판', file: files.board}
+            {label: '게시판', file: files.boardAll}
         ];
 
         var baseballMenu = [
             {label: '뉴스',  file: files.news},
             {label: '일정',  file: files.baseballSchedule},
             {label: '순위',  file: files.baseballStandings},
-            {label: '게시판', file: files.board}
+            {label: '게시판', file: files.boardBaseball}
         ];
         var soccerMenu = [
             {label: '뉴스',  file: files.news},
             {label: '일정',  file: files.soccerSchedule},
             {label: '순위',  file: files.soccerStandings},
-            {label: '게시판', file: files.board}
+            {label: '게시판', file: files.boardFootball}
         ];
         var lolMenu = [
             {label: '뉴스',  file: files.news},
             {label: '일정',  file: files.lolSchedule},
             {label: '순위',  file: files.lolStandings},
-            {label: '게시판', file: files.board}
+            {label: '게시판', file: files.boardLol}
         ];
 
         var isHome     = current === '' || current === '/' || current.indexOf('home') !== -1;

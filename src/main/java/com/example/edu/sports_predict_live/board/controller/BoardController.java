@@ -105,12 +105,14 @@ public class BoardController {
         model.addAttribute("currentUserRole", currentUserRole);
         model.addAttribute("isLiked", isLiked);
         model.addAttribute("isReported", isReported);
+        model.addAttribute("pageRequestDTO", pageRequestDTO);
     }
 
     @GetMapping("/register")
-    public String registerGET(Authentication authentication, Model model) {
+    public String registerGET(Authentication authentication, Model model, PageRequestDTO pageRequestDTO) {
         String currentUserRole = getCurrentUserRole(authentication);
         model.addAttribute("currentUserRole", currentUserRole);
+        model.addAttribute("pageRequestDTO", pageRequestDTO);
         return "board/register";
     }
 
@@ -122,6 +124,10 @@ public class BoardController {
         Long boardId = boardService.register(boardDTO, currentUserRole);
 
         redirectAttributes.addFlashAttribute("result", boardId);
+
+        if(boardDTO.getBoardType() != null && !boardDTO.getBoardType().isEmpty()) {
+            redirectAttributes.addAttribute("boardType", boardDTO.getBoardType());
+        }
         return "redirect:/board/list";
     }
 

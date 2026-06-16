@@ -86,7 +86,7 @@ public class SecurityConfig {
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
                                 "/user-info"
-                                , "/board", "/board/list", "/board/read/**", "/replies/**","/templates/**" // ← 추가
+                                , "/board", "/board/list/**", "/board/read/**", "/replies/**","/templates/**" // ← 추가
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()

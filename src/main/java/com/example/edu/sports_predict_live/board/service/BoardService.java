@@ -33,6 +33,7 @@ public interface BoardService {
                 .title(boardDTO.getTitle())
                 .content(boardDTO.getContent())
                 .isNotice(boardDTO.isNotice())
+                .boardType(boardDTO.getBoardType())
                 .build();
         if(boardDTO.getFileNames() != null) {
             boardDTO.getFileNames().forEach(fileName -> {

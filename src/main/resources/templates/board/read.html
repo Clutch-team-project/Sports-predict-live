@@ -86,7 +86,7 @@
     <div class="h-6"></div>
 
     <button class="btn-back mb-4"
-            th:onclick="|location.href='@{/board/list(page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">
+            th:onclick="|location.href='@{/board/list(page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">
         ← 목록
     </button>
 
@@ -149,7 +149,7 @@
 
                 <button type="button" class="action-btn"
                         th:if="${currentUserId != null and currentUserId == dto.userId}"
-                        th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">수정</button>
+                        th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">수정</button>
 
                 <button type="button" class="action-btn danger"
                         th:if="${currentUserId != null and (currentUserId == dto.userId or currentUserRole == 'ROLE_ADMIN')}"
