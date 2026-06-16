@@ -234,8 +234,15 @@
         const homeVal = m.sport === 'lol' ? m.homeWins : m.homeScore;
         const awayVal = m.sport === 'lol' ? m.awayWins : m.awayScore;
 
+        const isCancelled = m.status === 'cancelled';
+
         let centerHtml;
-        if (isLive || isDone) {
+        if (isCancelled) {
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    <span class="text-xs font-black text-red-600 px-2.5 py-1 rounded-xl bg-red-50 border border-red-200">취소</span>
+                </div>`;
+        } else if (isLive || isDone) {
             const color = isLive ? 'text-red-500' : 'text-slate-800';
             const badge = isLive
                 ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
@@ -350,6 +357,33 @@
                                 class="${predBtnClass(cur === 'HOME_WIN')}">${homeName} 승</button>
                     </div>
                     ${cur ? `<p class="text-[10px] text-slate-400 text-center mt-1">경기 시작 전까지 변경 가능</p>` : ''}
+                </div>`;
+            return;
+        }
+
+        if (m.status === 'cancelled') {
+            const predLabel = pred ? (pred.predictedResult === 'HOME_WIN' ? `${m.homeTeamName} 승`
+                            : pred.predictedResult === 'AWAY_WIN' ? `${m.awayTeamName} 승`
+                            : '무승부') : null;
+            el.innerHTML = pred ? `
+                <div class="flex items-center justify-center gap-2 px-4 pb-2.5 pt-2">
+                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">${predLabel}</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-100 text-slate-500 border border-slate-200">경기 취소</span>
+                </div>` : `
+                <div class="text-center px-4 pb-2.5 pt-2 text-xs text-slate-400 font-bold">경기가 취소되었습니다.</div>`;
+            return;
+        }
+
+        if (pred && m.status === 'in_progress') {
+            const predLabel = pred.predictedResult === 'HOME_WIN' ? `${m.homeTeamName} 승`
+                            : pred.predictedResult === 'AWAY_WIN' ? `${m.awayTeamName} 승`
+                            : '무승부';
+            el.innerHTML = `
+                <div class="flex items-center justify-center gap-2 px-4 pb-2.5 pt-2">
+                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">${predLabel}</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">진행중</span>
                 </div>`;
             return;
         }

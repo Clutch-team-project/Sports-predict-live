@@ -29,7 +29,7 @@ public class LolSettlementService {
     @Scheduled(fixedDelay = 300_000)
     @Transactional
     public void settleLolPredictions() {
-        List<Prediction> unsettled = predictionRepository.findBySportCodeAndIsCorrectIsNull("lol");
+        List<Prediction> unsettled = predictionRepository.findBySportCodeAndIsCorrectIsNullAndActualResultIsNull("lol");
         if (unsettled.isEmpty()) return;
 
         // 날짜별로 그룹화
@@ -51,13 +51,24 @@ public class LolSettlementService {
                                 m -> calcLolResult((int) m.get("homeWins"), (int) m.get("awayWins"))
                         ));
 
-                if (finishedResults.isEmpty()) continue;
+                // 취소된 경기 matchId 목록 — 예측 무효화 대상
+                Set<String> cancelledIds = matches.stream()
+                        .filter(m -> "cancelled".equals(m.get("status")))
+                        .map(m -> String.valueOf(m.get("matchId")))
+                        .collect(Collectors.toSet());
+
+                if (finishedResults.isEmpty() && cancelledIds.isEmpty()) continue;
 
                 // 해당 날짜 미정산 예측 정산
                 List<Prediction> todayPredictions =
-                        predictionRepository.findBySportCodeAndLolScheduledDateAndIsCorrectIsNull("lol", date);
+                        predictionRepository.findBySportCodeAndLolScheduledDateAndIsCorrectIsNullAndActualResultIsNull("lol", date);
 
                 for (Prediction p : todayPredictions) {
+                    if (cancelledIds.contains(p.getLolMatchId())) {
+                        p.voidByCancellation();
+                        log.debug("LOL 예측 무효화(경기 취소): predictionId={}", p.getPredictionId());
+                        continue;
+                    }
                     String result = finishedResults.get(p.getLolMatchId());
                     if (result != null) {
                         p.settle(result);

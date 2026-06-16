@@ -192,14 +192,21 @@ public class StandingsService {
         if (tournaments == null) return null;
 
         LocalDate today = LocalDate.now();
+        Map<String, Object> mostRecentlyEnded = null;
+        LocalDate mostRecentEnd = null;
         for (Map<String, Object> t : tournaments) {
             LocalDate start = LocalDate.parse((String) t.get("startDate"));
             LocalDate end   = LocalDate.parse((String) t.get("endDate"));
             if (!today.isBefore(start) && !today.isAfter(end)) {
                 return (String) t.get("id");
             }
+            // 진행 중인 토너먼트가 없을 경우를 대비해 종료일이 오늘 이전이면서 가장 최근인 토너먼트를 추적
+            if (today.isAfter(end) && (mostRecentEnd == null || end.isAfter(mostRecentEnd))) {
+                mostRecentEnd = end;
+                mostRecentlyEnded = t;
+            }
         }
         // 진행 중인 토너먼트 없으면 가장 최근 종료된 것 사용
-        return (String) tournaments.get(0).get("id");
+        return mostRecentlyEnded != null ? (String) mostRecentlyEnded.get("id") : null;
     }
 }

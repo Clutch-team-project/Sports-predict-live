@@ -127,6 +127,15 @@ public class PredictionService {
         }
     }
 
+    // 취소된 KBO·K리그 경기의 예측 무효화 (스케줄러 호출)
+    @Transactional
+    public void voidCancelledDbMatches() {
+        List<Prediction> cancelled = predictionRepository.findCancelledDbPredictions();
+        for (Prediction p : cancelled) {
+            p.voidByCancellation();
+        }
+    }
+
     private String calcDbResult(int homeScore, int awayScore, String sportCode) {
         if (homeScore > awayScore) return "HOME_WIN";
         if (homeScore < awayScore) return "AWAY_WIN";
