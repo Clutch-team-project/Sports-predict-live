@@ -158,17 +158,28 @@
     //  경기 상태 렌더링
     function renderStatus(match) {
         if (match.status === 'finished') {
+            const pitcherHtml = (match.winningPitcher || match.losingPitcher) ? `
+                <div class="flex items-center justify-center gap-2 mt-1 text-[10px]">
+                    ${match.winningPitcher ? `<span class="text-blue-500 font-bold">승 ${match.winningPitcher}</span>` : ''}
+                    ${match.winningPitcher && match.losingPitcher ? `<span class="text-slate-300">|</span>` : ''}
+                    ${match.losingPitcher  ? `<span class="text-red-400 font-bold">패 ${match.losingPitcher}</span>` : ''}
+                </div>` : '';
             return `<div class="w-1/3 text-center font-black text-slate-700 text-sm">
                 <span class="text-xl font-black">${match.awayScore}</span>
                 <span class="text-slate-400 mx-1">:</span>
                 <span class="text-xl font-black">${match.homeScore}</span>
                 <div class="text-[10px] text-slate-400 mt-0.5">종료</div>
+                ${pitcherHtml}
             </div>`;
         }
         if (match.status === 'in_progress') {
+            const pitcherHtml = match.currentPitcher
+                ? `<div class="text-[10px] text-slate-400 mt-0.5">🔵 ${match.currentPitcher}</div>`
+                : '';
             return `<div class="w-1/3 text-center">
                 <div class="text-emerald-600 font-black animate-pulse text-xs">LIVE</div>
                 <div class="font-black text-sm mt-0.5">${match.awayScore} : ${match.homeScore}</div>
+                ${pitcherHtml}
             </div>`;
         }
         if (match.status === 'cancelled') {
