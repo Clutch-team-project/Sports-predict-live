@@ -86,6 +86,8 @@ public class BoardServiceImpl implements BoardService{
     public void modify(BoardDTO boardDTO) {
         Optional<Board> result = boardRepository.findByIdWithImages(boardDTO.getBoardId());
         Board board = result.orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. id=" + boardDTO.getBoardId()));
+        boolean isNoticeFlag = "공지".equals(boardDTO.getCategory());
+        boardDTO.setNotice(isNoticeFlag);
         board.change(boardDTO.getTitle(), boardDTO.getContent(), boardDTO.getCategory(), boardDTO.isNotice());
         board.clearImage(); // 기존 이미지 파일 제거
         if(boardDTO.getFileNames() != null) {
@@ -129,14 +131,13 @@ public class BoardServiceImpl implements BoardService{
 
         List<BoardListAllDTO> dtoList = new ArrayList<>(result.getContent());
 
-        if(pageRequestDTO.getPage() == 1) {
-            PageRequest noticePageable = PageRequest.of(0, 5);
-            Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(null, null, "공지", null, noticePageable, boardType);
-            List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
-            dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
-            noticeDtoList.addAll(dtoList);
-            dtoList = noticeDtoList;
-        }
+        PageRequest noticePageable = PageRequest.of(0, 5);
+        Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(null, null, "공지", null, noticePageable, boardType);
+        List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
+        dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
+        noticeDtoList.addAll(dtoList);
+        dtoList = noticeDtoList;
+
         int totalElements = (int)result.getTotalElements();
 
         if (totalElements == 0 && !dtoList.isEmpty()) {
@@ -182,11 +183,9 @@ public class BoardServiceImpl implements BoardService{
     public void report(Long boardId, Long userId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
-
         if (board.getUserId().equals(userId)) {
             throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
         }
-
         if(board.isNotice()) {
             throw new IllegalStateException("공지글은 신고할 수 없스니다.");
         }
@@ -195,7 +194,6 @@ public class BoardServiceImpl implements BoardService{
         if (existingReport.isPresent()) {
             throw new IllegalStateException("이미 신고가 접수된 게시글입니다.");
         }
-
         BoardReport newReport = BoardReport.builder()
                 .board(board)
                 .userId(userId)

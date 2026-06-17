@@ -33,8 +33,7 @@
 </head>
 <body class="min-h-screen text-slate-800 bg-slate-50">
 
-<main class="max-w-4xl mx-auto px-6 pb-28 pt-8">
-    <div class="h-6"></div>
+<main class="mx-auto pb-28 pt-8" style="width: min(1024px, calc(100% - 48px));">    <div class="h-6"></div>
 
     <div class="flex items-center justify-between mb-4">
         <h1 style="font-size:22px; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">게시글 수정</h1>
@@ -44,6 +43,7 @@
         <form id="modifyForm">
             <input type="hidden" id="boardId" name="boardId" th:value="${dto.boardId}">
             <input type="hidden" id="boardType" name="boardType" th:value="${pageRequestDTO.boardType}">
+            <input type="hidden" id="page" th:value="${pageRequestDTO.page}">
 
             <div class="mb-6">
                 <label class="input-label" for="category">카테고리</label>
@@ -116,9 +116,17 @@
             .then(async res => {
                 if (res.ok) {
                     alert('게시글이 성공적으로 수정되었습니다.');
-                    location.href = '/board/read?boardId=' + boardId + '&boardType=' + boardType;
+                    const pageInput = document.getElementById('page');
+                    const boardTypeInput = document.getElementById('boardType');
+                    const pageValue = (pageInput && pageInput.value) ? pageInput.value : '1';
+                    const typeValue = (boardTypeInput && boardTypeInput.value) ? boardTypeInput.value : '';
+                    let targetUrl = '/board/list?page=' + pageValue;
+                    if (typeValue) {
+                        targetUrl += '&boardType=' + typeValue;
+                    }
+                    location.href = targetUrl;
+
                 } else {
-                    // 실패 시 백엔드가 보내준 정확한 실패 이유를 알림창에 띄움
                     const errorMessage = await res.text();
                     alert(errorMessage || '수정 중 오류가 발생했습니다.');
                 }
