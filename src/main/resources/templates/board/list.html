@@ -150,7 +150,7 @@
                 <th:block th:if="${responseDTO != null}">
                     <tr th:each="dto : ${responseDTO.dtoList}"
                         th:classappend="${dto.isNotice ? 'notice-row' : ''}"
-                        th:onclick="|location.href='@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">
+                        th:onclick="|location.href='@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, type=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">
 
                         <td th:if="${dto.isNotice}"><span style="font-size:15px">📌</span></td>
                         <td th:unless="${dto.isNotice}" style="color:#334155" th:text="${dto.boardId}">1</td>
