@@ -46,7 +46,10 @@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-3 text-sm">
             <button id="btn-prev-week" class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">&lt; 이전 주
             </button>
-            <span id="week-label" class="font-black text-blue-600 text-base"></span>
+            <div class="flex items-center gap-2">
+                <span id="week-label" class="font-black text-blue-600 text-base"></span>
+                <button id="btn-today" class="text-xs font-black px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100">오늘</button>
+            </div>
             <button id="btn-next-week" class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">다음 주 &gt;
             </button>
         </div>
@@ -99,7 +102,8 @@
     }
 
     function renderWeek() {
-        const weekStart = getWeekStart(currentDate);
+        const rangeStart = new Date(currentDate);
+        rangeStart.setDate(currentDate.getDate() - 3);
         document.getElementById('week-label').textContent =
             `📅 ${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 LCK`;
 
@@ -107,8 +111,8 @@
         container.innerHTML = '';
 
         for (let i = 0; i < 7; i++) {
-            const d = new Date(weekStart);
-            d.setDate(weekStart.getDate() + i);
+            const d = new Date(rangeStart);
+            d.setDate(rangeStart.getDate() + i);
             const isToday = isSameDay(d, new Date());
             const isSelected = isSameDay(d, selectedDate);
 
@@ -127,6 +131,7 @@
             const captured = new Date(d);
             div.addEventListener('click', () => {
                 selectedDate = captured;
+                currentDate = new Date(captured);
                 renderWeek();
                 loadMatches();
             });
@@ -141,6 +146,12 @@
     document.getElementById('btn-next-week').addEventListener('click', () => {
         currentDate.setDate(currentDate.getDate() + 7);
         renderWeek();
+    });
+    document.getElementById('btn-today').addEventListener('click', () => {
+        selectedDate = new Date();
+        currentDate = new Date();
+        renderWeek();
+        loadMatches();
     });
 
     function renderStatus(m) {
