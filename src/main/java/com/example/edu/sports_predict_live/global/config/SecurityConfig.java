@@ -44,7 +44,19 @@ public class SecurityConfig {
             "/api/schedule/**",     // 경기 일정
             "/api/predictions/ranking", // 포인트 순위 (비로그인도 조회 가능)
             "/oauth2/**",           // OAuth2 인증
-            "/login/oauth2/**"      // OAuth2 콜백
+            "/login/oauth2/**" ,     // OAuth2 콜백
+            "/api/auth/**",
+            "/api/standings/**",
+            "/api/records/**",
+            "/api/players/**",
+            "/api/teams/**",
+            "/api/schedule/**",
+
+            "/news/**",
+            "/news-scrap/**",
+
+            "/oauth2/**",
+            "/login/oauth2/**"
     };
 
     // 공개 페이지 경로
@@ -55,7 +67,7 @@ public class SecurityConfig {
             "/find-id", "/find-password", "/change-password",
             "/prediction-history", "/user-info", "/favorite-teams",
             "/baseball/**", "/soccer/**", "/lol/**",
-            "/team-detail", "/player-detail",
+            "/team-detail", "/player-detail", "/news", "/sitemap"
     };
 
     // 공개 정적 리소스
@@ -88,7 +100,10 @@ public class SecurityConfig {
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
                                 "/user-info", "/favorite-teams",
-                                "/board", "/board/list/**", "/board/read/**", "/replies/**","/templates/**" // ← 추가
+                                "/board", "/board/list/**", "/board/read/**", "/replies/**","/templates/**", // ← 추가
+                                "/user-info", "/favorite-teams"
+                                , "/board", "/board/list", "/board/read/**", "/templates/**",  "/news/**",
+                                "/board/**", "/soccer/**", "/baseball/**", "/lol/**", "/sitemap"// ← 추가
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()

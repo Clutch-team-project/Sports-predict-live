@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH — 뉴스</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+
+        /* 전체_홈.html 기준 라이트 배경 */
+        .light-portal-bg {
+            background-color: #e2e8f0;
+            background-image:
+                    linear-gradient(rgba(59,130,246,0.15) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(59,130,246,0.15) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* 카드 */
+        .card {
+            background: rgba(255,255,255,0.9);
+            border: 2px solid rgba(59,130,246,0.55);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* GNB */
+        .gnb {
+            background: white;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        /* 네비 탭 */
+        .nav-tab {
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .nav-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
+        .nav-tab:hover:not(.active) { color: #334155; }
+
+        /* 드롭다운 버튼 */
+        .dropdown-btn {
+            display: flex; align-items: center; gap: 6px;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .dropdown-btn:hover { border-color: #2563eb; color: #2563eb; }
+        .dropdown-btn .arrow { font-size: 10px; color: #94a3b8; }
+
+        /* 정렬 라디오 */
+        .sort-option {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 13px; color: #64748b;
+            cursor: pointer; transition: color 0.15s;
+            font-weight: 500;
+        }
+        .sort-option.active { color: #2563eb; font-weight: 700; }
+        .sort-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #cbd5e1; flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .sort-option.active .sort-dot { background: #2563eb; }
+
+        /* 뉴스 카드 */
+        .news-card {
+            display: flex; gap: 14px;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .news-card:last-child { border-bottom: none; }
+        .news-card:hover { background: #f1f5f9; }
+
+        /* 기사 이미지 플레이스홀더 */
+        .news-img {
+            width: 100px; height: 76px;
+            background: #e2e8f0;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: #94a3b8;
+            flex-shrink: 0;
+            font-weight: 600;
+        }
+
+        /* 뉴스 제목 */
+        .news-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.5;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .news-title:hover { color: #2563eb; }
+
+        /* 뉴스 본문 미리보기 */
+        .news-preview {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        /* 출처 · 시간 */
+        .news-meta {
+            font-size: 11px;
+            color: #94a3b8;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .news-meta .source { color: #2563eb; font-weight: 600; }
+        .news-meta .dot { color: #cbd5e1; }
+
+        /* 열 구분선 */
+        .col-divider {
+            width: 1px; background: #e2e8f0; flex-shrink: 0;
+        }
+
+        /* 상세 페이지 */
+        .article-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.45;
+            margin-bottom: 12px;
+        }
+
+        .article-meta {
+            font-size: 12px; color: #94a3b8;
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .badge-source {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #2563eb;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .badge-source:hover { background: #dbeafe; }
+
+        .article-body {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+
+            color: #334155;
+            font-size: 15px;
+            line-height: 1.8;
+
+            margin-bottom: 16px;
+            min-height: 180px;
+        }
+
+        /* 주요뉴스 사이드바 */
+        .side-news-item {
+            padding: 14px 0;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .side-news-item:last-child { border-bottom: none; }
+        .side-news-item:hover .side-news-title { color: #2563eb; }
+        .side-news-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            line-height: 1.5;
+            transition: color 0.15s;
+        }
+
+        /* 뒤로 가기 버튼 */
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .btn-back:hover { border-color: #2563eb; color: #2563eb; }
+
+        /* 페이지 인디케이터 */
+        .page-indicator {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 6px;
+            background: rgba(255,255,255,0.92);
+            padding: 8px 16px; border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #cbd5e1; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dot.active { background: #2563eb; width: 20px; border-radius: 4px; }
+
+        .page-label {
+            font-size: 10px; color: #2563eb;
+            font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; margin-bottom: 8px;
+        }
+
+        .section-divider {
+            border: none; border-top: 1px solid #e2e8f0;
+        }
+
+        /* 언론사 로고 플레이스홀더 */
+        .publisher-logo {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 10px;
+            color: #2563eb;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .article-image-box {
+            width: 100%;
+            overflow: hidden;
+            border-radius: 10px;
+            margin: 18px 0;
+        }
+
+        .article-image {
+            width: 100%;
+            max-height: 450px;
+            object-fit: contain;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    </style>
+</head>
+<script src="/gnb.js"></script>
+<body class="light-portal-bg min-h-screen text-slate-800">
+
+<!-- GNB -->
+<header class="gnb px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+    <span class="text-blue-600 font-black text-lg tracking-tight">AI.MATCH</span>
+    <div class="flex items-center gap-6 text-sm md:text-base font-black shrink-0" id="gnb-auth">
+    <span class="text-slate-700 hover:text-slate-900 cursor-pointer"
+          onclick="location.href='/login'">로그인</span>
+        <span class="text-slate-700 hover:text-slate-900 cursor-pointer">사이트맵</span>
+    </div>
+</header>
+
+<nav class="gnb px-6 py-2 flex justify-center gap-1 border-b border-slate-200">
+    <span class="nav-tab" onclick="location.href='/'">홈</span>
+    <span class="nav-tab" onclick="location.href='/soccer/standings'">축구</span>
+    <span class="nav-tab" onclick="location.href='/baseball/standings'">야구</span>
+    <span class="nav-tab" onclick="location.href='/lol/standings'">LOL</span>
+</nav>
+
+<!-- 페이지 탭 네비 -->
+<nav class="gnb px-6 py-2 flex justify-center gap-1 border-b border-slate-200 mb-6">
+    <span class="nav-tab active" onclick="location.href='/news'">뉴스</span>
+    <span class="nav-tab" onclick="location.href='/soccer/schedule'">일정</span>
+    <span class="nav-tab" onclick="location.href='/board/list'">게시판</span>
+</nav>
+
+<!-- 메인 -->
+<main class="max-w-6xl mx-auto px-6 pb-24">
+
+    <!-- ======================================================
+         PAGE 01: 뉴스 목록
+    ====================================================== -->
+    <div class="page active" id="page-01">
+        <p class="page-label">01 · 뉴스 목록</p>
+
+        <!-- 필터 바 -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <select id="sportFilter" class="dropdown-btn" onchange="updateTeamFilter()">
+                    <option value="">종목별</option>
+                    <option value="축구">축구</option>
+                    <option value="야구">야구</option>
+                    <option value="LOL">LOL</option>
+                </select>
+
+                <select id="teamFilter" class="dropdown-btn" onchange="loadNews()">
+                    <option value="">팀별</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-5">
+                <div class="sort-option active" id="sort-latest" onclick="changeSort('latest')">
+                    <div class="sort-dot"></div>
+                    최신순
+                </div>
+
+                <div class="sort-option" id="sort-popular" onclick="changeSort('popular')">
+                    <div class="sort-dot"></div>
+                    인기순
+                </div>
+
+                <div class="sort-option" id="sort-scrap" onclick="changeSort('scrap')">
+                    <div class="sort-dot"></div>
+                    스크랩
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- 뉴스 카드 그리드 (2열) -->
+        <div class="card overflow-hidden">
+            <div class="flex" id="newsList">
+                <div class="flex-1" id="leftNewsList"></div>
+                <div class="col-divider"></div>
+                <div class="flex-1" id="rightNewsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         PAGE 02: 뉴스 상세
+    ====================================================== -->
+    <div class="page" id="page-02">
+        <p class="page-label">02 · 뉴스 상세</p>
+
+        <button class="btn-back mb-4" onclick="goPage('page-01')">← 뒤로</button>
+
+        <div class="flex gap-5 items-start">
+            <!-- 왼쪽: 기사 본문 -->
+            <div class="card p-6 flex-1 min-w-0 h-fit">
+                <h1 class="article-title" id="detailTitle">뉴스 제목</h1>
+
+                <div class="article-meta">
+                    <span id="detailDate">입력 날짜</span>
+                    <button class="badge-source" id="detailLinkBtn">기사원문</button>
+                </div>
+
+                <div id="detailImageBox" class="article-image-box">
+                    <img id="detailImage" class="article-image" alt="뉴스 이미지">
+                </div>
+
+                <hr class="section-divider mb-4">
+
+                <div class="article-body" id="detailBody">기사 내용</div>
+            </div>
+
+            <!-- 오른쪽: 주요뉴스 사이드바 -->
+            <div class="card p-5 w-72 flex-shrink-0 h-fit">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-slate-800 font-black text-base">주요뉴스</span>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">해당 언론사에서 선정하며 언론사 페이지(아웃링크)로 이동해 볼 수 있습니다.</p>
+                <hr class="section-divider mb-1">
+                <div>
+                    <div id="sideNewsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- 페이지 인디케이터 -->
+<div class="page-indicator">
+    <div class="dot active" onclick="goPage('page-01')" title="뉴스 목록"></div>
+    <div class="dot" onclick="goPage('page-02')" title="뉴스 상세"></div>
+</div>
+
+<script>
+    let currentSort = "latest";
+
+    function changeSort(sortType) {
+        currentSort = sortType;
+
+        document.querySelectorAll(".sort-option").forEach(option => {
+            option.classList.remove("active");
+        });
+
+        document.getElementById(`sort-${sortType}`).classList.add("active");
+
+        loadNews();
+    }
+
+    function goPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+
+        const pages = ['page-01', 'page-02'];
+        const dots = document.querySelectorAll('.dot');
+        const idx = pages.indexOf(id);
+
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setSort(type) {
+        document.querySelectorAll('.sort-option').forEach(el => el.classList.remove('active'));
+        document.getElementById('sort-' + type).classList.add('active');
+    }
+
+    const teamOptions = {
+        "": [
+            { value: "", text: "팀별" }
+        ],
+        "축구": [
+            { value: "", text: "팀별" },
+            { value: "토트넘", text: "토트넘" },
+            { value: "PSG", text: "PSG" },
+            { value: "맨유", text: "맨유" }
+        ],
+        "야구": [
+            { value: "", text: "팀별" },
+            { value: "LG", text: "LG" },
+            { value: "KIA", text: "KIA" },
+            { value: "한화", text: "한화" },
+            { value: "두산", text: "두산" }
+        ],
+        "LOL": [
+            { value: "", text: "팀별" },
+            { value: "T1", text: "T1" },
+            { value: "젠지", text: "젠지" },
+            { value: "한화생명", text: "한화생명" }
+        ]
+    };
+
+    function updateTeamFilter() {
+        const sport = document.getElementById("sportFilter").value;
+        const teamFilter = document.getElementById("teamFilter");
+
+        teamFilter.innerHTML = "";
+
+        const options = teamOptions[sport] || teamOptions[""];
+
+        options.forEach(team => {
+            const option = document.createElement("option");
+            option.value = team.value;
+            option.textContent = team.text;
+            teamFilter.appendChild(option);
+        });
+
+        loadNews();
+    }
+
+    async function loadNews() {
+        const sport = document.getElementById("sportFilter")?.value || "";
+        const team = document.getElementById("teamFilter")?.value || "";
+
+
+
+        let url = "/news/search-filter";
+        const params = new URLSearchParams();
+
+        if (currentSort === "scrap") {
+            const userId = localStorage.getItem("userId");
+
+            if (!userId) {
+                alert("로그인 후 이용 가능합니다.");
+                location.href = "/login";
+                return;
+            }
+
+            url = "/news-scrap/my-news";
+            params.append("userId", userId);
+        } else {
+            if (sport !== "") {
+                params.append("sport", sport);
+            }
+
+            if (team !== "") {
+                params.append("team", team);
+            }
+
+            params.append("sort", currentSort);
+        }
+
+        if (params.toString() !== "") {
+            url += "?" + params.toString();
+        }
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        let items = currentSort === "scrap"
+            ? data.map(news => ({
+                title: news.title,
+                description: news.summary,
+                originallink: news.newsUrl,
+                link: news.newsUrl,
+                pubDate: news.publishedAt || news.createdAt,
+                newsId: news.newsId,
+                thumbnailUrl: news.thumbnailUrl,
+                scrapCount: news.scrapCount || 0
+            }))
+            : [...data.items];
+
+        if (currentSort === "latest") {
+            items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+        } else if (currentSort === "popular") {
+            items.reverse();
+        } else if (currentSort === "scrap") {
+            items.sort((a, b) => (b.scrapCount || 0) - (a.scrapCount || 0));
+        }
+
+        const leftNewsList = document.getElementById("leftNewsList");
+        const rightNewsList = document.getElementById("rightNewsList");
+
+        leftNewsList.innerHTML = "";
+        rightNewsList.innerHTML = "";
+
+        items.forEach((item, index) => {
+            const title = item.title.replace(/<[^>]*>/g, "");
+            const description = item.description.replace(/<[^>]*>/g, "");
+            const link = item.originallink || item.link;
+            const pubDate = item.pubDate || "";
+            const newsId = item.newsId;
+            const thumbnailUrl = item.thumbnailUrl;
+            const scrapCount = item.scrapCount || 0;
+
+            const newsCard = `
+    <div class="news-card" onclick="showNewsDetail('${escapeText(title)}', '${escapeText(description)}', '${link}', '${pubDate}', '${thumbnailUrl || ""}')">
+        ${
+                thumbnailUrl
+                    ? `<img src="${thumbnailUrl}" class="news-img object-cover" alt="뉴스 이미지">`
+                    : `<div class="news-img">기사<br>이미지</div>`
+            }
+
+        <div class="flex-1 min-w-0">
+            <p class="news-title">${title}</p>
+            <p class="news-preview">${description}</p>
+
+            <div class="news-meta">
+                <span class="source">NAVER</span>
+                <span class="dot">·</span>
+                <span>${pubDate}</span>
+                <span class="dot">·</span>
+                <span id="scrap-count-${newsId}">⭐ ${scrapCount}</span>
+            </div>
+
+            ${localStorage.getItem("userId") ? `
+        <button
+            id="scrap-btn-${newsId}"
+                class="mt-2 text-xs font-bold text-blue-600 border border-blue-200 px-3 py-1 rounded-lg hover:bg-blue-50"
+                onclick="event.stopPropagation(); toggleScrap(${newsId})">
+                ${scrapedNews.has(Number(newsId)) ? "★ 스크랩" : "☆ 스크랩"}
+        </button>
+    ` : ""}
+        </div>
+    </div>
+`;
+
+            if (index % 2 === 0) {
+                leftNewsList.innerHTML += newsCard;
+            } else {
+                rightNewsList.innerHTML += newsCard;
+            }
+        });
+
+        const sideNewsList = document.getElementById("sideNewsList");
+        sideNewsList.innerHTML = "";
+
+        const sideItems = currentSort === "scrap" ? items : data.items;
+
+        sideItems.slice(0, 8).forEach(item => {
+            const sideTitle = item.title.replace(/<[^>]*>/g, "");
+            const sideLink = item.originallink || item.link;
+
+            sideNewsList.innerHTML += `
+        <div class="side-news-item" onclick="window.open('${sideLink}', '_blank')">
+            <p class="side-news-title">${sideTitle}</p>
+        </div>
+        `;
+        });
+    }
+
+    const scrapedNews = new Set();
+
+    async function loadMyScraps() {
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+            return;
+        }
+
+        const response = await fetch(`/news-scrap/user?userId=${userId}`);
+        const scraps = await response.json();
+
+        console.log("내 스크랩 응답:", scraps);
+
+        scraps.forEach(scrap => {
+            const id = scrap.newsId || scrap.news?.newsId;
+
+            if (id) {
+                scrapedNews.add(Number(id));
+            }
+        });
+
+        console.log("스크랩 Set:", scrapedNews);
+    }
+
+    async function toggleScrap(newsId) {
+
+        // const userId = 1; 테스트 시 현재 코드 활성화 및 아래 코드 주석
+        const userId = localStorage.getItem("userId");
+        newsId = Number(newsId);
+
+        if (!userId) {
+            alert("로그인 후 이용 가능합니다.");
+            location.href = "/login";
+            return;
+        }
+        const button = document.getElementById(`scrap-btn-${newsId}`);
+
+        // 이미 스크랩된 경우 삭제
+        if (scrapedNews.has(newsId)) {
+
+            await fetch(
+                `/news-scrap/delete?userId=${userId}&newsId=${newsId}`
+            );
+
+            scrapedNews.delete(newsId);
+
+            button.innerText = "☆ 스크랩";
+
+            alert("스크랩 취소");
+
+            const countSpan = document.getElementById(`scrap-count-${newsId}`);
+            let count = Number(countSpan.innerText.replace("⭐", "").trim());
+
+            countSpan.innerText = `⭐ ${Math.max(0, count - 1)}`;
+
+            return;
+        }
+
+        if (!scrapedNews.has(newsId) && scrapedNews.size >= 10) {
+            alert("스크랩은 최대 10개까지 가능합니다.");
+            return;
+        }
+
+        // 신규 스크랩
+        await fetch(
+            `/news-scrap/save?userId=${userId}&newsId=${newsId}`
+        );
+
+        scrapedNews.add(newsId);
+
+        button.innerText = "★ 스크랩";
+
+        alert("스크랩 완료");
+
+        const countSpan = document.getElementById(`scrap-count-${newsId}`);
+        let count = Number(countSpan.innerText.replace("⭐", "").trim());
+
+        countSpan.innerText = `⭐ ${count + 1}`;
+
+
+    }
+
+    function showNewsDetail(title, description, link, pubDate, thumbnailUrl) {
+        document.getElementById("detailTitle").innerText = title;
+        document.getElementById("detailDate").innerText = "입력 " + pubDate;
+        document.getElementById("detailBody").innerText = description;
+
+        const imageBox = document.getElementById("detailImageBox");
+        const image = document.getElementById("detailImage");
+
+        if (thumbnailUrl) {
+            image.src = thumbnailUrl;
+            imageBox.style.display = "block";
+        } else {
+            imageBox.style.display = "none";
+        }
+
+        document.getElementById("detailLinkBtn").onclick = function () {
+            window.open(link, "_blank");
+        };
+
+        goPage("page-02");
+    }
+
+
+    function escapeText(text) {
+        return text
+            .replace(/\\/g, "\\\\")
+            .replace(/'/g, "\\'")
+            .replace(/"/g, "&quot;");
+    }
+
+    window.onload = async function () {
+        await loadMyScraps();
+        await loadNews();
+    };
+</script>
+
+</body>
+</html>

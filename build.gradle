@@ -62,6 +62,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly    'org.junit.platform:junit-platform-launcher'
+
+    //뉴스 이미지 크롤링
+    implementation 'org.jsoup:jsoup:1.17.2'
 }
 
 tasks.named('test') {
