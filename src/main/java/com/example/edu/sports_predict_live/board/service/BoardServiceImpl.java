@@ -36,6 +36,7 @@ public class BoardServiceImpl implements BoardService{
     private final UserRepository userRepository;
     private final BoardLikeRepository boardLikeRepository;
     private final BoardReportRepository boardReportRepository;
+    private final AiModerationService aiModerationService;
 
     // 게시글 생성
     @Override
@@ -48,6 +49,9 @@ public class BoardServiceImpl implements BoardService{
 
         Board board = dtoToEntity(boardDTO);
         Long boardId = boardRepository.save(board).getBoardId();
+
+        String textToAnalyze = boardDTO.getTitle() + " " + boardDTO.getContent();
+        aiModerationService.checkAndBlindAsync(boardId, textToAnalyze);
         return boardId;
     }
     // 게시글 상세 확인(조회수 증가)
@@ -219,7 +223,7 @@ public class BoardServiceImpl implements BoardService{
 
         boardRepository.save(board);
     }
-
+    // 메인홈 인기글 5개 출력
     @Override
     public List<BoardListAllDTO> getPopularPosts() {
         return boardRepository.findPopularPosts(5);

@@ -34,6 +34,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     private final UserRepository userRepository;
     private final BoardReplyLikeRepository boardReplyLikeRepository;
     private final BoardReplyReportRepository boardReplyReportRepository;
+    private final AiModerationService aiModerationService;
 
     private final ModelMapper modelMapper;
 
