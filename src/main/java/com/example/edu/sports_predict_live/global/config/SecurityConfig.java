@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -36,38 +37,31 @@ public class SecurityConfig {
 
     // 공개 API 경로
     private static final String[] PUBLIC_API = {
-            "/api/auth/**",         // 인증 (이메일 인증, 로그인, 회원가입 등)
-            "/api/standings/**",    // 팀 순위
-            "/api/records/**",      // 선수 기록
-            "/api/players/**",      // 선수 목록
-            "/api/teams/**",        // 팀 정보
-            "/api/schedule/**",     // 경기 일정
-            "/api/predictions/ranking", // 포인트 순위 (비로그인도 조회 가능)
-            "/oauth2/**",           // OAuth2 인증
-            "/login/oauth2/**" ,     // OAuth2 콜백
-            "/api/auth/**",
-            "/api/standings/**",
-            "/api/records/**",
-            "/api/players/**",
-            "/api/teams/**",
-            "/api/schedule/**",
-
+            "/api/auth/**",              // 인증 (이메일 인증, 로그인, 회원가입 등)
+            "/api/standings/**",         // 팀 순위
+            "/api/records/**",           // 선수 기록
+            "/api/players/**",           // 선수 목록
+            "/api/teams/**",             // 팀 정보
+            "/api/schedule/**",          // 경기 일정
+            "/api/predictions/ranking",  // 포인트 순위 (비로그인도 조회 가능)
             "/news/**",
             "/news-scrap/**",
-
-            "/oauth2/**",
-            "/login/oauth2/**"
+            "/oauth2/**",                // OAuth2 인증
+            "/login/oauth2/**",          // OAuth2 콜백
     };
 
     // 공개 페이지 경로
     private static final String[] PUBLIC_PAGES = {
             "/",
+            "/schedule",
             "/login", "/signup", "/signup-success", "/login-success",
             "/notification-agreement",
             "/find-id", "/find-password", "/change-password",
             "/prediction-history", "/user-info", "/favorite-teams",
             "/baseball/**", "/soccer/**", "/lol/**",
-            "/team-detail", "/player-detail", "/news", "/sitemap"
+            "/board", "/board/list/**", "/board/read/**",
+            "/replies/**", "/templates/**",
+            "/team-detail", "/player-detail", "/news", "/sitemap",
     };
 
     // 공개 정적 리소스
@@ -89,23 +83,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
-                        .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
-                        .requestMatchers(
-                                "/", "/schedule",
-                                "/login", "/signup", "/notification-agreement",
-                                "/signup-success", "/login-success", "/find-id",
-                                "/find-password", "/change-password", "/prediction-history",
-                                "/user-info", "/favorite-teams",
-                                "/board", "/board/list/**", "/board/read/**", "/replies/**","/templates/**", // ← 추가
-                                "/user-info", "/favorite-teams"
-                                , "/board", "/board/list", "/board/read/**", "/templates/**",  "/news/**",
-                                "/board/**", "/soccer/**", "/baseball/**", "/lol/**", "/sitemap"// ← 추가
-                        ).permitAll()
-                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/board/register", "/board/modify").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()
                         .requestMatchers(PUBLIC_PAGES).permitAll()
                         .requestMatchers(PUBLIC_STATIC).permitAll()
@@ -115,13 +94,12 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             String uri = request.getRequestURI();
 
-                            // API(Ajax/Fetch) 요청인 경우 -> 순수 401 상태 코드만 반환
                             if (uri.startsWith("/api/")) {
+                                // API 요청 → 401 상태 코드만 반환
                                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                                 response.getWriter().write("Unauthorized");
-                            }
-                            // 화면(HTML) 이동 요청인 경우 -> 자바스크립트 Confirm 창 응답
-                            else {
+                            } else {
+                                // 페이지 요청 → 로그인 유도 confirm 창
                                 response.setContentType("text/html; charset=UTF-8");
                                 PrintWriter out = response.getWriter();
                                 out.println("<script>");
@@ -143,6 +121,7 @@ public class SecurityConfig {
                         .failureHandler(oAuth2FailureHandler))
                 .addFilterBefore(new JwtFilter(jwtProvider),
                         UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
