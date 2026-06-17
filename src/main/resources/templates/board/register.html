@@ -75,76 +75,9 @@
 
 <script th:src="@{/board.js}"></script>
 
-<script>
-    // 페이지 접속 시 로그인(JWT 토큰) 검사 로직
-    const token = localStorage.getItem('accessToken');
-
-    if (!token) {
-        // 토큰이 없으면 confirm 창 출력
-        const isLoginIntent = confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?');
-        if (isLoginIntent) {
-            location.href = '/login'; // 확인 누르면 로그인 창으로
-        } else {
-            location.href = '/board/list'; // 취소 누르면 리스트로
-        }
-    }
-
-    // 폼 제출 시 JWT 헤더에 담아서 API 통신
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // 새로고침 방지
-
-        const category = document.getElementById('category').value;
-        const title = document.getElementById('title').value.trim();
-        const content = document.getElementById('content').value.trim();
-        const boardType = document.getElementById('boardType').value;
-
-        if(!category) { alert('카테고리를 선택해주세요.'); return; }
-        if(!title) { alert('제목을 입력해주세요.'); return; }
-        if(!content) { alert('내용을 입력해주세요.'); return; }
-
-        // Spring Controller (기존 폼 데이터 방식) 에 맞게 데이터 조립
-        const formData = new URLSearchParams();
-        formData.append('category', category);
-        formData.append('title', title);
-        formData.append('content', content);
-
-        if(boardType) formData.append('boardType', boardType);
-
-        // Fetch API를 사용해 Authorization 헤더에 토큰을 담아 보냄
-        fetch('/board/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Bearer ' + token
-            },
-            body: formData.toString()
-        })
-            .then(response => {
-                if (response.redirected) {
-                    location.href = response.url;
-                } else if (response.status === 401 || response.status === 403) {
-                    alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-                    location.href = '/login';
-                } else if (response.ok) {
-                    alert('게시글이 등록되었습니다.');
-                    location.href = boardType ? '/board/list?boardType=' + boardType : '/board/list';
-                } else {
-                    alert('게시글 등록에 실패했습니다.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            });
-
-    });
-    document.querySelector('.btn-cancel').removeAttribute('onclick');
-    document.querySelector('.btn-cancel').addEventListener('click', function() {
-        const boardType = document.getElementById('boardType').value;
-        location.href = boardType ? '/board/list?boardType=' + boardType : '/board/list';
-    });
-</script>
-
 <script th:src="@{/gnb.js}"></script>
+
+<script th:src="@{/board.js}"></script>
+
 </body>
 </html>

@@ -82,12 +82,14 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
                     query.where(board.category.eq("공지").and(board.boardType.isNull()));
                 }
             } else {
+                query.where(board.isNotice.isFalse());
                 query.where(board.category.eq(category));
                 if (boardType != null && !boardType.isEmpty()) {
                     query.where(board.boardType.eq(boardType));
                 }
             }
         } else {
+            query.where(board.isNotice.isFalse());
             if (boardType != null && !boardType.isEmpty()) {
                 query.where(board.boardType.eq(boardType));
             }

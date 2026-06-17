@@ -132,7 +132,7 @@ public class BoardServiceImpl implements BoardService{
         List<BoardListAllDTO> dtoList = new ArrayList<>(result.getContent());
 
         PageRequest noticePageable = PageRequest.of(0, 5);
-        Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(null, null, "공지", null, noticePageable, boardType);
+        Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(types, keyword, "공지", null, noticePageable, boardType);
         List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
         dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
         noticeDtoList.addAll(dtoList);

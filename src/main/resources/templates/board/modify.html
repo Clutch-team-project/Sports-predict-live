@@ -78,64 +78,7 @@
 
 <script th:src="@{/gnb.js}"></script>
 
-<script>
-    // 로그인 안 된 유저가 주소창 쳐서 들어오는 것 방지
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-        alert('로그인 후 이용 가능합니다.');
-        location.href = '/login';
-    }
+<script th:src="@{/board.js}"></script>
 
-    // 수정 완료 폼 제출
-    document.getElementById('modifyForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const boardId = document.getElementById('boardId').value;
-        const category = document.getElementById('category').value;
-        const title = document.getElementById('title').value.trim();
-        const content = document.getElementById('content').value.trim();
-        const boardType = document.getElementById('boardType').value;
-
-        if(!title) { alert('제목을 입력해주세요.'); return; }
-        if(!content) { alert('내용을 입력해주세요.'); return; }
-
-        const formData = new URLSearchParams();
-        formData.append('boardId', boardId);
-        formData.append('category', category);
-        formData.append('title', title);
-        formData.append('content', content);
-
-        // 서버로 데이터 전송
-        window.authFetch('/board/modify', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formData.toString()
-        })
-            .then(async res => {
-                if (res.ok) {
-                    alert('게시글이 성공적으로 수정되었습니다.');
-                    const pageInput = document.getElementById('page');
-                    const boardTypeInput = document.getElementById('boardType');
-                    const pageValue = (pageInput && pageInput.value) ? pageInput.value : '1';
-                    const typeValue = (boardTypeInput && boardTypeInput.value) ? boardTypeInput.value : '';
-                    let targetUrl = '/board/list?page=' + pageValue;
-                    if (typeValue) {
-                        targetUrl += '&boardType=' + typeValue;
-                    }
-                    location.href = targetUrl;
-
-                } else {
-                    const errorMessage = await res.text();
-                    alert(errorMessage || '수정 중 오류가 발생했습니다.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            });
-    });
-</script>
 </body>
 </html>
