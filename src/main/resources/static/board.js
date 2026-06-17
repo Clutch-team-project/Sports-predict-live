@@ -183,26 +183,40 @@ if (registerForm) { // 화면에 registerForm이 있을 때만 아래 로직 실
 // ==========================================
 // 5. READ PAGE LOGIC (조회 페이지 전용)
 // ==========================================
-// 함수들은 다른 페이지에서 HTML onClick으로 호출될 때 에러가 나지 않도록 전역 함수로 유지합니다.
 
-function removePost() {
-    const boardId = document.getElementById('currentBoardId').value;
-    if(!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
+function removePost(button) {
+    const boardId = button.getAttribute("data-id");
+    const boardType = button.getAttribute("data-boardtype"); // HTML에서 pageRequestDTO.boardType 값을 읽어옴
+
+    if (!confirm("정말 삭제하시겠습니까?")) return;
 
     window.authFetch('/board/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ boardId: boardId }).toString()
+        body: new URLSearchParams({
+            boardId: boardId,
+            boardType: boardType
+        }).toString()
     })
         .then(async res => {
             if (res.ok) {
                 alert('게시글이 삭제되었습니다.');
-                location.href = '/board/list';
+                if (boardType && boardType !== 'null' && boardType.trim() !== '') {
+                    location.href = '/board/list?boardType=' + boardType;
+                } else {
+                    location.href = '/board/list';
+                }
             } else {
-                const errorMessage = await res.text();
-                alert(errorMessage || '삭제 권한이 없거나 실패했습니다.');
+                try {
+                    const errorData = await res.json();
+                    alert(errorData.message || '삭제 권한이 없거나 실패했습니다.');
+                } catch(e) {
+                    const errorMessage = await res.text();
+                    alert(errorMessage || '삭제 권한이 없거나 실패했습니다.');
+                }
             }
-        }).catch(err => console.error(err));
+        })
+        .catch(err => console.error(err));
 }
 
 function toggleBlind() {
@@ -516,4 +530,4 @@ document.addEventListener("DOMContentLoaded", function() {
         // 초기 댓글 로드
         printReplies(1);
     }
-});//
+});

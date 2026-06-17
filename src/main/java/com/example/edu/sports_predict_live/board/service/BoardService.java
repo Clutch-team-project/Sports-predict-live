@@ -25,6 +25,8 @@ public interface BoardService {
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 
+    List<BoardListAllDTO> getPopularPosts();
+
     default Board dtoToEntity(BoardDTO boardDTO) {
         Board board = Board.builder()
                 .boardId(boardDTO.getBoardId())

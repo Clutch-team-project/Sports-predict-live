@@ -165,4 +165,50 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         return new PageImpl<>(dtoList, pageable, count);
     }
+
+    @Override
+    public List<BoardListAllDTO> findPopularPosts(int limit) {
+        QBoard board = QBoard.board;
+        QUser user = QUser.user;
+        QBoardReply reply = QBoardReply.boardReply;
+
+        JPQLQuery<Board> query = from(board);
+        query.leftJoin(user).on(board.userId.eq(user.userId));
+        query.leftJoin(reply).on(reply.board.eq(board));
+
+        query.where(board.deletedAt.isNull());
+        query.where(board.isBlinded.isFalse());
+        query.where(board.isNotice.isFalse());
+
+        // 조회수 기준 내림차순 정렬
+        query.orderBy(board.viewCount.desc(), board.boardId.desc());
+        query.limit(limit);
+        query.groupBy(board);
+
+        JPQLQuery<Tuple> tupleQuery = query.select(board, user, reply.countDistinct());
+        List<Tuple> tupleList = tupleQuery.fetch();
+
+        return tupleList.stream().map(tuple -> {
+            Board b = tuple.get(board);
+            User u = tuple.get(user);
+            Long replyCount = tuple.get(reply.countDistinct());
+
+            return BoardListAllDTO.builder()
+                    .boardId(b.getBoardId())
+                    .userId(b.getUserId())
+                    .loginId(u != null ? u.getLoginId() : null)
+                    .nickname(u != null ? u.getNickname() : null)
+                    .writerId(u != null ? u.getNickname() : "익명") // HTML th:text="${post.writerId}" 대응
+                    .category(b.getCategory())
+                    .title(b.getTitle())
+                    .viewCount(b.getViewCount())
+                    .likeCount(b.getLikeCount())
+                    .isNotice(b.isNotice())
+                    .isBlinded(b.isBlinded())
+                    .createdAt(b.getCreatedAt())
+                    .updatedAt(b.getUpdatedAt())
+                    .replyCount(replyCount != null ? replyCount : 0L)
+                    .build();
+        }).collect(Collectors.toList());
+    }
 }

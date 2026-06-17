@@ -152,7 +152,8 @@
 
                 <button type="button" class="action-btn danger"
                         th:if="${currentUserId != null and (currentUserId == dto.userId or currentUserRole == 'ROLE_ADMIN')}"
-                        onclick="removePost()">삭제</button>
+                        th:data-id="${dto.boardId}"
+                        th:data-boardtype="${pageRequestDTO.boardType}" onclick="removePost(this)">삭제</button>
 
                 <button type="button" id="btnBlind" class="action-btn"
                         th:if="${currentUserRole == 'ROLE_ADMIN'}"

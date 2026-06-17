@@ -219,4 +219,9 @@ public class BoardServiceImpl implements BoardService{
 
         boardRepository.save(board);
     }
+
+    @Override
+    public List<BoardListAllDTO> getPopularPosts() {
+        return boardRepository.findPopularPosts(5);
+    }
 }
