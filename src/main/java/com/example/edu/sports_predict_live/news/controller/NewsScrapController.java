@@ -1,5 +1,6 @@
 package com.example.edu.sports_predict_live.news.controller;
 
+import com.example.edu.sports_predict_live.news.entity.NewsEntity;
 import com.example.edu.sports_predict_live.news.entity.NewsScrapEntity;
 import com.example.edu.sports_predict_live.news.service.NewsScrapService;
 import lombok.RequiredArgsConstructor;
@@ -57,5 +58,12 @@ public class NewsScrapController {
         );
 
         return "스크랩 삭제 완료";
+    }
+
+    @GetMapping("/my-news")
+    public List<NewsEntity> getMyScrapNews(
+            @RequestParam Long userId
+    ) {
+        return newsScrapService.getMyScrapNews(userId);
     }
 }

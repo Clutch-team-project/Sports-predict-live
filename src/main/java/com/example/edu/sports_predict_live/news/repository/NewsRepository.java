@@ -30,4 +30,7 @@ public interface NewsRepository
             Long sportId,
             String team
     );
+
+    NewsEntity findTopByNewsUrl(String newsUrl);
+
 }

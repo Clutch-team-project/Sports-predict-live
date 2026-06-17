@@ -5,11 +5,13 @@ import com.example.edu.sports_predict_live.news.service.NewsApiService;
 import com.example.edu.sports_predict_live.news.service.NewsService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Controller
 @RestController
 @RequestMapping("/news")
 @RequiredArgsConstructor
@@ -79,13 +81,15 @@ public class NewsController {
             @RequestParam String keyword
     ) {
 
-        return newsApiService.searchSportsNews(keyword);
+        return newsApiService.searchSportsNews(keyword, "latest", null);
     }
 
     @GetMapping("/search-filter")
     public JsonNode searchFilteredNews(
             @RequestParam(required = false) String sport,
-            @RequestParam(required = false) String team
+            @RequestParam(required = false) String team,
+            @RequestParam(required = false, defaultValue = "latest") String sort,
+            @RequestParam(required = false) Long userId
     ) {
         String keyword = "";
 
@@ -104,7 +108,13 @@ public class NewsController {
             keyword = "스포츠";
         }
 
-        return newsApiService.searchSportsNews(keyword);
+        return newsApiService.searchSportsNews(keyword, sort, userId);
     }
+
+        @GetMapping("/news")
+        public String newsPage() {
+            return "news";
+        }
+        //화면 이동용 매핑
 
 }

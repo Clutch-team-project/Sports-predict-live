@@ -2,7 +2,6 @@ package com.example.edu.sports_predict_live.news.repository;
 
 import com.example.edu.sports_predict_live.news.entity.NewsScrapEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 
 public interface NewsScrapRepository
@@ -21,4 +20,8 @@ public interface NewsScrapRepository
             Long userId,
             Long newsId
     );
+    //스크랩 조회수
+    Long countByNewsId(Long newsId);
+
+    List<NewsScrapEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

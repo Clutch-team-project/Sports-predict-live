@@ -58,7 +58,7 @@ public class SecurityConfig {
             "/find-id", "/find-password", "/change-password",
             "/prediction-history", "/user-info", "/favorite-teams",
             "/baseball/**", "/soccer/**", "/lol/**",
-            "/team-detail", "/player-detail",
+            "/team-detail", "/player-detail", "/news", "/sitemap"
     };
 
     // 공개 정적 리소스
@@ -90,7 +90,8 @@ public class SecurityConfig {
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
                                 "/user-info", "/favorite-teams"
-                                , "/board", "/board/list", "/board/read/**", "/templates/**" // ← 추가
+                                , "/board", "/board/list", "/board/read/**", "/templates/**",  "/news/**",
+                                "/board/**", "/soccer/**", "/baseball/**", "/lol/**", "/sitemap"// ← 추가
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()

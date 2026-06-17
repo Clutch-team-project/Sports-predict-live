@@ -1,6 +1,8 @@
 package com.example.edu.sports_predict_live.news.service;
 
+import com.example.edu.sports_predict_live.news.entity.NewsEntity;
 import com.example.edu.sports_predict_live.news.entity.NewsScrapEntity;
+import com.example.edu.sports_predict_live.news.repository.NewsRepository;
 import com.example.edu.sports_predict_live.news.repository.NewsScrapRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,8 @@ import java.util.List;
 public class NewsScrapService {
 
     private final NewsScrapRepository newsScrapRepository;
+    private final NewsRepository newsRepository;
+
 
     /**
      * 뉴스 스크랩 저장
@@ -66,5 +70,17 @@ public class NewsScrapService {
                 userId,
                 newsId
         );
+    }
+
+    public List<NewsEntity> getMyScrapNews(Long userId) {
+
+        List<NewsScrapEntity> scraps =
+                newsScrapRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        List<Long> newsIds = scraps.stream()
+                .map(NewsScrapEntity::getNewsId)
+                .toList();
+
+        return newsRepository.findAllById(newsIds);
     }
 }

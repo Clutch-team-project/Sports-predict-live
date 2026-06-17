@@ -43,4 +43,7 @@ public class NewsEntity {
 
     @Column(length = 100)
     private String team;
+
+    @Column(name = "thumbnail_url", length = 1000)
+    private String thumbnailUrl;
 }
