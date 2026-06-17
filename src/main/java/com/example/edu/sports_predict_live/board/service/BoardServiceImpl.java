@@ -18,13 +18,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -39,7 +39,13 @@ public class BoardServiceImpl implements BoardService{
 
     // 게시글 생성
     @Override
-    public Long register(BoardDTO boardDTO) {
+    public Long register(BoardDTO boardDTO, String currentUserRole) {
+        if("공지".equals(boardDTO.getCategory()) && !currentUserRole.equals("ROLE_ADMIN")) {
+            throw new AccessDeniedException("공지사항은 관리자만 작성할 수 있습니다.");
+        }
+        boardDTO.setNotice("공지".equals(boardDTO.getCategory()));
+        boardDTO.setBlinded(false);
+
         Board board = dtoToEntity(boardDTO);
         Long boardId = boardRepository.save(board).getBoardId();
         return boardId;
@@ -80,6 +86,8 @@ public class BoardServiceImpl implements BoardService{
     public void modify(BoardDTO boardDTO) {
         Optional<Board> result = boardRepository.findByIdWithImages(boardDTO.getBoardId());
         Board board = result.orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. id=" + boardDTO.getBoardId()));
+        boolean isNoticeFlag = "공지".equals(boardDTO.getCategory());
+        boardDTO.setNotice(isNoticeFlag);
         board.change(boardDTO.getTitle(), boardDTO.getContent(), boardDTO.getCategory(), boardDTO.isNotice());
         board.clearImage(); // 기존 이미지 파일 제거
         if(boardDTO.getFileNames() != null) {
@@ -96,14 +104,20 @@ public class BoardServiceImpl implements BoardService{
     }
     // 게시글 삭제
     @Override
-    public void remove(Long boardId) {
-        Optional<Board> result = boardRepository.findById(boardId);
-        Board board = result.orElseThrow();
-        board.softDelete();
+    public void remove(Long boardId, Long currentUserId, String currentUserRole) {
+        Board board = boardRepository.findById(boardId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
+        boolean isOwner = board.getUserId().equals(currentUserId);
+        boolean isAdmin = "ROLE_ADMIN".equals(currentUserRole);
+
+        if(!isOwner && !isAdmin) {
+            throw new AccessDeniedException("삭제 권한이 없습니다.");
+        }
+
+        board.softDelete();
         boardRepository.save(board);
     }
-
+    // 리스트 조회
     @Override
     public PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO) {
         String[] types = pageRequestDTO.getTypes();
@@ -111,26 +125,31 @@ public class BoardServiceImpl implements BoardService{
         String category = pageRequestDTO.getCategory();
         String sort = pageRequestDTO.getSort();
         Pageable pageable = pageRequestDTO.getPageable("boardId");
+        String boardType = pageRequestDTO.getBoardType();
 
-        Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, category, sort, pageable);
+        Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, category, sort, pageable, boardType);
 
         List<BoardListAllDTO> dtoList = new ArrayList<>(result.getContent());
 
-        if(pageRequestDTO.getPage() == 1) {
-            PageRequest noticePageable = PageRequest.of(0, 5);
-            Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(null, null, "공지", null, noticePageable);
-            List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
-            dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
-            noticeDtoList.addAll(dtoList);
-            dtoList = noticeDtoList;
+        PageRequest noticePageable = PageRequest.of(0, 5);
+        Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(types, keyword, "공지", null, noticePageable, boardType);
+        List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
+        dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
+        noticeDtoList.addAll(dtoList);
+        dtoList = noticeDtoList;
+
+        int totalElements = (int)result.getTotalElements();
+
+        if (totalElements == 0 && !dtoList.isEmpty()) {
+            totalElements = dtoList.size();
         }
         return PageResponseDTO.<BoardListAllDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
                 .dtoList(dtoList)
-                .total((int)result.getTotalElements())
+                .total(totalElements)
                 .build();
     }
-
+    // 좋아요 토글
     @Override
     public void toggleLike(Long boardId, Long userId) {
         Optional<Board> result = boardRepository.findById(boardId);
@@ -150,7 +169,7 @@ public class BoardServiceImpl implements BoardService{
         boardRepository.save(board);
         boardRepository.flush();
     }
-
+    // 좋아요 여부 확인
     @Override
     public boolean checkIsLiked(Long boardId, Long userId) {
         if(userId == null){
@@ -164,11 +183,9 @@ public class BoardServiceImpl implements BoardService{
     public void report(Long boardId, Long userId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
-
         if (board.getUserId().equals(userId)) {
             throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
         }
-
         if(board.isNotice()) {
             throw new IllegalStateException("공지글은 신고할 수 없스니다.");
         }
@@ -177,7 +194,6 @@ public class BoardServiceImpl implements BoardService{
         if (existingReport.isPresent()) {
             throw new IllegalStateException("이미 신고가 접수된 게시글입니다.");
         }
-
         BoardReport newReport = BoardReport.builder()
                 .board(board)
                 .userId(userId)
@@ -185,7 +201,7 @@ public class BoardServiceImpl implements BoardService{
 
         boardReportRepository.save(newReport);
     }
-
+    // 신고 여부 확인
     @Override
     public boolean checkIsReported(Long boardId, Long userId) {
         if(userId == null) return false;
@@ -193,5 +209,14 @@ public class BoardServiceImpl implements BoardService{
                 .boardId(boardId)
                 .build();
         return boardReportRepository.findByBoard_BoardIdAndUserId(board.getBoardId(), userId).isPresent();
+    }
+    // 게시글 블라인드 처리
+    @Override
+    public void toggleBlind(Long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        board.changeBlind(!board.isBlinded());
+
+        boardRepository.save(board);
     }
 }

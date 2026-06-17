@@ -1,34 +1,27 @@
 package com.example.edu.sports_predict_live.board.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class BoardListAllDTO {
+public class BoardReplyDTO {
+    private Long replyId;
     private Long boardId;
+    private String replyText;
     private Long userId;
-    private String loginId;
     private String nickname;
-    private String category;
-    private String title;
-    private int viewCount;
-    private int likeCount;
-    private boolean isNotice;
-    private boolean isBlinded;
-    private boolean isDeleted;
-
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
-    private Long replyCount;
-
-    private List<String> fileNames;
+    private int likeCount;
+    private boolean isLiked;
+    private boolean isReported;
+    private boolean isBlinded;
 }

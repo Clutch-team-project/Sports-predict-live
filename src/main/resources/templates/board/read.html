@@ -11,7 +11,6 @@
 
         .card { background: rgba(255,255,255,0.9); border: 2px solid rgba(59,130,246,0.55); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
-        /* 게시글 상세 스타일 */
         .btn-back {
             display: inline-flex; align-items: center; gap: 6px;
             background: white; border: 1px solid #cbd5e1; border-radius: 8px;
@@ -50,20 +49,16 @@
         }
         .action-btn:hover { border-color: #2563eb; color: #2563eb; }
 
-        /* 신고 버튼 기본 hover */
         .action-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
 
-        /* ⭐️ 신고 완료 (is-active) 상태: 안 한 버튼에 마우스 올렸을 때(hover)와 동일한 색상 적용 */
         .action-btn.danger.is-active {
             border-color: #ef4444; color: #ef4444; background: white;
-            cursor: not-allowed; /* 이미 신고했음을 알리기 위해 마우스 커서 모양 변경 */
+            cursor: not-allowed;
         }
-        /* ⭐️ 신고 완료 상태에서 마우스 올렸을 때 살짝 연한 빨간색 배경을 주어 눌려있다는 느낌 강화 */
         .action-btn.danger.is-active:hover {
             background: #fef2f2;
         }
 
-        /* 사이드바 및 레이아웃 조정 */
         .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
         .stat-row:last-child { border-bottom: none; }
         .stat-label { font-size: 12px; color: #64748b; }
@@ -86,17 +81,16 @@
 </head>
 <body class="min-h-screen text-slate-800">
 
-<main class="max-w-6xl mx-auto px-6 pb-28">
-
+<main class="mx-auto pb-28 pt-8" style="width: min(1024px, calc(100% - 48px));">
     <div class="h-6"></div>
 
     <button class="btn-back mb-4"
-            th:onclick="|location.href='@{/board/list(page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">
+            th:onclick="|location.href='@{/board/list(page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">
         ← 목록
     </button>
 
     <div class="flex gap-5">
-        <div class="card p-6 flex-1 min-w-0">
+        <div class="card p-6 flex-1 min-w-0" th:with="canViewOriginal=${(currentUserId != null and currentUserId == dto.userId) or currentUserRole == 'ROLE_ADMIN'}">
 
             <div class="flex items-center gap-2 mb-3">
                 <span class="article-cat-badge"
@@ -109,7 +103,9 @@
                       th:text="${dto.category ?: '자유'}">자유</span>
             </div>
 
-            <h1 style="font-size:20px;font-weight:900;color:#0f172a;line-height:1.45;margin-bottom:10px" th:text="${dto.title}">오늘 경기 진짜 너무 재밌었다</h1>
+            <h1 style="font-size:20px; line-height:1.45; margin-bottom:10px"
+                th:styleappend="${dto.isBlinded and !canViewOriginal} ? 'color:#94a3b8; font-weight:500; font-style:italic;' : 'color:#0f172a; font-weight:900;'"
+                th:text="${dto.isBlinded and !canViewOriginal} ? '블라인드 처리된 글입니다.' : ${dto.title}">게시글 제목</h1>
 
             <div style="font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
                 <span th:if="${dto.isNotice}" style="font-weight:700; color:#334155;">관리자</span>
@@ -117,22 +113,23 @@
                       th:text="${dto.nickname != null and dto.nickname != '' ? dto.nickname : '익명'}">닉네임</span>
 
                 <span style="color:#cbd5e1">·</span>
-                <span th:text="${#temporals.format(dto.createdAt, 'yyyy.MM.dd HH:mm')}">2026.05.20 14:32</span>
+                <span th:text="${#temporals.format(dto.createdAt, 'yyyy.MM.dd HH:mm')}">날짜</span>
                 <span style="color:#cbd5e1">·</span>
-                <span th:text="|조회 ${dto.viewCount}|">조회 312</span>
-
-                <th:block th:if="${dto.updatedAt != null and dto.updatedAt != dto.createdAt}">
-                    <span style="color:#cbd5e1">·</span>
-                    <span style="color:#2563eb;" th:text="|수정됨 ${#temporals.format(dto.updatedAt, 'HH:mm')}|">수정됨 14:55</span>
-                </th:block>
+                <span th:text="|조회 ${dto.viewCount}|">조회 0</span>
             </div>
             <hr class="divider">
 
-            <div style="min-height:160px; color:#334155; font-size:14px; line-height:1.7; word-break: break-all;" th:utext="${dto.content}">
+            <div th:if="${!dto.isBlinded or canViewOriginal}"
+                 style="min-height:160px; color:#334155; font-size:14px; line-height:1.7; word-break: break-all;" th:utext="${dto.content}">
                 게시글 본문 내용 영역
             </div>
 
-            <div class="flex gap-2 mb-4" th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}">
+            <div th:if="${dto.isBlinded and !canViewOriginal}"
+                 style="min-height:160px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:14px; font-style:italic;">
+                블라인드 처리되어 내용을 확인할 수 없습니다.
+            </div>
+
+            <div class="flex gap-2 mb-4" th:if="${dto.fileNames != null and !dto.fileNames.isEmpty() and (!dto.isBlinded or canViewOriginal)}">
                 <th:block th:each="fileName : ${dto.fileNames}">
                     <div style="width:100px;height:80px;background:#e2e8f0;border:1px solid #cbd5e1;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
                         <span style="font-size:10px;color:#94a3b8;padding:4px;word-break:break-all;" th:text="${fileName}">이미지</span>
@@ -143,35 +140,66 @@
             <hr class="divider">
 
             <div class="flex items-center gap-2 mb-5 flex-wrap">
-                <button type="button" id="btnLike" class="like-btn" th:classappend="${isLiked != null and isLiked} ? 'is-active' : ''">
+                <button type="button" id="btnLike" class="like-btn"
+                        th:if="${!dto.isBlinded}"
+                        th:classappend="${isLiked != null and isLiked} ? 'is-active' : ''">
                     ♥ 좋아요 <span class="like-count-text" th:text="${dto.likeCount}">0</span>
                 </button>
 
-                <th:block th:if="${currentUserId != null and currentUserId == dto.userId}">
-                    <button type="button" class="action-btn"
-                            th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">수정</button>
+                <button type="button" class="action-btn"
+                        th:if="${currentUserId != null and currentUserId == dto.userId}"
+                        th:onclick="|location.href='@{/board/modify(boardId=${dto.boardId}, page=${pageRequestDTO.page}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">수정</button>
 
-                    <button type="button" class="action-btn danger" onclick="removePost()">삭제</button>
-                </th:block>
+                <button type="button" class="action-btn danger"
+                        th:if="${currentUserId != null and (currentUserId == dto.userId or currentUserRole == 'ROLE_ADMIN')}"
+                        onclick="removePost()">삭제</button>
 
-                <th:block th:unless="${currentUserId != null and currentUserId == dto.userId}">
+                <button type="button" id="btnBlind" class="action-btn"
+                        th:if="${currentUserRole == 'ROLE_ADMIN'}"
+                        th:style="${dto.isBlinded} ? 'border-color: #cbd5e1; color: #94a3b8; background: #f8fafc;' : ''"
+                        onclick="toggleBlind()">
+                    <span th:text="${dto.isBlinded} ? '블라인드 해제' : '블라인드 처리'">블라인드</span>
+                </button>
+
+                <th:block th:unless="${(currentUserId != null and currentUserId == dto.userId) or currentUserRole == 'ROLE_ADMIN'}">
                     <button type="button" id="btnReport" class="action-btn danger"
-                            th:if="${!dto.isNotice}"
+                            th:if="${!dto.isNotice and !dto.isBlinded}"
                             th:classappend="${isReported != null and isReported} ? 'is-active' : ''">신고</button>
                 </th:block>
             </div>
 
             <hr class="divider">
 
-            <div style="font-size:15px;font-weight:900;color:#0f172a;margin-bottom:14px">댓글 <span style="color:#2563eb" th:text="${dto.replyCount ?: 0}">0</span></div>
-
-            <div class="flex gap-2 mb-5">
-                <input class="input-field flex-1" type="text" placeholder="댓글을 입력하세요 (로그인 필요)">
-                <button class="btn-primary" style="padding:10px 20px;white-space:nowrap; background:#2563eb; color:white; border-radius:8px; font-weight:700;">등록</button>
+            <div style="font-size:15px;font-weight:900;color:#0f172a;margin-bottom:14px">
+                댓글 <span id="replyCountMain" style="color:#2563eb" th:text="${dto.replyCount ?: 0}">0</span>
             </div>
 
-            <hr class="divider">
-            <div style="text-align:center; padding:24px 0; color:#94a3b8; font-size:13px;">댓글 기능은 다음 스텝에서 연동 예정입니다.</div>
+            <div id="replyInputArea" class="flex gap-2 mb-5">
+                <input id="replyInput" class="input-field flex-1" type="text" placeholder="댓글을 입력하세요">
+                <button id="btnRegisterReply" class="btn-primary" style="padding:10px 20px;white-space:nowrap; background:#2563eb; color:white; border-radius:8px; font-weight:700;">등록</button>
+            </div>
+
+            <hr id="replyDivider" class="divider">
+
+            <div class="flex items-center gap-4 mb-4" id="replySortArea">
+                <button type="button" id="replySortLike" class="text-xs font-bold text-blue-600 cursor-pointer" onclick="chgReplySort('like')">좋아요순</button>
+                <span style="color:#cbd5e1; font-size:10px;">|</span>
+                <button type="button" id="replySortLatest" class="text-xs font-semibold text-slate-500 cursor-pointer" onclick="chgReplySort('latest')">최신순</button>
+            </div>
+
+            <ul id="replyList" class="flex flex-col gap-2 mt-4 min-h-[100px]">
+            </ul>
+
+            <ul id="replyPaging" class="flex justify-center gap-2 mt-8 text-sm">
+            </ul>
+
+            <div id="blindCommentMsg" th:if="${dto.isBlinded and !((currentUserId != null and currentUserId == dto.userId) or currentUserRole == 'ROLE_ADMIN')}"
+                 style="padding: 40px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; text-align: center; color: #94a3b8; font-size: 14px; font-style: italic; margin-top: 16px;">
+                블라인드 처리된 게시글에는 댓글을 작성하거나 확인할 수 없습니다.
+            </div>
+
+            <input type="hidden" id="loggedInUserId" th:value="${currentUserId}">
+            <input type="hidden" id="loggedInUserRole" th:value="${currentUserRole}">
         </div>
 
         <div class="flex flex-col gap-4 w-60 flex-shrink-0">
@@ -181,16 +209,16 @@
                     <div style="width:44px;height:44px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>
                     <div>
                         <p style="font-size:13px;font-weight:700;color:#334155"
-                           th:text="${dto.isNotice ? '관리자' : (dto.nickname != null and dto.nickname != '' ? dto.nickname : '익명')}">닉네임123</p>
+                           th:text="${dto.isNotice ? '관리자' : (dto.nickname != null and dto.nickname != '' ? dto.nickname : '익명')}">닉네임</p>
                     </div>
                 </div>
             </div>
 
             <div class="card p-4">
                 <p class="section-title">게시글 통계</p>
-                <div class="stat-row"><span class="stat-label">조회수</span><span class="stat-val" th:text="${dto.viewCount}">312</span></div>
-                <div class="stat-row"><span class="stat-label">좋아요</span><span id="sidebarLikeCount" class="stat-val" th:text="${dto.likeCount}">21</span></div>
-                <div class="stat-row"><span class="stat-label">댓글</span><span class="stat-val" th:text="${dto.replyCount ?: 0}">8</span></div>
+                <div class="stat-row"><span class="stat-label">조회수</span><span class="stat-val" th:text="${dto.viewCount}">0</span></div>
+                <div class="stat-row"><span class="stat-label">좋아요</span><span id="sidebarLikeCount" class="stat-val" th:text="${dto.likeCount}">0</span></div>
+                <div class="stat-row"><span class="stat-label">댓글</span><span id="replyCountSide" class="stat-val" th:text="${dto.replyCount ?: 0}">0</span></div>
             </div>
         </div>
     </div>
@@ -200,112 +228,7 @@
 
 <script th:src="@{/gnb.js}"></script>
 
-<script>
-    const token = localStorage.getItem('accessToken');
+<script th:src="@{/board.js}"></script>
 
-    // 좋아요 처리 로직
-    document.getElementById('btnLike').addEventListener('click', function() {
-        if (!token) {
-            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
-            return;
-        }
-
-        const boardId = document.getElementById('currentBoardId').value;
-        const formData = new URLSearchParams();
-        formData.append('boardId', boardId);
-
-        const likeBtn = document.getElementById('btnLike');
-        const countSpan = likeBtn.querySelector('.like-count-text');
-        const sidebarCountSpan = document.getElementById('sidebarLikeCount');
-
-        window.authFetch('/board/like', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
-        })
-            .then(async res => {
-                const msg = await res.text();
-                if (res.ok) {
-                    let currentCount = parseInt(countSpan.innerText);
-                    if(likeBtn.classList.contains('is-active')){
-                        likeBtn.classList.remove('is-active');
-                        countSpan.innerText = currentCount - 1;
-                        if(sidebarCountSpan) sidebarCountSpan.innerText = currentCount - 1;
-                    } else {
-                        likeBtn.classList.add('is-active');
-                        countSpan.innerText = currentCount + 1;
-                        if(sidebarCountSpan) sidebarCountSpan.innerText = currentCount + 1;
-                    }
-                } else {
-                    alert(msg || '오류가 발생했습니다.');
-                }
-            })
-            .catch(err => console.error(err));
-    });
-
-    // ⭐️ 신고 처리 로직
-    document.getElementById('btnReport').addEventListener('click', function() {
-        if (!token) {
-            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
-            return;
-        }
-
-        const reportBtn = document.getElementById('btnReport');
-
-        // 이미 신고 버튼이 눌려있으면 백엔드로 통신하지 않고 알림만 띄움
-        if (reportBtn.classList.contains('is-active')) {
-            alert('이미 신고가 접수된 게시글입니다.');
-            return;
-        }
-
-        // 신고 확인 창
-        if(!confirm('이 게시글을 정말로 신고하시겠습니까?')) return;
-
-        const boardId = document.getElementById('currentBoardId').value;
-        const formData = new URLSearchParams();
-        formData.append('boardId', boardId);
-
-        window.authFetch('/board/report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
-        })
-            .then(async res => {
-                const msg = await res.text();
-                if (res.ok) {
-                    alert(msg); // 신고 성공
-                    reportBtn.classList.add('is-active'); // ⭐️ 즉시 버튼 색상 변경
-                } else {
-                    alert(msg || '오류가 발생했습니다.');
-                }
-            })
-            .catch(err => console.error(err));
-    });
-
-    // 삭제 처리 로직
-    function removePost() {
-        if(!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
-
-        const boardId = document.getElementById('currentBoardId').value;
-        const formData = new URLSearchParams();
-        formData.append('boardId', boardId);
-
-        window.authFetch('/board/remove', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
-        })
-            .then(async res => {
-                if (res.ok) {
-                    alert('게시글이 삭제되었습니다.');
-                    location.href = '/board/list';
-                } else {
-                    const errorMessage = await res.text();
-                    alert(errorMessage || '삭제 권한이 없거나 실패했습니다.');
-                }
-            })
-            .catch(err => console.error(err));
-    }
-</script>
 </body>
 </html>

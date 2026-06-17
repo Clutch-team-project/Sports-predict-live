@@ -33,8 +33,7 @@
 </head>
 <body class="min-h-screen text-slate-800">
 
-<main class="max-w-4xl mx-auto px-6 pb-28">
-    <div class="h-6"></div>
+<main class="mx-auto pb-28 pt-8" style="width: min(1024px, calc(100% - 48px));">    <div class="h-6"></div>
 
     <div class="flex items-center justify-between mb-4">
         <h1 style="font-size:22px; font-weight:900; color:#0f172a; letter-spacing:-0.03em;">게시글 작성</h1>
@@ -42,6 +41,7 @@
 
     <div class="card p-8">
         <form id="registerForm">
+            <input type="hidden" id="boardType" th:value="${param.boardType}">
 
             <div class="mb-6">
                 <label class="input-label" for="category">카테고리</label>
@@ -51,6 +51,7 @@
                     <option value="분석">분석</option>
                     <option value="응원">응원</option>
                     <option value="예측후기">예측후기</option>
+                    <option value="공지" th:if="${currentUserRole == 'ROLE_ADMIN'}">공지</option>
                 </select>
             </div>
 
@@ -72,70 +73,9 @@
     </div>
 </main>
 
+<script th:src="@{/gnb.js}"></script>
+
 <script th:src="@{/board.js}"></script>
 
-<script>
-    // 페이지 접속 시 로그인(JWT 토큰) 검사 로직
-    const token = localStorage.getItem('accessToken');
-
-    if (!token) {
-        // 토큰이 없으면 confirm 창 출력
-        const isLoginIntent = confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?');
-        if (isLoginIntent) {
-            location.href = '/login'; // 확인 누르면 로그인 창으로
-        } else {
-            location.href = '/board/list'; // 취소 누르면 리스트로
-        }
-    }
-
-    // 폼 제출 시 JWT 헤더에 담아서 API 통신
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // 새로고침 방지
-
-        const category = document.getElementById('category').value;
-        const title = document.getElementById('title').value.trim();
-        const content = document.getElementById('content').value.trim();
-
-        if(!category) { alert('카테고리를 선택해주세요.'); return; }
-        if(!title) { alert('제목을 입력해주세요.'); return; }
-        if(!content) { alert('내용을 입력해주세요.'); return; }
-
-        // Spring Controller (기존 폼 데이터 방식) 에 맞게 데이터 조립
-        const formData = new URLSearchParams();
-        formData.append('category', category);
-        formData.append('title', title);
-        formData.append('content', content);
-
-        // Fetch API를 사용해 Authorization 헤더에 토큰을 담아 보냄
-        fetch('/board/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Bearer ' + token
-            },
-            body: formData.toString()
-        })
-            .then(response => {
-                // 스프링 부트 컨트롤러가 'redirect:/board/list'를 반환하면 response.redirected가 true가 됨
-                if (response.redirected) {
-                    location.href = response.url;
-                } else if (response.status === 401 || response.status === 403) {
-                    alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-                    location.href = '/login';
-                } else if (response.ok) {
-                    alert('게시글이 등록되었습니다.');
-                    location.href = '/board/list';
-                } else {
-                    alert('게시글 등록에 실패했습니다.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            });
-    });
-</script>
-
-<script th:src="@{/gnb.js}"></script>
 </body>
 </html>

@@ -87,7 +87,7 @@
 </head>
 <body class="min-h-screen text-slate-800">
 
-<main class="max-w-6xl mx-auto px-6 pb-28">
+<main class="mx-auto pb-28 pt-8" style="width: min(1024px, calc(100% - 48px));">
 
     <div class="h-6"></div>
 
@@ -103,6 +103,7 @@
         <form id="boardActionForm" action="/board/list" method="get" class="flex items-center gap-3 mb-4">
             <input type="hidden" name="category" id="formCategory" th:value="${pageRequestDTO.category ?: ''}">
             <input type="hidden" name="sort" id="formSort" th:value="${pageRequestDTO.sort ?: 'latest'}">
+            <input type="hidden" name="boardType" th:value="${pageRequestDTO.boardType ?: ''}">
 
             <select name="type" id="searchType" onchange="updatePlaceholder()" style="appearance:none; background:white; border:1px solid #cbd5e1; border-radius:8px; padding:9px 12px; font-size:13px; color:#475569; outline:none; cursor:pointer; font-family:'Noto Sans KR',sans-serif;">
                 <option value="tc" th:selected="${pageRequestDTO.type == 'tc'}">제목+내용</option>
@@ -128,7 +129,7 @@
             </div>
 
             <button type="submit" style="display:none;"></button>
-            <button type="button" class="btn-write" onclick="location.href='/board/register'">+ 글쓰기</button>
+            <button type="button" class="btn-write" onclick="clickWriteBtn()">+ 글쓰기</button>
         </form>
 
         <div class="card overflow-hidden mb-4">
@@ -149,7 +150,7 @@
                 <th:block th:if="${responseDTO != null}">
                     <tr th:each="dto : ${responseDTO.dtoList}"
                         th:classappend="${dto.isNotice ? 'notice-row' : ''}"
-                        th:onclick="|location.href='@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword})}'|">
+                        th:onclick="|location.href='@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">
 
                         <td th:if="${dto.isNotice}"><span style="font-size:15px">📌</span></td>
                         <td th:unless="${dto.isNotice}" style="color:#334155" th:text="${dto.boardId}">1</td>
@@ -170,7 +171,7 @@
                                 <span style="color:#334155;font-style:italic">삭제된 게시글입니다.</span>
                             </th:block>
                             <th:block th:if="${dto.isBlinded and !dto.isDeleted}">
-                                <span style="color:#334155;font-style:italic">블라인드 처리된 게시글입니다.</span>
+                                <span style="color:#94a3b8 !important; font-weight:400 !important; font-style:italic;">블라인드 처리된 게시글입니다.</span>
                             </th:block>
                             <th:block th:if="${!dto.isDeleted and !dto.isBlinded}">
                                 <span th:style="${dto.isNotice ? 'color:#93c5fd;font-weight:700' : 'color:#0f172a;font-weight:600'}" th:text="${dto.title}">제목</span>
@@ -202,53 +203,26 @@
 
         <div class="flex justify-center gap-1" th:if="${responseDTO != null && responseDTO.total > 0}">
             <a th:if="${responseDTO.prev}"
-               th:href="@{/board/list(page=${responseDTO.start - 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types})}"
+               th:href="@{/board/list(page=${responseDTO.start - 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, type=${pageRequestDTO.type}, boardType=${pageRequestDTO.boardType})}"
                class="pag-btn">&lt;</a>
 
             <th:block th:each="num : ${#numbers.sequence(responseDTO.start, responseDTO.end)}">
-                <a th:href="@{/board/list(page=${num}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types})}"
+                <a th:href="@{/board/list(page=${num}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, type=${pageRequestDTO.type}, boardType=${pageRequestDTO.boardType})}"
                    class="pag-btn"
                    th:classappend="${responseDTO.page == num ? 'active' : ''}"
                    th:text="${num}">1</a>
             </th:block>
 
             <a th:if="${responseDTO.next}"
-               th:href="@{/board/list(page=${responseDTO.end + 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, types=${pageRequestDTO.types})}"
+               th:href="@{/board/list(page=${responseDTO.end + 1}, category=${pageRequestDTO.category}, keyword=${pageRequestDTO.keyword}, type=${pageRequestDTO.type}, boardType=${pageRequestDTO.boardType})}"
                class="pag-btn">&gt;</a>
         </div>
 
     </div>
 </main>
 
-<script>
-    function chgCategory(catValue) {
-        document.getElementById('formCategory').value = catValue;
-        document.getElementById('boardActionForm').submit();
-    }
-
-    function chgSort(sortValue) {
-        document.getElementById('formSort').value = sortValue;
-        document.getElementById('boardActionForm').submit();
-    }
-
-    function updatePlaceholder() {
-        const typeSelect = document.getElementById('searchType');
-        const keywordInput = document.getElementById('searchKeyword');
-
-        switch(typeSelect.value) {
-            case 'tc': keywordInput.placeholder = "🔍  제목+내용 검색"; break;
-            case 't':  keywordInput.placeholder = "🔍  제목 검색"; break;
-            case 'c':  keywordInput.placeholder = "🔍  내용 검색"; break;
-            case 'w':  keywordInput.placeholder = "🔍  작성자 검색"; break;
-            default:   keywordInput.placeholder = "🔍  검색어 입력"; break;
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        updatePlaceholder();
-    });
-</script>
-
 <script th:src="@{/gnb.js}"></script>
+
+<script th:src="@{/board.js}"></script>
 </body>
 </html>
