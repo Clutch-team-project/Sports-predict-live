@@ -34,6 +34,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     private final UserRepository userRepository;
     private final BoardReplyLikeRepository boardReplyLikeRepository;
     private final BoardReplyReportRepository boardReplyReportRepository;
+    private final AiModerationService aiModerationService;
 
     private final ModelMapper modelMapper;
 
@@ -51,7 +52,11 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 .replyText(boardReplyDTO.getReplyText())
                 .userId(boardReplyDTO.getUserId())
                 .nickname(nickName)
+                .isBlinded(false)
                 .build();
+
+        BoardReply saveReply = boardReplyRepository.saveAndFlush(reply);
+        aiModerationService.checkAndReplyAsync(saveReply);
 
         return boardReplyRepository.save(reply).getReplyId();
     }

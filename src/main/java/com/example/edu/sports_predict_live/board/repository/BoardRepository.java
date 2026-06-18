@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,4 +21,6 @@ public interface BoardRepository extends JpaRepository<Board, Long>, BoardSearch
     Optional<Board> findByIdWithImages(@Param("boardId") Long boardId);
 
     List<Board> findByIsNoticeTrueOrderByBoardIdDesc();
-}
+
+    @Query
+    List<Board> findTop5ByCreatedAtBetweenAndDeletedAtIsNullAndIsBlindedFalseOrderByViewCountDesc(LocalDateTime start, LocalDateTime end);}

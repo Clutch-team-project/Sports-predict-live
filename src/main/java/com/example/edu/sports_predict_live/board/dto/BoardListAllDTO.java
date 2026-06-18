@@ -17,6 +17,7 @@ public class BoardListAllDTO {
     private Long userId;
     private String loginId;
     private String nickname;
+    private String writerId;
     private String category;
     private String title;
     private int viewCount;

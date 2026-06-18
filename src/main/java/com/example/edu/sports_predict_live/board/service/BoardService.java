@@ -25,6 +25,8 @@ public interface BoardService {
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 
+    List<BoardDTO> findTop5ViewCountToday();
+
     default Board dtoToEntity(BoardDTO boardDTO) {
         Board board = Board.builder()
                 .boardId(boardDTO.getBoardId())

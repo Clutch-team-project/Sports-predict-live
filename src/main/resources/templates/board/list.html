@@ -12,45 +12,56 @@
         .card { background: rgba(255,255,255,0.9); border: 2px solid rgba(59,130,246,0.55); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
         .cat-tab {
-            padding: 6px 18px; font-size: 13px; font-weight: 600;
+            height: 40px; padding: 0 18px; font-size: 14px; font-weight: 600;
             border-radius: 20px; cursor: pointer; transition: all .15s;
             border: 1px solid #cbd5e1; color: #64748b; background: white;
+            box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
         }
         .cat-tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
         .cat-tab:hover:not(.active) { border-color: #2563eb; color: #2563eb; }
 
         .search-input {
-            flex: 1; background: white; border: 1px solid #cbd5e1; border-radius: 8px;
-            padding: 9px 16px; font-size: 13px; color: #1e293b; outline: none;
+            flex: 1; height: 40px; background: white; border: 1px solid #cbd5e1; border-radius: 8px;
+            padding: 0 16px; font-size: 14px; color: #1e293b; outline: none;
             transition: border-color .2s; font-family: 'Noto Sans KR', sans-serif;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06); box-sizing: border-box;
         }
         .search-input::placeholder { color: #94a3b8; }
         .search-input:focus { border-color: #2563eb; }
 
-        .sort-option { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #64748b; cursor: pointer; font-weight: 500; }
+        .btn-search {
+            height: 40px; padding: 0 16px; background: #2563eb; color: #fff;
+            border: 1px solid #2563eb; border-radius: 8px; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: all .15s; white-space: nowrap;
+            font-family: 'Noto Sans KR', sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-search:hover { background: #1d4ed8; border-color: #1d4ed8; }
+
+        .sort-option { display: flex; align-items: center; gap: 5px; font-size: 14px; color: #64748b; cursor: pointer; font-weight: 500; }
         .sort-option.active { color: #2563eb; font-weight: 700; }
         .sort-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; }
         .sort-option.active .sort-dot { background: #2563eb; }
 
         .btn-write {
-            padding: 8px 18px; background: #2563eb; color: #fff;
-            border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
-            cursor: pointer; transition: background .15s; white-space: nowrap;
-            font-family: 'Noto Sans KR', sans-serif;
+            height: 40px; padding: 0 18px; background: #2563eb; color: #fff;
+            border: 1px solid #2563eb; border-radius: 8px; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: all .15s; white-space: nowrap;
+            font-family: 'Noto Sans KR', sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
         }
-        .btn-write:hover { background: #1d4ed8; }
+        .btn-write:hover { background: #1d4ed8; border-color: #1d4ed8; }
 
         .board-table { width: 100%; border-collapse: collapse; }
         .board-table thead tr { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
-        .board-table th { padding: 11px 12px; font-size: 11px; font-weight: 700; color: #64748b; text-align: center; letter-spacing: .05em; }
+        .board-table th { padding: 11px 12px; font-size: 12px; font-weight: 800; color: #475569; text-align: center; letter-spacing: .05em; }
         .board-table th.title-col { text-align: left; }
         .board-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .12s; cursor: pointer; }
         .board-table tbody tr:hover { background: #f8fafc; }
         .board-table tbody tr.notice-row { background: #fefce8; }
         .board-table tbody tr.notice-row:hover { background: #fef9c3; }
-        .board-table td { padding: 13px 12px; font-size: 13px; color: #475569; text-align: center; vertical-align: middle; }
-        .board-table td.title-col { text-align: left; }
+        .board-table td { padding: 13px 12px; font-size: 14px; color: #334155; font-weight: 600; text-align: center; vertical-align: middle; }
+        .board-table td.title-col { text-align: left; color: #0f172a !important; }
 
         .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; }
         .cat-notice  { background: #dbeafe; color: #1d4ed8; }
@@ -69,11 +80,8 @@
 
         main { font-size: 14px; color: #334155; }
         .card { border: 1px solid #cbd5e1; box-shadow: 0 8px 22px rgba(15,23,42,.12); }
-        .cat-tab, .search-input, .sort-option, .btn-write { font-size: 14px; }
-        .board-table th { font-size: 12px; color: #475569; font-weight: 800; }
-        .board-table td { font-size: 14px; color: #334155; font-weight: 600; }
-        .board-table td.title-col { color: #0f172a !important; }
-        .board-table td.title-col > span:first-child { color: #0f172a !important; font-weight: 800 !important; }
+        .board-table td.title-col > span:first-child,
+        .board-table td.title-col .real-title > span:first-child { color: #0f172a !important; font-weight: 800 !important; }
 
         .search-input::placeholder { color: #64748b; }
         [style*="color:#94a3b8"], [style*="color:#cbd5e1"] { color: #64748b !important; }
@@ -83,6 +91,25 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+        .safebot-switch { position: relative; display: inline-block; width: 42px; height: 24px; }
+        .safebot-switch input { opacity: 0; width: 0; height: 0; display: none; }
+        .sb-slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ffffff; border: 1px solid #cbd5e1;
+            transition: 0.3s; border-radius: 24px;
+        }
+        .sb-slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 2px; bottom: 2px; background-color: #2563eb;
+            transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .safebot-switch input:checked + .sb-slider {
+            background-color: #2563eb; border-color: #2563eb;
+        }
+        .safebot-switch input:checked + .sb-slider:before {
+            transform: translateX(18px); background-color: #ffffff;
+        }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -92,18 +119,29 @@
     <div class="h-6"></div>
 
     <div>
-        <div class="flex items-center gap-2 mb-3 flex-wrap">
-            <button class="cat-tab" th:classappend="${pageRequestDTO.category == null or pageRequestDTO.category == ''} ? 'active' : ''" onclick="chgCategory('')">전체</button>
-            <button class="cat-tab" th:classappend="${pageRequestDTO.category == '자유'} ? 'active' : ''" onclick="chgCategory('자유')">자유</button>
-            <button class="cat-tab" th:classappend="${pageRequestDTO.category == '분석'} ? 'active' : ''" onclick="chgCategory('분석')">분석</button>
-            <button class="cat-tab" th:classappend="${pageRequestDTO.category == '응원'} ? 'active' : ''" onclick="chgCategory('응원')">응원</button>
-            <button class="cat-tab" th:classappend="${pageRequestDTO.category == '예측후기'} ? 'active' : ''" onclick="chgCategory('예측후기')">예측후기</button>
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-y-2">
+            <div class="flex items-center gap-2 flex-wrap">
+                <button class="cat-tab" th:classappend="${pageRequestDTO.category == null or pageRequestDTO.category == ''} ? 'active' : ''" onclick="chgCategory('')">전체</button>
+                <button class="cat-tab" th:classappend="${pageRequestDTO.category == '자유'} ? 'active' : ''" onclick="chgCategory('자유')">자유</button>
+                <button class="cat-tab" th:classappend="${pageRequestDTO.category == '분석'} ? 'active' : ''" onclick="chgCategory('분석')">분석</button>
+                <button class="cat-tab" th:classappend="${pageRequestDTO.category == '응원'} ? 'active' : ''" onclick="chgCategory('응원')">응원</button>
+                <button class="cat-tab" th:classappend="${pageRequestDTO.category == '예측후기'} ? 'active' : ''" onclick="chgCategory('예측후기')">예측후기</button>
+            </div>
+
+            <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                <span class="text-sm font-bold" style="color: #64748b;">AI 세이프봇</span>
+                <label class="safebot-switch mb-0">
+                    <input type="checkbox" id="safebotSwitch" checked>
+                    <span class="sb-slider"></span>
+                </label>
+            </div>
         </div>
 
         <form id="boardActionForm" action="/board/list" method="get" class="flex items-center gap-3 mb-4">
             <input type="hidden" name="category" id="formCategory" th:value="${pageRequestDTO.category ?: ''}">
             <input type="hidden" name="sort" id="formSort" th:value="${pageRequestDTO.sort ?: 'latest'}">
             <input type="hidden" name="boardType" th:value="${pageRequestDTO.boardType ?: ''}">
+            <input type="hidden" id="loggedInUserRole" th:value="${currentUserRole}">
 
             <select name="type" id="searchType" onchange="updatePlaceholder()" style="appearance:none; background:white; border:1px solid #cbd5e1; border-radius:8px; padding:9px 12px; font-size:13px; color:#475569; outline:none; cursor:pointer; font-family:'Noto Sans KR',sans-serif;">
                 <option value="tc" th:selected="${pageRequestDTO.type == 'tc'}">제목+내용</option>
@@ -114,7 +152,9 @@
 
             <input type="text" name="keyword" id="searchKeyword" th:value="${pageRequestDTO != null ? pageRequestDTO.keyword : ''}" class="search-input" placeholder="🔍  제목+내용 검색">
 
-            <div class="flex items-center gap-4 flex-shrink-0">
+            <button type="submit" class="btn-search">검색</button>
+
+            <div class="flex items-center gap-4 flex-shrink-0 ml-1">
                 <span class="text-xs text-slate-600 font-bold">정렬:</span>
 
                 <div class="sort-option" th:classappend="${pageRequestDTO.sort == null or pageRequestDTO.sort == 'latest'} ? 'active' : ''" onclick="chgSort('latest')">
@@ -128,8 +168,7 @@
                 </div>
             </div>
 
-            <button type="submit" style="display:none;"></button>
-            <button type="button" class="btn-write" onclick="clickWriteBtn()">+ 글쓰기</button>
+            <button type="button" class="btn-write ml-2" onclick="clickWriteBtn()">+ 글쓰기</button>
         </form>
 
         <div class="card overflow-hidden mb-4">
@@ -149,8 +188,10 @@
                 <tbody>
                 <th:block th:if="${responseDTO != null}">
                     <tr th:each="dto : ${responseDTO.dtoList}"
+                        class="board-item"
+                        th:data-blinded="${dto.isBlinded}"
                         th:classappend="${dto.isNotice ? 'notice-row' : ''}"
-                        th:onclick="|location.href='@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, types=${pageRequestDTO.types}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}'|">
+                        th:onclick="|clickBoardRow('@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}', ${dto.isBlinded}, ${dto.isDeleted})|">
 
                         <td th:if="${dto.isNotice}"><span style="font-size:15px">📌</span></td>
                         <td th:unless="${dto.isNotice}" style="color:#334155" th:text="${dto.boardId}">1</td>
@@ -170,9 +211,17 @@
                             <th:block th:if="${dto.isDeleted}">
                                 <span style="color:#334155;font-style:italic">삭제된 게시글입니다.</span>
                             </th:block>
+
                             <th:block th:if="${dto.isBlinded and !dto.isDeleted}">
-                                <span style="color:#94a3b8 !important; font-weight:400 !important; font-style:italic;">블라인드 처리된 게시글입니다.</span>
+                                <span class="blind-title" style="color:#94a3b8 !important; font-weight:400 !important; font-style:italic;">
+                                    AI 세이프봇이 가린 부적절한 게시물입니다.
+                                </span>
+                                <span class="real-title" style="display:none;">
+                                    <span th:style="${dto.isNotice ? 'color:#93c5fd;font-weight:700' : 'color:#0f172a;font-weight:600'}" th:text="${dto.title}">제목</span>
+                                    <span th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}" style="font-size:13px;margin-left:4px">🖼</span>
+                                </span>
                             </th:block>
+
                             <th:block th:if="${!dto.isDeleted and !dto.isBlinded}">
                                 <span th:style="${dto.isNotice ? 'color:#93c5fd;font-weight:700' : 'color:#0f172a;font-weight:600'}" th:text="${dto.title}">제목</span>
                                 <span th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}" style="font-size:13px;margin-left:4px">🖼</span>
@@ -220,7 +269,6 @@
 
     </div>
 </main>
-
 <script th:src="@{/gnb.js}"></script>
 
 <script th:src="@{/board.js}"></script>
