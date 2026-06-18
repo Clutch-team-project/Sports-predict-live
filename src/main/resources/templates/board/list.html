@@ -141,6 +141,7 @@
             <input type="hidden" name="category" id="formCategory" th:value="${pageRequestDTO.category ?: ''}">
             <input type="hidden" name="sort" id="formSort" th:value="${pageRequestDTO.sort ?: 'latest'}">
             <input type="hidden" name="boardType" th:value="${pageRequestDTO.boardType ?: ''}">
+            <input type="hidden" id="loggedInUserRole" th:value="${currentUserRole}">
 
             <select name="type" id="searchType" onchange="updatePlaceholder()" style="appearance:none; background:white; border:1px solid #cbd5e1; border-radius:8px; padding:9px 12px; font-size:13px; color:#475569; outline:none; cursor:pointer; font-family:'Noto Sans KR',sans-serif;">
                 <option value="tc" th:selected="${pageRequestDTO.type == 'tc'}">제목+내용</option>
