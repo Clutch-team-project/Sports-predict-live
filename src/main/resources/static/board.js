@@ -47,6 +47,57 @@ function updatePlaceholder() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    const safebotSwitch = document.getElementById('safebotSwitch');
+    if(!safebotSwitch) return;
+
+    // 1. 브라우저 저장소에서 상태 읽어오기 (기본값은 ON)
+    const isSafebotOn = localStorage.getItem('safebot') !== 'OFF';
+    safebotSwitch.checked = isSafebotOn;
+    applySafebot(isSafebotOn);
+
+    // 2. 토글 클릭 이벤트
+    safebotSwitch.addEventListener('change', function() {
+        const isOn = this.checked;
+        localStorage.setItem('safebot', isOn ? 'ON' : 'OFF'); // 상태 기억
+        applySafebot(isOn);
+    });
+
+    // 3. 상태에 따라 제목 전환
+    function applySafebot(isOn) {
+        document.querySelectorAll('.board-item').forEach(item => {
+            const isBlinded = item.getAttribute('data-blinded') === 'true';
+
+            if (isBlinded) {
+                const blindTitle = item.querySelector('.blind-title');
+                const realTitle = item.querySelector('.real-title');
+
+                if (isOn) {
+                    if(blindTitle) blindTitle.style.display = 'inline';
+                    if(realTitle) realTitle.style.display = 'none';
+                } else {
+                    if(blindTitle) blindTitle.style.display = 'none';
+                    if(realTitle) realTitle.style.display = 'inline';
+                }
+            }
+        });
+    }
+});
+
+function clickBoardRow(url, isBlinded, isDeleted) {
+    if (isDeleted) return;
+
+    if (isBlinded) {
+        if (localStorage.getItem('safebot') === 'OFF') {
+            location.href = url;
+        } else {
+            alert('AI 세이프봇이 작동 중입니다.\n우측 상단의 스위치를 끄면 내용을 볼 수 있습니다.');
+        }
+    } else {
+        location.href = url;
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     updatePlaceholder();
 });
