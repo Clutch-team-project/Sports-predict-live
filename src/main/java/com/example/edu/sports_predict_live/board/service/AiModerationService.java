@@ -1,6 +1,8 @@
 package com.example.edu.sports_predict_live.board.service;
 
 import com.example.edu.sports_predict_live.board.entity.Board;
+import com.example.edu.sports_predict_live.board.entity.BoardReply;
+import com.example.edu.sports_predict_live.board.repository.BoardReplyRepository;
 import com.example.edu.sports_predict_live.board.repository.BoardRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +28,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AiModerationService {
     private final BoardRepository boardRepository;
+    private final BoardReplyRepository boardReplyRepository;
     @Value("${gemini.api.key}")
     private String apiKey;
 
@@ -97,6 +100,22 @@ public class AiModerationService {
                 board.changeBlind(true);
                 boardRepository.save(board);
             }
+        }
+    }
+
+    @Async
+    @Transactional
+    public void checkAndReplyAsync(BoardReply boardReply) {
+        try {
+            boolean isBad = isBadContent(boardReply.getReplyText());
+
+            if(isBad) {
+                log.warn("부적절한 댓글 감지. 블라인드 처리합니다. ID: {}", boardReply.getReplyId());
+                boardReply.changeBlind(true);
+                boardReplyRepository.save(boardReply);
+            }
+        } catch (Exception e) {
+            log.error("댓글 ai 검사중 에러 발생", e);
         }
     }
 }

@@ -8,7 +8,6 @@ const token = localStorage.getItem('accessToken');
 // 2. LIST PAGE LOGIC (리스트 페이지 전용)
 // ==========================================
 function clickWriteBtn() {
-    // 외부 JS에서는 타임리프([[${..}]])가 작동하지 않으므로 URL 파라미터에서 추출합니다.
     const urlParams = new URLSearchParams(window.location.search);
     const currentBoardType = urlParams.get('boardType') || '';
 
@@ -36,7 +35,7 @@ function chgSort(sortValue) {
 function updatePlaceholder() {
     const typeSelect = document.getElementById('searchType');
     const keywordInput = document.getElementById('searchKeyword');
-    if (!typeSelect || !keywordInput) return; // 화면에 검색창이 없으면 작동 중지
+    if (!typeSelect || !keywordInput) return;
 
     switch(typeSelect.value) {
         case 'tc': keywordInput.placeholder = "🔍  제목+내용 검색"; break;
@@ -51,19 +50,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const safebotSwitch = document.getElementById('safebotSwitch');
     if(!safebotSwitch) return;
 
-    // 1. 브라우저 저장소에서 상태 읽어오기 (기본값은 ON)
     const isSafebotOn = localStorage.getItem('safebot') !== 'OFF';
     safebotSwitch.checked = isSafebotOn;
     applySafebot(isSafebotOn);
 
-    // 2. 토글 클릭 이벤트
     safebotSwitch.addEventListener('change', function() {
         const isOn = this.checked;
-        localStorage.setItem('safebot', isOn ? 'ON' : 'OFF'); // 상태 기억
+        localStorage.setItem('safebot', isOn ? 'ON' : 'OFF');
         applySafebot(isOn);
     });
 
-    // 3. 상태에 따라 제목 전환
     function applySafebot(isOn) {
         document.querySelectorAll('.board-item').forEach(item => {
             const isBlinded = item.getAttribute('data-blinded') === 'true';
@@ -87,8 +83,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function clickBoardRow(url, isBlinded, isDeleted) {
     if (isDeleted) return;
 
+    const loggedInUserRole = document.getElementById('loggedInUserRole')?.value || '';
+
     if (isBlinded) {
-        if (localStorage.getItem('safebot') === 'OFF') {
+        if (loggedInUserRole === 'ROLE_ADMIN' || localStorage.getItem('safebot') === 'OFF') {
             location.href = url;
         } else {
             alert('AI 세이프봇이 작동 중입니다.\n우측 상단의 스위치를 끄면 내용을 볼 수 있습니다.');
@@ -107,7 +105,7 @@ document.addEventListener("DOMContentLoaded", function() {
 // 3. MODIFY PAGE LOGIC (수정 페이지 전용)
 // ==========================================
 const modifyForm = document.getElementById('modifyForm');
-if (modifyForm) { // 화면에 modifyForm이 있을 때만 아래 로직 실행
+if (modifyForm) {
     if (!token) {
         alert('로그인 후 이용 가능합니다.');
         location.href = '/login';
@@ -120,7 +118,6 @@ if (modifyForm) { // 화면에 modifyForm이 있을 때만 아래 로직 실행
         const category = document.getElementById('category').value;
         const title = document.getElementById('title').value.trim();
         const content = document.getElementById('content').value.trim();
-        const boardType = document.getElementById('boardType').value;
 
         if(!title) { alert('제목을 입력해주세요.'); return; }
         if(!content) { alert('내용을 입력해주세요.'); return; }
@@ -164,7 +161,7 @@ if (modifyForm) { // 화면에 modifyForm이 있을 때만 아래 로직 실행
 // 4. REGISTER PAGE LOGIC (등록 페이지 전용)
 // ==========================================
 const registerForm = document.getElementById('registerForm');
-if (registerForm) { // 화면에 registerForm이 있을 때만 아래 로직 실행
+if (registerForm) {
     if (!token) {
         if (confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) {
             location.href = '/login';
@@ -194,10 +191,7 @@ if (registerForm) { // 화면에 registerForm이 있을 때만 아래 로직 실
 
         window.authFetch('/board/register', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-                // authFetch에서 자동으로 토큰을 넣어주므로 명시할 필요 없음
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formData.toString()
         })
             .then(response => {
@@ -234,20 +228,16 @@ if (registerForm) { // 화면에 registerForm이 있을 때만 아래 로직 실
 // ==========================================
 // 5. READ PAGE LOGIC (조회 페이지 전용)
 // ==========================================
-
 function removePost(button) {
     const boardId = button.getAttribute("data-id");
-    const boardType = button.getAttribute("data-boardtype"); // HTML에서 pageRequestDTO.boardType 값을 읽어옴
+    const boardType = button.getAttribute("data-boardtype");
 
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
     window.authFetch('/board/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-            boardId: boardId,
-            boardType: boardType
-        }).toString()
+        body: new URLSearchParams({ boardId: boardId, boardType: boardType }).toString()
     })
         .then(async res => {
             if (res.ok) {
@@ -288,14 +278,13 @@ function toggleBlind() {
     });
 }
 
-// 댓글 페이징 및 정렬 전역 상태
 let currentReplyPage = 1;
 let currentReplySort = 'like';
 
 function printReplies(page = 1) {
     const boardIdEl = document.getElementById('currentBoardId');
     const replyList = document.getElementById('replyList');
-    if (!boardIdEl || !replyList) return; // 읽기 페이지가 아니면 중지
+    if (!boardIdEl || !replyList) return;
 
     const boardId = boardIdEl.value;
     const loggedInUserId = document.getElementById('loggedInUserId')?.value;
@@ -338,8 +327,16 @@ function printReplies(page = 1) {
             if (data.dtoList && data.dtoList.length > 0) {
                 data.dtoList.forEach(reply => {
                     let btnStr = '';
-                    let replyContentStr = reply.replyText;
-                    if (reply.blinded) replyContentStr = `<span style="color:#94a3b8; font-style:italic;">블라인드 처리된 댓글입니다.</span>`;
+
+                    let replyContentStr = '';
+                    if (reply.blinded) {
+                        replyContentStr = `
+                            <p class="blind-text text-slate-400 italic">AI 세이프봇이 가린 부적절한 댓글입니다.</p>
+                            <p class="real-text text-slate-600 break-all leading-relaxed" style="display:none;">${reply.replyText}</p>
+                        `;
+                    } else {
+                        replyContentStr = `<p class="real-text text-slate-600 break-all leading-relaxed">${reply.replyText}</p>`;
+                    }
 
                     if (!reply.blinded) {
                         const likeColor = reply.liked ? 'text-blue-600 font-bold' : 'text-slate-500';
@@ -366,7 +363,7 @@ function printReplies(page = 1) {
                     }
 
                     listStr += `
-                        <li class="py-3 border-b border-slate-100">
+                        <li class="reply-item py-3 border-b border-slate-100" data-blinded="${reply.blinded}">
                             <div class="flex justify-between items-center mb-1">
                                 <div>
                                     <span class="font-bold text-sm text-slate-800">${reply.nickname || '익명'}</span>
@@ -374,7 +371,7 @@ function printReplies(page = 1) {
                                 </div>
                                 <div>${btnStr}</div>
                             </div>
-                            <div class="text-sm text-slate-600 break-all leading-relaxed">${replyContentStr}</div>
+                            <div class="text-sm">${replyContentStr}</div>
                         </li>
                     `;
                 });
@@ -383,6 +380,10 @@ function printReplies(page = 1) {
             }
 
             replyList.innerHTML = listStr;
+
+            if (typeof applyReplySafebot === 'function') {
+                applyReplySafebot();
+            }
 
             let pagingStr = '';
             if (data.prev) pagingStr += `<li class="cursor-pointer px-3 py-1 bg-slate-50 border border-slate-200 rounded text-slate-600 hover:bg-blue-50" onclick="printReplies(${data.start - 1})">이전</li>`;
@@ -486,13 +487,11 @@ function chgReplySort(sortType) {
     printReplies(1);
 }
 
-// 📌 DOM 로딩이 끝난 후, 버튼 이벤트 리스너 부착 및 최초 댓글 로딩
 document.addEventListener("DOMContentLoaded", function() {
     const currentBoardIdEl = document.getElementById('currentBoardId');
     if (currentBoardIdEl) {
         const boardId = currentBoardIdEl.value;
 
-        // 게시글 좋아요 이벤트
         const btnLike = document.getElementById('btnLike');
         if (btnLike) {
             btnLike.addEventListener('click', function() {
@@ -524,7 +523,6 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        // 게시글 신고 이벤트
         const btnReport = document.getElementById('btnReport');
         if (btnReport) {
             btnReport.addEventListener('click', function() {
@@ -547,7 +545,6 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        // 댓글 등록 이벤트
         const btnRegisterReply = document.getElementById('btnRegisterReply');
         const replyInput = document.getElementById('replyInput');
         if (btnRegisterReply && replyInput) {
@@ -578,7 +575,44 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        // 초기 댓글 로드
         printReplies(1);
     }
 });
+
+window.safebotStatus = localStorage.getItem('safebot') !== 'OFF' ? 'ON' : 'OFF';
+
+document.addEventListener('DOMContentLoaded', function() {
+    const replySwitch = document.getElementById('replySafebotSwitch');
+    if (!replySwitch) return;
+
+    // 1. 초기 로드 시 브라우저에 저장된 상태 반영
+    replySwitch.checked = (window.safebotStatus === 'ON');
+
+    // 2. 스위치를 켜고 끌 때마다 상태를 변경하고 화면을 새로 정렬
+    replySwitch.addEventListener('change', function() {
+        window.safebotStatus = this.checked ? 'ON' : 'OFF';
+        localStorage.setItem('safebot', window.safebotStatus);
+        applyReplySafebot(); // 화면 가림막 업데이트
+    });
+});
+
+function applyReplySafebot() {
+    const isOn = (window.safebotStatus === 'ON');
+
+    document.querySelectorAll('.reply-item').forEach(item => {
+        const isBlinded = item.getAttribute('data-blinded') === 'true';
+
+        if (isBlinded) {
+            const blindText = item.querySelector('.blind-text');
+            const realText = item.querySelector('.real-text');
+
+            if (isOn) {
+                if (blindText) blindText.style.display = 'block';
+                if (realText) realText.style.display = 'none';
+            } else {
+                if (blindText) blindText.style.display = 'none';
+                if (realText) realText.style.display = 'block';
+            }
+        }
+    });
+}

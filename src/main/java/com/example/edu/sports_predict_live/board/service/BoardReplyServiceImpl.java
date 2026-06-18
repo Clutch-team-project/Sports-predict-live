@@ -52,7 +52,11 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 .replyText(boardReplyDTO.getReplyText())
                 .userId(boardReplyDTO.getUserId())
                 .nickname(nickName)
+                .isBlinded(false)
                 .build();
+
+        BoardReply saveReply = boardReplyRepository.saveAndFlush(reply);
+        aiModerationService.checkAndReplyAsync(saveReply);
 
         return boardReplyRepository.save(reply).getReplyId();
     }
