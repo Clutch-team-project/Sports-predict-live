@@ -60,6 +60,12 @@ public class Match {
     @Column(name = "current_pitcher", length = 50)
     private String currentPitcher;
 
+    @Column(name = "starting_pitcher_away", length = 50)
+    private String startingPitcherAway;
+
+    @Column(name = "starting_pitcher_home", length = 50)
+    private String startingPitcherHome;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

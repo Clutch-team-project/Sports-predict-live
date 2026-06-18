@@ -155,21 +155,16 @@
         loadMatches();
     });
 
-    //  경기 상태 렌더링
+    //  경기 상태 렌더링 (투수 정보 제외 — 팀 이름 아래에 별도 표시)
     function renderStatus(match) {
         if (match.status === 'finished') {
-            const pitcherHtml = (match.winningPitcher || match.losingPitcher) ? `
-                <div class="flex items-center justify-center gap-2 mt-1 text-[10px]">
-                    ${match.winningPitcher ? `<span class="text-blue-500 font-bold">승 ${match.winningPitcher}</span>` : ''}
-                    ${match.winningPitcher && match.losingPitcher ? `<span class="text-slate-300">|</span>` : ''}
-                    ${match.losingPitcher  ? `<span class="text-red-400 font-bold">패 ${match.losingPitcher}</span>` : ''}
-                </div>` : '';
-            return `<div class="w-1/3 text-center font-black text-slate-700 text-sm">
-                <span class="text-xl font-black">${match.awayScore}</span>
-                <span class="text-slate-400 mx-1">:</span>
-                <span class="text-xl font-black">${match.homeScore}</span>
-                <div class="text-[10px] text-slate-400 mt-0.5">종료</div>
-                ${pitcherHtml}
+            return `<div class="w-1/3 text-center">
+                <div class="text-[10px] text-slate-400 font-bold">종료</div>
+                <div class="flex items-center justify-center gap-1 mt-0.5">
+                    <span class="text-xl font-black text-slate-800">${match.awayScore}</span>
+                    <span class="text-slate-300 text-sm">:</span>
+                    <span class="text-xl font-black text-slate-800">${match.homeScore}</span>
+                </div>
             </div>`;
         }
         if (match.status === 'in_progress') {
@@ -177,8 +172,12 @@
                 ? `<div class="text-[10px] text-slate-400 mt-0.5">🔵 ${match.currentPitcher}</div>`
                 : '';
             return `<div class="w-1/3 text-center">
-                <div class="text-emerald-600 font-black animate-pulse text-xs">LIVE</div>
-                <div class="font-black text-sm mt-0.5">${match.awayScore} : ${match.homeScore}</div>
+                <div class="text-red-500 font-black animate-pulse text-[10px]">● LIVE</div>
+                <div class="flex items-center justify-center gap-1 mt-0.5">
+                    <span class="text-xl font-black text-red-500">${match.awayScore}</span>
+                    <span class="text-slate-300 text-sm">:</span>
+                    <span class="text-xl font-black text-red-500">${match.homeScore}</span>
+                </div>
                 ${pitcherHtml}
             </div>`;
         }
@@ -186,7 +185,25 @@
             return `<div class="w-1/3 text-center"><span class="text-red-600 px-3 py-1 rounded-xl text-xs font-black bg-red-50 border border-red-200">취소</span></div>`;
         }
         // scheduled
-        return `<div class="w-1/3 text-center font-black text-slate-500 text-sm">${match.scheduledAt}</div>`;
+        return `<div class="w-1/3 text-center">
+            <div class="text-sm font-black text-slate-500">${match.scheduledAt}</div>
+            <div class="text-[10px] text-slate-400 font-bold">VS</div>
+        </div>`;
+    }
+
+    function pitcherHtml(match, isAway) {
+        if (match.status === 'finished') {
+            const awayWon = match.awayScore > match.homeScore;
+            const teamWon = isAway ? awayWon : !awayWon;
+            if (teamWon && match.winningPitcher)
+                return `<div class="text-[10px] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
+            if (!teamWon && match.losingPitcher)
+                return `<div class="text-[10px] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
+        } else if (match.status === 'scheduled' || match.status === 'in_progress') {
+            const name = isAway ? match.startingPitcherAway : match.startingPitcherHome;
+            if (name) return `<div class="text-[10px] text-gray-500 mt-0.5">선 ${name}</div>`;
+        }
+        return '';
     }
 
     function renderActionBtn(match) {
@@ -329,15 +346,21 @@
             container.innerHTML = matches.map(m => `
                 <div class="bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors">
                     <div class="flex items-center justify-between p-4">
-                        <div class="w-20 flex items-center gap-2">
+                        <div class="w-20 shrink-0">
                             <span class="font-black text-slate-500 text-sm">${m.scheduledAt}</span>
                         </div>
-                        <div class="flex-grow flex justify-around items-center px-4 text-slate-700 text-sm">
-                            <div class="w-1/3 text-right font-bold text-slate-800">${m.awayTeamName}</div>
+                        <div class="flex-grow flex justify-around items-center px-4">
+                            <div class="w-1/3 text-right">
+                                <div class="font-bold text-slate-800 text-sm">${m.awayTeamName}</div>
+                                ${pitcherHtml(m, true)}
+                            </div>
                             ${renderStatus(m)}
-                            <div class="w-1/3 text-left font-bold text-slate-800">${m.homeTeamName}</div>
+                            <div class="w-1/3 text-left">
+                                <div class="font-bold text-slate-800 text-sm">${m.homeTeamName}</div>
+                                ${pitcherHtml(m, false)}
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2 ml-2">
+                        <div class="flex items-center gap-2 ml-2 shrink-0">
                             <span class="text-slate-400 text-xs">${m.venue ?? ''}</span>
                             ${renderActionBtn(m)}
                         </div>

@@ -241,6 +241,23 @@
         container.innerHTML = html;
     }
 
+    // ── 야구 팀별 투수 HTML ──────────────────────────
+    function pitcherLabel(m, isAway) {
+        if (m.sport !== 'baseball') return '';
+        if (m.status === 'finished') {
+            const awayWon = m.awayScore > m.homeScore;
+            const teamWon = isAway ? awayWon : !awayWon;
+            if (teamWon && m.winningPitcher)
+                return `<div class="text-[10px] text-blue-500 font-bold mt-0.5">승 ${m.winningPitcher}</div>`;
+            if (!teamWon && m.losingPitcher)
+                return `<div class="text-[10px] text-red-400 font-bold mt-0.5">패 ${m.losingPitcher}</div>`;
+        } else if (m.status === 'scheduled' || m.status === 'in_progress') {
+            const name = isAway ? m.startingPitcherAway : m.startingPitcherHome;
+            if (name) return `<div class="text-[10px] text-gray-500 mt-0.5">선 ${name}</div>`;
+        }
+        return '';
+    }
+
     // ── 경기 카드 HTML ─────────────────────────────────────────
     function matchCardHtml(m) {
         const predId  = getPredId(m);
@@ -248,15 +265,11 @@
         const isDone  = m.status === 'finished';
         const homeVal = m.sport === 'lol' ? m.homeWins : m.homeScore;
         const awayVal = m.sport === 'lol' ? m.awayWins : m.awayScore;
-
         const isCancelled = m.status === 'cancelled';
 
         let centerHtml;
         if (isCancelled) {
-            centerHtml = `
-                <div class="flex flex-col items-center gap-0.5">
-                    <span class="text-xs font-black text-red-600 px-2.5 py-1 rounded-xl bg-red-50 border border-red-200">취소</span>
-                </div>`;
+            centerHtml = `<span class="text-xs font-black text-red-600 px-2.5 py-1 rounded-xl bg-red-50 border border-red-200">취소</span>`;
         } else if (isLive || isDone) {
             const color = isLive ? 'text-red-500' : 'text-slate-800';
             const badge = isLive
@@ -265,7 +278,7 @@
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     ${badge}
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
                         <span class="text-xl font-black ${color}">${awayVal}</span>
                         <span class="text-slate-300 text-sm">:</span>
                         <span class="text-xl font-black ${color}">${homeVal}</span>
@@ -279,17 +292,33 @@
                 </div>`;
         }
 
+        // 진행 중 야구: 현재 투수 표시 (센터 하단)
+        const livePitcherHtml = (m.sport === 'baseball' && isLive && m.currentPitcher)
+            ? `<div class="text-[10px] text-slate-400 mt-0.5">🔵 ${m.currentPitcher}</div>`
+            : '';
+
         return `
-        <div class="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div class="flex items-center px-5 py-3 gap-2">
-                <div class="flex-1 flex flex-col items-start min-w-0">
-                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</span>
-                    <span class="font-black text-slate-800 text-sm truncate">${m.awayTeamName}</span>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl hover:border-slate-300 transition-colors shadow-sm overflow-hidden">
+            <div class="flex items-center px-4 py-3 gap-2">
+                <!-- 종목·시간 -->
+                <div class="w-20 shrink-0">
+                    <div class="text-[10px] font-bold text-slate-400">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</div>
+                    <div class="text-sm font-black text-slate-500 mt-0.5">${m.scheduledAt || ''}</div>
                 </div>
-                <div class="flex-shrink-0 w-28 flex justify-center">${centerHtml}</div>
-                <div class="flex-1 flex flex-col items-end min-w-0">
-                    <span class="text-[10px] font-bold text-transparent mb-0.5">.</span>
-                    <span class="font-black text-slate-800 text-sm truncate">${m.homeTeamName}</span>
+                <!-- 원정·스코어·홈 -->
+                <div class="flex-1 flex items-center justify-around">
+                    <div class="w-1/3 text-right">
+                        <div class="font-black text-slate-800 text-sm truncate">${m.awayTeamName}</div>
+                        ${pitcherLabel(m, true)}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-center">
+                        ${centerHtml}
+                        ${livePitcherHtml}
+                    </div>
+                    <div class="w-1/3 text-left">
+                        <div class="font-black text-slate-800 text-sm truncate">${m.homeTeamName}</div>
+                        ${pitcherLabel(m, false)}
+                    </div>
                 </div>
             </div>
             <div class="border-t border-slate-100" id="pred-${predId}"></div>
