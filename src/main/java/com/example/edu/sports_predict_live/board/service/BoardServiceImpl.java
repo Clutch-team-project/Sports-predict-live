@@ -22,9 +22,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -223,9 +225,17 @@ public class BoardServiceImpl implements BoardService{
 
         boardRepository.save(board);
     }
-    // 메인홈 인기글 5개 출력
+    // 메인홈 일별 인기글 5개 출력
+
     @Override
-    public List<BoardListAllDTO> getPopularPosts() {
-        return boardRepository.findPopularPosts(5);
+    public List<BoardDTO> findTop5ViewCountToday() {
+        LocalDateTime startOfToday = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfToday = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+        List<Board> result = boardRepository.findTop5ByCreatedAtBetweenAndDeletedAtIsNullAndIsBlindedFalseOrderByViewCountDesc(startOfToday, endOfToday);
+
+        return result.stream()
+                .map(board -> entityToDTO(board))
+                .collect(Collectors.toList());
     }
 }
