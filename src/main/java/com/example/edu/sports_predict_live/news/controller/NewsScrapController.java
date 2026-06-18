@@ -68,4 +68,5 @@ public class NewsScrapController {
     ) {
         return newsScrapService.getMyScrapNews(userId, order, page);
     }
+    //커밋
 }
