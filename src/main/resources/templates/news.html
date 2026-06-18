@@ -769,6 +769,18 @@
     window.onload = async function () {
         await loadMyScraps();
         await loadNews();
+
+        const isDetail = new URLSearchParams(location.search).get("detail");
+
+        if (isDetail === "true") {
+            showNewsDetail(
+                sessionStorage.getItem("detailNewsTitle") || "",
+                sessionStorage.getItem("detailNewsDescription") || "",
+                sessionStorage.getItem("detailNewsLink") || "",
+                sessionStorage.getItem("detailNewsPubDate") || "",
+                sessionStorage.getItem("detailNewsThumbnailUrl") || ""
+            );
+        }
     };
 </script>
 

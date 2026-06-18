@@ -216,14 +216,21 @@
         <div class="grid grid-cols-12 gap-4">
 
             <!-- 뉴스 큰화면 -->
-            <div id="boxNewsMain" onclick="clickBox('news_main')"
+            <div id="newsMain"
                  class="col-span-12 md:col-span-6 border border-slate-300 bg-white p-5 flex flex-col justify-center items-center text-sm font-bold cursor-pointer hover:bg-slate-50 min-h-[280px] relative shadow-md rounded-2xl">
                 <div class="w-full h-full flex flex-col justify-between text-left">
-                    <div class="h-40 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-bold mb-2.5">
+                    <div
+                            id="homePopularNewsImage"
+                            class="h-40 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center overflow-hidden text-slate-400 text-sm font-bold">
                         [대표 경기장 전경 썸네일]
                     </div>
-                    <h4 class="font-black text-sm md:text-base text-slate-800 line-clamp-1">[기획] 한화 이글스 선발 투수진 방어율 추이와
-                        AI 분석...</h4>
+
+                    <h4
+                            id="homePopularNewsTitle"
+                            class="font-black text-sm md:text-base text-slate-800 line-clamp-1">
+                        인기 뉴스 불러오는 중...
+                    </h4>
+
                 </div>
             </div>
 
@@ -838,6 +845,63 @@ public BoardResponseDto(Board board) {
             container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">랭킹을 불러올 수 없습니다.</div>';
         }
     }
+
+    async function loadHomePopularNews() {
+        const response = await fetch("/news/search-filter?sort=popular&page=1");
+        const data = await response.json();
+
+        if (!data.items || data.items.length === 0) {
+            return;
+        }
+
+        const topItems = data.items.slice(0, 5);
+        const news = topItems[Math.floor(Math.random() * topItems.length)];
+
+        const title = news.title.replace(/<[^>]*>/g, "");
+        const description = news.description.replace(/<[^>]*>/g, "");
+        const thumbnailUrl = news.thumbnailUrl;
+        const link = news.originallink || news.link;
+        const pubDate = news.pubDate || "";
+
+        document.getElementById("homePopularNewsTitle").innerText = title;
+
+        const imageBox = document.getElementById("homePopularNewsImage");
+
+        if (thumbnailUrl) {
+            imageBox.innerHTML = `
+            <img
+                src="${thumbnailUrl}"
+                class="w-full h-full object-cover"
+                alt="인기 뉴스 이미지">
+        `;
+        } else {
+            imageBox.innerHTML = "[대표 경기장 전경 썸네일]";
+        }
+
+        document.getElementById("newsMain").onclick = function () {
+            sessionStorage.setItem("detailNewsTitle", title);
+            sessionStorage.setItem("detailNewsDescription", description);
+            sessionStorage.setItem("detailNewsLink", link);
+            sessionStorage.setItem("detailNewsPubDate", pubDate);
+            sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl || "");
+
+            location.href = "/news?detail=true";
+        };
+    }
+
+    window.addEventListener("load", loadHomePopularNews);
+
+    newsMain.onclick = function () {
+        console.log("홈 인기뉴스 클릭됨");
+
+        sessionStorage.setItem("detailNewsTitle", title);
+        sessionStorage.setItem("detailNewsDescription", description);
+        sessionStorage.setItem("detailNewsLink", link);
+        sessionStorage.setItem("detailNewsPubDate", pubDate);
+        sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl || "");
+
+        location.href = "/news?detail=true";
+    };
 
     // 페이지 로드 시 실행
     document.addEventListener('DOMContentLoaded', () => {
