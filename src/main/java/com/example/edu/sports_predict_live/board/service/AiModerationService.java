@@ -36,37 +36,51 @@ public class AiModerationService {
 
     public boolean isBadContent(String text) {
         String prompt = "너는 스포츠 커뮤니티의 클린봇이야. 다음 텍스트를 분석해서 심한 욕설, 타 팀 비하, 혐오 표현, 분란 조장이 포함되어 있다면 오직 'true'를, 정상적인 글이라면 오직 'false'만 대답해. 부연 설명은 절대 하지마.\n\n분석할 텍스트: " + text;
-        try {
-            Map<String, Object> part = new HashMap<>();
-            part.put("text", prompt);
+        int maxRetries = 3;
 
-            Map<String, Object> content = new HashMap<>();
-            content.put("parts", List.of(part));
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                Map<String, Object> part = new HashMap<>();
+                part.put("text", prompt);
 
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("contents", List.of(content));
+                Map<String, Object> content = new HashMap<>();
+                content.put("parts", List.of(part));
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("contents", List.of(content));
 
-            RestTemplate restTemplate = new RestTemplate();
-            String requestUrl = apiUrl + "?key=" + apiKey;
-            ResponseEntity<String> response = restTemplate.postForEntity(requestUrl, requestEntity, String.class);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
-            String aiResponse = rootNode.path("candidates").get(0)
-                    .path("content").path("parts").get(0)
-                    .path("text").asText().trim().toLowerCase();
+                RestTemplate restTemplate = new RestTemplate();
+                String requestUrl = apiUrl + "?key=" + apiKey;
+                ResponseEntity<String> response = restTemplate.postForEntity(requestUrl, requestEntity, String.class);
 
-            log.info("🤖 AI 검사 결과 (원본 텍스트 일부: {}...): {}", text.substring(0, Math.min(text.length(), 10)), aiResponse);
+                JsonNode rootNode = objectMapper.readTree(response.getBody());
+                String aiResponse = rootNode.path("candidates").get(0)
+                        .path("content").path("parts").get(0)
+                        .path("text").asText().trim().toLowerCase();
+                log.info("AI 검사 결과 (원본 텍스트 일부: {}...): {}", text.substring(0, Math.min(text.length(), 10)), aiResponse);
 
-            return aiResponse.contains("true");
-
-        } catch (Exception e) {
-            log.error("AI 검사 중 서버 통신 오류 발생", e);
-            return false;
+                return aiResponse.contains("true");
+            } catch (org.springframework.web.client.HttpServerErrorException e) {
+                log.warn("AI 서버 통신 지연 (재시도 {}/{}): {}", attempt, maxRetries, e.getMessage());
+                if (attempt == maxRetries) {
+                    log.error("3회 시도 모두 실패. 필터링을 건너뜁니다.");
+                    return false;
+                }
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            } catch (Exception e) {
+                log.error("AI 검사 중 오류 발생", e);
+                return false;
+            }
         }
+        return false;
     }
 
     @Async
