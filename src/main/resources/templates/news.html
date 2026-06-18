@@ -221,25 +221,6 @@
         }
         .btn-back:hover { border-color: #2563eb; color: #2563eb; }
 
-        /* 페이지 인디케이터 */
-        .page-indicator {
-            position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 6px;
-            background: rgba(255,255,255,0.92);
-            padding: 8px 16px; border-radius: 20px;
-            border: 1px solid #cbd5e1;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        .dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: #cbd5e1; cursor: pointer;
-            transition: all 0.2s;
-        }
-        .dot.active { background: #2563eb; width: 20px; border-radius: 4px; }
-
         .page-label {
             font-size: 10px; color: #2563eb;
             font-weight: 700; letter-spacing: 0.1em;
@@ -326,7 +307,7 @@
                     <option value="LOL">LOL</option>
                 </select>
 
-                <select id="teamFilter" class="dropdown-btn" onchange="loadNews()">
+                <select id="teamFilter" class="dropdown-btn" onchange="changeTeamFilter()">
                     <option value="">팀별</option>
                 </select>
             </div>
@@ -357,6 +338,14 @@
                 <div class="col-divider"></div>
                 <div class="flex-1" id="rightNewsList"></div>
             </div>
+        </div>
+        <div class="flex justify-center mt-5">
+            <button
+                    id="loadMoreBtn"
+                    class="bg-white border border-blue-200 text-blue-600 font-bold px-8 py-2 rounded-lg hover:bg-blue-50"
+                    onclick="loadMoreNews()">
+                더보기
+            </button>
         </div>
     </div>
 
@@ -405,17 +394,13 @@
 
 </main>
 
-<!-- 페이지 인디케이터 -->
-<div class="page-indicator">
-    <div class="dot active" onclick="goPage('page-01')" title="뉴스 목록"></div>
-    <div class="dot" onclick="goPage('page-02')" title="뉴스 상세"></div>
-</div>
-
 <script>
     let currentSort = "latest";
+    let currentPage = 1;
 
     function changeSort(sortType) {
         currentSort = sortType;
+        currentPage = 1;
 
         document.querySelectorAll(".sort-option").forEach(option => {
             option.classList.remove("active");
@@ -423,7 +408,8 @@
 
         document.getElementById(`sort-${sortType}`).classList.add("active");
 
-        loadNews();
+        updateScrapFilterUI();
+        loadNews(false);
     }
 
     function goPage(id) {
@@ -483,10 +469,16 @@
             teamFilter.appendChild(option);
         });
 
-        loadNews();
+        currentPage = 1;
+        loadNews(false);
     }
 
-    async function loadNews() {
+    function changeTeamFilter() {
+        currentPage = 1;
+        loadNews(false);
+    }
+
+    async function loadNews(append = false) {
         const sport = document.getElementById("sportFilter")?.value || "";
         const team = document.getElementById("teamFilter")?.value || "";
 
@@ -506,6 +498,10 @@
 
             url = "/news-scrap/my-news";
             params.append("userId", userId);
+            params.append("page", currentPage);
+
+            const scrapOrder = document.getElementById("sportFilter").value || "latest";
+            params.append("order", scrapOrder);
         } else {
             if (sport !== "") {
                 params.append("sport", sport);
@@ -516,6 +512,7 @@
             }
 
             params.append("sort", currentSort);
+            params.append("page", currentPage);
         }
 
         if (params.toString() !== "") {
@@ -549,8 +546,10 @@
         const leftNewsList = document.getElementById("leftNewsList");
         const rightNewsList = document.getElementById("rightNewsList");
 
-        leftNewsList.innerHTML = "";
-        rightNewsList.innerHTML = "";
+        if (!append) {
+            leftNewsList.innerHTML = "";
+            rightNewsList.innerHTML = "";
+        }
 
         items.forEach((item, index) => {
             const title = item.title.replace(/<[^>]*>/g, "");
@@ -588,6 +587,7 @@
                 onclick="event.stopPropagation(); toggleScrap(${newsId})">
                 ${scrapedNews.has(Number(newsId)) ? "★ 스크랩" : "☆ 스크랩"}
         </button>
+
     ` : ""}
         </div>
     </div>
@@ -597,6 +597,16 @@
                 leftNewsList.innerHTML += newsCard;
             } else {
                 rightNewsList.innerHTML += newsCard;
+            }
+
+            const loadMoreBtn = document.getElementById("loadMoreBtn");
+
+            if (loadMoreBtn) {
+                if (currentSort === "scrap") {
+                    loadMoreBtn.style.display = items.length >= 10 ? "block" : "none";
+                } else {
+                    loadMoreBtn.style.display = "block";
+                }
             }
         });
 
@@ -676,11 +686,6 @@
             return;
         }
 
-        if (!scrapedNews.has(newsId) && scrapedNews.size >= 10) {
-            alert("스크랩은 최대 10개까지 가능합니다.");
-            return;
-        }
-
         // 신규 스크랩
         await fetch(
             `/news-scrap/save?userId=${userId}&newsId=${newsId}`
@@ -728,6 +733,37 @@
             .replace(/\\/g, "\\\\")
             .replace(/'/g, "\\'")
             .replace(/"/g, "&quot;");
+    }
+
+    function loadMoreNews() {
+        currentPage++;
+        loadNews(true);
+    }
+
+    function updateScrapFilterUI() {
+        const sportFilter = document.getElementById("sportFilter");
+        const teamFilter = document.getElementById("teamFilter");
+
+        if (currentSort === "scrap") {
+            sportFilter.innerHTML = `
+            <option value="latest">최신순</option>
+            <option value="oldest">오래된순</option>
+        `;
+
+            teamFilter.style.display = "none";
+        } else {
+            sportFilter.style.display = "inline-flex";
+            teamFilter.style.display = "inline-flex";
+
+            sportFilter.innerHTML = `
+            <option value="">종목별</option>
+            <option value="축구">축구</option>
+            <option value="야구">야구</option>
+            <option value="LOL">LOL</option>
+        `;
+
+            updateTeamFilter();
+        }
     }
 
     window.onload = async function () {
