@@ -24,6 +24,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Controller
 @Log4j2
 @RequiredArgsConstructor
@@ -167,18 +170,25 @@ public class BoardController {
     // 게시글 삭제
     @PostMapping("/remove")
     @ResponseBody
-    public ResponseEntity<String> removePOST(@RequestParam("boardId") Long boardId, Authentication authentication) {
+    public ResponseEntity <Map<String, Object>> removePOST(@RequestParam("boardId") Long boardId, @RequestParam("boardType") String boardType, Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
         try {
             Long currentUserId = getCurrentUserId(authentication);
             String currentUserRole = getCurrentUserRole(authentication);
 
             boardService.remove(boardId, currentUserId, currentUserRole);
-            return ResponseEntity.ok("success");
 
+            response.put("status", "success");
+            response.put("boardType", boardType);
+            return ResponseEntity.ok(response);
         } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류가 발생했습니다: " + e.getMessage());
+            response.put("status", "error");
+            response.put("message", "오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 

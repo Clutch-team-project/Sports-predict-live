@@ -43,4 +43,18 @@ public interface PlayerSeasonStatBaseballRepository extends JpaRepository<Player
     );
 
     Optional<PlayerSeasonStatBaseball> findByPlayerSeasonStatPlayerSeasonStatId(Long playerSeasonStatId);
+
+    // AI 예측용 — 선발 투수 이름으로 시즌 성적 조회
+    @Query("""
+        SELECT b FROM PlayerSeasonStatBaseball b
+        JOIN FETCH b.playerSeasonStat pss
+        JOIN FETCH pss.player p
+        WHERE p.name = :name
+          AND pss.season = :season
+          AND b.era IS NOT NULL
+    """)
+    Optional<PlayerSeasonStatBaseball> findPitcherByNameAndSeason(
+            @Param("name") String name,
+            @Param("season") String season
+    );
 }

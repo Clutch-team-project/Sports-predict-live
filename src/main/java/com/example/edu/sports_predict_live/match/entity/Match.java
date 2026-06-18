@@ -51,6 +51,21 @@ public class Match {
     @Column(name = "venue", length = 100)
     private String venue;
 
+    @Column(name = "winning_pitcher", length = 50)
+    private String winningPitcher;
+
+    @Column(name = "losing_pitcher", length = 50)
+    private String losingPitcher;
+
+    @Column(name = "current_pitcher", length = 50)
+    private String currentPitcher;
+
+    @Column(name = "starting_pitcher_away", length = 50)
+    private String startingPitcherAway;
+
+    @Column(name = "starting_pitcher_home", length = 50)
+    private String startingPitcherHome;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

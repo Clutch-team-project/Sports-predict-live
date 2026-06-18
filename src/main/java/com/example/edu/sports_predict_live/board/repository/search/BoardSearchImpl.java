@@ -53,25 +53,23 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             query.where(booleanBuilder);
         }
         // 블라인드 된 글을 검색하지 않을시 list에서 안보임
-        if (keyword == null || keyword.trim().isEmpty()) {
-            query.where(board.isBlinded.isFalse());
-        } else {
-            boolean isTitleOrContentSearch = false;
-
-            if (types != null) {
-                for (String type : types) {
-                    if (type.contains("t") || type.contains("c")) {
-                        isTitleOrContentSearch = true;
-                        break;
-                    }
-                }
-            }
-            if (!isTitleOrContentSearch) {
-                query.where(board.isBlinded.isFalse());
-            }
-        }
-
-
+//        if (keyword == null || keyword.trim().isEmpty()) {
+//            query.where(board.isBlinded.isFalse());
+//        } else {
+//            boolean isTitleOrContentSearch = false;
+//
+//            if (types != null) {
+//                for (String type : types) {
+//                    if (type.contains("t") || type.contains("c")) {
+//                        isTitleOrContentSearch = true;
+//                        break;
+//                    }
+//                }
+//            }
+//            if (!isTitleOrContentSearch) {
+//                query.where(board.isBlinded.isFalse());
+//            }
+//        }
 
         if (category != null && !category.isEmpty()) {
             if ("공지".equals(category)) {
@@ -164,5 +162,51 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
         }).collect(Collectors.toList());
 
         return new PageImpl<>(dtoList, pageable, count);
+    }
+
+    @Override
+    public List<BoardListAllDTO> findPopularPosts(int limit) {
+        QBoard board = QBoard.board;
+        QUser user = QUser.user;
+        QBoardReply reply = QBoardReply.boardReply;
+
+        JPQLQuery<Board> query = from(board);
+        query.leftJoin(user).on(board.userId.eq(user.userId));
+        query.leftJoin(reply).on(reply.board.eq(board));
+
+        query.where(board.deletedAt.isNull());
+        query.where(board.isBlinded.isFalse());
+        query.where(board.isNotice.isFalse());
+
+        // 조회수 기준 내림차순 정렬
+        query.orderBy(board.viewCount.desc(), board.boardId.desc());
+        query.limit(limit);
+        query.groupBy(board);
+
+        JPQLQuery<Tuple> tupleQuery = query.select(board, user, reply.countDistinct());
+        List<Tuple> tupleList = tupleQuery.fetch();
+
+        return tupleList.stream().map(tuple -> {
+            Board b = tuple.get(board);
+            User u = tuple.get(user);
+            Long replyCount = tuple.get(reply.countDistinct());
+
+            return BoardListAllDTO.builder()
+                    .boardId(b.getBoardId())
+                    .userId(b.getUserId())
+                    .loginId(u != null ? u.getLoginId() : null)
+                    .nickname(u != null ? u.getNickname() : null)
+                    .writerId(u != null ? u.getNickname() : "익명") // HTML th:text="${post.writerId}" 대응
+                    .category(b.getCategory())
+                    .title(b.getTitle())
+                    .viewCount(b.getViewCount())
+                    .likeCount(b.getLikeCount())
+                    .isNotice(b.isNotice())
+                    .isBlinded(b.isBlinded())
+                    .createdAt(b.getCreatedAt())
+                    .updatedAt(b.getUpdatedAt())
+                    .replyCount(replyCount != null ? replyCount : 0L)
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

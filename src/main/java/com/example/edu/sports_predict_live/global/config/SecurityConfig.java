@@ -44,6 +44,7 @@ public class SecurityConfig {
             "/api/teams/**",             // 팀 정보
             "/api/schedule/**",          // 경기 일정
             "/api/predictions/ranking",  // 포인트 순위 (비로그인도 조회 가능)
+            "/api/ai-prediction/**",     // AI 승부 예측 (비로그인도 조회 가능)
             "/news/**",
             "/news-scrap/**",
             "/oauth2/**",                // OAuth2 인증
@@ -84,6 +85,16 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
+                        .requestMatchers(
+                                "/", "/schedule",
+                                "/login", "/signup", "/notification-agreement",
+                                "/signup-success", "/login-success", "/find-id",
+                                "/find-password", "/change-password", "/prediction-history",
+                                "/user-info", "/favorite-teams",
+                                "/board", "/board/list/**", "/board/read/**", "/replies/**", "/templates/**" // ← 추가
+                        ).permitAll()
+                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
                         .requestMatchers(HttpMethod.GET, "/board/register", "/board/modify").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()
                         .requestMatchers(PUBLIC_PAGES).permitAll()

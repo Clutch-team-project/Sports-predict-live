@@ -252,31 +252,29 @@
             </div>
 
             <!-- 게시판 인기글 피드 -->
-            <div id="boxPopular" onclick="clickBox('popular_board')"
-                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-center items-center text-sm font-bold cursor-pointer hover:bg-slate-50 min-h-[280px] shadow-md rounded-2xl">
-                <div class="w-full h-full flex flex-col justify-between text-left">
-                    <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 mb-3 flex items-center gap-1">
-                        📝 커뮤니티 인기 글 리스트</h4>
-                    <div class="space-y-2.5 text-xs text-slate-600 flex-1 flex flex-col justify-around font-medium">
-                        <div class="flex justify-between items-center">
-                            <span class="truncate text-slate-700 font-bold">1. 페이커 아지르 밴픽 분석</span>
-                            <span class="font-bold text-slate-500 font-mono">sangyeop123</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="truncate text-slate-700 font-bold">2. 기아 투수진 ERA 변화...</span>
-                            <span class="text-slate-500 font-bold font-mono">withdrawn_3</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="truncate text-slate-700 font-bold">3. 축구 손흥민 기대득점...</span>
-                            <span class="text-slate-500 font-bold font-mono">soccer_god</span>
+            <div id="boxPopular"
+                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-start min-h-[210px] shadow-md rounded-2xl">
+                <div class="w-full flex flex-col justify-start text-left">
+                    <h4 class="text-[15px] font-black text-slate-800 border-b border-slate-200 pb-3 mb-3 flex items-center gap-1">
+                        📝 커뮤니티 일별 인기 글 리스트</h4>
+
+                    <div class="flex flex-col gap-2 text-sm text-slate-600 font-medium">
+                        <a th:each="post, iterStat : ${findTop5ViewCountToday}"
+                           th:href="@{/board/read(boardId=${post.boardId})}"
+                           class="flex justify-between items-center hover:bg-slate-50 py-1.5 px-1 rounded transition-colors cursor-pointer group">
+                            <span class="truncate text-slate-700 font-bold group-hover:text-blue-600 pr-3">
+                                <span th:text="${iterStat.count} + '. ' + ${post.title}">1. 게시글 제목</span>
+                            </span>
+                            <span class="font-bold text-slate-400 text-xs whitespace-nowrap" th:text="${#strings.isEmpty(post.nickname) ? '익명' : post.nickname}">작성자</span>
+                        </a>
+
+                        <div th:if="${#lists.isEmpty(findTop5ViewCountToday)}" class="text-center text-slate-400 py-6 text-sm">
+                            오늘의 인기 게시글이 없습니다...
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
-
-
     </div>
 </main>
 
@@ -596,11 +594,12 @@ public BoardResponseDto(Board board) {
     function matchCard(match, isFavorite) {
         const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
         const emoji = SPORT_EMOJI[match.sport] || '';
-        const isLive = match.status === 'in_progress';
+        const isLive     = match.status === 'in_progress';
         const isFinished = match.status === 'finished';
+        const isCancelled = match.status === 'cancelled';
 
-        const borderClass = isFavorite ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 bg-white';
-        const favoriteBar = isFavorite
+        const borderClass  = isFavorite ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 bg-slate-50';
+        const favoriteBar  = isFavorite
             ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
             : '';
         const favBadge = isFavorite
@@ -611,7 +610,9 @@ public BoardResponseDto(Board board) {
         const awayVal = match.sport === 'lol' ? match.awayWins : match.awayScore;
 
         let centerHtml;
-        if (isLive || isFinished) {
+        if (isCancelled) {
+            centerHtml = `<span class="text-xs font-black text-red-600 px-2.5 py-1 rounded-xl bg-red-50 border border-red-200">취소</span>`;
+        } else if (isLive || isFinished) {
             const scoreColor = isLive ? 'text-red-500' : 'text-slate-800';
             const badge = isLive
                 ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
@@ -619,7 +620,7 @@ public BoardResponseDto(Board board) {
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     ${badge}
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
                         <span class="text-xl font-black ${scoreColor}">${awayVal}</span>
                         <span class="text-slate-300 text-sm">:</span>
                         <span class="text-xl font-black ${scoreColor}">${homeVal}</span>
@@ -633,20 +634,50 @@ public BoardResponseDto(Board board) {
                 </div>`;
         }
 
+        // 야구 투수 정보 (팀 이름 아래)
+        function pitcherLabel(isAway) {
+            if (match.sport !== 'baseball') return '';
+            if (isFinished) {
+                const awayWon = awayVal > homeVal;
+                const teamWon = isAway ? awayWon : !awayWon;
+                if (teamWon && match.winningPitcher)
+                    return `<div class="text-[10px] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
+                if (!teamWon && match.losingPitcher)
+                    return `<div class="text-[10px] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
+            } else if (match.status === 'scheduled' || match.status === 'in_progress') {
+                const name = isAway ? match.startingPitcherAway : match.startingPitcherHome;
+                if (name) return `<div class="text-[10px] text-gray-500 mt-0.5">선 ${name}</div>`;
+            }
+            return '';
+        }
+
+        const livePitcherHtml = (match.sport === 'baseball' && isLive && match.currentPitcher)
+            ? `<div class="text-[10px] text-slate-400 mt-0.5">🔵 ${match.currentPitcher}</div>`
+            : '';
+
         return `
         <div class="relative border ${borderClass} rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
             ${favoriteBar}
-            <div class="flex items-center px-5 py-3 gap-2">
-                <div class="flex-1 flex flex-col items-start min-w-0">
-                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</span>
-                    <span class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</span>
+            <div class="flex items-center px-4 py-3 gap-2">
+                <!-- 종목·시간 -->
+                <div class="w-20 shrink-0">
+                    <div class="text-[10px] font-bold text-slate-400">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</div>
+                    <div class="text-sm font-black text-slate-500 mt-0.5">${match.scheduledAt || ''}</div>
                 </div>
-                <div class="flex-shrink-0 w-28 flex justify-center">
-                    ${centerHtml}
-                </div>
-                <div class="flex-1 flex flex-col items-end min-w-0">
-                    <span class="text-[10px] font-bold text-slate-400 mb-0.5"> </span>
-                    <span class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</span>
+                <!-- 원정·스코어·홈 -->
+                <div class="flex-1 flex items-center justify-around">
+                    <div class="w-1/3 text-right">
+                        <div class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</div>
+                        ${pitcherLabel(true)}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-center">
+                        ${centerHtml}
+                        ${livePitcherHtml}
+                    </div>
+                    <div class="w-1/3 text-left">
+                        <div class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</div>
+                        ${pitcherLabel(false)}
+                    </div>
                 </div>
             </div>
         </div>`;

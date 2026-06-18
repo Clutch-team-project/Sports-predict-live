@@ -14,12 +14,23 @@
         new Notification(title, { body, icon: '/favicon.ico' });
     }
 
-    // ── 경기 시작 N분 전 알림 ────────────────────────────────────
+    // ── 경기 시작 N분 전 알림 (관심 팀 경기만) ──────────────────────
     async function checkMatchStart() {
+        // 로그인하지 않으면 관심 팀을 알 수 없으므로 알림 불필요
+        if (!localStorage.getItem('accessToken')) return;
+
         const today   = new Date();
         const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
 
         try {
+            // 관심 팀 ID 목록 조회
+            const favRes = await authFetch(`${BASE_URL}/api/users/me/favorites/ids`);
+            if (!favRes.ok) return;
+            const favoriteIds = await favRes.json(); // Long[]
+            if (!favoriteIds.length) return;
+
+            const favSet = new Set(favoriteIds.map(id => Number(id)));
+
             const [bbRes, scRes, lolRes] = await Promise.all([
                 fetch(`${BASE_URL}/api/schedule/baseball?date=${dateStr}`),
                 fetch(`${BASE_URL}/api/schedule/soccer?date=${dateStr}`),
@@ -31,6 +42,9 @@
             if (lolRes.ok) { (await lolRes.json()).forEach(m => all.push({ ...m,  sport: 'lol'      })); }
 
             all.filter(m => m.status === 'scheduled').forEach(m => {
+                // 관심 팀이 참여하는 경기만 처리
+                if (!favSet.has(Number(m.homeTeamId)) && !favSet.has(Number(m.awayTeamId))) return;
+
                 const key = `${m.sport}-${m.matchId}`;
                 if (notifiedMatches.has(key)) return;
 

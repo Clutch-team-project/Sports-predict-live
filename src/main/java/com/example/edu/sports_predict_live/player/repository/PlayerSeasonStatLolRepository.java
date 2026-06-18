@@ -20,4 +20,19 @@ public interface PlayerSeasonStatLolRepository extends JpaRepository<PlayerSeaso
         ORDER BY l.kda DESC NULLS LAST
     """)
     List<PlayerSeasonStatLol> findBySeasonOrderByKdaDesc(@Param("season") String season);
+
+    // AI 예측용 — 팀 이름으로 선수 성적 조회 (KDA 내림차순)
+    @Query("""
+        SELECT l FROM PlayerSeasonStatLol l
+        JOIN FETCH l.playerSeasonStat pss
+        JOIN FETCH pss.player p
+        JOIN FETCH p.team t
+        WHERE t.name = :teamName
+          AND pss.season = :season
+        ORDER BY l.kda DESC NULLS LAST
+    """)
+    List<PlayerSeasonStatLol> findByTeamNameAndSeason(
+            @Param("teamName") String teamName,
+            @Param("season") String season
+    );
 }
