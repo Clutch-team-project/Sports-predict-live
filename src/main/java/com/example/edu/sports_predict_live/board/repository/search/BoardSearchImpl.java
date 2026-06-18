@@ -53,25 +53,23 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             query.where(booleanBuilder);
         }
         // 블라인드 된 글을 검색하지 않을시 list에서 안보임
-        if (keyword == null || keyword.trim().isEmpty()) {
-            query.where(board.isBlinded.isFalse());
-        } else {
-            boolean isTitleOrContentSearch = false;
-
-            if (types != null) {
-                for (String type : types) {
-                    if (type.contains("t") || type.contains("c")) {
-                        isTitleOrContentSearch = true;
-                        break;
-                    }
-                }
-            }
-            if (!isTitleOrContentSearch) {
-                query.where(board.isBlinded.isFalse());
-            }
-        }
-
-
+//        if (keyword == null || keyword.trim().isEmpty()) {
+//            query.where(board.isBlinded.isFalse());
+//        } else {
+//            boolean isTitleOrContentSearch = false;
+//
+//            if (types != null) {
+//                for (String type : types) {
+//                    if (type.contains("t") || type.contains("c")) {
+//                        isTitleOrContentSearch = true;
+//                        break;
+//                    }
+//                }
+//            }
+//            if (!isTitleOrContentSearch) {
+//                query.where(board.isBlinded.isFalse());
+//            }
+//        }
 
         if (category != null && !category.isEmpty()) {
             if ("공지".equals(category)) {
