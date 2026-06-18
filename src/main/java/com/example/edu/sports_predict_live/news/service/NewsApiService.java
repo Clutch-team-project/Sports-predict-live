@@ -28,12 +28,17 @@ public class NewsApiService {
     private final String CLIENT_ID = "01WqnP5WnzxUPdjgIBMi";
     private final String CLIENT_SECRET = "sOCkEPhUh8";
 
-    public JsonNode searchSportsNews(String keyword, String sort, Long userId) {
+    public JsonNode searchSportsNews(String keyword, String sort, Long userId, int page) {
+
+
+        int start = (page - 1) * 10 + 1;
 
         String url =
                 "https://openapi.naver.com/v1/search/news.json?query="
                         + keyword
-                        + "&display=10&sort=date";
+                        + "&display=10"
+                        + "&start=" + start
+                        + "&sort=date";
 
         HttpHeaders headers = new HttpHeaders();
 

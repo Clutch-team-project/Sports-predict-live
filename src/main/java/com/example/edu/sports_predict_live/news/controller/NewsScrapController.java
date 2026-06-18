@@ -62,8 +62,10 @@ public class NewsScrapController {
 
     @GetMapping("/my-news")
     public List<NewsEntity> getMyScrapNews(
-            @RequestParam Long userId
+            @RequestParam Long userId,
+            @RequestParam(required = false, defaultValue = "latest") String order,
+            @RequestParam(required = false, defaultValue = "1") int page
     ) {
-        return newsScrapService.getMyScrapNews(userId);
+        return newsScrapService.getMyScrapNews(userId, order, page);
     }
 }
