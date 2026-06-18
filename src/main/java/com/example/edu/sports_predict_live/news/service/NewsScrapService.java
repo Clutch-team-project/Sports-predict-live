@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 
+
 @Service
 @RequiredArgsConstructor
 public class NewsScrapService {
@@ -72,15 +73,31 @@ public class NewsScrapService {
         );
     }
 
-    public List<NewsEntity> getMyScrapNews(Long userId) {
+    public List<NewsEntity> getMyScrapNews(Long userId, String order, int page) {
 
-        List<NewsScrapEntity> scraps =
-                newsScrapRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<NewsScrapEntity> scraps;
 
-        List<Long> newsIds = scraps.stream()
+        if ("oldest".equals(order)) {
+            scraps = newsScrapRepository.findByUserIdOrderByCreatedAtAsc(userId);
+        } else {
+            scraps = newsScrapRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        }
+
+        int pageSize = 10;
+        int start = (page - 1) * pageSize;
+        int end = Math.min(start + pageSize, scraps.size());
+
+        if (start >= scraps.size()) {
+            return List.of();
+        }
+
+        List<Long> newsIds = scraps.subList(start, end)
+                .stream()
                 .map(NewsScrapEntity::getNewsId)
                 .toList();
 
         return newsRepository.findAllById(newsIds);
     }
+
+
 }

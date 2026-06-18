@@ -24,4 +24,6 @@ public interface NewsScrapRepository
     Long countByNewsId(Long newsId);
 
     List<NewsScrapEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<NewsScrapEntity> findByUserIdOrderByCreatedAtAsc(Long userId);
 }
