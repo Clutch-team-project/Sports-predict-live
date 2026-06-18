@@ -46,7 +46,10 @@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-3 text-sm">
             <button id="btn-prev-week" class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">&lt; 이전 주
             </button>
-            <span id="week-label" class="font-black text-blue-600 text-base"></span>
+            <div class="flex items-center gap-2">
+                <span id="week-label" class="font-black text-blue-600 text-base"></span>
+                <button id="btn-today" class="text-xs font-black px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100">오늘</button>
+            </div>
             <button id="btn-next-week" class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">다음 주 &gt;
             </button>
         </div>
@@ -99,7 +102,8 @@
     }
 
     function renderWeek() {
-        const weekStart = getWeekStart(currentDate);
+        const rangeStart = new Date(currentDate);
+        rangeStart.setDate(currentDate.getDate() - 3);
         document.getElementById('week-label').textContent =
             `📅 ${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 LCK`;
 
@@ -107,8 +111,8 @@
         container.innerHTML = '';
 
         for (let i = 0; i < 7; i++) {
-            const d = new Date(weekStart);
-            d.setDate(weekStart.getDate() + i);
+            const d = new Date(rangeStart);
+            d.setDate(rangeStart.getDate() + i);
             const isToday = isSameDay(d, new Date());
             const isSelected = isSameDay(d, selectedDate);
 
@@ -127,6 +131,7 @@
             const captured = new Date(d);
             div.addEventListener('click', () => {
                 selectedDate = captured;
+                currentDate = new Date(captured);
                 renderWeek();
                 loadMatches();
             });
@@ -141,6 +146,12 @@
     document.getElementById('btn-next-week').addEventListener('click', () => {
         currentDate.setDate(currentDate.getDate() + 7);
         renderWeek();
+    });
+    document.getElementById('btn-today').addEventListener('click', () => {
+        selectedDate = new Date();
+        currentDate = new Date();
+        renderWeek();
+        loadMatches();
     });
 
     function renderStatus(m) {
@@ -172,7 +183,11 @@
         if (m.status === 'cancelled') {
             return `<button class="bg-slate-100 text-slate-400 text-xs font-bold px-4 py-1.5 rounded-xl cursor-not-allowed" disabled>취소됨</button>`;
         }
-        return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">전력분석</button>`;
+        return `<button onclick="toggleAiPrediction('${m.matchId}', '${m.awayTeamName}', '${m.homeTeamName}')"
+                        id="ai-btn-${m.matchId}"
+                        class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-xs font-black px-4 py-1.5 rounded-xl hover:from-indigo-600 hover:to-blue-600 transition-all shadow-sm">
+                    🤖 AI 예측
+                </button>`;
     }
 
     function resultLabel(result, m) {
@@ -315,6 +330,7 @@
                         </div>
                     </div>
                     <div class="border-t border-slate-100" id="pred-${m.matchId}"></div>
+                    <div id="ai-pred-${m.matchId}" class="hidden"></div>
                 </div>
             `).join('');
 
@@ -332,6 +348,101 @@
                 if (r.ok) { const pred = await r.json(); renderPrediction(m, pred); }
             }
         } catch (e) { /* 예측 로드 실패 시 무시 */ }
+    }
+
+    // ── AI 예측 ──────────────────────────────────────────────────
+
+    const aiPredCache = {};
+
+    async function toggleAiPrediction(matchId, awayName, homeName) {
+        const panel = document.getElementById(`ai-pred-${matchId}`);
+        if (!panel) return;
+
+        if (!panel.classList.contains('hidden')) {
+            panel.classList.add('hidden');
+            const btn = document.getElementById(`ai-btn-${matchId}`);
+            if (btn) btn.textContent = '🤖 AI 예측';
+            return;
+        }
+
+        if (aiPredCache[matchId]) {
+            renderAiPrediction(matchId, aiPredCache[matchId], awayName, homeName);
+            return;
+        }
+
+        panel.classList.remove('hidden');
+        panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-4 text-center text-slate-400 text-xs font-bold">🤖 AI 분석 중...</div>`;
+        const btn = document.getElementById(`ai-btn-${matchId}`);
+        if (btn) btn.textContent = '⏳ 분석 중...';
+
+        const season = new Date().getFullYear().toString();
+        try {
+            const url = `${BASE_URL}/api/ai-prediction/lol?matchId=${encodeURIComponent(matchId)}&homeTeam=${encodeURIComponent(homeName)}&awayTeam=${encodeURIComponent(awayName)}&season=${season}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            aiPredCache[matchId] = data;
+            renderAiPrediction(matchId, data, awayName, homeName);
+            if (btn) btn.textContent = '🤖 AI 예측 닫기';
+        } catch (e) {
+            panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-3 text-center text-red-400 text-xs font-bold">AI 예측을 불러올 수 없습니다.</div>`;
+            if (btn) btn.textContent = '🤖 AI 예측';
+        }
+    }
+
+    function renderAiPrediction(matchId, data, awayName, homeName) {
+        const panel = document.getElementById(`ai-pred-${matchId}`);
+        if (!panel) return;
+        panel.classList.remove('hidden');
+
+        const homeProb = data.homeWinProb.toFixed(1);
+        const awayProb = data.awayWinProb.toFixed(1);
+        const homeHigher = parseFloat(homeProb) >= parseFloat(awayProb);
+        const awayHigher = parseFloat(awayProb) > parseFloat(homeProb);
+
+        const keyFactorsHtml = data.keyFactors && data.keyFactors.length
+            ? `<div class="flex flex-wrap gap-1 mt-2">
+                ${data.keyFactors.map(f =>
+                    `<span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">${f}</span>`
+                ).join('')}
+               </div>` : '';
+
+        const reasoningHtml = data.reasoning
+            ? `<div class="text-xs text-slate-600 leading-relaxed mt-2 bg-white rounded-xl p-3 border border-slate-100">${data.reasoning}</div>` : '';
+
+        panel.innerHTML = `
+            <div class="border-t border-slate-100 px-4 py-3 bg-gradient-to-b from-slate-50 to-white rounded-b-2xl">
+                <div class="flex items-center gap-1 mb-2">
+                    <span class="text-[10px] font-black text-indigo-500">🤖 AI 승부 예측</span>
+                    <span class="text-[10px] text-slate-400 font-bold ml-auto">GPT-4o-mini</span>
+                </div>
+                <div class="flex rounded-xl overflow-hidden h-8 text-xs font-black">
+                    <div class="flex items-center justify-start pl-3 transition-all duration-500"
+                         style="width:${awayProb}%;
+                                background:${awayHigher ? 'linear-gradient(90deg,#e11d48,#f43f5e)' : 'linear-gradient(90deg,#94a3b8,#cbd5e1)'};
+                                color:${awayHigher ? '#fff' : '#475569'};">
+                        ${awayProb}%
+                    </div>
+                    <div class="flex items-center justify-end pr-3 transition-all duration-500"
+                         style="width:${homeProb}%;
+                                background:${homeHigher ? 'linear-gradient(90deg,#f43f5e,#e11d48)' : 'linear-gradient(90deg,#cbd5e1,#94a3b8)'};
+                                color:${homeHigher ? '#fff' : '#475569'};">
+                        ${homeProb}%
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mt-1.5 mb-1">
+                    <div class="flex items-center gap-1">
+                        ${awayHigher ? `<span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600">예측 우세</span>` : ''}
+                        <span class="text-xs font-bold text-slate-700">${awayName}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-xs font-bold text-slate-700">${homeName}</span>
+                        ${homeHigher ? `<span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600">예측 우세</span>` : ''}
+                    </div>
+                </div>
+                ${reasoningHtml}
+                ${keyFactorsHtml}
+            </div>`;
     }
 
     renderWeek();

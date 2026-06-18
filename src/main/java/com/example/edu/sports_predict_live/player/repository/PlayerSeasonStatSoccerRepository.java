@@ -20,4 +20,19 @@ public interface PlayerSeasonStatSoccerRepository extends JpaRepository<PlayerSe
         ORDER BY s.goals DESC, s.assists DESC
     """)
     List<PlayerSeasonStatSoccer> findBySeasonOrderByGoalsDesc(@Param("season") String season);
+
+    // AI 예측용 — 팀별 상위 득점·도움 선수 조회
+    @Query("""
+        SELECT s FROM PlayerSeasonStatSoccer s
+        JOIN FETCH s.playerSeasonStat pss
+        JOIN FETCH pss.player p
+        JOIN FETCH p.team t
+        WHERE t.teamId = :teamId
+          AND pss.season = :season
+        ORDER BY s.goals DESC, s.assists DESC
+    """)
+    List<PlayerSeasonStatSoccer> findTopByTeamAndSeason(
+            @Param("teamId") Long teamId,
+            @Param("season") String season
+    );
 }

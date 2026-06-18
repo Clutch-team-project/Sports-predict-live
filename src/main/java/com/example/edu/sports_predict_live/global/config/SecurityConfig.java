@@ -44,6 +44,7 @@ public class SecurityConfig {
             "/api/teams/**",             // 팀 정보
             "/api/schedule/**",          // 경기 일정
             "/api/predictions/ranking",  // 포인트 순위 (비로그인도 조회 가능)
+            "/api/ai-prediction/**",     // AI 승부 예측 (비로그인도 조회 가능)
             "/news/**",
             "/news-scrap/**",
             "/oauth2/**",                // OAuth2 인증

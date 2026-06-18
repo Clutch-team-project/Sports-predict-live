@@ -714,11 +714,11 @@
                     localStorage.setItem('loginId',  user.loginId  || '');
                 }
             } catch (e) { /* 닉네임 미표시만 발생, 로그인은 유지 */ }
-        }
 
-        // 닉네임 표시
-        const el = document.getElementById('welcome-nickname');
-        if (el) el.textContent = localStorage.getItem('nickname') || '회원';
+            // 토큰 저장 완료 후 홈으로 이동
+            location.href = '/';
+            return;
+        }
     }
 
     init();

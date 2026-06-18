@@ -64,4 +64,21 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
         ORDER BY m.scheduledAt ASC
     """)
     List<Match> findUpcomingByTeamId(@Param("teamId") Long teamId, Pageable pageable);
+
+    // AI 예측용 — 두 팀의 해당 시즌 종료 경기 (상대 전적)
+    @Query("""
+        SELECT m FROM Match m
+        JOIN FETCH m.homeTeam ht
+        JOIN FETCH m.awayTeam at
+        WHERE ((ht.teamId = :homeTeamId AND at.teamId = :awayTeamId)
+            OR (ht.teamId = :awayTeamId AND at.teamId = :homeTeamId))
+          AND m.season = :season
+          AND m.status = 'finished'
+        ORDER BY m.scheduledAt DESC
+    """)
+    List<Match> findHeadToHead(
+            @Param("homeTeamId") Long homeTeamId,
+            @Param("awayTeamId") Long awayTeamId,
+            @Param("season") String season
+    );
 }

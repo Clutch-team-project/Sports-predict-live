@@ -556,7 +556,7 @@ async function doLogin() {
     localStorage.setItem('autoLogin', stayLogin ? 'true' : 'false');
     sessionStorage.setItem('sessionActive', '1');
 
-    location.href = '/login-success';
+    location.href = '/';
 
   } catch (e) {
     showMsg('서버 연결에 실패했습니다.', true);
@@ -568,6 +568,16 @@ async function doLogin() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
+
+// 소셜 로그인 실패 에러 메시지 처리
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const error = params.get('error');
+  if (error) {
+    history.replaceState(null, '', '/login');
+    alert(decodeURIComponent(error));
+  }
+})();
 </script>
 <script src="/gnb.js"></script>
 </body>
