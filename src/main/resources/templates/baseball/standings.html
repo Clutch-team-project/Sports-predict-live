@@ -136,10 +136,10 @@
                     <tr>
                         <th class="p-3.5 text-left pl-6">순위</th>
                         <th class="p-3.5 text-left">팀</th>
-                        <th class="p-3.5 text-center sort-th" data-table="standing" data-key="winRate">승률<span class="sort-icon">↕</span></th>
-                        <th class="p-3.5 text-center sort-th" data-table="standing" data-key="wins">승<span class="sort-icon">↕</span></th>
-                        <th class="p-3.5 text-center sort-th" data-table="standing" data-key="losses">패<span class="sort-icon">↕</span></th>
-                        <th class="p-3.5 text-center sort-th" data-table="standing" data-key="draws">무<span class="sort-icon">↕</span></th>
+                        <th class="p-3.5 text-center">승률</th>
+                        <th class="p-3.5 text-center">승</th>
+                        <th class="p-3.5 text-center">패</th>
+                        <th class="p-3.5 text-center">무</th>
                         <th class="p-3.5 text-center">최근5경기</th>
                         <th class="p-3.5 text-center">관심</th>
                     </tr>
@@ -328,24 +328,22 @@
         });
     }
 
-    function initSort(tableId, getData, renderFn, defaultKey, defaultDir = 'desc') {
-        sortState[tableId] = { key: defaultKey, dir: defaultDir };
+    function initSort(tableId, getData, renderFn, defaultKey) {
+        sortState[tableId] = { key: defaultKey, dir: 'desc' };
         document.querySelectorAll(`th[data-table="${tableId}"]`).forEach(th => {
             if (th.dataset.key === defaultKey) {
                 th.classList.add('sort-active');
-                th.querySelector('.sort-icon').textContent = defaultDir === 'asc' ? '↑' : '↓';
+                th.querySelector('.sort-icon').textContent = '↓';
             }
             th.addEventListener('click', () => {
                 const key = th.dataset.key;
-                const cur = sortState[tableId];
-                const dir = (cur.key === key && cur.dir === 'desc') ? 'asc' : 'desc';
-                sortState[tableId] = { key, dir };
+                sortState[tableId] = { key, dir: 'desc' };
                 document.querySelectorAll(`th[data-table="${tableId}"]`).forEach(h => {
                     h.classList.remove('sort-active');
                     h.querySelector('.sort-icon').textContent = '↕';
                 });
                 th.classList.add('sort-active');
-                th.querySelector('.sort-icon').textContent = dir === 'asc' ? '↑' : '↓';
+                th.querySelector('.sort-icon').textContent = '↓';
                 renderFn(applySort(getData(), sortState[tableId]));
             });
         });
@@ -507,10 +505,9 @@
     });
 
     // ── 초기화 ───────────────────────────────────────────────────────────────
-    initSort('standing', () => standingData, renderStanding, 'winRate', 'desc');
-    initSort('team',     () => standingData, renderTeam,     'diff',    'desc');
-    initSort('hitter',   () => hitterData,   renderHitters,  'battingAvg', 'desc');
-    initSort('pitcher',  () => pitcherData,  renderPitchers, 'era',     'asc');
+    initSort('team',    () => standingData, renderTeam,     'diff');
+    initSort('hitter',  () => hitterData,   renderHitters,  'battingAvg');
+    initSort('pitcher', () => pitcherData,  renderPitchers, 'era');
     loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>

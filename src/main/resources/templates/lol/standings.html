@@ -105,9 +105,9 @@
                         <tr>
                             <th class="p-3.5 text-left pl-6">순위</th>
                             <th class="p-3.5 text-left">팀</th>
-                            <th class="p-3.5 text-center sort-th" data-key="wins">승<span class="sort-icon">↕</span></th>
-                            <th class="p-3.5 text-center sort-th" data-key="losses">패<span class="sort-icon">↕</span></th>
-                            <th class="p-3.5 text-center sort-th" data-key="winRate">승률<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center">승</th>
+                            <th class="p-3.5 text-center">패</th>
+                            <th class="p-3.5 text-center">승률</th>
                             <th class="p-3.5 text-center">최근5경기</th>
                             <th class="p-3.5 text-center">관심</th>
                         </tr>
@@ -240,28 +240,27 @@
             return dir === 'asc' ? av - bv : bv - av;
         });
     }
-    function initSort(tableId, getData, renderFn, defaultKey, defaultDir = 'desc') {
-        sortState[tableId] = { key: defaultKey, dir: defaultDir };
+    function initSort(tableId, getData, renderFn, defaultKey) {
+        sortState[tableId] = { key: defaultKey, dir: 'desc' };
         const thead = document.querySelector(`thead[data-table="${tableId}"]`);
         if (!thead) return;
         thead.querySelectorAll('th[data-key]').forEach(th => {
-            if (th.dataset.key === defaultKey) th.classList.add('sort-active');
+            if (th.dataset.key === defaultKey) {
+                th.classList.add('sort-active');
+                th.querySelector('.sort-icon').textContent = '↓';
+            }
             th.addEventListener('click', () => {
                 const key = th.dataset.key;
-                const cur = sortState[tableId];
-                sortState[tableId] = { key, dir: cur.key === key && cur.dir === 'desc' ? 'asc' : 'desc' };
+                sortState[tableId] = { key, dir: 'desc' };
                 thead.querySelectorAll('th[data-key]').forEach(t => {
                     t.classList.remove('sort-active');
                     t.querySelector('.sort-icon').textContent = '↕';
                 });
                 th.classList.add('sort-active');
-                th.querySelector('.sort-icon').textContent = sortState[tableId].dir === 'desc' ? '↓' : '↑';
+                th.querySelector('.sort-icon').textContent = '↓';
                 renderFn(applySort(getData(), sortState[tableId]));
             });
         });
-        // 초기 아이콘
-        const initTh = thead.querySelector(`th[data-key="${defaultKey}"]`);
-        if (initTh) initTh.querySelector('.sort-icon').textContent = defaultDir === 'desc' ? '↓' : '↑';
     }
 
     // ── 탭 전환 ──────────────────────────────────────────────────────────────
@@ -406,8 +405,7 @@
     });
 
     // ── 초기화 ───────────────────────────────────────────────────────────────
-    initSort('standing', () => standingData, renderStanding, 'winRate', 'desc');
-    initSort('record',   () => recordData,   renderRecord,   'kda',     'desc');
+    initSort('record', () => recordData, renderRecord, 'kda');
     loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>
