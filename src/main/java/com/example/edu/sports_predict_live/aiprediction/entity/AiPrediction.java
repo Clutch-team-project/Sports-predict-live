@@ -51,13 +51,20 @@ public class AiPrediction {
     @Column(name = "basis", columnDefinition = "JSON")
     private String basis;
 
+    @Column(name = "reasoning", columnDefinition = "TEXT")
+    private String reasoning;
+
+    @Column(name = "key_factors", columnDefinition = "JSON")
+    private String keyFactors;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Builder
     public AiPrediction(Match match, String lolMatchId, String sportCode,
                         BigDecimal homeWinProb, BigDecimal drawProb,
-                        BigDecimal awayWinProb, String basis) {
+                        BigDecimal awayWinProb, String basis,
+                        String reasoning, String keyFactors) {
         this.match       = match;
         this.lolMatchId  = lolMatchId;
         this.sportCode   = sportCode;
@@ -65,6 +72,8 @@ public class AiPrediction {
         this.drawProb    = drawProb;
         this.awayWinProb = awayWinProb;
         this.basis       = basis;
+        this.reasoning   = reasoning;
+        this.keyFactors  = keyFactors;
     }
 
     @PrePersist

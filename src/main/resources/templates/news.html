@@ -577,7 +577,7 @@
                 <span class="dot">·</span>
                 <span>${pubDate}</span>
                 <span class="dot">·</span>
-                <span id="scrap-count-${newsId}">⭐ ${scrapCount}</span>
+                <span id="scrap-count-${newsId}">스크랩 ${scrapCount}</span>
             </div>
 
             ${localStorage.getItem("userId") ? `
@@ -679,9 +679,9 @@
             alert("스크랩 취소");
 
             const countSpan = document.getElementById(`scrap-count-${newsId}`);
-            let count = Number(countSpan.innerText.replace("⭐", "").trim());
+            let count = Number(countSpan.innerText.replace("스크랩", "").trim());
 
-            countSpan.innerText = `⭐ ${Math.max(0, count - 1)}`;
+            countSpan.innerText = `스크랩 ${Math.max(0, count - 1)}`;
 
             return;
         }
@@ -698,9 +698,9 @@
         alert("스크랩 완료");
 
         const countSpan = document.getElementById(`scrap-count-${newsId}`);
-        let count = Number(countSpan.innerText.replace("⭐", "").trim());
+        let count = Number(countSpan.innerText.replace("스크랩", "").trim());
 
-        countSpan.innerText = `⭐ ${count + 1}`;
+        countSpan.innerText = `스크랩 ${count + 1}`;
 
 
     }

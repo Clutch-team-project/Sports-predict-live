@@ -228,7 +228,7 @@
             <div class="card p-4">
                 <p class="section-title">작성자 정보</p>
                 <div class="flex items-center gap-3 mb-3">
-                    <div style="width:44px;height:44px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>
+                    <div style="width:44px;height:44px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8;">USER</div>
                     <div>
                         <p style="font-size:13px;font-weight:700;color:#334155"
                            th:text="${dto.isNotice ? '관리자' : (dto.nickname != null and dto.nickname != '' ? dto.nickname : '익명')}">닉네임</p>

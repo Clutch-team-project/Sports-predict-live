@@ -55,7 +55,10 @@ public class AiPredictionService {
         if (cached.isPresent() && isCacheValidBaseball(cached.get())) {
             return toResponseDTO(cached.get());
         }
-        cached.ifPresent(aiPredictionRepository::delete);
+        if (cached.isPresent()) {
+            aiPredictionRepository.delete(cached.get());
+            aiPredictionRepository.flush();
+        }
 
         Match match = findMatch(matchId);
         String season = resolveSeason(match.getSeason());
@@ -78,7 +81,10 @@ public class AiPredictionService {
         aiPredictionRepository.save(AiPrediction.builder()
                 .match(match).sportCode("baseball")
                 .homeWinProb(probs[0]).drawProb(probs[1]).awayWinProb(probs[2])
-                .basis(basis).build());
+                .basis(basis)
+                .reasoning(ai.path("reasoning").asText(""))
+                .keyFactors(toJsonArray(ai.path("key_factors")))
+                .build());
 
         return buildResponse(probs, ai);
     }
@@ -112,7 +118,10 @@ public class AiPredictionService {
         aiPredictionRepository.save(AiPrediction.builder()
                 .match(match).sportCode("soccer")
                 .homeWinProb(probs[0]).drawProb(probs[1]).awayWinProb(probs[2])
-                .basis("{}").build());
+                .basis("{}")
+                .reasoning(ai.path("reasoning").asText(""))
+                .keyFactors(toJsonArray(ai.path("key_factors")))
+                .build());
 
         return buildResponse(probs, ai);
     }
@@ -141,7 +150,10 @@ public class AiPredictionService {
         aiPredictionRepository.save(AiPrediction.builder()
                 .lolMatchId(lolMatchId).sportCode("lol")
                 .homeWinProb(probs[0]).drawProb(probs[1]).awayWinProb(probs[2])
-                .basis("{}").build());
+                .basis("{}")
+                .reasoning(ai.path("reasoning").asText(""))
+                .keyFactors(toJsonArray(ai.path("key_factors")))
+                .build());
 
         return buildResponse(probs, ai);
     }
@@ -351,9 +363,11 @@ public class AiPredictionService {
         double hp = pred.getHomeWinProb().multiply(BigDecimal.valueOf(100)).doubleValue();
         double dp = pred.getDrawProb().multiply(BigDecimal.valueOf(100)).doubleValue();
         double ap = pred.getAwayWinProb().multiply(BigDecimal.valueOf(100)).doubleValue();
+        List<String> factors = parseJsonArray(pred.getKeyFactors());
         return AiPredictionResponseDTO.builder()
                 .homeWinProb(hp).drawProb(dp).awayWinProb(ap)
-                .reasoning("").keyFactors(List.of())
+                .reasoning(pred.getReasoning() != null ? pred.getReasoning() : "")
+                .keyFactors(factors)
                 .predictedResult(hp >= ap ? "HOME_WIN" : "AWAY_WIN")
                 .build();
     }
@@ -378,6 +392,20 @@ public class AiPredictionService {
         List<String> list = new ArrayList<>();
         if (node.isArray()) node.forEach(n -> list.add(n.asText()));
         return list;
+    }
+
+    private String toJsonArray(JsonNode node) {
+        try {
+            return node.isArray() ? objectMapper.writeValueAsString(node) : "[]";
+        } catch (Exception e) { return "[]"; }
+    }
+
+    private List<String> parseJsonArray(String json) {
+        try {
+            if (json == null || json.isBlank()) return List.of();
+            JsonNode node = objectMapper.readTree(json);
+            return toStringList(node);
+        } catch (Exception e) { return List.of(); }
     }
 
     private String buildBaseballBasis(TeamSeasonStat hs, TeamSeasonStat as,

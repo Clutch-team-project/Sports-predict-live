@@ -105,7 +105,7 @@
         const rangeStart = new Date(currentDate);
         rangeStart.setDate(currentDate.getDate() - 3);
         document.getElementById('week-label').textContent =
-            `📅 ${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 LCK`;
+            `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 LCK`;
 
         const container = document.getElementById('week-days');
         container.innerHTML = '';
@@ -178,16 +178,19 @@
             return `<button class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-xl animate-pulse">라이브</button>`;
         }
         if (m.status === 'finished') {
-            return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">결과</button>`;
+            return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">기록</button>`;
         }
         if (m.status === 'cancelled') {
             return `<button class="bg-slate-100 text-slate-400 text-xs font-bold px-4 py-1.5 rounded-xl cursor-not-allowed" disabled>취소됨</button>`;
         }
-        return `<button onclick="toggleAiPrediction('${m.matchId}', '${m.awayTeamName}', '${m.homeTeamName}')"
-                        id="ai-btn-${m.matchId}"
-                        class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-xs font-black px-4 py-1.5 rounded-xl hover:from-indigo-600 hover:to-blue-600 transition-all shadow-sm">
-                    🤖 AI 예측
-                </button>`;
+        return `<div class="flex gap-1.5">
+            <button class="bg-slate-100 text-slate-700 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-all">전력</button>
+            <button onclick="toggleAiPrediction('${m.matchId}', '${m.awayTeamName}', '${m.homeTeamName}')"
+                    id="ai-btn-${m.matchId}"
+                    class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-xs font-black px-3 py-1.5 rounded-xl hover:from-indigo-600 hover:to-blue-600 transition-all shadow-sm">
+                AI 예측
+            </button>
+        </div>`;
     }
 
     function resultLabel(result, m) {
@@ -251,7 +254,9 @@
                         ${resultLabel(pred.predictedResult, m)}
                     </span>
                     ${resultBadge}
+                    <span id="ai-result-${m.matchId}"></span>
                 </div>`;
+            loadAiResultBadge(m);
             return;
         }
         if (pred) {
@@ -263,6 +268,28 @@
                     </span>
                 </div>`;
         }
+    }
+
+    async function loadAiResultBadge(m) {
+        const span = document.getElementById(`ai-result-${m.matchId}`);
+        if (!span) return;
+        try {
+            let data = aiPredCache[m.matchId];
+            if (!data) {
+                const res = await fetch(`${BASE_URL}/api/ai-prediction/lol/${m.matchId}`);
+                if (!res.ok) return;
+                data = await res.json();
+                aiPredCache[m.matchId] = data;
+            }
+            const ap = data.awayWinProb ?? 0, hp = data.homeWinProb ?? 0;
+            const aiPred = hp >= ap ? 'HOME_WIN' : 'AWAY_WIN';
+            const aw = m.awayWins, hw = m.homeWins;
+            if (aw == null || hw == null) return;
+            const actual = aw > hw ? 'AWAY_WIN' : 'HOME_WIN';
+            span.innerHTML = aiPred === actual
+                ? `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-violet-50 text-violet-600 border border-violet-200">AI 적중 ✓</span>`
+                : `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-100 text-slate-500 border border-slate-200">AI 빗나감</span>`;
+        } catch (e) {}
     }
 
     async function submitPrediction(lolMatchId, result, awayName, homeName) {
@@ -310,22 +337,22 @@
             container.innerHTML = matches.map(m => `
                 <div class="bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors">
                     <div class="flex items-center justify-between p-4">
-                        <div class="w-20 flex flex-col gap-0.5">
+                        <div class="w-20 shrink-0">
                             <span class="font-black text-slate-500 text-sm">${m.scheduledAt}</span>
-                            <span class="text-[10px] text-slate-400">${m.blockName}</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">${m.blockName}</div>
                         </div>
-                        <div class="flex-grow flex justify-around items-center px-4 text-slate-700 text-sm">
+                        <div class="flex-grow flex justify-around items-center px-4">
                             <div class="w-1/3 text-right">
-                                <div class="font-bold text-slate-800">${m.awayTeamName}</div>
+                                <div class="font-bold text-slate-800 text-sm">${m.awayTeamName}</div>
                                 <div class="text-[10px] text-slate-400">${m.awayTeamCode}</div>
                             </div>
                             ${renderStatus(m)}
                             <div class="w-1/3 text-left">
-                                <div class="font-bold text-slate-800">${m.homeTeamName}</div>
+                                <div class="font-bold text-slate-800 text-sm">${m.homeTeamName}</div>
                                 <div class="text-[10px] text-slate-400">${m.homeTeamCode}</div>
                             </div>
                         </div>
-                        <div class="ml-2">
+                        <div class="ml-2 shrink-0">
                             ${renderActionBtn(m)}
                         </div>
                     </div>
@@ -334,7 +361,14 @@
                 </div>
             `).join('');
 
-            if (localStorage.getItem('accessToken')) loadPredictions(matches);
+            if (localStorage.getItem('accessToken')) {
+                loadPredictions(matches);
+            } else {
+                matches.filter(m => m.status === 'scheduled').forEach(m => {
+                    const el = document.getElementById(`pred-${m.matchId}`);
+                    if (el) el.innerHTML = `<div class="px-4 pb-2 pt-1.5 text-center"><a href="/login" class="text-[11px] text-slate-400 hover:text-blue-500 transition-colors font-bold">로그인하면 승부예측에 참여할 수 있어요</a></div>`;
+                });
+            }
         } catch (e) {
             container.innerHTML = '<div class="text-center text-red-400 py-8">데이터를 불러올 수 없습니다.</div>';
         }
@@ -361,17 +395,19 @@
         if (!panel.classList.contains('hidden')) {
             panel.classList.add('hidden');
             const btn = document.getElementById(`ai-btn-${matchId}`);
-            if (btn) btn.textContent = '🤖 AI 예측';
+            if (btn) btn.textContent = 'AI 예측';
             return;
         }
 
         if (aiPredCache[matchId]) {
             renderAiPrediction(matchId, aiPredCache[matchId], awayName, homeName);
+            const cachedBtn = document.getElementById(`ai-btn-${matchId}`);
+            if (cachedBtn) cachedBtn.textContent = 'AI 예측 닫기';
             return;
         }
 
         panel.classList.remove('hidden');
-        panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-4 text-center text-slate-400 text-xs font-bold">🤖 AI 분석 중...</div>`;
+        panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-4 text-center text-slate-400 text-xs font-bold">AI 분석 중...</div>`;
         const btn = document.getElementById(`ai-btn-${matchId}`);
         if (btn) btn.textContent = '⏳ 분석 중...';
 
@@ -383,10 +419,10 @@
             const data = await res.json();
             aiPredCache[matchId] = data;
             renderAiPrediction(matchId, data, awayName, homeName);
-            if (btn) btn.textContent = '🤖 AI 예측 닫기';
+            if (btn) btn.textContent = 'AI 예측 닫기';
         } catch (e) {
             panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-3 text-center text-red-400 text-xs font-bold">AI 예측을 불러올 수 없습니다.</div>`;
-            if (btn) btn.textContent = '🤖 AI 예측';
+            if (btn) btn.textContent = 'AI 예측';
         }
     }
 
@@ -413,7 +449,7 @@
         panel.innerHTML = `
             <div class="border-t border-slate-100 px-4 py-3 bg-gradient-to-b from-slate-50 to-white rounded-b-2xl">
                 <div class="flex items-center gap-1 mb-2">
-                    <span class="text-[10px] font-black text-indigo-500">🤖 AI 승부 예측</span>
+                    <span class="text-[10px] font-black text-indigo-500">AI 승부 예측</span>
                     <span class="text-[10px] text-slate-400 font-bold ml-auto">GPT-4o-mini</span>
                 </div>
                 <div class="flex rounded-xl overflow-hidden h-8 text-xs font-black">
@@ -444,6 +480,7 @@
                 ${keyFactorsHtml}
             </div>`;
     }
+
 
     renderWeek();
     loadMatches();

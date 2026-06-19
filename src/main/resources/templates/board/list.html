@@ -150,7 +150,7 @@
                 <option value="w"  th:selected="${pageRequestDTO.type == 'w'}">작성자</option>
             </select>
 
-            <input type="text" name="keyword" id="searchKeyword" th:value="${pageRequestDTO != null ? pageRequestDTO.keyword : ''}" class="search-input" placeholder="🔍  제목+내용 검색">
+            <input type="text" name="keyword" id="searchKeyword" th:value="${pageRequestDTO != null ? pageRequestDTO.keyword : ''}" class="search-input" placeholder="제목+내용 검색">
 
             <button type="submit" class="btn-search">검색</button>
 
@@ -181,8 +181,8 @@
                     <th style="width:100px">작성자</th>
                     <th style="width:96px">작성일</th>
                     <th style="width:56px">조회</th>
-                    <th style="width:44px">♥</th>
-                    <th style="width:44px">💬</th>
+                    <th style="width:44px">좋아요</th>
+                    <th style="width:44px">댓글</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -193,7 +193,7 @@
                         th:classappend="${dto.isNotice ? 'notice-row' : ''}"
                         th:onclick="|clickBoardRow('@{/board/read(boardId=${dto.boardId}, page=${responseDTO.page}, category=${pageRequestDTO.category}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword}, boardType=${pageRequestDTO.boardType})}', ${dto.isBlinded}, ${dto.isDeleted})|">
 
-                        <td th:if="${dto.isNotice}"><span style="font-size:15px">📌</span></td>
+                        <td th:if="${dto.isNotice}"><span style="font-size:12px;font-weight:700;color:#3b82f6">공지</span></td>
                         <td th:unless="${dto.isNotice}" style="color:#334155" th:text="${dto.boardId}">1</td>
 
                         <td>
@@ -218,7 +218,7 @@
                                 </span>
                                 <span class="real-title" style="display:none;">
                                     <span th:style="${dto.isNotice ? 'color:#93c5fd;font-weight:700' : 'color:#0f172a;font-weight:600'}" th:text="${dto.title}">제목</span>
-                                    <span th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}" style="font-size:13px;margin-left:4px">🖼</span>
+                                    <span th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}" style="font-size:11px;margin-left:4px;color:#94a3b8">[이미지]</span>
                                 </span>
                             </th:block>
 

@@ -80,10 +80,10 @@
 
                 // 이전에 null(미정산)이었다가 이번에 결과가 나온 경우만 알림
                 if (hasPrev && predSnapshot[key] === null && nowCorrect !== null && !notifiedPreds.has(key)) {
-                    const emoji = SPORT_EMOJI[p.sportCode] || '🏆';
+                    const emoji = SPORT_EMOJI[p.sportCode] || '';
                     notify(
                         nowCorrect ? `${emoji} 승부예측 적중!` : `${emoji} 승부예측 결과`,
-                        nowCorrect ? '+100P 획득했습니다 🎯'    : '아쉽게도 틀렸습니다'
+                        nowCorrect ? '+100P 획득했습니다'       : '아쉽게도 틀렸습니다'
                     );
                     notifiedPreds.add(key);
                 }
