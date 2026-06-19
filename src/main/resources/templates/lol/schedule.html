@@ -342,13 +342,19 @@
                             <div class="text-[10px] text-slate-400 mt-0.5">${m.blockName}</div>
                         </div>
                         <div class="flex-grow flex justify-around items-center px-4">
-                            <div class="w-1/3 text-right">
-                                <div class="font-bold text-slate-800 text-sm">${m.awayTeamName}</div>
+                            <div class="w-1/3 flex flex-col items-end">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <span class="font-bold text-slate-800 text-sm">${m.awayTeamName}</span>
+                                    ${m.awayTeamEmblem ? `<img src="${m.awayTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${m.awayTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                                </div>
                                 <div class="text-[10px] text-slate-400">${m.awayTeamCode}</div>
                             </div>
                             ${renderStatus(m)}
-                            <div class="w-1/3 text-left">
-                                <div class="font-bold text-slate-800 text-sm">${m.homeTeamName}</div>
+                            <div class="w-1/3 flex flex-col items-start">
+                                <div class="flex items-center gap-1.5">
+                                    ${m.homeTeamEmblem ? `<img src="${m.homeTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${m.homeTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                                    <span class="font-bold text-slate-800 text-sm">${m.homeTeamName}</span>
+                                </div>
                                 <div class="text-[10px] text-slate-400">${m.homeTeamCode}</div>
                             </div>
                         </div>

@@ -325,16 +325,22 @@
                     <div class="text-sm font-black text-slate-500 mt-0.5">${m.scheduledAt || ''}</div>
                 </div>
                 <div class="flex-1 flex items-center justify-around">
-                    <div class="w-1/3 text-right">
-                        <div class="font-bold text-slate-800 text-sm truncate">${m.awayTeamName}</div>
+                    <div class="w-1/3 flex flex-col items-end">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span class="font-bold text-slate-800 text-sm truncate">${m.awayTeamName}</span>
+                            ${m.awayTeamEmblem ? `<img src="${m.awayTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${m.awayTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                        </div>
                         ${pitcherLabel(m, true)}
                     </div>
                     <div class="w-1/3 flex flex-col items-center text-center">
                         ${centerHtml}
                         ${livePitcherHtml}
                     </div>
-                    <div class="w-1/3 text-left">
-                        <div class="font-bold text-slate-800 text-sm truncate">${m.homeTeamName}</div>
+                    <div class="w-1/3 flex flex-col items-start">
+                        <div class="flex items-center gap-1.5">
+                            ${m.homeTeamEmblem ? `<img src="${m.homeTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${m.homeTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                            <span class="font-bold text-slate-800 text-sm truncate">${m.homeTeamName}</span>
+                        </div>
                         ${pitcherLabel(m, false)}
                     </div>
                 </div>

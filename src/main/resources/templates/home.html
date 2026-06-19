@@ -647,16 +647,22 @@ public BoardResponseDto(Board board) {
                 </div>
                 <!-- 원정·스코어·홈 -->
                 <div class="flex-1 flex items-center justify-around">
-                    <div class="w-1/3 text-right">
-                        <div class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</div>
+                    <div class="w-1/3 flex flex-col items-end">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</span>
+                            ${match.awayTeamEmblem ? `<img src="${match.awayTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${match.awayTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                        </div>
                         ${pitcherLabel(true)}
                     </div>
                     <div class="w-1/3 flex flex-col items-center">
                         ${centerHtml}
                         ${livePitcherHtml}
                     </div>
-                    <div class="w-1/3 text-left">
-                        <div class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</div>
+                    <div class="w-1/3 flex flex-col items-start">
+                        <div class="flex items-center gap-1.5">
+                            ${match.homeTeamEmblem ? `<img src="${match.homeTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${match.homeTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                            <span class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</span>
+                        </div>
                         ${pitcherLabel(false)}
                     </div>
                 </div>

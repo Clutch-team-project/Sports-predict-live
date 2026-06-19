@@ -81,6 +81,50 @@ public class LolApiClient {
     }
 
     /**
+     * LCK 팀명 → 로고 이미지 URL 맵 반환 (팀 엠블럼 초기화용)
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, String> getTeamImages() {
+        Map<String, Object> response = webClient.get()
+                .uri(uri -> uri.path("/getStandings")
+                        .queryParam("hl", "ko-KR")
+                        .queryParam("leagueId", LCK_LEAGUE_ID)
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .onErrorReturn(new HashMap<>())
+                .block();
+
+        Map<String, String> result = new HashMap<>();
+        if (response == null || response.isEmpty()) return result;
+
+        try {
+            List<Map<String, Object>> stages = (List<Map<String, Object>>)
+                    ((Map<?, ?>) ((Map<?, ?>) response.get("data")).get("standings")).get("stages");
+            if (stages == null || stages.isEmpty()) return result;
+
+            List<Map<String, Object>> rankings = (List<Map<String, Object>>)
+                    ((Map<?, ?>) ((List<?>) stages.get(stages.size() - 1).get("sections")).get(0)).get("rankings");
+            if (rankings == null) return result;
+
+            for (Map<String, Object> ranking : rankings) {
+                List<Map<String, Object>> teams = (List<Map<String, Object>>) ranking.get("teams");
+                if (teams == null) continue;
+                for (Map<String, Object> team : teams) {
+                    String name  = (String) team.get("name");
+                    String image = (String) team.get("image");
+                    if (name != null && image != null && !image.isBlank()) {
+                        result.put(name, image);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("LCK 팀 이미지 파싱 실패", e);
+        }
+        return result;
+    }
+
+    /**
      * 두 팀의 현재 시즌 맞대결 기록 집계
      * 반환: int[] { homeWins, awayWins }
      */

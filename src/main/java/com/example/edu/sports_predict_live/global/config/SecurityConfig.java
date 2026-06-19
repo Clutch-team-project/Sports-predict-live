@@ -13,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -69,7 +70,14 @@ public class SecurityConfig {
     private static final String[] PUBLIC_STATIC = {
             "/gnb.js", "/script.js", "/favicon.ico",
             "/*.js", "/*.css", "/*.png",
+            "/images/**",
     };
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring()
+                .requestMatchers("/images/**", "/favicon.ico", "/*.js", "/*.css", "/*.png", "/*.svg");
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -94,7 +102,7 @@ public class SecurityConfig {
                                 "/user-info", "/favorite-teams",
                                 "/board", "/board/list/**", "/board/read/**", "/replies/**", "/templates/**" // ← 추가
                         ).permitAll()
-                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
+                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/board/register", "/board/modify").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()
                         .requestMatchers(PUBLIC_PAGES).permitAll()

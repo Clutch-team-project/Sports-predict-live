@@ -318,7 +318,12 @@
         tbody.innerHTML = data.map((t, i) => `
             <tr class="table-row cursor-pointer" onclick="goTeamDetail(${t.teamId})">
                 <td class="p-4 pl-6 font-black ${rankClass(i)}">${t.rank ?? i + 1}</td>
-                <td class="p-4 font-black"><span class="detail-link">${t.teamName}</span></td>
+                <td class="p-4 font-black">
+                    <div class="flex items-center gap-2">
+                        ${t.emblemUrl ? `<img src="${t.emblemUrl}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${t.teamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                        <span class="detail-link">${t.teamName}</span>
+                    </div>
+                </td>
                 <td class="p-4 text-center">${t.wins}</td>
                 <td class="p-4 text-center">${t.losses}</td>
                 <td class="p-4 text-center font-bold text-blue-600">${t.winRate ? (t.winRate * 100).toFixed(1) + '%' : '-'}</td>
