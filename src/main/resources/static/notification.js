@@ -5,9 +5,28 @@
     const SPORT_EMOJI      = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
     const ALERT_BEFORE_MIN = 10; // 경기 시작 몇 분 전 알림
 
-    const notifiedMatches = new Set(); // 이미 알림 보낸 경기 키
-    const notifiedPreds   = new Set(); // 이미 알림 보낸 예측 ID
+    // localStorage로 유지해 새로고침 후 중복 알림 방지
+    const STORAGE_KEY_MATCHES = 'notifiedMatches';
+    const STORAGE_KEY_PREDS   = 'notifiedPreds';
+
+    function loadSet(key) {
+        try { return new Set(JSON.parse(localStorage.getItem(key)) || []); } catch { return new Set(); }
+    }
+    function saveSet(key, set) {
+        try { localStorage.setItem(key, JSON.stringify([...set])); } catch {}
+    }
+
+    const notifiedMatches = loadSet(STORAGE_KEY_MATCHES);
+    const notifiedPreds   = loadSet(STORAGE_KEY_PREDS);
     const predSnapshot    = {};        // predictionId → isCorrect (이전 상태)
+
+    // 하루가 바뀌면 경기 알림 기록 초기화
+    const todayKey = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('notifiedMatchesDate') !== todayKey) {
+        notifiedMatches.clear();
+        saveSet(STORAGE_KEY_MATCHES, notifiedMatches);
+        localStorage.setItem('notifiedMatchesDate', todayKey);
+    }
 
     function notify(title, body) {
         if (Notification.permission !== 'granted') return;
@@ -61,6 +80,7 @@
                         `${m.awayTeamName} vs ${m.homeTeamName}`
                     );
                     notifiedMatches.add(key);
+                    saveSet(STORAGE_KEY_MATCHES, notifiedMatches);
                 }
             });
         } catch (_) {}
@@ -86,6 +106,7 @@
                         nowCorrect ? '+100P 획득했습니다'       : '아쉽게도 틀렸습니다'
                     );
                     notifiedPreds.add(key);
+                    saveSet(STORAGE_KEY_PREDS, notifiedPreds);
                 }
 
                 predSnapshot[key] = nowCorrect;
