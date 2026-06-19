@@ -2,6 +2,7 @@ package com.example.edu.sports_predict_live.aiprediction.controller;
 
 import com.example.edu.sports_predict_live.aiprediction.dto.AiPredictionResponseDTO;
 import com.example.edu.sports_predict_live.aiprediction.service.AiPredictionService;
+import com.example.edu.sports_predict_live.prediction.dto.response.PredictionStatsDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,12 @@ import org.springframework.web.bind.annotation.*;
 public class AiPredictionController {
 
     private final AiPredictionService aiPredictionService;
+
+    // 홈 통계 카드용: AI 예측 건수 & 적중률
+    @GetMapping("/stats")
+    public ResponseEntity<PredictionStatsDTO> getAiStats() {
+        return ResponseEntity.ok(aiPredictionService.getAiStats());
+    }
 
     // 야구
     @GetMapping("/baseball/{matchId}")

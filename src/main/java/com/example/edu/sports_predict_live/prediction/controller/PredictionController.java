@@ -2,6 +2,7 @@ package com.example.edu.sports_predict_live.prediction.controller;
 
 import com.example.edu.sports_predict_live.prediction.dto.request.PredictionRequestDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.PredictionResponseDTO;
+import com.example.edu.sports_predict_live.prediction.dto.response.PredictionStatsDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.RankingResponseDTO;
 import com.example.edu.sports_predict_live.prediction.service.PredictionService;
 import lombok.RequiredArgsConstructor;
@@ -59,5 +60,18 @@ public class PredictionController {
     public ResponseEntity<List<RankingResponseDTO>> getRanking(
             @RequestParam(required = false) String sport) {
         return ResponseEntity.ok(predictionService.getRanking(sport));
+    }
+
+    // 홈 통계 카드용: 전체 적중률 & 예측 건수
+    @GetMapping("/stats")
+    public ResponseEntity<PredictionStatsDTO> getStats() {
+        return ResponseEntity.ok(predictionService.getStats());
+    }
+
+    // 홈 통계 카드용: 내 예측 건수 & 적중률 (로그인 필요)
+    @GetMapping("/me/stats")
+    public ResponseEntity<PredictionStatsDTO> getMyStats(
+            @AuthenticationPrincipal Long userId) {
+        return ResponseEntity.ok(predictionService.getUserStats(userId));
     }
 }

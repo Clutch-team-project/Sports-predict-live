@@ -46,4 +46,14 @@ public interface PredictionRepository extends JpaRepository<Prediction, Long> {
     // 특정 날짜 미정산 LOL 예측 (날짜별 배치 정산용) — 취소 무효화된 예측은 재조회 대상에서 제외
     List<Prediction> findBySportCodeAndLolScheduledDateAndIsCorrectIsNullAndActualResultIsNull(
             String sportCode, LocalDate lolScheduledDate);
+
+    // 홈 통계 카드용: 정산 완료된 전체 예측 수 + 적중 수
+    @Query("SELECT COUNT(p), SUM(CASE WHEN p.isCorrect = true THEN 1L ELSE 0L END) " +
+           "FROM Prediction p WHERE p.isCorrect IS NOT NULL")
+    List<Object[]> findGlobalStats();
+
+    // 홈 통계 카드용: 특정 유저의 전체 예측 수 + 정산 완료된 적중 수
+    @Query("SELECT COUNT(p), SUM(CASE WHEN p.isCorrect = true THEN 1L ELSE 0L END) " +
+           "FROM Prediction p WHERE p.user.userId = :userId")
+    List<Object[]> findUserStats(@Param("userId") Long userId);
 }

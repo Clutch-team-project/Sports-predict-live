@@ -4,6 +4,7 @@ import com.example.edu.sports_predict_live.aiprediction.client.LolApiClient;
 import com.example.edu.sports_predict_live.aiprediction.client.OpenAiClient;
 import com.example.edu.sports_predict_live.aiprediction.dto.AiPredictionResponseDTO;
 import com.example.edu.sports_predict_live.aiprediction.entity.AiPrediction;
+import com.example.edu.sports_predict_live.prediction.dto.response.PredictionStatsDTO;
 import com.example.edu.sports_predict_live.aiprediction.repository.AiPredictionRepository;
 import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
@@ -44,6 +45,20 @@ public class AiPredictionService {
     private final OpenAiClient openAiClient;
     private final LolApiClient lolApiClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // ══════════════════════════════════════════════
+    //  홈 통계 카드
+    // ══════════════════════════════════════════════
+
+    @Transactional(readOnly = true)
+    public PredictionStatsDTO getAiStats() {
+        long total = aiPredictionRepository.count();
+        List<Object[]> rows = aiPredictionRepository.findAiAccuracyStats();
+        Object[] row = rows.isEmpty() ? new Object[]{0L, 0L} : rows.get(0);
+        long settled = row[0] != null ? ((Number) row[0]).longValue() : 0L;
+        long correct = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        return new PredictionStatsDTO(total, settled, correct);
+    }
 
     // ══════════════════════════════════════════════
     //  야구 예측

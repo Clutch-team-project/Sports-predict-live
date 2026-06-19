@@ -6,6 +6,7 @@ import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import com.example.edu.sports_predict_live.prediction.dto.request.PredictionRequestDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.PredictionResponseDTO;
+import com.example.edu.sports_predict_live.prediction.dto.response.PredictionStatsDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.RankingResponseDTO;
 import com.example.edu.sports_predict_live.prediction.entity.Prediction;
 import com.example.edu.sports_predict_live.prediction.repository.PredictionRepository;
@@ -134,6 +135,24 @@ public class PredictionService {
         for (Prediction p : cancelled) {
             p.voidByCancellation();
         }
+    }
+
+    @Transactional(readOnly = true)
+    public PredictionStatsDTO getStats() {
+        List<Object[]> rows = predictionRepository.findGlobalStats();
+        Object[] row = rows.isEmpty() ? new Object[]{0L, 0L} : rows.get(0);
+        long total   = row[0] != null ? ((Number) row[0]).longValue() : 0L;
+        long correct = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        return new PredictionStatsDTO(total, correct);
+    }
+
+    @Transactional(readOnly = true)
+    public PredictionStatsDTO getUserStats(Long userId) {
+        List<Object[]> rows = predictionRepository.findUserStats(userId);
+        Object[] row = rows.isEmpty() ? new Object[]{0L, 0L} : rows.get(0);
+        long total   = row[0] != null ? ((Number) row[0]).longValue() : 0L;
+        long correct = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        return new PredictionStatsDTO(total, correct);
     }
 
     private String calcDbResult(int homeScore, int awayScore, String sportCode) {
