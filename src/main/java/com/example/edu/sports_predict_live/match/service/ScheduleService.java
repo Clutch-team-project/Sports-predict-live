@@ -62,6 +62,7 @@ public class ScheduleService {
                 ? LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"))
                 : LocalDate.now();
 
+        List<Map<String, Object>> results = new ArrayList<>();
         Map<String, Object> response;
         try {
             response = webClient.get()
@@ -79,7 +80,6 @@ public class ScheduleService {
             return results;
         }
 
-        List<Map<String, Object>> results = new ArrayList<>();
         if (response == null) return results;
 
         List<Map<String, Object>> events = (List<Map<String, Object>>)
