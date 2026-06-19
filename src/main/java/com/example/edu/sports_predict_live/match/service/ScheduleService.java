@@ -2,15 +2,11 @@ package com.example.edu.sports_predict_live.match.service;
 
 import com.example.edu.sports_predict_live.match.dto.response.MatchResponseDTO;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -18,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 // 경기 일정 조회 — KBO/K리그는 DB(match 테이블), LOL은 lolesports API 실시간 호출
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,24 +21,15 @@ public class ScheduleService {
 
     private final MatchRepository matchRepository;
 
-    @Value("${lol.api.key}")
-    private String lolApiKey;
+    // lolesports API 설정
+    private static final String LOL_API_KEY      = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z";
+    private static final String LOL_API_BASE     = "https://esports-api.lolesports.com/persisted/gw";
+    private static final String LCK_LEAGUE_ID    = "98767991310872058";
 
-    @Value("${lol.api.base-url}")
-    private String lolApiBaseUrl;
-
-    @Value("${lol.lck.league-id}")
-    private String lckLeagueId;
-
-    private WebClient webClient;
-
-    @PostConstruct
-    public void init() {
-        this.webClient = WebClient.builder()
-                .baseUrl(lolApiBaseUrl)
-                .defaultHeader("x-api-key", lolApiKey)
-                .build();
-    }
+    private final WebClient webClient = WebClient.builder()
+            .baseUrl(LOL_API_BASE)
+            .defaultHeader("x-api-key", LOL_API_KEY)
+            .build();
 
     public List<MatchResponseDTO> getSchedule(String sport, String dateStr) {
         LocalDate date = (dateStr != null)
@@ -62,24 +48,17 @@ public class ScheduleService {
                 ? LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"))
                 : LocalDate.now();
 
-        List<Map<String, Object>> results = new ArrayList<>();
-        Map<String, Object> response;
-        try {
-            response = webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/getSchedule")
-                            .queryParam("hl", "ko-KR")
-                            .queryParam("leagueId", lckLeagueId)
-                            .build())
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .timeout(Duration.ofSeconds(5))
-                    .block();
-        } catch (Exception e) {
-            log.warn("LOL 일정 API 호출 실패: {}", e.getMessage());
-            return results;
-        }
+        Map<String, Object> response = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/getSchedule")
+                        .queryParam("hl", "ko-KR")
+                        .queryParam("leagueId", LCK_LEAGUE_ID)
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
 
+        List<Map<String, Object>> results = new ArrayList<>();
         if (response == null) return results;
 
         List<Map<String, Object>> events = (List<Map<String, Object>>)

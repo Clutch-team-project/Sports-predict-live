@@ -7,12 +7,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "news", indexes = {
-        @Index(name = "idx_news_sport_published", columnList = "sport_id, published_at"),
-        @Index(name = "idx_news_category_published", columnList = "category, published_at"),
-        @Index(name = "idx_news_published", columnList = "published_at"),
-        @Index(name = "idx_news_url", columnList = "news_url", unique = true)
-})
+@Table(name = "news")
 @Getter
 @Setter
 public class NewsEntity {

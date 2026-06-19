@@ -1,7 +1,6 @@
 package com.example.edu.sports_predict_live.prediction.repository;
 
 import com.example.edu.sports_predict_live.prediction.entity.Prediction;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,16 +28,10 @@ public interface PredictionRepository extends JpaRepository<Prediction, Long> {
            "WHERE p.actualResult IS NULL AND m.status = 'cancelled'")
     List<Prediction> findCancelledDbPredictions();
 
-    // 내 예측 기록 전체 (최신순) — match, homeTeam, awayTeam 한 번에 fetch
-    @Query("SELECT p FROM Prediction p " +
-           "LEFT JOIN FETCH p.match m " +
-           "LEFT JOIN FETCH m.homeTeam " +
-           "LEFT JOIN FETCH m.awayTeam " +
-           "WHERE p.user.userId = :userId " +
-           "ORDER BY p.createdAt DESC")
-    List<Prediction> findByUserIdWithMatchFetch(@Param("userId") Long userId);
+    // 내 예측 기록 전체 (최신순)
+    List<Prediction> findByUser_UserIdOrderByCreatedAtDesc(Long userId);
 
-    // 포인트 순위 — 종목 필터 or 전체, 상위 100명 제한
+    // 포인트 순위 — 종목 필터 or 전체
     @Query("SELECT p.user.userId, p.user.nickname, " +
            "SUM(p.pointsEarned) as totalPoints, " +
            "SUM(CASE WHEN p.isCorrect = true THEN 1L ELSE 0L END) as correctCount, " +
@@ -48,7 +41,7 @@ public interface PredictionRepository extends JpaRepository<Prediction, Long> {
            "AND p.isCorrect IS NOT NULL " +
            "GROUP BY p.user.userId, p.user.nickname " +
            "ORDER BY totalPoints DESC")
-    List<Object[]> findRanking(@Param("sportCode") String sportCode, Pageable pageable);
+    List<Object[]> findRanking(@Param("sportCode") String sportCode);
 
     // 특정 날짜 미정산 LOL 예측 (날짜별 배치 정산용) — 취소 무효화된 예측은 재조회 대상에서 제외
     List<Prediction> findBySportCodeAndLolScheduledDateAndIsCorrectIsNullAndActualResultIsNull(
