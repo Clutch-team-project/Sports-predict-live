@@ -9,6 +9,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Table(name = "board", indexes = {
+        @Index(name = "idx_board_created_deleted_blinded_view", columnList = "created_at, deleted_at, is_blinded, view_count"),
+        @Index(name = "idx_board_category_created", columnList = "category, created_at"),
+        @Index(name = "idx_board_user_created", columnList = "user_id, created_at")
+})
 @Getter
 @Builder
 @AllArgsConstructor

@@ -3,6 +3,9 @@ package com.example.edu.sports_predict_live.news.service;
 import com.example.edu.sports_predict_live.news.entity.NewsEntity;
 import com.example.edu.sports_predict_live.news.repository.NewsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,6 +20,11 @@ public class NewsService {
     /**
      * 뉴스 저장
      */
+    @Caching(evict = {
+            @CacheEvict(value = "latestNews", allEntries = true),
+            @CacheEvict(value = "newsBySport", key = "#sportId"),
+            @CacheEvict(value = "newsByCategory", key = "#category")
+    })
     public NewsEntity saveNews(
             Long sportId,
             String category,
@@ -52,6 +60,7 @@ public class NewsService {
     /**
      * 최신 뉴스 조회
      */
+    @Cacheable(value = "latestNews", key = "'all'")
     public List<NewsEntity> getLatestNews() {
 
         return newsRepository.findTop10ByOrderByPublishedAtDesc();
@@ -60,17 +69,19 @@ public class NewsService {
     /**
      * 종목별 뉴스 조회
      */
+    @Cacheable(value = "newsBySport", key = "#sportId")
     public List<NewsEntity> getNewsBySport(Long sportId) {
 
-        return newsRepository.findBySportIdOrderByPublishedAtDesc(sportId);
+        return newsRepository.findTop20BySportIdOrderByPublishedAtDesc(sportId);
     }
 
     /**
      * 카테고리별 뉴스 조회
      */
+    @Cacheable(value = "newsByCategory", key = "#category")
     public List<NewsEntity> getNewsByCategory(String category) {
 
-        return newsRepository.findByCategoryOrderByPublishedAtDesc(category);
+        return newsRepository.findTop20ByCategoryOrderByPublishedAtDesc(category);
     }
 
     /**
@@ -82,7 +93,7 @@ public class NewsService {
     ) {
 
         return newsRepository
-                .findBySportIdAndCategoryOrderByPublishedAtDesc(
+                .findTop20BySportIdAndCategoryOrderByPublishedAtDesc(
                         sportId,
                         category
                 );
@@ -94,7 +105,7 @@ public class NewsService {
     ) {
 
         return newsRepository
-                .findBySportIdAndTeamOrderByPublishedAtDesc(
+                .findTop20BySportIdAndTeamOrderByPublishedAtDesc(
                         sportId,
                         team
                 );

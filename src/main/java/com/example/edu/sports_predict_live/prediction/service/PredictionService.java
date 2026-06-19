@@ -15,10 +15,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Optional;
 
 @Service
@@ -98,16 +100,18 @@ public class PredictionService {
 
     @Transactional(readOnly = true)
     public List<PredictionResponseDTO> getMyPredictions(Long userId) {
-        return predictionRepository.findByUser_UserIdOrderByCreatedAtDesc(userId)
+        return predictionRepository.findByUserIdWithMatchFetch(userId)
                 .stream()
                 .map(PredictionResponseDTO::new)
                 .toList();
     }
 
+    @Cacheable(value = "ranking", key = "#sportCode != null ? #sportCode : 'all'")
     @Transactional(readOnly = true)
     public List<RankingResponseDTO> getRanking(String sportCode) {
         List<Object[]> rows = predictionRepository.findRanking(
-                (sportCode == null || sportCode.isBlank()) ? null : sportCode
+                (sportCode == null || sportCode.isBlank()) ? null : sportCode,
+                PageRequest.of(0, 100)
         );
         List<RankingResponseDTO> result = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {

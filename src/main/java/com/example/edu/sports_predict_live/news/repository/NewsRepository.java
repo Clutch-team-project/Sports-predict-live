@@ -11,22 +11,23 @@ public interface NewsRepository
     // 최신 뉴스 조회
     List<NewsEntity> findTop10ByOrderByPublishedAtDesc();
 
-    // 종목별 뉴스 조회
-    List<NewsEntity> findBySportIdOrderByPublishedAtDesc(Long sportId);
+    // 종목별 뉴스 조회 (최대 20건)
+    List<NewsEntity> findTop20BySportIdOrderByPublishedAtDesc(Long sportId);
 
-    // 카테고리별 뉴스 조회
-    List<NewsEntity> findByCategoryOrderByPublishedAtDesc(String category);
+    // 카테고리별 뉴스 조회 (최대 20건)
+    List<NewsEntity> findTop20ByCategoryOrderByPublishedAtDesc(String category);
 
     // URL 중복 체크
     boolean existsByNewsUrl(String newsUrl);
 
-    // 종목 + 팀 조회
-    List<NewsEntity> findBySportIdAndCategoryOrderByPublishedAtDesc(
+    // 종목 + 카테고리 조회 (최대 20건)
+    List<NewsEntity> findTop20BySportIdAndCategoryOrderByPublishedAtDesc(
             Long sportId,
             String category
     );
 
-    List<NewsEntity> findBySportIdAndTeamOrderByPublishedAtDesc(
+    // 종목 + 팀 조회 (최대 20건)
+    List<NewsEntity> findTop20BySportIdAndTeamOrderByPublishedAtDesc(
             Long sportId,
             String team
     );

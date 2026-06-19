@@ -1,5 +1,7 @@
 package com.example.edu.sports_predict_live.prediction.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
@@ -11,6 +13,24 @@ public class RankingResponseDTO {
     private final long   totalPoints;
     private final long   correctCount;
     private final long   totalCount;
+
+    // Redis 역직렬화용
+    @JsonCreator
+    public RankingResponseDTO(
+            @JsonProperty("rank")         int rank,
+            @JsonProperty("userId")       Long userId,
+            @JsonProperty("nickname")     String nickname,
+            @JsonProperty("totalPoints")  long totalPoints,
+            @JsonProperty("correctCount") long correctCount,
+            @JsonProperty("totalCount")   long totalCount
+    ) {
+        this.rank         = rank;
+        this.userId       = userId;
+        this.nickname     = nickname;
+        this.totalPoints  = totalPoints;
+        this.correctCount = correctCount;
+        this.totalCount   = totalCount;
+    }
 
     public RankingResponseDTO(int rank, Object[] row) {
         this.rank         = rank;

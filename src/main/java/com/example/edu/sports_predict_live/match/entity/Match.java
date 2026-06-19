@@ -10,7 +10,12 @@ import java.time.LocalDateTime;
 
 // 경기 일정/결과 — KBO·K리그 전용 (LOL 경기는 lolesports API 실시간 조회)
 @Entity
-@Table(name = "`match`")
+@Table(name = "`match`", indexes = {
+        @Index(name = "idx_match_sport_scheduled", columnList = "sport_id, scheduled_at"),
+        @Index(name = "idx_match_home_team_status", columnList = "home_team_id, status"),
+        @Index(name = "idx_match_away_team_status", columnList = "away_team_id, status"),
+        @Index(name = "idx_match_status_scheduled", columnList = "status, scheduled_at")
+})
 @Getter
 @NoArgsConstructor
 public class Match {
