@@ -169,19 +169,19 @@
         ];
 
         var baseballMenu = [
-            {label: '뉴스',  file: files.news},
+            {label: '뉴스', file: '/news?sport=야구'},
             {label: '일정',  file: files.baseballSchedule},
             {label: '순위',  file: files.baseballStandings},
             {label: '게시판', file: files.boardBaseball}
         ];
         var soccerMenu = [
-            {label: '뉴스',  file: files.news},
+            {label: '뉴스', file: '/news?sport=축구'},
             {label: '일정',  file: files.soccerSchedule},
             {label: '순위',  file: files.soccerStandings},
             {label: '게시판', file: files.boardFootball}
         ];
         var lolMenu = [
-            {label: '뉴스',  file: files.news},
+            {label: '뉴스', file: '/news?sport=LOL'},
             {label: '일정',  file: files.lolSchedule},
             {label: '순위',  file: files.lolStandings},
             {label: '게시판', file: files.boardLol}

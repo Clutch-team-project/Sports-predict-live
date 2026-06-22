@@ -22,7 +22,7 @@
 <!-- SUB NAV -->
 <nav class="w-full border-b border-slate-300 bg-white p-2.5 flex items-center justify-center shadow-sm">
     <div class="max-w-5xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
-        <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/soccer/news'">뉴스</span>
+        <span class="hover:text-slate-800 cursor-pointer" onclick="event.stopPropagation(); location.href='/news?sport=축구'">뉴스</span>
         <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black">일정</span>
         <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/soccer/standings'">순위</span>
         <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/soccer/board'">게시판</span>

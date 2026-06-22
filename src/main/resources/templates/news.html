@@ -283,7 +283,7 @@
 
 <!-- 페이지 탭 네비 -->
 <nav class="gnb px-6 py-2 flex justify-center gap-1 border-b border-slate-200 mb-6">
-    <span class="nav-tab active" onclick="location.href='/news'">뉴스</span>
+    <span class="nav-tab active" onclick="goNewsByCurrentSport()">뉴스</span>
     <span class="nav-tab" onclick="location.href='/soccer/schedule'">일정</span>
     <span class="nav-tab" onclick="location.href='/board/list'">게시판</span>
 </nav>
@@ -355,7 +355,7 @@
     <div class="page" id="page-02">
         <p class="page-label">02 · 뉴스 상세</p>
 
-        <button class="btn-back mb-4" onclick="goPage('page-01')">← 뒤로</button>
+        <button class="btn-back mb-4" onclick="goBackFromDetail()">← 뒤로</button>
 
         <div class="flex gap-5 items-start">
             <!-- 왼쪽: 기사 본문 -->
@@ -435,22 +435,46 @@
         ],
         "축구": [
             { value: "", text: "팀별" },
-            { value: "토트넘", text: "토트넘" },
-            { value: "PSG", text: "PSG" },
-            { value: "맨유", text: "맨유" }
+            { value: "강원FC", text: "강원" },
+            { value: "광주FC", text: "광주" },
+            { value: "김천상무프로축구단", text: "김천" },
+            { value: "대전 하나 시티즌", text: "대전" },
+            { value: "부천 FC", text: "부천" },
+            { value: "서울 이랜드 FC", text: "서울" },
+            { value: "FC안양", text: "안양" },
+            { value: "울산 HD FC", text: "울산" },
+            { value: "인천 유나이티드 FC", text: "인천" },
+            { value: "전북 현대 모터스", text: "전북" },
+            { value: "제주 유나이티드", text: "제주" },
+            { value: "포항 스틸러스", text: "포항" }
+
         ],
         "야구": [
             { value: "", text: "팀별" },
-            { value: "LG", text: "LG" },
-            { value: "KIA", text: "KIA" },
-            { value: "한화", text: "한화" },
-            { value: "두산", text: "두산" }
+            { value: "LG 트윈스", text: "LG" },
+            { value: "KIA 타이거즈", text: "KIA" },
+            { value: "한화 이글스", text: "한화" },
+            { value: "두산 베어스", text: "두산" },
+            { value: "KT 워즈", text: "KT" },
+            { value: "NC 다이노스", text: "NC" },
+            { value: "SSG 랜더스", text: "SSG" },
+            { value: "롯데 자이언츠", text: "롯데" },
+            { value: "삼성 라이온즈", text: "삼성" },
+            { value: "키움 히어로즈", text: "키움" }
         ],
         "LOL": [
             { value: "", text: "팀별" },
             { value: "T1", text: "T1" },
-            { value: "젠지", text: "젠지" },
-            { value: "한화생명", text: "한화생명" }
+            { value: "GEN", text: "GEN" },
+            { value: "HLE", text: "HLE" },
+            { value: "BFX", text: "BFX" },
+            { value: "BRO", text: "BRO" },
+            { value: "DK", text: "DK" },
+            { value: "KRX", text: "KRX" },
+            { value: "KT 롤스터", text: "KT" },
+            { value: "농심 레드포스", text: "NS" },
+            { value: "DNS", text: "DNS" }
+
         ]
     };
 
@@ -766,11 +790,46 @@
         }
     }
 
+    function goBackFromDetail() {
+        const from = new URLSearchParams(location.search).get("from");
+
+        if (from === "home") {
+            location.href = "/";
+            return;
+        }
+
+        goPage("page-01");
+    }
+
+    function goNewsByCurrentSport() {
+        const sport = document.getElementById("sportFilter")?.value;
+
+        if (sport) {
+            location.href = `/news?sport=${encodeURIComponent(sport)}`;
+        } else {
+            location.href = "/news";
+        }
+    }
+
     window.onload = async function () {
         await loadMyScraps();
-        await loadNews();
 
-        const isDetail = new URLSearchParams(location.search).get("detail");
+        const params = new URLSearchParams(location.search);
+        const sport = params.get("sport");
+        const isDetail = params.get("detail");
+
+        if (sport) {
+            const sportFilter = document.getElementById("sportFilter");
+
+            sportFilter.value = sport;
+            sportFilter.disabled = true;
+            sportFilter.style.opacity = "0.7";
+            sportFilter.style.cursor = "not-allowed";
+
+            updateTeamFilter();
+        } else {
+            await loadNews(false);
+        }
 
         if (isDetail === "true") {
             showNewsDetail(
@@ -782,6 +841,7 @@
             );
         }
     };
+
 </script>
 
 </body>

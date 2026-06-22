@@ -81,7 +81,7 @@ public class NewsController {
             @RequestParam String keyword
     ) {
 
-        return newsApiService.searchSportsNews(keyword, "latest", null, 1);
+        return newsApiService.searchSportsNews(keyword, "latest", null, 1, null);
     }
 
     @GetMapping("/search-filter")
@@ -109,7 +109,7 @@ public class NewsController {
             keyword = "스포츠";
         }
 
-        return newsApiService.searchSportsNews(keyword, sort, userId, page);
+        return newsApiService.searchSportsNews(keyword, sort, userId, page, team);
     }
 
         @GetMapping("/news")
