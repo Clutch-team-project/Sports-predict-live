@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
 
         .card { background: rgba(255,255,255,0.9); border: 2px solid rgba(59,130,246,0.55); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -100,7 +102,7 @@
 </head>
 <body class="min-h-screen text-slate-800">
 
-<main class="mx-auto pb-28 pt-8" style="width: min(1024px, calc(100% - 48px));">
+<main class="mx-auto pb-28 pt-8" style="width: min(80rem, calc(100% - 3rem));">
     <div class="h-6"></div>
 
     <button class="btn-back mb-4"

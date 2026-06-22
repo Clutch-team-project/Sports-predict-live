@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
 
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -43,7 +45,7 @@
 
 <!-- MAIN (중앙 정합 구조로 깔끔하게 배치) -->
 <main class="flex-1 overflow-y-auto p-6" id="canvasViewport">
-    <div class="max-w-5xl mx-auto space-y-4">
+    <div class="max-w-7xl mx-auto space-y-4">
 
         <!-- [통합 GNB 헤더 바] 로고, 종목 네비게이션, 로그인/사이트맵 일체형 구조 -->
         <div id="boxHeaderBar" onclick="clickBox('header_bar')"
@@ -121,22 +123,22 @@
                     <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                         <span class="text-xs font-black text-slate-200">실시간 AI 예측 피드</span>
                         <span id="heroUpdateBtn" onclick="refreshHeroPredictionFeed()"
-                              class="text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-0.5 rounded font-black cursor-pointer transition-colors select-none">+ 업데이트</span>
+                              class="text-[0.625rem] bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-0.5 rounded font-black cursor-pointer transition-colors select-none">+ 업데이트</span>
                     </div>
 
                     <!-- 카드 아이템 목록 (동적 로드) -->
                     <div id="heroPredictionFeed" class="space-y-2.5">
-                        <div class="text-center text-slate-500 text-[10px] py-3">불러오는 중...</div>
+                        <div class="text-center text-slate-500 text-[0.625rem] py-3">불러오는 중...</div>
                     </div>
 
                     <!-- 하단 누적 요약 스펙 카드 그룹 -->
                     <div class="grid grid-cols-2 gap-3 text-center text-xs pt-1">
                         <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
-                            <div id="heroTotalCountLabel" class="text-[10px] text-slate-400">총 예측 건수</div>
+                            <div id="heroTotalCountLabel" class="text-[0.625rem] text-slate-400">총 예측 건수</div>
                             <div id="heroTotalCount" class="text-sm font-black text-blue-400 mt-1">-</div>
                         </div>
                         <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
-                            <div id="heroAccuracyRateLabel" class="text-[10px] text-slate-400">평균 적중률</div>
+                            <div id="heroAccuracyRateLabel" class="text-[0.625rem] text-slate-400">평균 적중률</div>
                             <div id="heroAccuracyRate" class="text-sm font-black text-emerald-400 mt-1">-</div>
                         </div>
                     </div>
@@ -177,13 +179,13 @@
                     <!-- 종목 필터 탭 -->
                     <div class="flex gap-1.5 mb-3">
                         <button onclick="loadRanking(null)" id="rankTab-all"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white">전체</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white">전체</button>
                         <button onclick="loadRanking('baseball')" id="rankTab-baseball"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">야구</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">야구</button>
                         <button onclick="loadRanking('soccer')" id="rankTab-soccer"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">축구</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">축구</button>
                         <button onclick="loadRanking('lol')" id="rankTab-lol"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">LOL</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">LOL</button>
                     </div>
                     <div id="rankingList" class="space-y-2 text-xs flex-1">
                         <div class="text-center text-slate-400 py-6">불러오는 중...</div>
@@ -236,7 +238,7 @@
             <div id="boxPopular"
                  class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-start min-h-[210px] shadow-md rounded-2xl">
                 <div class="w-full flex flex-col justify-start text-left">
-                    <h4 class="text-[15px] font-black text-slate-800 border-b border-slate-200 pb-3 mb-3 flex items-center gap-1">
+                    <h4 class="text-[0.9375rem] font-black text-slate-800 border-b border-slate-200 pb-3 mb-3 flex items-center gap-1">
                         커뮤니티 일별 인기 글 리스트</h4>
 
                     <div class="flex flex-col gap-2 text-sm text-slate-600 font-medium">
@@ -584,7 +586,7 @@ public BoardResponseDto(Board board) {
             ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
             : '';
         const favBadge = isFavorite
-            ? `<span class="text-[10px] font-black text-yellow-500">★</span>`
+            ? `<span class="text-[0.625rem] font-black text-yellow-500">★</span>`
             : '';
 
         const homeVal = match.sport === 'lol' ? match.homeWins : match.homeScore;
@@ -596,8 +598,8 @@ public BoardResponseDto(Board board) {
         } else if (isLive || isFinished) {
             const scoreColor = isLive ? 'text-red-500' : 'text-slate-800';
             const badge = isLive
-                ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
-                : `<span class="text-[10px] font-bold text-slate-400">종료</span>`;
+                ? `<span class="text-[0.625rem] font-black text-red-500 animate-pulse">● LIVE</span>`
+                : `<span class="text-[0.625rem] font-bold text-slate-400">종료</span>`;
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     ${badge}
@@ -611,7 +613,7 @@ public BoardResponseDto(Board board) {
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     <span class="text-sm font-black text-slate-700">${match.scheduledAt || '--:--'}</span>
-                    <span class="text-[10px] text-slate-400 font-bold">VS</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">VS</span>
                 </div>`;
         }
 
@@ -622,18 +624,18 @@ public BoardResponseDto(Board board) {
                 const awayWon = awayVal > homeVal;
                 const teamWon = isAway ? awayWon : !awayWon;
                 if (teamWon && match.winningPitcher)
-                    return `<div class="text-[10px] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
+                    return `<div class="text-[0.625rem] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
                 if (!teamWon && match.losingPitcher)
-                    return `<div class="text-[10px] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
+                    return `<div class="text-[0.625rem] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
             } else if (match.status === 'scheduled' || match.status === 'in_progress') {
                 const name = isAway ? match.startingPitcherAway : match.startingPitcherHome;
-                if (name) return `<div class="text-[10px] text-gray-500 mt-0.5">선 ${name}</div>`;
+                if (name) return `<div class="text-[0.625rem] text-gray-500 mt-0.5">선 ${name}</div>`;
             }
             return '';
         }
 
         const livePitcherHtml = (match.sport === 'baseball' && isLive && match.currentPitcher)
-            ? `<div class="text-[10px] text-slate-400 mt-0.5">${match.currentPitcher}</div>`
+            ? `<div class="text-[0.625rem] text-slate-400 mt-0.5">${match.currentPitcher}</div>`
             : '';
 
         return `
@@ -642,7 +644,7 @@ public BoardResponseDto(Board board) {
             <div class="flex items-center px-4 py-3 gap-2">
                 <!-- 종목·시간 -->
                 <div class="w-20 shrink-0">
-                    <div class="text-[10px] font-bold text-slate-400">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</div>
+                    <div class="text-[0.625rem] font-bold text-slate-400">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</div>
                     <div class="text-sm font-black text-slate-500 mt-0.5">${match.scheduledAt || ''}</div>
                 </div>
                 <!-- 원정·스코어·홈 -->
@@ -805,7 +807,7 @@ public BoardResponseDto(Board board) {
             if (hasFav && hasNonFav && !fav && !dividerInserted) {
                 html += `<div class="flex items-center gap-2 py-1">
                     <div class="flex-1 h-px bg-slate-200"></div>
-                    <span class="text-[10px] text-slate-400 font-bold">기타 경기</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">기타 경기</span>
                     <div class="flex-1 h-px bg-slate-200"></div>
                 </div>`;
                 dividerInserted = true;
@@ -822,11 +824,11 @@ public BoardResponseDto(Board board) {
     async function loadRanking(sport) {
         // 탭 스타일 업데이트
         document.querySelectorAll('.rank-tab').forEach(btn => {
-            btn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+            btn.className = 'rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
         });
         const activeId = sport ? `rankTab-${sport}` : 'rankTab-all';
         const activeBtn = document.getElementById(activeId);
-        if (activeBtn) activeBtn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white';
+        if (activeBtn) activeBtn.className = 'rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white';
 
         const container = document.getElementById('rankingList');
         const url = `${BASE_URL}/api/predictions/ranking${sport ? `?sport=${sport}` : ''}`;
@@ -979,7 +981,7 @@ public BoardResponseDto(Board board) {
         const picked = matches.filter(m => m.status !== 'cancelled').slice(0, 2);
 
         if (!picked.length) {
-            feedEl.innerHTML = '<div class="text-center text-slate-500 text-[10px] py-3">오늘 예정된 경기가 없습니다.</div>';
+            feedEl.innerHTML = '<div class="text-center text-slate-500 text-[0.625rem] py-3">오늘 예정된 경기가 없습니다.</div>';
             return;
         }
 
@@ -1009,18 +1011,18 @@ public BoardResponseDto(Board board) {
 
             let badge;
             if (m.status === 'in_progress') {
-                badge = `<span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-[10px] font-black animate-pulse">LIVE</span>`;
+                badge = `<span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-[0.625rem] font-black animate-pulse">LIVE</span>`;
             } else if (m.status === 'finished') {
-                badge = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-black">종료</span>`;
+                badge = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[0.625rem] font-black">종료</span>`;
             } else {
-                badge = `<span class="bg-slate-500/20 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded text-[10px] font-black">예측 가능</span>`;
+                badge = `<span class="bg-slate-500/20 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded text-[0.625rem] font-black">예측 가능</span>`;
             }
 
             return `
             <div class="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex justify-between items-center text-xs">
                 <div>
                     <div class="font-extrabold text-slate-100">${home} vs ${away}</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">${subText}</div>
+                    <div class="text-[0.625rem] text-slate-400 mt-0.5">${subText}</div>
                 </div>
                 ${badge}
             </div>`;

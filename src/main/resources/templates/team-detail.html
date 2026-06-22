@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
 
         .light-portal-view {
@@ -29,7 +31,7 @@
 </head>
 <body class="light-portal-view text-slate-800 min-h-screen antialiased">
 
-<main class="max-w-5xl mx-auto px-6 py-6 space-y-4">
+<main class="max-w-7xl mx-auto px-6 py-6 space-y-4">
 
     <!-- 팀 헤더 카드 -->
     <div id="team-header" class="glass-card border border-slate-300 rounded-2xl shadow-md p-6">
@@ -185,7 +187,7 @@
             <div class="grid grid-cols-4 md:grid-cols-7 gap-3 text-center">
                 ${items.map(([label, value]) => `
                     <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                        <div class="text-[11px] text-slate-400 font-bold">${label}</div>
+                        <div class="text-[0.6875rem] text-slate-400 font-bold">${label}</div>
                         <div class="text-lg font-black text-slate-800 mt-0.5">${value}</div>
                     </div>`).join('')}
             </div>`;
@@ -216,7 +218,7 @@
                 <span class="font-bold text-slate-700 w-[32%] truncate">${esc(m.homeTeamName)}</span>
                 <div class="text-center w-[28%]">
                     ${center}
-                    <div class="text-[10px] text-slate-400 mt-0.5">${esc(m.date)}${isLive ? ' · LIVE' : ''}</div>
+                    <div class="text-[0.625rem] text-slate-400 mt-0.5">${esc(m.date)}${isLive ? ' · LIVE' : ''}</div>
                 </div>
                 <span class="font-bold text-slate-700 w-[32%] truncate text-right">${esc(m.awayTeamName)}</span>
             </div>`;
