@@ -46,11 +46,18 @@ public class BoardServiceImpl implements BoardService{
     private String uploadPath;
 
     // 게시글 생성
-    @Override
     public Long register(BoardDTO boardDTO, String currentUserRole) {
         if("공지".equals(boardDTO.getCategory()) && !currentUserRole.equals("ROLE_ADMIN")) {
             throw new AccessDeniedException("공지사항은 관리자만 작성할 수 있습니다.");
         }
+
+        if (boardDTO.getBoardType() != null) {
+            String trimmed = boardDTO.getBoardType().trim().toLowerCase();
+            if (trimmed.equals("football") || trimmed.equals("soccer")) {
+                boardDTO.setBoardType("soccer");
+            }
+        }
+
         boardDTO.setNotice("공지".equals(boardDTO.getCategory()));
         boardDTO.setBlinded(false);
 
@@ -279,17 +286,34 @@ public class BoardServiceImpl implements BoardService{
 
         boardRepository.save(board);
     }
+
     // 메인홈 일별 인기글 5개 출력
-
     @Override
-    public List<BoardDTO> findTop5ViewCountToday() {
-        LocalDateTime startOfToday = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-        LocalDateTime endOfToday = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-
-        List<Board> result = boardRepository.findTop5ByCreatedAtBetweenAndDeletedAtIsNullAndIsBlindedFalseOrderByViewCountDesc(startOfToday, endOfToday);
+    public List<BoardDTO> findTop5ViewCountToday(String boardType) {
+        if (boardType != null) {
+            String normalized = boardType.trim().toLowerCase();
+            if (normalized.equals("football") || normalized.equals("soccer")) {
+                boardType = "soccer"; // "football"이나 "soccer"로 들어와도 "soccer"로 통일
+            } else if (normalized.equals("baseball")) {
+                boardType = "baseball";
+            } else if (normalized.equals("lol")) {
+                boardType = "lol";
+            }
+        }
+        List<BoardListAllDTO> result = boardRepository.findPopularPosts(5, boardType);
 
         return result.stream()
-                .map(board -> entityToDTO(board))
+                .map(listAllDTO -> {
+                    BoardDTO dto = new BoardDTO();
+                    dto.setBoardId(listAllDTO.getBoardId());
+                    dto.setTitle(listAllDTO.getTitle());
+                    dto.setNickname(listAllDTO.getNickname());
+                    dto.setViewCount(listAllDTO.getViewCount());
+                    dto.setCategory(listAllDTO.getCategory());
+                    dto.setCreatedAt(listAllDTO.getCreatedAt());
+                    dto.setBoardType(listAllDTO.getBoardType());
+                    return dto;
+                })
                 .collect(Collectors.toList());
-    }
+        }
 }

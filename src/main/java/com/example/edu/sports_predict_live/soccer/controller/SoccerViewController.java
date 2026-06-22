@@ -17,7 +17,7 @@ public class SoccerViewController {
     // 축구 홈 (메인 홈 구조 기반, 상단 AI 배너 제외 / 축구 경기·뉴스만 노출)
     @GetMapping
     public String home(Model model) {
-        model.addAttribute("findTop5ViewCountToday", boardService.findTop5ViewCountToday());
+        model.addAttribute("findTop5ViewCountToday", boardService.findTop5ViewCountToday("soccer"));
         return "soccer/index";
     }
 

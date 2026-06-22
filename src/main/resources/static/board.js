@@ -9,7 +9,7 @@ const token = localStorage.getItem('accessToken');
 // ==========================================
 function clickWriteBtn() {
     const urlParams = new URLSearchParams(window.location.search);
-    const currentBoardType = urlParams.get('boardType') || '';
+    const currentBoardType = (urlParams.get('boardType') || '').toLowerCase();
 
     if (!token) {
         if (confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) {
@@ -270,9 +270,14 @@ if (registerForm) {
         if(!content) { alert('내용을 입력해주세요.'); return; }
 
         const formData = new FormData(registerForm);
-        formData.delete('files'); // HTML input에서 잡힌 기본값 비우기
+        formData.delete('files');
 
-        // 우리가 직접 누적한 배열을 넣기
+        let boardTypeVal = document.getElementById('boardType') ? document.getElementById('boardType').value : '';
+        if(boardTypeVal) {
+            boardTypeVal = boardTypeVal.trim().toLowerCase();
+            formData.set('boardType', boardTypeVal);
+        }
+
         registerFiles.forEach(file => {
             formData.append('files', file);
         });
