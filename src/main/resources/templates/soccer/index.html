@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
 
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -37,7 +39,7 @@
 
 <!-- MAIN (중앙 정합 구조) -->
 <main class="flex-1 overflow-y-auto p-6" id="canvasViewport">
-    <div class="max-w-5xl mx-auto space-y-4">
+    <div class="max-w-7xl mx-auto space-y-4">
 
         <!-- [통합 GNB 헤더 바] gnb.js 가 런타임에 숨기고 통일 상단바를 주입한다 -->
         <div id="boxHeaderBar"
@@ -130,7 +132,7 @@
             <div id="boxPopular"
                  class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-start min-h-[210px] shadow-md rounded-2xl">
                 <div class="w-full flex flex-col justify-start text-left">
-                    <h4 class="text-[15px] font-black text-slate-800 border-b border-slate-200 pb-3 mb-3 flex items-center gap-1">
+                    <h4 class="text-[0.9375rem] font-black text-slate-800 border-b border-slate-200 pb-3 mb-3 flex items-center gap-1">
                         커뮤니티 일별 인기 글 리스트</h4>
                     <div class="flex flex-col gap-2 text-sm text-slate-600 font-medium">
                         <a th:each="post, iterStat : ${findTop5ViewCountToday}"
@@ -173,7 +175,7 @@
             ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
             : '';
         const favBadge = isFavorite
-            ? `<span class="text-[10px] font-black text-yellow-500">★</span>`
+            ? `<span class="text-[0.625rem] font-black text-yellow-500">★</span>`
             : '';
 
         const homeVal = match.homeScore;
@@ -185,8 +187,8 @@
         } else if (isLive || isFinished) {
             const scoreColor = isLive ? 'text-red-500' : 'text-slate-800';
             const badge = isLive
-                ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
-                : `<span class="text-[10px] font-bold text-slate-400">종료</span>`;
+                ? `<span class="text-[0.625rem] font-black text-red-500 animate-pulse">● LIVE</span>`
+                : `<span class="text-[0.625rem] font-bold text-slate-400">종료</span>`;
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     ${badge}
@@ -200,7 +202,7 @@
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     <span class="text-sm font-black text-slate-700">${match.scheduledAt || '--:--'}</span>
-                    <span class="text-[10px] text-slate-400 font-bold">VS</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">VS</span>
                 </div>`;
         }
 
@@ -209,7 +211,7 @@
             ${favoriteBar}
             <div class="flex items-center px-4 py-3 gap-2">
                 <div class="w-20 shrink-0">
-                    <div class="text-[10px] font-bold text-slate-400">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</div>
+                    <div class="text-[0.625rem] font-bold text-slate-400">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</div>
                     <div class="text-sm font-black text-slate-500 mt-0.5">${match.scheduledAt || ''}</div>
                 </div>
                 <div class="flex-1 flex items-center justify-around">
@@ -323,7 +325,7 @@
             if (hasFav && hasNonFav && !fav && !dividerInserted) {
                 html += `<div class="flex items-center gap-2 py-1">
                     <div class="flex-1 h-px bg-slate-200"></div>
-                    <span class="text-[10px] text-slate-400 font-bold">기타 경기</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">기타 경기</span>
                     <div class="flex-1 h-px bg-slate-200"></div>
                 </div>`;
                 dividerInserted = true;
@@ -405,17 +407,25 @@
             location.href = "/news?detail=true";
         };
 
-        // 서브 뉴스 리스트 (2~5위)
+        // 서브 뉴스 리스트 (2~5위) - 클릭 시 기사 상세로 이동
         const subBox = document.getElementById("boxNewsList");
         const subs = items.slice(1, 5);
-        if (subs.length) {
-            subBox.innerHTML = subs.map((n, idx) => {
-                const t = n.title.replace(/<[^>]*>/g, "");
-                return `<div class="border border-slate-300 bg-white flex items-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">${idx + 2}. ${t}</span>
-                </div>`;
-            }).join('');
-        }
+        subBox.innerHTML = "";
+        subs.forEach((n, idx) => {
+            const t = n.title.replace(/<[^>]*>/g, "");
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "border border-slate-300 bg-white flex items-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11";
+            itemDiv.innerHTML = `<span class="text-slate-700 font-bold truncate px-3">${idx + 2}. ${t}</span>`;
+            itemDiv.onclick = function () {
+                sessionStorage.setItem("detailNewsTitle", t);
+                sessionStorage.setItem("detailNewsDescription", (n.description || "").replace(/<[^>]*>/g, ""));
+                sessionStorage.setItem("detailNewsLink", n.originallink || n.link);
+                sessionStorage.setItem("detailNewsPubDate", n.pubDate || "");
+                sessionStorage.setItem("detailNewsThumbnailUrl", n.thumbnailUrl || "");
+                location.href = "/news?detail=true";
+            };
+            subBox.appendChild(itemDiv);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {

@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
         .light-portal-view {
             background-color: #cbd5e1;
@@ -21,7 +23,7 @@
 
 <!-- SUB NAV -->
 <nav class="w-full border-b border-slate-300 bg-white p-2.5 flex items-center justify-center shadow-sm">
-    <div class="max-w-5xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
+    <div class="max-w-7xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
         <span class="hover:text-slate-800 cursor-pointer" onclick="event.stopPropagation(); location.href='/news?sport=축구'">뉴스</span>
         <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black">일정</span>
         <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/soccer/standings'">순위</span>
@@ -30,7 +32,7 @@
 </nav>
 
 <!-- MAIN -->
-<main class="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-6">
+<main class="flex-1 max-w-7xl mx-auto w-full px-6 py-8 space-y-6">
 
     <!-- 시즌 타이틀 -->
     <div class="flex justify-center items-center gap-5 mb-2">
@@ -119,13 +121,13 @@
             const div = document.createElement('div');
             if (isSelected) {
                 div.className = 'p-2.5 bg-blue-600 rounded-2xl text-white shadow-md cursor-pointer';
-                div.innerHTML = `<div class="font-black mb-1 text-[11px]">${isToday ? '오늘' : DAY_NAMES[d.getDay()]}</div><div class="font-black text-base">${d.getDate()}</div>`;
+                div.innerHTML = `<div class="font-black mb-1 text-[0.6875rem]">${isToday ? '오늘' : DAY_NAMES[d.getDay()]}</div><div class="font-black text-base">${d.getDate()}</div>`;
             } else if (isToday) {
                 div.className = 'p-2.5 bg-blue-50 border border-blue-300 rounded-2xl cursor-pointer';
-                div.innerHTML = `<div class="text-blue-600 font-black mb-1 text-[11px]">오늘</div><div class="text-blue-600 font-black">${d.getDate()}</div>`;
+                div.innerHTML = `<div class="text-blue-600 font-black mb-1 text-[0.6875rem]">오늘</div><div class="text-blue-600 font-black">${d.getDate()}</div>`;
             } else {
                 div.className = 'p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer';
-                div.innerHTML = `<div class="text-slate-400 mb-1 text-[11px]">${DAY_NAMES[d.getDay()]}</div><div class="text-slate-800 font-extrabold">${d.getDate()}</div>`;
+                div.innerHTML = `<div class="text-slate-400 mb-1 text-[0.6875rem]">${DAY_NAMES[d.getDay()]}</div><div class="text-slate-800 font-extrabold">${d.getDate()}</div>`;
             }
 
             const captured = new Date(d);
@@ -162,7 +164,7 @@
                 <span class="text-xl font-black">${match.awayScore}</span>
                 <span class="text-slate-400 mx-1">:</span>
                 <span class="text-xl font-black">${match.homeScore}</span>
-                <div class="text-[10px] text-slate-400 mt-0.5">종료</div>
+                <div class="text-[0.625rem] text-slate-400 mt-0.5">종료</div>
             </div>`;
         }
         if (match.status === 'in_progress') {
@@ -218,7 +220,7 @@
             el.innerHTML = `
                 <div class="px-4 pb-3 pt-2">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold mr-1">승부예측</span>
+                        <span class="text-[0.625rem] text-slate-400 font-bold mr-1">승부예측</span>
                         <button onclick="submitPrediction(${m.matchId}, 'AWAY_WIN', '${m.awayTeamName}', '${m.homeTeamName}')"
                                 class="${predBtnClass(cur === 'AWAY_WIN')}">
                             ${m.awayTeamName} 승
@@ -232,14 +234,14 @@
                             ${m.homeTeamName} 승
                         </button>
                     </div>
-                    ${cur ? `<p class="text-[10px] text-slate-400 text-center mt-1">경기 시작 전까지 변경 가능</p>` : ''}
+                    ${cur ? `<p class="text-[0.625rem] text-slate-400 text-center mt-1">경기 시작 전까지 변경 가능</p>` : ''}
                 </div>`;
             return;
         }
         if (m.status === 'cancelled') {
             el.innerHTML = pred ? `
                 <div class="flex items-center justify-center gap-2 px-4 pb-3 pt-2">
-                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">내 예측</span>
                     <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
                         ${resultLabel(pred.predictedResult, m)}
                     </span>
@@ -259,7 +261,7 @@
             }
             el.innerHTML = `
                 <div class="flex items-center justify-center gap-2 px-4 pb-3 pt-2">
-                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">내 예측</span>
                     <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
                         ${resultLabel(pred.predictedResult, m)}
                     </span>
@@ -272,7 +274,7 @@
         if (pred) {
             el.innerHTML = `
                 <div class="flex items-center justify-center gap-2 px-4 pb-3 pt-2">
-                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">내 예측</span>
                     <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
                         ${resultLabel(pred.predictedResult, m)}
                     </span>
@@ -381,7 +383,7 @@
             } else {
                 matches.filter(m => m.status === 'scheduled').forEach(m => {
                     const el = document.getElementById(`pred-${m.matchId}`);
-                    if (el) el.innerHTML = `<div class="px-4 pb-2 pt-1.5 text-center"><a href="/login" class="text-[11px] text-slate-400 hover:text-blue-500 transition-colors font-bold">로그인하면 승부예측에 참여할 수 있어요</a></div>`;
+                    if (el) el.innerHTML = `<div class="px-4 pb-2 pt-1.5 text-center"><a href="/login" class="text-[0.6875rem] text-slate-400 hover:text-blue-500 transition-colors font-bold">로그인하면 승부예측에 참여할 수 있어요</a></div>`;
                 });
             }
         } catch (e) {
@@ -465,7 +467,7 @@
         const keyFactorsHtml = data.keyFactors && data.keyFactors.length
             ? `<div class="flex flex-wrap gap-1 mt-2">
                 ${data.keyFactors.map(f =>
-                    `<span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">${f}</span>`
+                    `<span class="text-[0.625rem] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">${f}</span>`
                 ).join('')}
                </div>` : '';
 
@@ -475,8 +477,8 @@
         panel.innerHTML = `
             <div class="border-t border-slate-100 px-4 py-3 bg-gradient-to-b from-slate-50 to-white rounded-b-2xl">
                 <div class="flex items-center gap-1 mb-2">
-                    <span class="text-[10px] font-black text-indigo-500">AI 승부 예측</span>
-                    <span class="text-[10px] text-slate-400 font-bold ml-auto">GPT-4o-mini</span>
+                    <span class="text-[0.625rem] font-black text-indigo-500">AI 승부 예측</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold ml-auto">GPT-4o-mini</span>
                 </div>
                 <div class="flex rounded-xl overflow-hidden h-8 text-xs font-black">
                     <div class="flex items-center justify-start pl-3 transition-all duration-500"
@@ -495,13 +497,13 @@
                 </div>
                 <div class="flex justify-between items-center mt-1.5 mb-1">
                     <div class="flex items-center gap-1">
-                        ${awayHigher ? `<span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600">예측 우세</span>` : ''}
+                        ${awayHigher ? `<span class="text-[0.625rem] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600">예측 우세</span>` : ''}
                         <span class="text-xs font-bold text-slate-700">${awayName}</span>
                     </div>
                     <span></span>
                     <div class="flex items-center gap-1">
                         <span class="text-xs font-bold text-slate-700">${homeName}</span>
-                        ${homeHigher ? `<span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600">예측 우세</span>` : ''}
+                        ${homeHigher ? `<span class="text-[0.625rem] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600">예측 우세</span>` : ''}
                     </div>
                 </div>
                 ${reasoningHtml}
