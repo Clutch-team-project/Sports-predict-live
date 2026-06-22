@@ -38,3 +38,9 @@ out/
 
 # Secret Properties
 **/src/main/resources/application-secret.properties
+
+### Python (crawlers) ###
+__pycache__/
+*.py[cod]
+.venv/
+venv/
