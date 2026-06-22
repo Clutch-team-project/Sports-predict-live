@@ -15,6 +15,7 @@ import com.example.edu.sports_predict_live.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,10 @@ public class BoardServiceImpl implements BoardService{
     private final BoardReportRepository boardReportRepository;
     private final AiModerationService aiModerationService;
 
+    // 파일 저장 경로
+    @Value("${com.example.upload.path}")
+    private String uploadPath;
+
     // 게시글 생성
     @Override
     public Long register(BoardDTO boardDTO, String currentUserRole) {
@@ -50,6 +55,29 @@ public class BoardServiceImpl implements BoardService{
         boardDTO.setBlinded(false);
 
         Board board = dtoToEntity(boardDTO);
+
+        if(boardDTO.getFiles() != null && !boardDTO.getFiles().isEmpty()) {
+            String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
+            java.io.File uploadDir = new java.io.File(absolutePath);
+            if (!uploadDir.exists()) uploadDir.mkdirs();
+
+            for (org.springframework.web.multipart.MultipartFile multipartFile : boardDTO.getFiles()) {
+                if (multipartFile.isEmpty()) continue;
+
+                String originalName = multipartFile.getOriginalFilename();
+                String uuid = java.util.UUID.randomUUID().toString();
+                String saveName = uuid + "_" + originalName;
+                java.nio.file.Path savePath = java.nio.file.Paths.get(absolutePath, saveName);
+
+                try {
+                    multipartFile.transferTo(savePath);
+                    board.addImage(uuid, originalName);
+                } catch (java.io.IOException e) {
+                    throw new RuntimeException("이미지 저장 중 에러 발생", e);
+                }
+            }
+        }
+
         Long boardId = boardRepository.save(board).getBoardId();
 
         String textToAnalyze = boardDTO.getTitle() + " " + boardDTO.getContent();
@@ -95,7 +123,10 @@ public class BoardServiceImpl implements BoardService{
         boolean isNoticeFlag = "공지".equals(boardDTO.getCategory());
         boardDTO.setNotice(isNoticeFlag);
         board.change(boardDTO.getTitle(), boardDTO.getContent(), boardDTO.getCategory(), boardDTO.isNotice());
-        board.clearImage(); // 기존 이미지 파일 제거
+
+        board.clearImage();
+
+        // 기존에 있던 파일명 다시 담기
         if(boardDTO.getFileNames() != null) {
             for(String fileName : boardDTO.getFileNames()) {
                 String[] arr = fileName.split("_", 2);
@@ -103,6 +134,29 @@ public class BoardServiceImpl implements BoardService{
                     board.addImage(arr[0], arr[1]);
                 } else {
                     board.addImage(java.util.UUID.randomUUID().toString(), fileName);
+                }
+            }
+        }
+
+        // 새로 추가된 파일 저장하기
+        if(boardDTO.getFiles() != null && !boardDTO.getFiles().isEmpty()) {
+            String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
+            java.io.File uploadDir = new java.io.File(absolutePath);
+            if (!uploadDir.exists()) uploadDir.mkdirs();
+
+            for (org.springframework.web.multipart.MultipartFile multipartFile : boardDTO.getFiles()) {
+                if (multipartFile.isEmpty()) continue;
+
+                String originalName = multipartFile.getOriginalFilename();
+                String uuid = java.util.UUID.randomUUID().toString();
+                String saveName = uuid + "_" + originalName;
+                java.nio.file.Path savePath = java.nio.file.Paths.get(absolutePath, saveName);
+
+                try {
+                    multipartFile.transferTo(savePath);
+                    board.addImage(uuid, originalName);
+                } catch (java.io.IOException e) {
+                    throw new RuntimeException("새 이미지 저장 중 에러 발생", e);
                 }
             }
         }

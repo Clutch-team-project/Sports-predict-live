@@ -224,7 +224,6 @@
 
                             <th:block th:if="${!dto.isDeleted and !dto.isBlinded}">
                                 <span th:style="${dto.isNotice ? 'color:#93c5fd;font-weight:700' : 'color:#0f172a;font-weight:600'}" th:text="${dto.title}">제목</span>
-                                <span th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}" style="font-size:13px;margin-left:4px">🖼</span>
                             </th:block>
                         </td>
 
