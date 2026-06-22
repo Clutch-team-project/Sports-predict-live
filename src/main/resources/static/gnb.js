@@ -89,7 +89,7 @@
         teamStat:      '/team-stats',
         // 종류별 게시판
         boardAll: '/board/list',
-        boardFootball: '/board/list?boardType=FOOTBALL',
+        boardFootball: '/board/list?boardType=SOCCER',
         boardBaseball: '/board/list?boardType=BASEBALL',
         boardLol: '/board/list?boardType=LOL',
     };

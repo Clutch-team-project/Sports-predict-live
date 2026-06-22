@@ -52,24 +52,6 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             }
             query.where(booleanBuilder);
         }
-        // 블라인드 된 글을 검색하지 않을시 list에서 안보임
-//        if (keyword == null || keyword.trim().isEmpty()) {
-//            query.where(board.isBlinded.isFalse());
-//        } else {
-//            boolean isTitleOrContentSearch = false;
-//
-//            if (types != null) {
-//                for (String type : types) {
-//                    if (type.contains("t") || type.contains("c")) {
-//                        isTitleOrContentSearch = true;
-//                        break;
-//                    }
-//                }
-//            }
-//            if (!isTitleOrContentSearch) {
-//                query.where(board.isBlinded.isFalse());
-//            }
-//        }
 
         if (category != null && !category.isEmpty()) {
             if ("공지".equals(category)) {
@@ -165,48 +147,47 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
     }
 
     @Override
-    public List<BoardListAllDTO> findPopularPosts(int limit) {
+    public List<BoardListAllDTO> findPopularPosts(int limit, String boardType) {
         QBoard board = QBoard.board;
-        QUser user = QUser.user;
-        QBoardReply reply = QBoardReply.boardReply;
+        QUser users = QUser.user;
+        QBoardReply boardReply = QBoardReply.boardReply;
 
-        JPQLQuery<Board> query = from(board);
-        query.leftJoin(user).on(board.userId.eq(user.userId));
-        query.leftJoin(reply).on(reply.board.eq(board));
+        java.time.LocalDateTime start = java.time.LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        java.time.LocalDateTime end = java.time.LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
-        query.where(board.deletedAt.isNull());
-        query.where(board.isBlinded.isFalse());
-        query.where(board.isNotice.isFalse());
+        com.querydsl.jpa.JPQLQuery<Board> baseQuery = from(board)
+                .leftJoin(users).on(board.userId.eq(users.userId))
+                .leftJoin(boardReply).on(boardReply.board.boardId.eq(board.boardId))
+                .where(board.createdAt.between(start, end))
+                .where(board.deletedAt.isNull())
+                .where(board.isBlinded.isFalse())
+                .where(board.isNotice.isFalse());
 
-        // 조회수 기준 내림차순 정렬
-        query.orderBy(board.viewCount.desc(), board.boardId.desc());
-        query.limit(limit);
-        query.groupBy(board);
+        if (boardType != null && !boardType.trim().isEmpty()) {
+            baseQuery.where(board.boardType.equalsIgnoreCase(boardType.trim()));
+        }
 
-        JPQLQuery<Tuple> tupleQuery = query.select(board, user, reply.countDistinct());
-        List<Tuple> tupleList = tupleQuery.fetch();
+        com.querydsl.core.types.Expression<Long> replyCount = boardReply.replyId.countDistinct();
 
-        return tupleList.stream().map(tuple -> {
-            Board b = tuple.get(board);
-            User u = tuple.get(user);
-            Long replyCount = tuple.get(reply.countDistinct());
+        com.querydsl.jpa.JPQLQuery<BoardListAllDTO> finalQuery = baseQuery.select(
+                com.querydsl.core.types.Projections.bean(BoardListAllDTO.class,
+                        board.boardId,
+                        board.title,
+                        board.content,
+                        users.nickname,
+                        board.createdAt,
+                        board.viewCount,
+                        board.likeCount,
+                        board.category,
+                        board.boardType,
+                        com.querydsl.core.types.dsl.Expressions.as(replyCount, "replyCount")
+                )
+        );
 
-            return BoardListAllDTO.builder()
-                    .boardId(b.getBoardId())
-                    .userId(b.getUserId())
-                    .loginId(u != null ? u.getLoginId() : null)
-                    .nickname(u != null ? u.getNickname() : null)
-                    .writerId(u != null ? u.getNickname() : "익명") // HTML th:text="${post.writerId}" 대응
-                    .category(b.getCategory())
-                    .title(b.getTitle())
-                    .viewCount(b.getViewCount())
-                    .likeCount(b.getLikeCount())
-                    .isNotice(b.isNotice())
-                    .isBlinded(b.isBlinded())
-                    .createdAt(b.getCreatedAt())
-                    .updatedAt(b.getUpdatedAt())
-                    .replyCount(replyCount != null ? replyCount : 0L)
-                    .build();
-        }).collect(Collectors.toList());
+        finalQuery.groupBy(board.boardId, users.nickname);
+        finalQuery.orderBy(board.viewCount.desc(), board.boardId.desc());
+        finalQuery.limit(limit);
+
+        return finalQuery.fetch();
     }
 }

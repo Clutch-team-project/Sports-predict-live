@@ -42,8 +42,7 @@
 
     <div class="card p-8">
         <form id="registerForm">
-            <input type="hidden" id="boardType" th:value="${param.boardType}">
-
+            <input type="hidden" id="boardType" name="boardType" th:value="${param.boardType}">
             <div class="mb-6">
                 <label class="input-label" for="category">카테고리</label>
                 <select name="category" id="category" class="input-field" style="appearance:none; cursor:pointer;" required>

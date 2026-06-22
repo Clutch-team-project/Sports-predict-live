@@ -14,7 +14,7 @@ public class WebController {
 
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("findTop5ViewCountToday", boardService.findTop5ViewCountToday());
+        model.addAttribute("findTop5ViewCountToday", boardService.findTop5ViewCountToday(null));
         return "home";
     }
 

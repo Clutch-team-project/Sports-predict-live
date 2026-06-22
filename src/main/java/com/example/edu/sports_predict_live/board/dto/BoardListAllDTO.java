@@ -25,6 +25,7 @@ public class BoardListAllDTO {
     private boolean isNotice;
     private boolean isBlinded;
     private boolean isDeleted;
+    private String boardType;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
