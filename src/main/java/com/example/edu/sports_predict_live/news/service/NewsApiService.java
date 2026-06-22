@@ -28,7 +28,7 @@ public class NewsApiService {
     private final String CLIENT_ID = "01WqnP5WnzxUPdjgIBMi";
     private final String CLIENT_SECRET = "sOCkEPhUh8";
 
-    public JsonNode searchSportsNews(String keyword, String sort, Long userId, int page) {
+    public JsonNode searchSportsNews(String keyword, String sort, Long userId, int page, String team){
 
 
         int start = (page - 1) * 10 + 1;
@@ -71,6 +71,10 @@ public class NewsApiService {
                 String description = item.get("description")
                         .asText()
                         .replaceAll("<[^>]*>", "");
+
+                if (!matchesTeam(title, description, team)) {
+                    continue;
+                }
 
                 String link = item.get("originallink").asText();
 
@@ -150,25 +154,25 @@ public class NewsApiService {
 
                 news.setCategory(keyword);
 
-                String team = "기타";
+                String detectedTeam = "기타";
 
                 if (
                         title.contains("손흥민")
                                 || title.contains("토트넘")
                 ) {
-                    team = "토트넘";
+                    detectedTeam = "토트넘";
                 }
                 else if (
                         title.contains("이강인")
                                 || title.contains("PSG")
                 ) {
-                    team = "PSG";
+                    detectedTeam = "PSG";
                 }
                 else if (
                         title.contains("페이커")
                                 || title.contains("T1")
                 ) {
-                    team = "T1";
+                    detectedTeam = "T1";
                 }
 
                 news.setTitle(title);
@@ -183,7 +187,7 @@ public class NewsApiService {
 
                 news.setCreatedAt(LocalDateTime.now());
 
-                news.setTeam(team);
+                news.setTeam(detectedTeam);
 
                 news.setThumbnailUrl(thumbnailUrl);
 
@@ -222,5 +226,66 @@ public class NewsApiService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private boolean matchesTeam(String title, String description, String team) {
+        if (team == null || team.isBlank()) {
+            return true;
+        }
+
+        String text = (title + " " + description)
+                .replaceAll("<[^>]*>", "")
+                .replace(" ", "")
+                .toLowerCase();
+
+        String normalizedTeam = team
+                .replace(" ", "")
+                .toLowerCase();
+
+        if (text.contains(normalizedTeam)) {
+            return true;
+        }
+
+        return switch (team) {
+            // 축구
+            case "강원FC" -> text.contains("강원fc");
+            case "광주FC" -> text.contains("광주fc");
+            case "김천상무프로축구단" -> text.contains("김천상무");
+            case "대전 하나 시티즌" -> text.contains("대전하나시티즌");
+            case "부천 FC" -> text.contains("부천fc");
+            case "서울 이랜드 FC" -> text.contains("서울이랜드");
+            case "FC안양" -> text.contains("fc안양");
+            case "울산 HD FC" -> text.contains("울산hd");
+            case "인천 유나이티드 FC" -> text.contains("인천유나이티드");
+            case "전북 현대 모터스" -> text.contains("전북현대");
+            case "제주 유나이티드" -> text.contains("제주유나이티드");
+            case "포항 스틸러스" -> text.contains("포항스틸러스");
+
+            // 야구
+            case "LG 트윈스" -> text.contains("lg트윈스") || text.contains("엘지트윈스");
+            case "KIA 타이거즈" -> text.contains("kia타이거즈");
+            case "한화 이글스" -> text.contains("한화이글스");
+            case "두산 베어스" -> text.contains("두산베어스");
+            case "KT 워즈" -> text.contains("kt위즈") || text.contains("ktwiz");
+            case "NC 다이노스" -> text.contains("nc다이노스");
+            case "SSG 랜더스" -> text.contains("ssg랜더스");
+            case "롯데 자이언츠" -> text.contains("롯데자이언츠");
+            case "삼성 라이온즈" -> text.contains("삼성라이온즈");
+            case "키움 히어로즈" -> text.contains("키움히어로즈");
+
+            // LOL
+            case "T1" -> text.contains("t1") || text.contains("티원") || text.contains("페이커");
+            case "GEN" -> text.contains("gen") || text.contains("젠지") || text.contains("geng");
+            case "HLE" -> text.contains("hle") || text.contains("한화생명") || text.contains("한화생명e스포츠");
+            case "BFX" -> text.contains("bfx") || text.contains("bnk피어엑스") || text.contains("피어엑스");
+            case "BRO" -> text.contains("bro") || text.contains("브리온");
+            case "DK" -> text.contains("dk") || text.contains("디플러스기아") || text.contains("디플러스");
+            case "KRX" -> text.contains("krx") || text.contains("drx") || text.contains("디알엑스");
+            case "KT 롤스터" -> text.contains("kt롤스터") || text.contains("롤스터");
+            case "농심 레드포스" -> text.contains("농심레드포스") || text.contains("농심") || text.contains("레드포스");
+            case "DNS" -> text.contains("dns") || text.contains("dnfreecs") || text.contains("dn프릭스") || text.contains("광동프릭스");
+
+            default -> false;
+        };
     }
 }

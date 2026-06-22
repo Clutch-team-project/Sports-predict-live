@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI.MATCH - 프리미엄 스포츠 분석 플랫폼</title>
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
 
@@ -57,10 +59,25 @@
             <!-- 2. Center: 종목별 네비게이션 (GNB 내부 중앙 배치) -->
             <div id="subBoxSportNav" class="flex-grow flex justify-center px-4">
                 <div class="flex items-center gap-10 text-base md:text-lg text-slate-500 font-extrabold">
-                    <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">홈</span>
-                    <span class="hover:text-slate-800 transition-colors cursor-pointer">축구</span>
-                    <span class="hover:text-slate-800 transition-colors cursor-pointer">야구</span>
-                    <span class="hover:text-slate-800 transition-colors cursor-pointer">LOL</span>
+                    <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer"
+                          onclick="currentSport = null">
+    홈
+</span>
+
+                    <span class="hover:text-slate-800 transition-colors cursor-pointer"
+                          onclick="currentSport='soccer'; console.log('현재 선택 종목:', currentSport);">
+    축구
+</span>
+
+                    <span class="hover:text-slate-800 transition-colors cursor-pointer"
+                          onclick="currentSport='baseball'; console.log('현재 선택 종목:', currentSport);">
+    야구
+</span>
+
+                    <span class="hover:text-slate-800 transition-colors cursor-pointer"
+                          onclick="currentSport='lol'; console.log('현재 선택 종목:', currentSport);">
+    LOL
+</span>
                 </div>
             </div>
 
@@ -74,7 +91,7 @@
         </div>
 
         <!-- [2번째 줄] 각 페이지 네비게이션바 (상단 GNB와 공백 없이 완벽 밀착) -->
-        <div id="boxPageNav" onclick="clickBox('page_nav')"
+        <div id="boxPageNav" onclick="goNewsPage()"
              class="w-full !mt-1.5 border border-slate-300 bg-white p-2.5 flex items-center justify-center text-base md:text-lg font-black cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md">
             <div class="flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full">
                 <span class="hover:text-slate-800 transition-colors cursor-pointer">뉴스</span>
@@ -216,22 +233,12 @@
             </div>
 
             <!-- 큰화면 옆 네칸 뉴스 리스트 -->
-            <div id="boxNewsList" onclick="clickBox('news_list')"
+            <div id="boxNewsList"
                  class="col-span-12 md:col-span-2 space-y-2 flex flex-col justify-between">
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">1. LG 최근 OPS 분석</span>
-                </div>
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">2. LCK 15분 골드차</span>
-                </div>
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">3. 손흥민 기대득점</span>
-                </div>
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">4. KBO 구장별 홈런</span>
+                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 rounded-xl h-11">
+                    <span class="text-slate-400 font-bold truncate px-3">뉴스 불러오는 중...</span>
                 </div>
             </div>
-
             <!-- 게시판 인기글 피드 -->
             <div id="boxPopular"
                  class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-start min-h-[210px] shadow-md rounded-2xl">
@@ -261,6 +268,7 @@
 
 <!-- JS 제어 엔진 -->
 <script>
+    let currentSport = null;
     // 도면 카드 클릭 연계 데이터세트 (GNB 통합 반영)
     const blockSpecs = {
         header_bar: {
@@ -697,6 +705,7 @@ public BoardResponseDto(Board board) {
         const dateStr = todayStr();
         const accessToken = localStorage.getItem('accessToken');
 
+
         // 날짜 레이블
         const dateLabel = document.getElementById('matchDateLabel');
         if (dateLabel) dateLabel.textContent = todayLabel();
@@ -820,6 +829,8 @@ public BoardResponseDto(Board board) {
     const RANK_COLORS = ['text-amber-500', 'text-slate-400', 'text-amber-700'];
 
     async function loadRanking(sport) {
+
+        currentSport = sport;
         // 탭 스타일 업데이트
         document.querySelectorAll('.rank-tab').forEach(btn => {
             btn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
@@ -863,6 +874,47 @@ public BoardResponseDto(Board board) {
         }
     }
 
+    function goNewsPage() {
+        console.log("뉴스 이동 currentSport =", currentSport);
+
+        if (currentSport === "soccer") {
+            window.location.href = "/news?sport=축구";
+            return;
+        }
+
+        if (currentSport === "baseball") {
+            window.location.href = "/news?sport=야구";
+            return;
+        }
+
+        if (currentSport === "lol") {
+            window.location.href = "/news?sport=LOL";
+            return;
+        }
+
+        window.location.href = "/news";
+    }
+
+    function cleanNewsText(text) {
+        return (text || "").replace(/<[^>]*>/g, "");
+    }
+
+    function openHomeNewsDetail(news) {
+        const title = cleanNewsText(news.title);
+        const description = cleanNewsText(news.description);
+        const link = news.originallink || news.link;
+        const pubDate = news.pubDate || "";
+        const thumbnailUrl = news.thumbnailUrl || "";
+
+        sessionStorage.setItem("detailNewsTitle", title);
+        sessionStorage.setItem("detailNewsDescription", description);
+        sessionStorage.setItem("detailNewsLink", link);
+        sessionStorage.setItem("detailNewsPubDate", pubDate);
+        sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl);
+
+        location.href = "/news?detail=true&from=home";
+    }
+
     async function loadHomePopularNews() {
         const response = await fetch("/news/search-filter?sort=popular&page=1");
         const data = await response.json();
@@ -871,14 +923,16 @@ public BoardResponseDto(Board board) {
             return;
         }
 
-        const topItems = data.items.slice(0, 5);
-        const news = topItems[Math.floor(Math.random() * topItems.length)];
+        const items = data.items.slice(0, 5);
 
-        const title = news.title.replace(/<[^>]*>/g, "");
-        const description = news.description.replace(/<[^>]*>/g, "");
-        const thumbnailUrl = news.thumbnailUrl;
-        const link = news.originallink || news.link;
-        const pubDate = news.pubDate || "";
+        // 메인 큰 뉴스
+        const mainNews = items[0];
+
+        const title = cleanNewsText(mainNews.title);
+        const description = cleanNewsText(mainNews.description);
+        const thumbnailUrl = mainNews.thumbnailUrl;
+        const link = mainNews.originallink || mainNews.link;
+        const pubDate = mainNews.pubDate || "";
 
         document.getElementById("homePopularNewsTitle").innerText = title;
 
@@ -902,23 +956,36 @@ public BoardResponseDto(Board board) {
             sessionStorage.setItem("detailNewsPubDate", pubDate);
             sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl || "");
 
-            location.href = "/news?detail=true";
+            location.href = "/news?detail=true&from=home";
         };
+
+        // 오른쪽 작은 뉴스 4개
+        const boxNewsList = document.getElementById("boxNewsList");
+        boxNewsList.innerHTML = "";
+
+        items.slice(1, 5).forEach((news, index) => {
+            const smallTitle = cleanNewsText(news.title);
+
+            const itemDiv = document.createElement("div");
+            itemDiv.className =
+                "border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11";
+
+            itemDiv.innerHTML = `
+            <span class="text-slate-700 font-bold truncate px-3">
+                ${index + 1}. ${smallTitle}
+            </span>
+        `;
+
+            itemDiv.onclick = function () {
+                openHomeNewsDetail(news);
+            };
+
+            boxNewsList.appendChild(itemDiv);
+        });
     }
 
     window.addEventListener("load", loadHomePopularNews);
 
-    newsMain.onclick = function () {
-        console.log("홈 인기뉴스 클릭됨");
-
-        sessionStorage.setItem("detailNewsTitle", title);
-        sessionStorage.setItem("detailNewsDescription", description);
-        sessionStorage.setItem("detailNewsLink", link);
-        sessionStorage.setItem("detailNewsPubDate", pubDate);
-        sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl || "");
-
-        location.href = "/news?detail=true";
-    };
 
     async function loadHeroPredictionFeed() {
         const feedEl            = document.getElementById('heroPredictionFeed');
@@ -1041,6 +1108,7 @@ public BoardResponseDto(Board board) {
 
     // 페이지 로드 시 실행
     document.addEventListener('DOMContentLoaded', () => {
+        currentSport = null;
         loadTodayMatches();
         loadRanking(null);
         loadHeroPredictionFeed();
