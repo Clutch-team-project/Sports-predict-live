@@ -140,10 +140,10 @@
                 게시글 본문 내용 영역
             </div>
 
-            <div class="flex gap-2 mb-4" th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}">
+            <div class="image-area mt-6 mb-4 flex flex-col gap-4" th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}">
                 <th:block th:each="fileName : ${dto.fileNames}">
-                    <div style="width:100px;height:80px;background:#e2e8f0;border:1px solid #cbd5e1;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-                        <span style="font-size:10px;color:#94a3b8;padding:4px;word-break:break-all;" th:text="${fileName}">이미지</span>
+                    <div>
+                        <img th:src="@{/board/view(fileName=${fileName})}" alt="첨부 이미지" style="max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;">
                     </div>
                 </th:block>
             </div>

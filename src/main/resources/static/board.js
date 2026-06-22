@@ -111,48 +111,89 @@ if (modifyForm) {
         location.href = '/login';
     }
 
+    let modifyFilesArray = [];
+    const modifyFilesInput = document.getElementById('modifyFiles');
+    const modifyFilePreview = document.getElementById('modifyFilePreview');
+
+    // 기존 등록된 파일 개수 파악
+    function getExistingFileCount() {
+        return document.querySelectorAll('.existing-file-item').length;
+    }
+
+    // 기존 파일 삭제
+    window.removeExistingFile = function(btn) {
+        btn.closest('.existing-file-item').remove();
+    }
+
+    // 새 파일 추가 (누적)
+    if (modifyFilesInput) {
+        modifyFilesInput.addEventListener('change', function(e) {
+            const newFiles = Array.from(e.target.files);
+
+            if (getExistingFileCount() + modifyFilesArray.length + newFiles.length > 5) {
+                alert("기존 이미지를 포함해 최대 5장까지만 첨부할 수 있습니다.");
+                e.target.value = '';
+                return;
+            }
+
+            modifyFilesArray = modifyFilesArray.concat(newFiles);
+            e.target.value = '';
+            renderModifyFiles();
+        });
+    }
+
+    // 새 파일 렌더링
+    function renderModifyFiles() {
+        modifyFilePreview.innerHTML = '';
+        modifyFilesArray.forEach((file, index) => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded border border-blue-200';
+            div.innerHTML = `
+                <span class="truncate pr-4">[새 이미지] ${file.name}</span>
+                <button type="button" class="text-red-500 font-bold hover:text-red-700 flex-shrink-0" onclick="removeModifyFile(${index})">X</button>
+            `;
+            modifyFilePreview.appendChild(div);
+        });
+    }
+
+    // 새 파일 삭제
+    window.removeModifyFile = function(index) {
+        modifyFilesArray.splice(index, 1);
+        renderModifyFiles();
+    }
+
     modifyForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        const boardId = document.getElementById('boardId').value;
-        const category = document.getElementById('category').value;
         const title = document.getElementById('title').value.trim();
         const content = document.getElementById('content').value.trim();
 
         if(!title) { alert('제목을 입력해주세요.'); return; }
         if(!content) { alert('내용을 입력해주세요.'); return; }
 
-        const formData = new URLSearchParams();
-        formData.append('boardId', boardId);
-        formData.append('category', category);
-        formData.append('title', title);
-        formData.append('content', content);
+        const formData = new FormData(modifyForm);
+
+        // 새로 누적한 파일들을 FormData에 수동 추가
+        modifyFilesArray.forEach(file => {
+            formData.append('files', file);
+        });
 
         window.authFetch('/board/modify', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
+            body: formData
         })
             .then(async res => {
                 if (res.ok) {
                     alert('게시글이 성공적으로 수정되었습니다.');
-                    const pageInput = document.getElementById('page');
-                    const boardTypeInput = document.getElementById('boardType');
-                    const pageValue = (pageInput && pageInput.value) ? pageInput.value : '1';
-                    const typeValue = (boardTypeInput && boardTypeInput.value) ? boardTypeInput.value : '';
-
-                    let targetUrl = '/board/list?page=' + pageValue;
-                    if (typeValue) targetUrl += '&boardType=' + typeValue;
-                    location.href = targetUrl;
+                    const boardId = document.getElementById('boardId').value;
+                    const boardType = document.getElementById('boardType') ? document.getElementById('boardType').value : '';
+                    location.href = '/board/read?boardId=' + boardId + (boardType ? '&boardType=' + boardType : '');
                 } else {
                     const errorMessage = await res.text();
                     alert(errorMessage || '수정 중 오류가 발생했습니다.');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            });
+            .catch(error => { console.error(error); alert('서버와 통신 중 오류가 발생했습니다.'); });
     });
 }
 
@@ -170,6 +211,51 @@ if (registerForm) {
         }
     }
 
+    let registerFiles = [];
+    const fileInput = document.getElementById('files');
+    const filePreview = document.getElementById('filePreview');
+
+    // 파일 여러 번 선택하여 누적하기
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const newFiles = Array.from(e.target.files);
+
+            const maxSize = 10 * 1024 * 1024; // 10MB 계산
+            for (let file of newFiles) {
+                if (file.size > maxSize) {
+                    alert("10MB 이하의 이미지만 첨부 가능합니다: " + file.name);
+                    e.target.value = '';
+                    return;
+                }
+            }
+
+            registerFiles = registerFiles.concat(newFiles);
+            e.target.value = '';
+            renderRegisterFiles();
+        });
+    }
+
+    // 파일 목록 화면 렌더링
+    function renderRegisterFiles() {
+        if(!filePreview) return;
+        filePreview.innerHTML = '';
+        registerFiles.forEach((file, index) => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center text-sm text-slate-700 bg-slate-100 px-3 py-2 rounded border border-slate-200';
+            div.innerHTML = `
+                <span class="truncate pr-4">${file.name}</span>
+                <button type="button" class="text-red-500 font-bold hover:text-red-700 flex-shrink-0" onclick="removeRegisterFile(${index})">X</button>
+            `;
+            filePreview.appendChild(div);
+        });
+    }
+
+    // 목록에서 파일 제거
+    window.removeRegisterFile = function(index) {
+        registerFiles.splice(index, 1);
+        renderRegisterFiles();
+    }
+
     registerForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -183,16 +269,17 @@ if (registerForm) {
         if(!title) { alert('제목을 입력해주세요.'); return; }
         if(!content) { alert('내용을 입력해주세요.'); return; }
 
-        const formData = new URLSearchParams();
-        formData.append('category', category);
-        formData.append('title', title);
-        formData.append('content', content);
-        if(boardType) formData.append('boardType', boardType);
+        const formData = new FormData(registerForm);
+        formData.delete('files'); // HTML input에서 잡힌 기본값 비우기
+
+        // 우리가 직접 누적한 배열을 넣기
+        registerFiles.forEach(file => {
+            formData.append('files', file);
+        });
 
         window.authFetch('/board/register', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
+            body: formData
         })
             .then(response => {
                 if (response.redirected) {
@@ -207,10 +294,7 @@ if (registerForm) {
                     alert('게시글 등록에 실패했습니다.');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            });
+            .catch(error => { console.error(error); alert('서버 통신 오류'); });
     });
 
     const btnCancel = document.querySelector('.btn-cancel');
@@ -223,7 +307,6 @@ if (registerForm) {
         });
     }
 }
-
 
 // ==========================================
 // 5. READ PAGE LOGIC (조회 페이지 전용)

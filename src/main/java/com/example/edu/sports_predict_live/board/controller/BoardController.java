@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -232,6 +233,33 @@ public class BoardController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류가 발생하였습니다.");
         }
+    }
+
+    @Value("${com.example.upload.path}")
+    private String uploadPath;
+
+    @GetMapping("/view")
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> viewFileGet(@RequestParam("fileName") String fileName) {
+
+        // 경로 구분자가 겹치지 않도록 안전하게 조합
+        String basePath = uploadPath.endsWith("/") || uploadPath.endsWith("\\") ? uploadPath : uploadPath + java.io.File.separator;
+        String fullPath = basePath + fileName;
+
+        org.springframework.core.io.Resource resource = new org.springframework.core.io.FileSystemResource(fullPath);
+
+        if (!resource.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        try {
+            String contentType = java.nio.file.Files.probeContentType(resource.getFile().toPath());
+            headers.add("Content-Type", contentType != null ? contentType : "application/octet-stream");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok().headers(headers).body(resource);
     }
 
 
