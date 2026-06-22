@@ -7,15 +7,17 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <style>
+        /* 전역 UI 스케일: 기본 1rem -> 1.125rem (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
   body { font-family: 'Noto Sans KR', sans-serif; }
 
   /* 전체_홈 기준 라이트 배경 */
   .light-portal-view {
     background-color: #cbd5e1;
     background-image:
-      linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
-    background-size: 24px 24px;
+      linear-gradient(rgba(148, 163, 184, 0.1) 0.0625rem, transparent 0.0625rem),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.1) 0.0625rem, transparent 0.0625rem);
+    background-size: 1.5rem 1.5rem;
   }
 
   .page { display: none; }
@@ -24,20 +26,20 @@
   /* 카드 */
   .card {
     background: rgba(255,255,255,0.9);
-    border: 2px solid rgba(59,130,246,0.55);
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 0.125rem solid rgba(59,130,246,0.55);
+    border-radius: 1rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.08);
   }
 
   /* 입력 필드 */
   .input-field {
     width: 100%;
     background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 10px 14px;
+    border: 0.0625rem solid #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
     color: #1e293b;
-    font-size: 14px;
+    font-size: 0.875rem;
     outline: none;
     transition: border-color 0.2s;
     font-family: 'Noto Sans KR', sans-serif;
@@ -51,9 +53,9 @@
     background: #2563eb;
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 700;
     cursor: pointer;
     transition: background 0.2s;
@@ -65,10 +67,10 @@
     width: 100%;
     background: white;
     color: #475569;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 11px;
-    font-size: 14px;
+    border: 0.0625rem solid #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 0.6875rem;
+    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -80,7 +82,7 @@
     background: transparent;
     color: #64748b;
     border: none;
-    font-size: 12px;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: color 0.2s;
     font-family: 'Noto Sans KR', sans-serif;
@@ -91,57 +93,57 @@
   /* 섹션 구분선 */
   .section-divider {
     border: none;
-    border-top: 1px solid #e2e8f0;
-    margin: 20px 0;
+    border-top: 0.0625rem solid #e2e8f0;
+    margin: 1.25rem 0;
   }
 
   /* 섹션 타이틀 */
   .section-title {
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 700;
     color: #2563eb;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 0.75rem;
   }
 
   /* 레이블 */
   .field-label {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #475569;
-    margin-bottom: 6px;
+    margin-bottom: 0.375rem;
     display: block;
   }
-  .required { color: #ef4444; margin-left: 2px; }
-  .optional { color: #94a3b8; font-weight: 400; font-size: 11px; margin-left: 4px; }
+  .required { color: #ef4444; margin-left: 0.125rem; }
+  .optional { color: #94a3b8; font-weight: 400; font-size: 0.6875rem; margin-left: 0.25rem; }
 
   /* 토글 스위치 */
-  .toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
-  .toggle-label { font-size: 13px; color: #475569; }
+  .toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; }
+  .toggle-label { font-size: 0.8125rem; color: #475569; }
   .toggle {
-    position: relative; width: 44px; height: 24px;
-    background: #cbd5e1; border-radius: 12px;
+    position: relative; width: 2.75rem; height: 1.5rem;
+    background: #cbd5e1; border-radius: 0.75rem;
     cursor: pointer; transition: background 0.2s;
     flex-shrink: 0;
   }
   .toggle.on { background: #2563eb; }
   .toggle::after {
     content: ''; position: absolute;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: white; top: 3px; left: 3px;
+    width: 1.125rem; height: 1.125rem; border-radius: 50%;
+    background: white; top: 0.1875rem; left: 0.1875rem;
     transition: transform 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: 0 0.0625rem 0.1875rem rgba(0,0,0,0.2);
   }
-  .toggle.on::after { transform: translateX(20px); }
+  .toggle.on::after { transform: translateX(1.25rem); }
 
   /* 사이드바 메뉴 */
   .sidebar-menu-item {
-    padding: 12px 16px;
-    font-size: 13px;
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
     color: #64748b;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     transition: all 0.15s;
     font-weight: 500;
   }
@@ -153,19 +155,19 @@
   .data-table th {
     background: #f1f5f9;
     color: #64748b;
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 700;
-    padding: 10px 14px;
+    padding: 0.625rem 0.875rem;
     text-align: center;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 0.0625rem solid #e2e8f0;
     letter-spacing: 0.05em;
   }
   .data-table td {
-    padding: 12px 14px;
-    font-size: 13px;
+    padding: 0.75rem 0.875rem;
+    font-size: 0.8125rem;
     color: #475569;
     text-align: center;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 0.0625rem solid #f1f5f9;
   }
   .data-table tr:hover td { background: #f8fafc; }
 
@@ -178,9 +180,9 @@
 
   /* 체크박스 */
   .checkbox-custom {
-    width: 18px; height: 18px;
-    border: 2px solid #cbd5e1;
-    border-radius: 4px;
+    width: 1.125rem; height: 1.125rem;
+    border: 0.125rem solid #cbd5e1;
+    border-radius: 0.25rem;
     cursor: pointer;
     transition: all 0.15s;
     flex-shrink: 0;
@@ -188,100 +190,100 @@
     background: white;
   }
   .checkbox-custom.checked { background: #2563eb; border-color: #2563eb; }
-  .checkbox-custom.checked::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+  .checkbox-custom.checked::after { content: '✓'; color: white; font-size: 0.6875rem; font-weight: 700; }
 
   /* 프로필 이미지 */
   .avatar-placeholder {
-    width: 72px; height: 72px;
+    width: 4.5rem; height: 4.5rem;
     background: #e2e8f0;
     border-radius: 50%;
-    border: 2px solid #cbd5e1;
+    border: 0.125rem solid #cbd5e1;
     display: flex; align-items: center; justify-content: center;
-    color: #94a3b8; font-size: 11px; text-align: center;
+    color: #94a3b8; font-size: 0.6875rem; text-align: center;
     flex-shrink: 0;
   }
 
   /* 소셜 로그인 구분선 */
   .social-divider {
-    display: flex; align-items: center; gap: 12px;
-    margin: 16px 0;
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 1rem 0;
   }
   .social-divider::before,
   .social-divider::after {
     content: ''; flex: 1;
-    height: 1px; background: #e2e8f0;
+    height: 0.0625rem; background: #e2e8f0;
   }
-  .social-divider span { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+  .social-divider span { font-size: 0.6875rem; color: #94a3b8; white-space: nowrap; }
 
   /* 정보 박스 */
   .info-box {
     background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 14px;
-    font-size: 12px;
+    border: 0.0625rem solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.875rem;
+    font-size: 0.75rem;
     color: #64748b;
     text-align: center;
     line-height: 1.7;
   }
 
   /* GNB */
-  .gnb { background: white; border-bottom: 1px solid #cbd5e1; }
+  .gnb { background: white; border-bottom: 0.0625rem solid #cbd5e1; }
 
   /* 네비 탭 */
   .nav-tab {
-    padding: 8px 16px;
-    font-size: 13px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: #64748b;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
+    border-bottom: 0.125rem solid transparent;
     transition: all 0.15s;
   }
   .nav-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
   .nav-tab:hover:not(.active) { color: #334155; }
 
   /* 안내 메시지 */
-  .hint-text { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  .hint-text { font-size: 0.6875rem; color: #94a3b8; margin-top: 0.25rem; }
 
   /* 페이지 인디케이터 */
   .page-indicator {
-    position: fixed; bottom: 20px; left: 50%;
+    position: fixed; bottom: 1.25rem; left: 50%;
     transform: translateX(-50%);
-    display: flex; gap: 6px;
+    display: flex; gap: 0.375rem;
     background: rgba(255,255,255,0.92);
-    padding: 8px 16px; border-radius: 20px;
-    border: 1px solid #cbd5e1;
+    padding: 0.5rem 1rem; border-radius: 1.25rem;
+    border: 0.0625rem solid #cbd5e1;
     z-index: 100;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    backdrop-filter: blur(0.5rem);
+    box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.08);
   }
   .dot {
-    width: 8px; height: 8px; border-radius: 50%;
+    width: 0.5rem; height: 0.5rem; border-radius: 50%;
     background: #cbd5e1; cursor: pointer;
     transition: all 0.2s;
   }
-  .dot.active { background: #2563eb; width: 20px; border-radius: 4px; }
+  .dot.active { background: #2563eb; width: 1.25rem; border-radius: 0.25rem; }
 
   /* 페이지 레이블 */
   .page-label {
-    font-size: 10px;
+    font-size: 0.625rem;
     color: #2563eb;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
   }
 
   /* 비밀번호 변경 버튼 */
   .btn-sm {
-    padding: 6px 14px;
-    font-size: 12px;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.75rem;
     font-weight: 700;
     background: #eff6ff;
     color: #2563eb;
-    border: 1px solid #bfdbfe;
-    border-radius: 6px;
+    border: 0.0625rem solid #bfdbfe;
+    border-radius: 0.375rem;
     cursor: pointer;
     transition: all 0.15s;
     white-space: nowrap;
@@ -291,19 +293,19 @@
 
   /* 카카오/구글 버튼 */
   .btn-kakao {
-    width: 100%; padding: 11px;
+    width: 100%; padding: 0.6875rem;
     background: #FEE500; color: #3C1E1E;
-    border: none; border-radius: 8px;
-    font-size: 13px; font-weight: 700;
+    border: none; border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 700;
     cursor: pointer; transition: opacity 0.15s;
     font-family: 'Noto Sans KR', sans-serif;
   }
   .btn-kakao:hover { opacity: 0.9; }
   .btn-google {
-    width: 100%; padding: 11px;
+    width: 100%; padding: 0.6875rem;
     background: white; color: #475569;
-    border: 1px solid #cbd5e1; border-radius: 8px;
-    font-size: 13px; font-weight: 700;
+    border: 0.0625rem solid #cbd5e1; border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 700;
     cursor: pointer; transition: all 0.15s;
     font-family: 'Noto Sans KR', sans-serif;
   }
@@ -311,15 +313,15 @@
 
   /* 탈퇴 링크 */
   .danger-link {
-    font-size: 12px; color: #ef4444;
+    font-size: 0.75rem; color: #ef4444;
     text-decoration: underline; cursor: pointer;
   }
   .danger-link:hover { color: #dc2626; }
 
   /* 스크롤바 */
-  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar { width: 0.25rem; }
   ::-webkit-scrollbar-track { background: #e2e8f0; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0.125rem; }
 </style>
 </head>
 <body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
@@ -452,7 +454,7 @@
 
 
 <!-- 메인 콘텐츠 -->
-<main class="max-w-6xl mx-auto px-6 py-8">
+<main class="max-w-7xl mx-auto px-6 py-8">
 
   <div class="page active" id="page-05">
     <p class="page-label">05 · 회원가입</p>
@@ -460,7 +462,7 @@
       <h2 class="text-center text-xl font-black text-slate-800 mb-6">회원가입</h2>
 
       <!-- 에러/성공 메시지 -->
-      <div id="msg-box" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:16px;"></div>
+      <div id="msg-box" style="display:none;padding:0.625rem 0.875rem;border-radius:0.5rem;font-size:0.8125rem;font-weight:600;margin-bottom:1rem;"></div>
 
       <p class="section-title">계정 정보</p>
       <div class="grid grid-cols-2 gap-3 mb-4">
@@ -472,7 +474,7 @@
           <label class="field-label">이메일 <span class="required">*</span></label>
           <div class="flex gap-2">
             <input id="inp-email" class="input-field" type="email" placeholder="example@email.com" style="flex:1">
-            <button id="btn-send-code" onclick="sendEmailCode()" style="white-space:nowrap;padding:0 12px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">인증코드 발송</button>
+            <button id="btn-send-code" onclick="sendEmailCode()" style="white-space:nowrap;padding:0 0.75rem;background:#eff6ff;color:#2563eb;border:0.0625rem solid #bfdbfe;border-radius:0.5rem;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">인증코드 발송</button>
           </div>
         </div>
         <div>
@@ -486,11 +488,11 @@
       </div>
 
       <!-- 이메일 인증코드 입력 (발송 후 표시) -->
-      <div id="verify-area" style="display:none;margin-bottom:16px;">
+      <div id="verify-area" style="display:none;margin-bottom:1rem;">
         <label class="field-label">인증코드 <span class="required">*</span></label>
         <div class="flex gap-2">
           <input id="inp-code" class="input-field" type="text" placeholder="6자리 입력" maxlength="6" style="flex:1">
-          <button onclick="verifyEmailCode()" style="white-space:nowrap;padding:0 12px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">확인</button>
+          <button onclick="verifyEmailCode()" style="white-space:nowrap;padding:0 0.75rem;background:#eff6ff;color:#2563eb;border:0.0625rem solid #bfdbfe;border-radius:0.5rem;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">확인</button>
         </div>
         <p id="verify-timer" class="hint-text" style="color:#ef4444;"></p>
       </div>

@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
 
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -68,7 +70,7 @@
 
 <!-- GNB -->
 <header class="bg-white border-b border-slate-300 p-4 shadow-sm">
-    <div class="max-w-5xl mx-auto w-full flex justify-between items-center">
+    <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
         <div class="flex items-center shrink-0">
             <span class="text-blue-600 font-black tracking-tighter text-xl cursor-pointer"
                   onclick="location.href='/'">AI.MATCH</span>
@@ -91,7 +93,7 @@
 
 <!-- SUB NAV -->
 <nav class="w-full border-b border-slate-300 bg-white p-2.5 flex items-center justify-center shadow-sm">
-    <div class="max-w-5xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
+    <div class="max-w-7xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
         <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/baseball/news'">뉴스</span>
         <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/baseball/schedule'">일정</span>
         <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">순위</span>
@@ -100,7 +102,7 @@
 </nav>
 
 <!-- MAIN -->
-<main class="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-6">
+<main class="flex-1 max-w-7xl mx-auto w-full px-6 py-8 space-y-6">
 
     <!-- 시즌 타이틀 + 탭 -->
     <div class="flex flex-col items-center mb-4">
@@ -368,7 +370,7 @@
         if (!form) return '-';
         return [...form].map(c => {
             const cls = c === 'W' ? 'recent-w' : c === 'L' ? 'recent-l' : 'recent-d';
-            return `<span class="${cls} w-5 h-5 rounded flex items-center justify-center text-[10px] font-black">${c}</span>`;
+            return `<span class="${cls} w-5 h-5 rounded flex items-center justify-center text-[0.625rem] font-black">${c}</span>`;
         }).join('');
     }
 
