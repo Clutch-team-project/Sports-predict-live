@@ -430,17 +430,25 @@
             location.href = "/news?detail=true";
         };
 
-        // 서브 뉴스 리스트 (2~5위)
+        // 서브 뉴스 리스트 (2~5위) - 클릭 시 기사 상세로 이동
         const subBox = document.getElementById("boxNewsList");
         const subs = items.slice(1, 5);
-        if (subs.length) {
-            subBox.innerHTML = subs.map((n, idx) => {
-                const t = n.title.replace(/<[^>]*>/g, "");
-                return `<div class="border border-slate-300 bg-white flex items-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">${idx + 2}. ${t}</span>
-                </div>`;
-            }).join('');
-        }
+        subBox.innerHTML = "";
+        subs.forEach((n, idx) => {
+            const t = n.title.replace(/<[^>]*>/g, "");
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "border border-slate-300 bg-white flex items-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11";
+            itemDiv.innerHTML = `<span class="text-slate-700 font-bold truncate px-3">${idx + 2}. ${t}</span>`;
+            itemDiv.onclick = function () {
+                sessionStorage.setItem("detailNewsTitle", t);
+                sessionStorage.setItem("detailNewsDescription", (n.description || "").replace(/<[^>]*>/g, ""));
+                sessionStorage.setItem("detailNewsLink", n.originallink || n.link);
+                sessionStorage.setItem("detailNewsPubDate", n.pubDate || "");
+                sessionStorage.setItem("detailNewsThumbnailUrl", n.thumbnailUrl || "");
+                location.href = "/news?detail=true";
+            };
+            subBox.appendChild(itemDiv);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {

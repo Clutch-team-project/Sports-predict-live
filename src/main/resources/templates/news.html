@@ -401,6 +401,7 @@
     let currentPage = 1;
 
     function changeSort(sortType) {
+        const prevSort = currentSort;
         currentSort = sortType;
         currentPage = 1;
 
@@ -410,7 +411,12 @@
 
         document.getElementById(`sort-${sortType}`).classList.add("active");
 
-        updateScrapFilterUI();
+        // 필터 UI는 스크랩 모드 진입/이탈 시에만 재구성한다.
+        // (최신순 ↔ 인기순 전환 시 종목/팀 선택이 초기화되는 문제 방지)
+        if (sortType === "scrap" || prevSort === "scrap") {
+            updateScrapFilterUI();
+        }
+
         loadNews(false);
     }
 
