@@ -897,7 +897,10 @@ public BoardResponseDto(Board board) {
     }
 
     function cleanNewsText(text) {
-        return (text || "").replace(/<[^>]*>/g, "");
+        const stripped = (text || "").replace(/<[^>]*>/g, "");
+        const el = document.createElement("textarea");
+        el.innerHTML = stripped;          // HTML 엔티티(&quot; 등) 디코드
+        return el.value;
     }
 
     function openHomeNewsDetail(news) {
