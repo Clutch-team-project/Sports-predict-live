@@ -10,6 +10,7 @@ K리그 크롤러 (K리그1 전용)
     python kleague_crawler.py --month 05   # 특정 월 경기 일정만
 """
 
+import os
 import re
 import time
 import requests
@@ -26,11 +27,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 #  DB 설정
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     3306,
-    "user":     "root",
-    "password": "1234",
-    "database": "ai_match",
+    "host":     os.environ.get("DB_HOST", "localhost"),
+    "port":     int(os.environ.get("DB_PORT", "3306")),
+    "user":     os.environ.get("DB_USER", "root"),
+    "password": os.environ.get("DB_PASSWORD", "1234"),
+    "database": os.environ.get("DB_NAME", "ai_match"),
     "charset":  "utf8mb4",
 }
 

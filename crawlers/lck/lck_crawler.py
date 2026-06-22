@@ -11,17 +11,18 @@ LCK 크롤러
 ※ league_id는 시즌마다 바뀌므로 하단 업데이트 필요
 """
 
+import os
 import requests
 import pymysql
 from datetime import datetime
 
 #  DB 설정
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     3306,
-    "user":     "root",
-    "password": "1234",
-    "database": "ai_match",
+    "host":     os.environ.get("DB_HOST", "localhost"),
+    "port":     int(os.environ.get("DB_PORT", "3306")),
+    "user":     os.environ.get("DB_USER", "root"),
+    "password": os.environ.get("DB_PASSWORD", "1234"),
+    "database": os.environ.get("DB_NAME", "ai_match"),
     "charset":  "utf8mb4",
 }
 

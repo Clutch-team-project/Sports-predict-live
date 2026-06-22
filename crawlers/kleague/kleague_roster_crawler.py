@@ -12,6 +12,7 @@ K리그 선수 명단(로스터) 크롤러 (K리그1 전용)
 권장 실행 주기: 주 1회 (이적/등록 변동 반영)
 """
 
+import os
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -20,11 +21,11 @@ from datetime import datetime
 
 #  DB 설정
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     3306,
-    "user":     "root",
-    "password": "1234",
-    "database": "ai_match",
+    "host":     os.environ.get("DB_HOST", "localhost"),
+    "port":     int(os.environ.get("DB_PORT", "3306")),
+    "user":     os.environ.get("DB_USER", "root"),
+    "password": os.environ.get("DB_PASSWORD", "1234"),
+    "database": os.environ.get("DB_NAME", "ai_match"),
     "charset":  "utf8mb4",
 }
 

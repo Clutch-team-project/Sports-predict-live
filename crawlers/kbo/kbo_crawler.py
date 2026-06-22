@@ -12,6 +12,7 @@ KBO 크롤러
     python kbo_crawler.py --start 20260601 --end 20260630  # 날짜 범위
 """
 
+import os
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -20,11 +21,11 @@ from datetime import datetime, timedelta
 
 #  DB 설정
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     3306,
-    "user":     "root",
-    "password": "1234",
-    "database": "ai_match",
+    "host":     os.environ.get("DB_HOST", "localhost"),
+    "port":     int(os.environ.get("DB_PORT", "3306")),
+    "user":     os.environ.get("DB_USER", "root"),
+    "password": os.environ.get("DB_PASSWORD", "1234"),
+    "database": os.environ.get("DB_NAME", "ai_match"),
     "charset":  "utf8mb4",
 }
 
@@ -45,6 +46,11 @@ URL_SCHEDULE_API = "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleLi
 
 # ASP.NET 컨트롤 prefix (KBO 공통)
 CTL = "ctl00$ctl00$ctl00$cphContents$cphContents$cphContents$"
+
+# 팀 선택 드롭다운 컨트롤 + 팀 코드 (전체 보기는 규정타석 충족 선수만,
+# 팀 선택 시 해당 팀 전 선수가 나오므로 팀별로 순회해 규정 미달 선수까지 수집한다)
+TEAM_FIELD = CTL + "ddlTeam$ddlTeam"
+TEAM_CODES = ["LG", "KT", "SS", "HT", "OB", "HH", "NC", "LT", "SK", "WO"]
 
 
 #  공통 유틸
@@ -107,10 +113,80 @@ def get_all_player_pages(url: str, position_type: str) -> list[dict]:
     return all_players
 
 
+def get_team_player_pages(url: str, position_type: str, team_code: str) -> list[dict]:
+    """특정 팀을 선택(postback)해 해당 팀 전 선수(규정 미달 포함) 기록을 페이지네이션 처리해 수집"""
+    session = requests.Session()
+    res = session.get(url, headers=HEADERS, timeout=10)
+    res.raise_for_status()
+    soup = BeautifulSoup(res.text, "html.parser")
+
+    # 팀 선택 postback
+    form_data = extract_all_form_fields(soup)
+    form_data["__EVENTTARGET"]   = TEAM_FIELD
+    form_data["__EVENTARGUMENT"] = ""
+    form_data[TEAM_FIELD]        = team_code
+    res = session.post(url, data=form_data, headers={
+        **HEADERS,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": url,
+    }, timeout=10)
+    soup = BeautifulSoup(res.text, "html.parser")
+
+    players = parse_players_from_table(soup, position_type)
+
+    # 팀 선택 상태를 유지한 채 페이지네이션 (extract_all_form_fields가 선택된 팀을 그대로 전송)
+    page = 2
+    while soup.find("a", id=re.compile(f"ucPager_btnNo{page}$")):
+        form_data = extract_all_form_fields(soup)
+        form_data["__EVENTTARGET"]   = CTL + f"ucPager$btnNo{page}"
+        form_data["__EVENTARGUMENT"] = ""
+        res = session.post(url, data=form_data, headers={
+            **HEADERS,
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Referer": url,
+        }, timeout=10)
+        soup = BeautifulSoup(res.text, "html.parser")
+        rows = parse_players_from_table(soup, position_type)
+        if not rows:
+            break
+        players.extend(rows)
+        page += 1
+
+    return players
+
+
+def crawl_all_players_by_team(url: str, position_type: str) -> list[dict]:
+    """전체 팀을 순회해 규정 미달 선수까지 포함한 전 선수 기록을 수집"""
+    all_players = []
+    for code in TEAM_CODES:
+        rows = get_team_player_pages(url, position_type, code)
+        print(f"  [{code}] {len(rows)}명")
+        all_players.extend(rows)
+    return all_players
+
+
 def get_db():
     config = DB_CONFIG.copy()
     config["password"] = config["password"].encode("utf-8")
     return pymysql.connect(**config)
+
+
+def ensure_schema(conn):
+    """qualified 컬럼이 없으면 추가 (앱의 ddl-auto와 무관하게 크롤러 단독 실행 보장)"""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_schema = %s
+              AND table_name = 'player_season_stat_baseball'
+              AND column_name = 'qualified'
+        """, (DB_CONFIG["database"],))
+        if cur.fetchone()[0] == 0:
+            cur.execute(
+                "ALTER TABLE player_season_stat_baseball "
+                "ADD COLUMN qualified TINYINT(1) NOT NULL DEFAULT 0"
+            )
+            print("  [SCHEMA] qualified 컬럼 추가")
+    conn.commit()
 
 
 def load_team_map(conn) -> dict:
@@ -330,41 +406,55 @@ def parse_players_from_table(soup: BeautifulSoup, position_type: str) -> list[di
         if not name or not team_name:
             continue
 
+        # 규정 미달 선수는 기록 칸이 '-'(타석/이닝 없음)로 올 수 있어 안전 변환 필요
+        def _i(key):
+            v = row.get(key, "")
+            return int(v) if v not in ("", "-") else 0
+
+        def _f(key):
+            v = row.get(key, "")
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return 0.0
+
         base = {
             "name":               name,
             "team_name":          team_name,
             "external_player_id": external_player_id,
             "position_type":      position_type,
-            "games_played":       int(row.get("G", 0) or 0),
+            "games_played":       _i("G"),
         }
 
         if position_type == "hitter":
             base.update({
-                "batting_avg": float(row.get("AVG", 0) or 0),
-                "hits":        int(row.get("H", 0) or 0),
-                "home_runs":   int(row.get("HR", 0) or 0),
-                "rbi":         int(row.get("RBI", 0) or 0),
+                "batting_avg": _f("AVG"),
+                "hits":        _i("H"),
+                "home_runs":   _i("HR"),
+                "rbi":         _i("RBI"),
             })
         else:
             base.update({
-                "era":        float(row.get("ERA", 0) or 0),
-                "wins":       int(row.get("W", 0) or 0),
-                "losses":     int(row.get("L", 0) or 0),
-                "strikeouts": int(row.get("SO", 0) or 0),
-                "saves":      int(row.get("SV", 0) or 0),
-                "holds":      int(row.get("HLD", 0) or 0),
+                "era":        _f("ERA"),
+                "wins":       _i("W"),
+                "losses":     _i("L"),
+                "strikeouts": _i("SO"),
+                "saves":      _i("SV"),
+                "holds":      _i("HLD"),
             })
 
         results.append(base)
     return results
 
 
-def save_hitters(conn, team_map: dict, data: list[dict]):
+def save_hitters(conn, team_map: dict, data: list[dict], qualified_ids: set = None):
+    if qualified_ids is None:
+        qualified_ids = set()
     sql_upsert = """
         INSERT INTO player_season_stat_baseball
-            (player_season_stat_id, batting_avg, hits, home_runs, rbi)
-        VALUES (%s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE batting_avg=%s, hits=%s, home_runs=%s, rbi=%s
+            (player_season_stat_id, batting_avg, hits, home_runs, rbi, qualified)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE batting_avg=%s, hits=%s, home_runs=%s, rbi=%s, qualified=%s
     """
     sql_update_base = "UPDATE player_season_stat SET games_played=%s, updated_at=NOW() WHERE player_season_stat_id=%s"
     saved = 0
@@ -375,11 +465,12 @@ def save_hitters(conn, team_map: dict, data: list[dict]):
             if not player_id:
                 continue
             stat_id = get_or_create_season_stat(cur, player_id, SEASON)
+            qualified = 1 if row.get("external_player_id") in qualified_ids else 0
             cur.execute(sql_update_base, (row["games_played"], stat_id))
             cur.execute(sql_upsert, (
                 stat_id,
-                row["batting_avg"], row["hits"], row["home_runs"], row["rbi"],
-                row["batting_avg"], row["hits"], row["home_runs"], row["rbi"],
+                row["batting_avg"], row["hits"], row["home_runs"], row["rbi"], qualified,
+                row["batting_avg"], row["hits"], row["home_runs"], row["rbi"], qualified,
             ))
             seen_stat_ids.append(stat_id)
             saved += 1
@@ -405,12 +496,14 @@ def save_hitters(conn, team_map: dict, data: list[dict]):
     print(f"  타자 기록 저장 완료: {saved}건")
 
 
-def save_pitchers(conn, team_map: dict, data: list[dict]):
+def save_pitchers(conn, team_map: dict, data: list[dict], qualified_ids: set = None):
+    if qualified_ids is None:
+        qualified_ids = set()
     sql_upsert = """
         INSERT INTO player_season_stat_baseball
-            (player_season_stat_id, era, wins, losses, strikeouts, saves, holds)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE era=%s, wins=%s, losses=%s, strikeouts=%s, saves=%s, holds=%s
+            (player_season_stat_id, era, wins, losses, strikeouts, saves, holds, qualified)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE era=%s, wins=%s, losses=%s, strikeouts=%s, saves=%s, holds=%s, qualified=%s
     """
     sql_update_base = "UPDATE player_season_stat SET games_played=%s, updated_at=NOW() WHERE player_season_stat_id=%s"
     saved = 0
@@ -421,13 +514,14 @@ def save_pitchers(conn, team_map: dict, data: list[dict]):
             if not player_id:
                 continue
             stat_id = get_or_create_season_stat(cur, player_id, SEASON)
+            qualified = 1 if row.get("external_player_id") in qualified_ids else 0
             cur.execute(sql_update_base, (row["games_played"], stat_id))
             cur.execute(sql_upsert, (
                 stat_id,
                 row["era"], row["wins"], row["losses"],
-                row["strikeouts"], row["saves"], row["holds"],
+                row["strikeouts"], row["saves"], row["holds"], qualified,
                 row["era"], row["wins"], row["losses"],
-                row["strikeouts"], row["saves"], row["holds"],
+                row["strikeouts"], row["saves"], row["holds"], qualified,
             ))
             seen_stat_ids.append(stat_id)
             saved += 1
@@ -849,6 +943,7 @@ def main():
 
     conn = get_db()
     try:
+        ensure_schema(conn)
         team_map         = load_team_map(conn)
         player_id_to_name = load_player_id_map(conn)
 
@@ -889,10 +984,26 @@ def main():
             save_team_rank(conn, team_map, crawl_team_rank())
 
             print("\n▶ 타자 기록 크롤링...")
-            save_hitters(conn, team_map, get_all_player_pages(URL_HITTER_P1, "hitter"))
+            # 전체 보기(규정타석 충족) → qualified 판별용 ext_id 집합
+            qualified_hitters = {
+                p["external_player_id"]
+                for p in get_all_player_pages(URL_HITTER_P1, "hitter")
+                if p.get("external_player_id")
+            }
+            # 팀별 전 선수(규정 미달 포함)
+            print("  팀별 전 선수 수집...")
+            all_hitters = crawl_all_players_by_team(URL_HITTER_P1, "hitter")
+            save_hitters(conn, team_map, all_hitters, qualified_hitters)
 
             print("\n▶ 투수 기록 크롤링...")
-            save_pitchers(conn, team_map, get_all_player_pages(URL_PITCHER_P1, "pitcher"))
+            qualified_pitchers = {
+                p["external_player_id"]
+                for p in get_all_player_pages(URL_PITCHER_P1, "pitcher")
+                if p.get("external_player_id")
+            }
+            print("  팀별 전 선수 수집...")
+            all_pitchers = crawl_all_players_by_team(URL_PITCHER_P1, "pitcher")
+            save_pitchers(conn, team_map, all_pitchers, qualified_pitchers)
 
     finally:
         conn.close()

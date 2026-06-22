@@ -19,6 +19,7 @@ public class PitcherRecordResponseDTO {
     private final Integer strikeouts;
     private final Integer saves;
     private final Integer holds;
+    private final boolean qualified;
 
     public PitcherRecordResponseDTO(PlayerSeasonStatBaseball stat) {
         var pss    = stat.getPlayerSeasonStat();
@@ -34,5 +35,6 @@ public class PitcherRecordResponseDTO {
         this.strikeouts   = stat.getStrikeouts();
         this.saves        = stat.getSaves();
         this.holds        = stat.getHolds();
+        this.qualified    = Boolean.TRUE.equals(stat.getQualified());
     }
 }

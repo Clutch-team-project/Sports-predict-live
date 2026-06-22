@@ -197,8 +197,16 @@
                     <h2 class="text-lg md:text-xl font-black text-slate-800">KBO 타자 스펙 랭킹</h2>
                     <p class="text-xs text-slate-400 mt-0.5">시즌 개인 누적 타격 기록 랭킹</p>
                 </div>
-                <input type="text" id="hitter-search" placeholder="선수명 검색"
-                       class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="openTeamModal('hitter')"
+                            class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold shadow-sm hover:border-blue-500 transition">
+                        <span class="text-slate-400 font-medium">팀</span>
+                        <span id="hitter-team-label" class="text-slate-800">전체</span>
+                        <span class="text-xs text-slate-400">▾</span>
+                    </button>
+                    <input type="text" id="hitter-search" placeholder="선수명 검색"
+                           class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+                </div>
             </div>
             <div class="overflow-x-auto rounded-2xl border border-slate-200">
                 <table class="w-full text-xs md:text-sm min-w-[600px]">
@@ -224,6 +232,17 @@
         </div>
     </section>
 
+    <!-- 팀 선택 모달 -->
+    <div id="team-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onclick="closeTeamModal()">
+        <div class="bg-white rounded-3xl shadow-xl w-full max-w-md p-6" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-black text-slate-800 mx-auto">팀을 선택해주세요</h3>
+                <button onclick="closeTeamModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">×</button>
+            </div>
+            <div id="team-modal-grid" class="grid grid-cols-4 gap-x-2 gap-y-5"></div>
+        </div>
+    </div>
+
     <!-- 투수 기록 탭 -->
     <section id="section-pitcher" class="hidden">
         <div class="bg-white border border-slate-300 rounded-3xl p-6 shadow-md">
@@ -232,8 +251,16 @@
                     <h2 class="text-lg md:text-xl font-black text-slate-800">KBO 투수 스펙 랭킹</h2>
                     <p class="text-xs text-slate-400 mt-0.5">시즌 개인 누적 투구 기록 랭킹</p>
                 </div>
-                <input type="text" id="pitcher-search" placeholder="선수명 검색"
-                       class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="openTeamModal('pitcher')"
+                            class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold shadow-sm hover:border-blue-500 transition">
+                        <span class="text-slate-400 font-medium">팀</span>
+                        <span id="pitcher-team-label" class="text-slate-800">전체</span>
+                        <span class="text-xs text-slate-400">▾</span>
+                    </button>
+                    <input type="text" id="pitcher-search" placeholder="선수명 검색"
+                           class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold outline-none shadow-sm focus:border-blue-500 transition">
+                </div>
             </div>
             <div class="overflow-x-auto rounded-2xl border border-slate-200">
                 <table class="w-full text-xs md:text-sm min-w-[600px]">
@@ -313,6 +340,73 @@
             class="text-lg leading-none ${isFav ? 'text-yellow-400' : 'text-slate-300'} hover:text-yellow-400 transition-colors">
             ${isFav ? '★' : '☆'}
         </button>`;
+    }
+
+    // ── 팀 필터 ─────────────────────────────────────────────────────────────
+    // 선택된 팀명 (null = 전체). standingData(emblemUrl 포함)를 재사용해 로고를 표시한다.
+    const teamFilter = { hitter: null, pitcher: null };
+    let teamModalTarget = null;
+
+    function openTeamModal(tab) {
+        teamModalTarget = tab;
+        const grid = document.getElementById('team-modal-grid');
+        const selected = teamFilter[tab];
+
+        const cell = (name, emblemUrl) => {
+            const isSel = (name === null && selected === null) || name === selected;
+            const ring = isSel ? 'ring-2 ring-blue-500' : '';
+            const label = isSel ? 'text-blue-600' : 'text-slate-600';
+            const inner = emblemUrl
+                ? `<img src="${emblemUrl}" class="w-9 h-9 object-contain" onerror="this.style.display='none'" alt="${name}">`
+                : `<span class="text-slate-400 text-xl">◎</span>`;
+            return `
+                <button type="button" onclick="selectTeam(${name === null ? 'null' : `'${name}'`})"
+                        class="flex flex-col items-center gap-2">
+                    <span class="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center ${ring}">
+                        ${inner}
+                    </span>
+                    <span class="text-xs font-bold ${label}">${name === null ? '전체' : name}</span>
+                </button>`;
+        };
+
+        const cells = [cell(null, null)];
+        standingData.forEach(t => cells.push(cell(t.teamName, t.emblemUrl)));
+        grid.innerHTML = cells.join('');
+
+        document.getElementById('team-modal').classList.remove('hidden');
+    }
+
+    function closeTeamModal() {
+        document.getElementById('team-modal').classList.add('hidden');
+    }
+
+    function selectTeam(name) {
+        const tab = teamModalTarget;
+        teamFilter[tab] = name;
+        document.getElementById(`${tab}-team-label`).textContent = name ?? '전체';
+        closeTeamModal();
+        if (tab === 'hitter') applyHitterFilters();
+        else                  applyPitcherFilters();
+    }
+
+    // 팀 + 검색어 + 정렬을 모두 반영해 다시 렌더
+    // 전체 선택 시 규정타석/이닝 충족 선수만, 특정 팀 선택 시 그 팀 전 선수
+    function applyHitterFilters() {
+        const kw = (document.getElementById('hitter-search').value || '').trim().toLowerCase();
+        let base = teamFilter.hitter
+            ? hitterData.filter(p => p.teamName === teamFilter.hitter)
+            : hitterData.filter(p => p.qualified);
+        if (kw) base = base.filter(p => p.playerName.toLowerCase().includes(kw) || p.teamName.toLowerCase().includes(kw));
+        renderHitters(applySort(base, sortState['hitter']));
+    }
+
+    function applyPitcherFilters() {
+        const kw = (document.getElementById('pitcher-search').value || '').trim().toLowerCase();
+        let base = teamFilter.pitcher
+            ? pitcherData.filter(p => p.teamName === teamFilter.pitcher)
+            : pitcherData.filter(p => p.qualified);
+        if (kw) base = base.filter(p => p.playerName.toLowerCase().includes(kw) || p.teamName.toLowerCase().includes(kw));
+        renderPitchers(applySort(base, sortState['pitcher']));
     }
 
     // ── 정렬 ────────────────────────────────────────────────────────────────
@@ -441,7 +535,7 @@
         try {
             const res = await authFetch(`${BASE_URL}/api/records/baseball/hitters`);
             hitterData = await res.json();
-            renderHitters(applySort(hitterData, sortState['hitter']));
+            applyHitterFilters();
             loaded.hitter = true;
         } catch (e) {
             document.getElementById('hitter-tbody').innerHTML =
@@ -473,7 +567,7 @@
         try {
             const res = await authFetch(`${BASE_URL}/api/records/baseball/pitchers`);
             pitcherData = await res.json();
-            renderPitchers(applySort(pitcherData, sortState['pitcher']));
+            applyPitcherFilters();
             loaded.pitcher = true;
         } catch (e) {
             document.getElementById('pitcher-tbody').innerHTML =
@@ -503,22 +597,13 @@
     }
 
     // ── 검색 (정렬 상태 유지) ────────────────────────────────────────────────
-    document.getElementById('hitter-search').addEventListener('input', function () {
-        const kw = this.value.trim().toLowerCase();
-        const base = kw ? hitterData.filter(p => p.playerName.includes(kw) || p.teamName.includes(kw)) : hitterData;
-        renderHitters(applySort(base, sortState['hitter']));
-    });
-
-    document.getElementById('pitcher-search').addEventListener('input', function () {
-        const kw = this.value.trim().toLowerCase();
-        const base = kw ? pitcherData.filter(p => p.playerName.includes(kw) || p.teamName.includes(kw)) : pitcherData;
-        renderPitchers(applySort(base, sortState['pitcher']));
-    });
+    document.getElementById('hitter-search').addEventListener('input', applyHitterFilters);
+    document.getElementById('pitcher-search').addEventListener('input', applyPitcherFilters);
 
     // ── 초기화 ───────────────────────────────────────────────────────────────
-    initSort('team',    () => standingData, renderTeam,     'diff');
-    initSort('hitter',  () => hitterData,   renderHitters,  'battingAvg');
-    initSort('pitcher', () => pitcherData,  renderPitchers, 'era');
+    initSort('team',    () => standingData, renderTeam,        'diff');
+    initSort('hitter',  () => hitterData,   applyHitterFilters,  'battingAvg');
+    initSort('pitcher', () => pitcherData,  applyPitcherFilters, 'era');
     loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>

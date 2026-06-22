@@ -17,6 +17,7 @@ public class HitterRecordResponseDTO {
     private final Integer hits;
     private final Integer homeRuns;
     private final Integer rbi;
+    private final boolean qualified;
 
     public HitterRecordResponseDTO(PlayerSeasonStatBaseball stat) {
         var pss    = stat.getPlayerSeasonStat();
@@ -30,5 +31,6 @@ public class HitterRecordResponseDTO {
         this.hits         = stat.getHits();
         this.homeRuns     = stat.getHomeRuns();
         this.rbi          = stat.getRbi();
+        this.qualified    = Boolean.TRUE.equals(stat.getQualified());
     }
 }

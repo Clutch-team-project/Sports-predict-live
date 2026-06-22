@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface PlayerSeasonStatBaseballRepository extends JpaRepository<PlayerSeasonStatBaseball, Long> {
 
-    // 타자 기록 조회 (battingAvg 기준 내림차순)
+    // 타자 기록 조회 (battingAvg 기준 내림차순) — 규정타석 미달 선수 포함(전체/팀 필터는 프론트에서 처리)
     @Query("""
         SELECT b FROM PlayerSeasonStatBaseball b
         JOIN FETCH b.playerSeasonStat pss
