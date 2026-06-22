@@ -9,11 +9,15 @@ import com.example.edu.sports_predict_live.user.entity.User;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.JPQLQuery;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.Expressions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,40 +57,33 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             query.where(booleanBuilder);
         }
 
-        if (category != null && !category.isEmpty()) {
-            if ("공지".equals(category)) {
-                if (boardType != null && !boardType.isEmpty()) {
-                    query.where(board.category.eq("공지")
-                            .and(board.boardType.eq(boardType).or(board.boardType.isNull())));
-                } else {
-                    query.where(board.category.eq("공지").and(board.boardType.isNull()));
-                }
-            } else {
-                query.where(board.isNotice.isFalse());
-                query.where(board.category.eq(category));
-                if (boardType != null && !boardType.isEmpty()) {
-                    query.where(board.boardType.eq(boardType));
-                }
-            }
-        } else {
-            query.where(board.isNotice.isFalse());
-            if (boardType != null && !boardType.isEmpty()) {
-                query.where(board.boardType.eq(boardType));
-            }
-        }
-
+        // 카테고리 및 공지사항 분기 처리
         if ("공지".equals(category)) {
-            if (boardType != null && !boardType.isEmpty()) {
-                query.where(board.boardType.eq(boardType).or(board.boardType.isNull()));
+            query.where(board.category.eq("공지"));
+            if (boardType != null && !boardType.trim().isEmpty()) {
+                query.where(board.boardType.eq(boardType)
+                        .or(board.boardType.isNull())
+                        .or(board.boardType.isEmpty()));
             } else {
-                query.where(board.boardType.isNull());
+                query.where(board.boardType.isNull()
+                        .or(board.boardType.isEmpty()));
             }
-        } else {
-            if (boardType != null && !boardType.isEmpty()) {
+        }
+        else if (category != null && !category.trim().isEmpty()) {
+            query.where(board.isNotice.isFalse());
+            query.where(board.category.eq(category));
+            if (boardType != null && !boardType.trim().isEmpty()) {
+                query.where(board.boardType.eq(boardType));
+            }
+        }
+        else {
+            query.where(board.isNotice.isFalse());
+            if (boardType != null && !boardType.trim().isEmpty()) {
                 query.where(board.boardType.eq(boardType));
             }
         }
 
+        // 정렬 조건 처리
         if(sort != null) {
             switch (sort) {
                 case "view":
@@ -104,7 +101,10 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
             query.orderBy(board.boardId.desc());
         }
 
-        query.where(board.boardId.gt(0L));
+        if(!"공지".equals(category)) {
+            query.where(board.boardId.gt(0L));
+        }
+
         query.where(board.deletedAt.isNull());
         query.groupBy(board);
 
@@ -152,10 +152,10 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
         QUser users = QUser.user;
         QBoardReply boardReply = QBoardReply.boardReply;
 
-        java.time.LocalDateTime start = java.time.LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-        java.time.LocalDateTime end = java.time.LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        LocalDateTime start = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
-        com.querydsl.jpa.JPQLQuery<Board> baseQuery = from(board)
+        JPQLQuery<Board> baseQuery = from(board)
                 .leftJoin(users).on(board.userId.eq(users.userId))
                 .leftJoin(boardReply).on(boardReply.board.boardId.eq(board.boardId))
                 .where(board.createdAt.between(start, end))
@@ -164,23 +164,28 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
                 .where(board.isNotice.isFalse());
 
         if (boardType != null && !boardType.trim().isEmpty()) {
-            baseQuery.where(board.boardType.equalsIgnoreCase(boardType.trim()));
+            String targetType = boardType.trim().toLowerCase();
+            if (targetType.equals("football") || targetType.equals("soccer")) {
+                baseQuery.where(board.boardType.equalsIgnoreCase("soccer")
+                        .or(board.boardType.equalsIgnoreCase("football")));
+            } else {
+                baseQuery.where(board.boardType.equalsIgnoreCase(targetType));
+            }
         }
 
-        com.querydsl.core.types.Expression<Long> replyCount = boardReply.replyId.countDistinct();
+        Expression<Long> replyCount = boardReply.replyId.countDistinct();
 
-        com.querydsl.jpa.JPQLQuery<BoardListAllDTO> finalQuery = baseQuery.select(
-                com.querydsl.core.types.Projections.bean(BoardListAllDTO.class,
+        JPQLQuery<BoardListAllDTO> finalQuery = baseQuery.select(
+                Projections.bean(BoardListAllDTO.class,
                         board.boardId,
                         board.title,
-                        board.content,
                         users.nickname,
                         board.createdAt,
                         board.viewCount,
                         board.likeCount,
                         board.category,
                         board.boardType,
-                        com.querydsl.core.types.dsl.Expressions.as(replyCount, "replyCount")
+                        Expressions.as(replyCount, "replyCount")
                 )
         );
 

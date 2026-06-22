@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BoardReplyRepository extends JpaRepository<BoardReply, Long> {
-    Page<BoardReply> findByBoard_BoardId(Long boardId, Pageable pageable);
+    Page<BoardReply> findByBoard_BoardIdAndDeletedAtIsNull(Long boardId, Pageable pageable);
 }

@@ -54,4 +54,10 @@ public class BoardReply {
     public void changeText(String text) {
         this.replyText = text;
     }
+
+    private LocalDateTime deletedAt;
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

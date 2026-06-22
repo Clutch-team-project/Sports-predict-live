@@ -191,29 +191,31 @@ public class BoardServiceImpl implements BoardService{
         String keyword = pageRequestDTO.getKeyword();
         String category = pageRequestDTO.getCategory();
         String sort = pageRequestDTO.getSort();
-        Pageable pageable = pageRequestDTO.getPageable("boardId");
         String boardType = pageRequestDTO.getBoardType();
 
+        Pageable pageable = pageRequestDTO.getPageable("boardId");
+        
         Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, category, sort, pageable, boardType);
-
         List<BoardListAllDTO> dtoList = new ArrayList<>(result.getContent());
 
         PageRequest noticePageable = PageRequest.of(0, 5);
         Page<BoardListAllDTO> noticeResult = boardRepository.searchWithAll(types, keyword, "공지", null, noticePageable, boardType);
-        List<BoardListAllDTO> noticeDtoList = new ArrayList<>(noticeResult.getContent());
-        dtoList.removeIf(dto -> "공지".equals(dto.getCategory()));
-        noticeDtoList.addAll(dtoList);
-        dtoList = noticeDtoList;
 
-        int totalElements = (int)result.getTotalElements();
+        List<BoardListAllDTO> noticeList = noticeResult.getContent().stream()
+                .map(listAllDTO -> {
+                    listAllDTO.setNotice(true);
+                    return listAllDTO;
+                })
+                .collect(Collectors.toList());
 
-        if (totalElements == 0 && !dtoList.isEmpty()) {
-            totalElements = dtoList.size();
-        }
+        List<BoardListAllDTO> combinedList = new ArrayList<>();
+        combinedList.addAll(noticeList); // 공지글 먼저 추가
+        combinedList.addAll(dtoList);    // 일반글 뒤에 추가
+
         return PageResponseDTO.<BoardListAllDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
-                .dtoList(dtoList)
-                .total(totalElements)
+                .dtoList(combinedList)
+                .total((int) result.getTotalElements())
                 .build();
     }
     // 좋아요 토글
