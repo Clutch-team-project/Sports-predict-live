@@ -13,6 +13,8 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -62,140 +64,113 @@ public class NewsApiService {
 
             JsonNode items = jsonNode.get("items");
 
+            // 1) 팀 필터를 통과한 항목만 수집
+            List<ObjectNode> targets = new ArrayList<>();
             for (JsonNode item : items) {
-
-                String title = item.get("title")
-                        .asText()
-                        .replaceAll("<[^>]*>", "");
-
-                String description = item.get("description")
-                        .asText()
-                        .replaceAll("<[^>]*>", "");
+                String title = item.get("title").asText().replaceAll("<[^>]*>", "");
+                String description = item.get("description").asText().replaceAll("<[^>]*>", "");
 
                 if (!matchesTeam(title, description, team)) {
                     continue;
                 }
+                targets.add((ObjectNode) item);
+            }
 
+            // 2) 기존 뉴스 조회(있으면 재사용) + 썸네일 스크래핑 대상 선별
+            Map<String, NewsEntity> existingByLink = new HashMap<>();
+            Map<String, String> thumbByLink = new ConcurrentHashMap<>();
+            Set<String> toScrape = new LinkedHashSet<>();
+
+            for (ObjectNode item : targets) {
                 String link = item.get("originallink").asText();
 
-                String pubDate = item.get("pubDate").asText();
+                NewsEntity existing = newsRepository.existsByNewsUrl(link)
+                        ? newsRepository.findTopByNewsUrl(link)
+                        : null;
 
-                String thumbnailUrl = extractThumbnailUrl(link);
+                if (existing != null) {
+                    existingByLink.put(link, existing);
+                    String savedThumb = existing.getThumbnailUrl();
+                    if (savedThumb != null && !savedThumb.isBlank()) {
+                        thumbByLink.put(link, savedThumb);   // DB 썸네일 재사용 → 스크래핑 skip
+                    } else {
+                        toScrape.add(link);
+                    }
+                } else {
+                    toScrape.add(link);
+                }
+            }
+
+            // 3) 신규 썸네일만 병렬 스크래핑 (기존엔 10건 동기 호출 → 페이지당 최대 30초)
+            toScrape.parallelStream().forEach(link -> {
+                String thumb = extractThumbnailUrl(link);
+                if (thumb != null && !thumb.isBlank()) {
+                    thumbByLink.put(link, thumb);
+                }
+            });
+
+            // 4) 신규 뉴스만 1회 저장 + 응답 주석
+            for (ObjectNode item : targets) {
+                String title = item.get("title").asText().replaceAll("<[^>]*>", "");
+                String description = item.get("description").asText().replaceAll("<[^>]*>", "");
+                String link = item.get("originallink").asText();
+                String pubDate = item.get("pubDate").asText();
+                String thumbnailUrl = thumbByLink.get(link);
 
                 Long sportId = 1L;
-
-// 축구
                 if (keyword.contains("축구")) {
-
                     sportId = 1L;
-                }
-
-// 야구
-                else if (keyword.contains("야구")) {
-
+                } else if (keyword.contains("야구")) {
                     sportId = 2L;
-                }
-
-// LOL
-                else if (
-                        keyword.contains("LOL")
-                                || keyword.contains("롤")
-                ) {
-
+                } else if (keyword.contains("LOL") || keyword.contains("롤")) {
                     sportId = 3L;
                 }
 
-                String originLink = item.get("originallink").asText();
+                String[] parts = link.split("/");
+                String source = parts.length > 2 ? parts[2] : "NAVER";
 
-                String[] parts = originLink.split("/");
+                LocalDateTime publishedAt = ZonedDateTime.parse(
+                        pubDate,
+                        DateTimeFormatter.RFC_1123_DATE_TIME
+                ).toLocalDateTime();
 
-                String source =
-                        parts.length > 2
-                                ? parts[2]
-                                : "NAVER";
+                String detectedTeam = "기타";
+                if (title.contains("손흥민") || title.contains("토트넘")) {
+                    detectedTeam = "토트넘";
+                } else if (title.contains("이강인") || title.contains("PSG")) {
+                    detectedTeam = "PSG";
+                } else if (title.contains("페이커") || title.contains("T1")) {
+                    detectedTeam = "T1";
+                }
 
-                LocalDateTime publishedAt =
-                        ZonedDateTime.parse(
-                                pubDate,
-                                DateTimeFormatter.RFC_1123_DATE_TIME
-                        ).toLocalDateTime();
+                NewsEntity savedNews = existingByLink.get(link);
 
-                // 중복 뉴스 방지
-                NewsEntity savedNews;
-
-                boolean exists = newsRepository.existsByNewsUrl(link);
-
-                if (exists) {
-                    savedNews = newsRepository.findTopByNewsUrl(link);
-                } else {
+                if (savedNews == null) {
+                    // 신규 뉴스만 1회 저장 (기존의 중복 insert 제거)
                     NewsEntity news = new NewsEntity();
-
+                    news.setSportId(sportId);
                     news.setCategory(keyword);
                     news.setTitle(title);
                     news.setSummary(description);
                     news.setNewsUrl(link);
-                    news.setSource("NAVER");
-
+                    news.setSource(source);
+                    news.setPublishedAt(publishedAt);
+                    news.setCreatedAt(LocalDateTime.now());
+                    news.setTeam(detectedTeam);
+                    news.setThumbnailUrl(thumbnailUrl);
                     savedNews = newsRepository.save(news);
-
-                    System.out.println("뉴스 저장 완료 : " + savedNews.getTitle());
+                } else if ((savedNews.getThumbnailUrl() == null || savedNews.getThumbnailUrl().isBlank())
+                        && thumbnailUrl != null && !thumbnailUrl.isBlank()) {
+                    // 기존 뉴스에 썸네일이 없을 때만 갱신
+                    savedNews.setThumbnailUrl(thumbnailUrl);
+                    savedNews = newsRepository.save(savedNews);
                 }
+
+                Long scrapCount = newsScrapRepository.countByNewsId(savedNews.getNewsId());
 
                 ((ObjectNode) item).put("newsId", savedNews.getNewsId());
                 ((ObjectNode) item).put("thumbnailUrl", thumbnailUrl);
-
-                Long scrapCount = newsScrapRepository.countByNewsId(savedNews.getNewsId());
                 ((ObjectNode) item).put("scrapCount", scrapCount);
-
-                // 뉴스 엔티티 생성
-                NewsEntity news = new NewsEntity();
-
-                news.setSportId(sportId);
-
-                news.setCategory(keyword);
-
-                String detectedTeam = "기타";
-
-                if (
-                        title.contains("손흥민")
-                                || title.contains("토트넘")
-                ) {
-                    detectedTeam = "토트넘";
-                }
-                else if (
-                        title.contains("이강인")
-                                || title.contains("PSG")
-                ) {
-                    detectedTeam = "PSG";
-                }
-                else if (
-                        title.contains("페이커")
-                                || title.contains("T1")
-                ) {
-                    detectedTeam = "T1";
-                }
-
-                news.setTitle(title);
-
-                news.setSummary(description);
-
-                news.setNewsUrl(link);
-
-                news.setSource(source);
-
-                news.setPublishedAt(publishedAt);
-
-                news.setCreatedAt(LocalDateTime.now());
-
-                news.setTeam(detectedTeam);
-
-                news.setThumbnailUrl(thumbnailUrl);
-
-                // 저장
-                savedNews = newsRepository.save(news);
-
-                System.out.println("뉴스 저장 완료 : " + savedNews.getTitle());
-                System.out.println("저장된 뉴스 ID : " + savedNews.getNewsId());
             }
 
             return jsonNode;
