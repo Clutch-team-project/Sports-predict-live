@@ -1,6 +1,8 @@
 package com.example.edu.sports_predict_live.match.service;
 
+
 import com.example.edu.sports_predict_live.match.dto.response.MatchResponseDTO;
+import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,8 +40,30 @@ public class ScheduleService {
 
         return matchRepository.findBySportCodeAndDate(sport, date)
                 .stream()
-                .map(MatchResponseDTO::new)
+                .map(match -> toScheduleResponse(sport, match))
                 .toList();
+    }
+
+    public List<MatchResponseDTO> getScheduleAll(String sport) {
+        return matchRepository.findBySportCodeOrderByScheduledAtDesc(sport)
+                .stream()
+                .map(match -> toScheduleResponse(sport, match))
+                .toList();
+    }
+
+    private MatchResponseDTO toScheduleResponse(String sport, Match match) {
+        String status = match.getStatus();
+
+        if ("in_progress".equals(status)) {
+            status = "live";
+        }
+
+        return new MatchResponseDTO(
+                match,
+                match.getHomeScore(),
+                match.getAwayScore(),
+                status
+        );
     }
 
     @SuppressWarnings("unchecked")

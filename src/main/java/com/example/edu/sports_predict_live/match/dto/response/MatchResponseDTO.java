@@ -40,4 +40,20 @@ public class MatchResponseDTO {
         this.venue           = match.getVenue();
         this.date            = match.getScheduledAt().format(DATE_FMT);
     }
+
+    public MatchResponseDTO(Match match, int homeScore, int awayScore, String status) {
+        this.matchId         = match.getMatchId();
+        this.homeTeamId      = match.getHomeTeam().getTeamId();
+        this.awayTeamId      = match.getAwayTeam().getTeamId();
+        this.homeTeamName    = match.getHomeTeam().getName();
+        this.awayTeamName    = match.getAwayTeam().getName();
+        this.homeTeamEmblem  = match.getHomeTeam().getEmblemUrl();
+        this.awayTeamEmblem  = match.getAwayTeam().getEmblemUrl();
+        this.homeScore       = homeScore;
+        this.awayScore       = awayScore;
+        this.status          = status;
+        this.scheduledAt     = match.getScheduledAt().format(TIME_FMT);
+        this.venue           = match.getVenue();
+        this.date            = match.getScheduledAt().format(DATE_FMT);
+    }
 }

@@ -1,7 +1,7 @@
 (function () {
   var files = {
     home: 'home.html',
-    baseball: 'baseball-live-match.html',
+    baseball: 'baseball/schedule',
     football: 'soccer-live-match.html',
     board: 'board.html',
     news: 'news.html',
@@ -44,9 +44,7 @@
   }
 
   function routeFor(file) {
-    if (file === files.baseball) {
-      return liveBaseballMatch ? location.pathname : '/games/1/baseball/live';
-    }
+    if (file === files.baseball) return '/baseball/schedule';
     if (file === files.member) return '/login';
     return '/' + file;
   }

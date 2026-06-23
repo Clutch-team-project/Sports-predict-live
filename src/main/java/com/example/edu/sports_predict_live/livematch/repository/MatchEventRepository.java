@@ -4,6 +4,7 @@ import com.example.edu.sports_predict_live.livematch.entity.MatchEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MatchEventRepository extends JpaRepository<MatchEvent, Long> {
 
@@ -21,4 +22,10 @@ public interface MatchEventRepository extends JpaRepository<MatchEvent, Long> {
      * ORDER BY event_time ASC, match_event_id ASC
      */
     List<MatchEvent> findByMatchIdOrderByEventTimeAscMatchEventIdAsc(Long matchId);
+
+    long countByMatchId(Long matchId);
+
+    void deleteByMatchId(Long matchId);
+
+    Optional<MatchEvent> findTopByMatchIdAndEventPeriodOrderByEventTimeDescMatchEventIdDesc(Long matchId, String eventPeriod);
 }

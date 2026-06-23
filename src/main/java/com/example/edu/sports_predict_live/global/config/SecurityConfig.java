@@ -35,20 +35,7 @@ public class SecurityConfig {
     private final OAuth2FailureHandler oAuth2FailureHandler;
 
     private static final String[] PUBLIC_API = {
-<<<<<<< HEAD
-            "/api/auth/**",
-            "/api/standings/**",
-            "/api/records/**",
-            "/api/players/**",
-            "/api/schedule/**",
-            "/prediction/**",
-            "/ai-pred/**",
-            "/match/**",
-            "/games/**",
-            "/api/games/**",
-            "/oauth2/**",
-            "/login/oauth2/**"
-=======
+
             "/api/auth/**",         // 인증 (이메일 인증, 로그인, 회원가입 등)
             "/api/standings/**",    // 팀 순위
             "/api/records/**",      // 선수 기록
@@ -58,7 +45,6 @@ public class SecurityConfig {
             "/api/predictions/ranking", // 포인트 순위 (비로그인도 조회 가능)
             "/oauth2/**",           // OAuth2 인증
             "/login/oauth2/**"      // OAuth2 콜백
->>>>>>> 97ad1653951578eb2122423fe33e13fe5a28b0a5
     };
 
     private static final String[] PUBLIC_PAGES = {
@@ -66,19 +52,16 @@ public class SecurityConfig {
             "/login", "/signup", "/signup-success", "/login-success",
             "/notification-agreement",
             "/find-id", "/find-password", "/change-password",
-<<<<<<< HEAD
-            "/prediction-history", "/user-info",
-            "/board", "/board/list", "/board/read", "/templates/**",
-=======
+
             "/prediction-history", "/user-info", "/favorite-teams",
->>>>>>> 97ad1653951578eb2122423fe33e13fe5a28b0a5
+
             "/baseball/**", "/soccer/**", "/lol/**",
             "/team-detail", "/player-detail",
     };
 
     private static final String[] PUBLIC_STATIC = {
             "/gnb.js", "/script.js", "/favicon.ico",
-            "/*.js", "/*.css", "/*.png",
+            "/*.js", "/*.css", "/*.png","/images/**"
     };
 
     @Bean
@@ -96,7 +79,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
+                        .requestMatchers("/admin/control").permitAll()
+                        .requestMatchers("/games/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/games/**").permitAll()
                         .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
+                        .requestMatchers("/api/admin/baseball/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
                         .requestMatchers(
@@ -107,7 +94,7 @@ public class SecurityConfig {
                                 "/user-info", "/favorite-teams",
                                 "/board", "/board/list", "/board/read/**", "/templates/**"
                         ).permitAll()
-                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png").permitAll()
+                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png", "/images/**").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()
                         .requestMatchers(PUBLIC_PAGES).permitAll()
                         .requestMatchers(PUBLIC_STATIC).permitAll()
