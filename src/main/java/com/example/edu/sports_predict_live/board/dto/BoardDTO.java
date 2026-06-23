@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +31,7 @@ public class BoardDTO {
     private String title;
 
     @NotEmpty
-    private String content; // 내용
+    private String content;
 
     private int viewCount;
     private int likeCount;
@@ -44,5 +45,8 @@ public class BoardDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private List<MultipartFile> files;
     private List<String> fileNames;
+
+    private String boardType;
 }

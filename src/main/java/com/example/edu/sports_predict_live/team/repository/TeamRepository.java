@@ -2,6 +2,7 @@ package com.example.edu.sports_predict_live.team.repository;
 
 import com.example.edu.sports_predict_live.team.entity.Team;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,4 +18,12 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
         ORDER BY t.name ASC
     """)
     List<Team> findBySportCode(@Param("sportCode") String sportCode);
+
+    @Modifying
+    @Query("UPDATE Team t SET t.emblemUrl = :url WHERE t.teamId = :teamId")
+    void updateEmblemUrl(@Param("teamId") Long teamId, @Param("url") String url);
+
+    @Modifying
+    @Query("UPDATE Team t SET t.emblemUrl = :url WHERE t.name = :name")
+    void updateEmblemUrlByName(@Param("name") String name, @Param("url") String url);
 }

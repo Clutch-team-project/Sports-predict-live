@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI.MATCH - 프리미엄 스포츠 분석 플랫폼</title>
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
 
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -43,7 +47,7 @@
 
 <!-- MAIN (중앙 정합 구조로 깔끔하게 배치) -->
 <main class="flex-1 overflow-y-auto p-6" id="canvasViewport">
-    <div class="max-w-5xl mx-auto space-y-4">
+    <div class="max-w-7xl mx-auto space-y-4">
 
         <!-- [통합 GNB 헤더 바] 로고, 종목 네비게이션, 로그인/사이트맵 일체형 구조 -->
         <div id="boxHeaderBar" onclick="clickBox('header_bar')"
@@ -57,10 +61,25 @@
             <!-- 2. Center: 종목별 네비게이션 (GNB 내부 중앙 배치) -->
             <div id="subBoxSportNav" class="flex-grow flex justify-center px-4">
                 <div class="flex items-center gap-10 text-base md:text-lg text-slate-500 font-extrabold">
-                    <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">홈</span>
-                    <span class="hover:text-slate-800 transition-colors cursor-pointer">축구</span>
-                    <span class="hover:text-slate-800 transition-colors cursor-pointer">야구</span>
-                    <span class="hover:text-slate-800 transition-colors cursor-pointer">LOL</span>
+                    <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer"
+                          onclick="currentSport = null">
+    홈
+</span>
+
+                    <span class="hover:text-slate-800 transition-colors cursor-pointer"
+                          onclick="currentSport='soccer'; console.log('현재 선택 종목:', currentSport);">
+    축구
+</span>
+
+                    <span class="hover:text-slate-800 transition-colors cursor-pointer"
+                          onclick="currentSport='baseball'; console.log('현재 선택 종목:', currentSport);">
+    야구
+</span>
+
+                    <span class="hover:text-slate-800 transition-colors cursor-pointer"
+                          onclick="currentSport='lol'; console.log('현재 선택 종목:', currentSport);">
+    LOL
+</span>
                 </div>
             </div>
 
@@ -68,13 +87,12 @@
             <div class="flex items-center gap-6 text-sm md:text-base font-black shrink-0">
                 <span id="gnb-auth" class="text-slate-700 hover:text-slate-900 cursor-pointer transition-colors"
                       onclick="location.href='/login'">로그인</span>
-                <span class="text-slate-700 hover:text-slate-900 cursor-pointer transition-colors">사이트맵</span>
             </div>
 
         </div>
 
         <!-- [2번째 줄] 각 페이지 네비게이션바 (상단 GNB와 공백 없이 완벽 밀착) -->
-        <div id="boxPageNav" onclick="clickBox('page_nav')"
+        <div id="boxPageNav" onclick="goNewsPage()"
              class="w-full !mt-1.5 border border-slate-300 bg-white p-2.5 flex items-center justify-center text-base md:text-lg font-black cursor-pointer hover:bg-slate-50 transition-all rounded-2xl shadow-md">
             <div class="flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full">
                 <span class="hover:text-slate-800 transition-colors cursor-pointer">뉴스</span>
@@ -107,12 +125,10 @@
 
                     <!-- CTA 버튼 그룹 -->
                     <div class="flex gap-3 pt-2">
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md transition-colors">
-                            실시간 예측 피드
-                        </button>
-                        <button class="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-extrabold text-xs px-5 py-2.5 rounded-xl transition-colors">
-                            AI 전력 자가진단
-                        </button>
+                        <a href="/schedule"
+                           class="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md transition-colors inline-flex items-center">
+                            AI 예측 분석
+                        </a>
                     </div>
                 </div>
 
@@ -122,41 +138,24 @@
                     <!-- 카드 헤더 -->
                     <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                         <span class="text-xs font-black text-slate-200">실시간 AI 예측 피드</span>
-                        <span class="text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-0.5 rounded font-black cursor-pointer transition-colors">+ 업데이트</span>
+                        <span id="heroUpdateBtn" onclick="refreshHeroPredictionFeed()"
+                              class="text-[0.625rem] bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-0.5 rounded font-black cursor-pointer transition-colors select-none">+ 업데이트</span>
                     </div>
 
-                    <!-- 카드 아이템 목록 -->
-                    <div class="space-y-2.5">
-
-                        <!-- 아이템 1 -->
-                        <div class="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex justify-between items-center text-xs">
-                            <div>
-                                <div class="font-extrabold text-slate-100">T1 vs Gen.G</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">평균 KDA 5.9 · 15분 골드차 우세</div>
-                            </div>
-                            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-black">적중 완료</span>
-                        </div>
-
-                        <!-- 아이템 2 -->
-                        <div class="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex justify-between items-center text-xs">
-                            <div>
-                                <div class="font-extrabold text-slate-100">LG vs KIA</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">상대전적 우세 · xG 기대치 +1.4</div>
-                            </div>
-                            <span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-[10px] font-black animate-pulse">4회말 LIVE</span>
-                        </div>
-
+                    <!-- 카드 아이템 목록 (동적 로드) -->
+                    <div id="heroPredictionFeed" class="space-y-2.5">
+                        <div class="text-center text-slate-500 text-[0.625rem] py-3">불러오는 중...</div>
                     </div>
 
                     <!-- 하단 누적 요약 스펙 카드 그룹 -->
                     <div class="grid grid-cols-2 gap-3 text-center text-xs pt-1">
                         <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
-                            <div class="text-[10px] text-slate-400">총 예측 건수</div>
-                            <div class="text-sm font-black text-blue-400 mt-1">1,204건</div>
+                            <div id="heroTotalCountLabel" class="text-[0.625rem] text-slate-400">총 예측 건수</div>
+                            <div id="heroTotalCount" class="text-sm font-black text-blue-400 mt-1">-</div>
                         </div>
                         <div class="bg-white/[0.02] border border-white/5 rounded-xl p-2.5">
-                            <div class="text-[10px] text-slate-400">평균 적중률</div>
-                            <div class="text-sm font-black text-emerald-400 mt-1">88.5%</div>
+                            <div id="heroAccuracyRateLabel" class="text-[0.625rem] text-slate-400">평균 적중률</div>
+                            <div id="heroAccuracyRate" class="text-sm font-black text-emerald-400 mt-1">-</div>
                         </div>
                     </div>
 
@@ -191,18 +190,18 @@
                  class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col min-h-[300px] shadow-md rounded-2xl">
                 <div class="w-full h-full flex flex-col text-left">
                     <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2.5 mb-3 flex items-center gap-1">
-                        🏆 승부예측 포인트 랭킹
+                        승부예측 포인트 랭킹
                     </h4>
                     <!-- 종목 필터 탭 -->
                     <div class="flex gap-1.5 mb-3">
                         <button onclick="loadRanking(null)" id="rankTab-all"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white">전체</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white">전체</button>
                         <button onclick="loadRanking('baseball')" id="rankTab-baseball"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">야구</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">야구</button>
                         <button onclick="loadRanking('soccer')" id="rankTab-soccer"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">축구</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">축구</button>
                         <button onclick="loadRanking('lol')" id="rankTab-lol"
-                                class="rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">LOL</button>
+                                class="rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">LOL</button>
                     </div>
                     <div id="rankingList" class="space-y-2 text-xs flex-1">
                         <div class="text-center text-slate-400 py-6">불러오는 중...</div>
@@ -216,65 +215,61 @@
         <div class="grid grid-cols-12 gap-4">
 
             <!-- 뉴스 큰화면 -->
-            <div id="boxNewsMain" onclick="clickBox('news_main')"
+            <div id="newsMain"
                  class="col-span-12 md:col-span-6 border border-slate-300 bg-white p-5 flex flex-col justify-center items-center text-sm font-bold cursor-pointer hover:bg-slate-50 min-h-[280px] relative shadow-md rounded-2xl">
                 <div class="w-full h-full flex flex-col justify-between text-left">
-                    <div class="h-40 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-bold mb-2.5">
+                    <div
+                            id="homePopularNewsImage"
+                            class="h-40 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center overflow-hidden text-slate-400 text-sm font-bold">
                         [대표 경기장 전경 썸네일]
                     </div>
-                    <h4 class="font-black text-sm md:text-base text-slate-800 line-clamp-1">[기획] 한화 이글스 선발 투수진 방어율 추이와
-                        AI 분석...</h4>
+
+                    <h4
+                            id="homePopularNewsTitle"
+                            class="font-black text-sm md:text-base text-slate-800 line-clamp-1">
+                        인기 뉴스 불러오는 중...
+                    </h4>
+
                 </div>
             </div>
 
             <!-- 큰화면 옆 네칸 뉴스 리스트 -->
-            <div id="boxNewsList" onclick="clickBox('news_list')"
+            <div id="boxNewsList"
                  class="col-span-12 md:col-span-2 space-y-2 flex flex-col justify-between">
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">1. LG 최근 OPS 분석</span>
-                </div>
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">2. LCK 15분 골드차</span>
-                </div>
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">3. 손흥민 기대득점</span>
-                </div>
-                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11">
-                    <span class="text-slate-700 font-bold truncate px-3">4. KBO 구장별 홈런</span>
+                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 rounded-xl h-11">
+                    <span class="text-slate-400 font-bold truncate px-3">뉴스 불러오는 중...</span>
                 </div>
             </div>
-
             <!-- 게시판 인기글 피드 -->
-            <div id="boxPopular" onclick="clickBox('popular_board')"
-                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-center items-center text-sm font-bold cursor-pointer hover:bg-slate-50 min-h-[280px] shadow-md rounded-2xl">
-                <div class="w-full h-full flex flex-col justify-between text-left">
-                    <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 mb-3 flex items-center gap-1">
-                        📝 커뮤니티 인기 글 리스트</h4>
-                    <div class="space-y-2.5 text-xs text-slate-600 flex-1 flex flex-col justify-around font-medium">
-                        <div class="flex justify-between items-center">
-                            <span class="truncate text-slate-700 font-bold">1. 페이커 아지르 밴픽 분석</span>
-                            <span class="font-bold text-slate-500 font-mono">sangyeop123</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="truncate text-slate-700 font-bold">2. 기아 투수진 ERA 변화...</span>
-                            <span class="text-slate-500 font-bold font-mono">withdrawn_3</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="truncate text-slate-700 font-bold">3. 축구 손흥민 기대득점...</span>
-                            <span class="text-slate-500 font-bold font-mono">soccer_god</span>
+            <div id="boxPopular"
+                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-start min-h-[210px] shadow-md rounded-2xl">
+                <div class="w-full flex flex-col justify-start text-left">
+                    <h4 class="text-[0.9375rem] font-black text-slate-800 border-b border-slate-200 pb-3 mb-3 flex items-center gap-1">
+                        커뮤니티 일별 인기 글 리스트</h4>
+
+                    <div class="flex flex-col gap-2 text-sm text-slate-600 font-medium">
+                        <a th:each="post, iterStat : ${findTop5ViewCountToday}"
+                           th:href="@{/board/read(boardId=${post.boardId})}"
+                           class="flex justify-between items-center hover:bg-slate-50 py-1.5 px-1 rounded transition-colors cursor-pointer group">
+                            <span class="truncate text-slate-700 font-bold group-hover:text-blue-600 pr-3">
+                                <span th:text="${iterStat.count} + '. ' + ${post.title}">1. 게시글 제목</span>
+                            </span>
+                            <span class="font-bold text-slate-400 text-xs whitespace-nowrap" th:text="${#strings.isEmpty(post.nickname) ? '익명' : post.nickname}">작성자</span>
+                        </a>
+
+                        <div th:if="${#lists.isEmpty(findTop5ViewCountToday)}" class="text-center text-slate-400 py-6 text-sm">
+                            오늘의 인기 게시글이 없습니다...
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
-
-
     </div>
 </main>
 
 <!-- JS 제어 엔진 -->
 <script>
+    let currentSport = null;
     // 도면 카드 클릭 연계 데이터세트 (GNB 통합 반영)
     const blockSpecs = {
         header_bar: {
@@ -589,30 +584,33 @@ public BoardResponseDto(Board board) {
     function matchCard(match, isFavorite) {
         const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
         const emoji = SPORT_EMOJI[match.sport] || '';
-        const isLive = match.status === 'in_progress';
+        const isLive     = match.status === 'in_progress';
         const isFinished = match.status === 'finished';
+        const isCancelled = match.status === 'cancelled';
 
-        const borderClass = isFavorite ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 bg-white';
-        const favoriteBar = isFavorite
+        const borderClass  = isFavorite ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 bg-slate-50';
+        const favoriteBar  = isFavorite
             ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
             : '';
         const favBadge = isFavorite
-            ? `<span class="text-[10px] font-black text-yellow-500">★</span>`
+            ? `<span class="text-[0.625rem] font-black text-yellow-500">★</span>`
             : '';
 
         const homeVal = match.sport === 'lol' ? match.homeWins : match.homeScore;
         const awayVal = match.sport === 'lol' ? match.awayWins : match.awayScore;
 
         let centerHtml;
-        if (isLive || isFinished) {
+        if (isCancelled) {
+            centerHtml = `<span class="text-xs font-black text-red-600 px-2.5 py-1 rounded-xl bg-red-50 border border-red-200">취소</span>`;
+        } else if (isLive || isFinished) {
             const scoreColor = isLive ? 'text-red-500' : 'text-slate-800';
             const badge = isLive
-                ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
-                : `<span class="text-[10px] font-bold text-slate-400">종료</span>`;
+                ? `<span class="text-[0.625rem] font-black text-red-500 animate-pulse">● LIVE</span>`
+                : `<span class="text-[0.625rem] font-bold text-slate-400">종료</span>`;
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     ${badge}
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
                         <span class="text-xl font-black ${scoreColor}">${awayVal}</span>
                         <span class="text-slate-300 text-sm">:</span>
                         <span class="text-xl font-black ${scoreColor}">${homeVal}</span>
@@ -622,24 +620,60 @@ public BoardResponseDto(Board board) {
             centerHtml = `
                 <div class="flex flex-col items-center gap-0.5">
                     <span class="text-sm font-black text-slate-700">${match.scheduledAt || '--:--'}</span>
-                    <span class="text-[10px] text-slate-400 font-bold">VS</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">VS</span>
                 </div>`;
         }
+
+        // 야구 투수 정보 (팀 이름 아래)
+        function pitcherLabel(isAway) {
+            if (match.sport !== 'baseball') return '';
+            if (isFinished) {
+                const awayWon = awayVal > homeVal;
+                const teamWon = isAway ? awayWon : !awayWon;
+                if (teamWon && match.winningPitcher)
+                    return `<div class="text-[0.625rem] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
+                if (!teamWon && match.losingPitcher)
+                    return `<div class="text-[0.625rem] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
+            } else if (match.status === 'scheduled' || match.status === 'in_progress') {
+                const name = isAway ? match.startingPitcherAway : match.startingPitcherHome;
+                if (name) return `<div class="text-[0.625rem] text-gray-500 mt-0.5">선 ${name}</div>`;
+            }
+            return '';
+        }
+
+        const livePitcherHtml = (match.sport === 'baseball' && isLive && match.currentPitcher)
+            ? `<div class="text-[0.625rem] text-slate-400 mt-0.5">${match.currentPitcher}</div>`
+            : '';
 
         return `
         <div class="relative border ${borderClass} rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
             ${favoriteBar}
-            <div class="flex items-center px-5 py-3 gap-2">
-                <div class="flex-1 flex flex-col items-start min-w-0">
-                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</span>
-                    <span class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</span>
+            <div class="flex items-center px-4 py-3 gap-2">
+                <!-- 종목·시간 -->
+                <div class="w-20 shrink-0">
+                    <div class="text-[0.625rem] font-bold text-slate-400">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</div>
+                    <div class="text-sm font-black text-slate-500 mt-0.5">${match.scheduledAt || ''}</div>
                 </div>
-                <div class="flex-shrink-0 w-28 flex justify-center">
-                    ${centerHtml}
-                </div>
-                <div class="flex-1 flex flex-col items-end min-w-0">
-                    <span class="text-[10px] font-bold text-slate-400 mb-0.5"> </span>
-                    <span class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</span>
+                <!-- 원정·스코어·홈 -->
+                <div class="flex-1 flex items-center justify-around">
+                    <div class="w-1/3 flex flex-col items-end">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</span>
+                            ${match.awayTeamEmblem ? `<img src="${match.awayTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${match.awayTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                        </div>
+                        ${pitcherLabel(true)}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-center">
+                        ${centerHtml}
+                        ${livePitcherHtml}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-start">
+                        <div class="flex items-center gap-1.5">
+                            ${match.homeTeamEmblem ? `<img src="${match.homeTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${match.homeTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                            <span class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</span>
+                        </div>
+                        ${pitcherLabel(false)}
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -671,6 +705,7 @@ public BoardResponseDto(Board board) {
     async function loadTodayMatches() {
         const dateStr = todayStr();
         const accessToken = localStorage.getItem('accessToken');
+
 
         // 날짜 레이블
         const dateLabel = document.getElementById('matchDateLabel');
@@ -756,13 +791,12 @@ public BoardResponseDto(Board board) {
         if (allMatches.length === 0) {
             container.innerHTML = `
                 <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm">
-                    <div class="text-4xl mb-3">📅</div>
                     <p class="text-slate-700 font-black mb-1">오늘은 경기가 없습니다</p>
                     <p class="text-slate-400 text-xs mb-4">다가오는 경기 일정을 확인해보세요</p>
                     <div class="flex gap-2 justify-center">
-                        <a href="/baseball/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">⚾ 야구</a>
-                        <a href="/soccer/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">⚽ 축구</a>
-                        <a href="/lol/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">🎮 LOL</a>
+                        <a href="/baseball/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">야구</a>
+                        <a href="/soccer/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">축구</a>
+                        <a href="/lol/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">LOL</a>
                     </div>
                 </div>`;
             return;
@@ -781,7 +815,7 @@ public BoardResponseDto(Board board) {
             if (hasFav && hasNonFav && !fav && !dividerInserted) {
                 html += `<div class="flex items-center gap-2 py-1">
                     <div class="flex-1 h-px bg-slate-200"></div>
-                    <span class="text-[10px] text-slate-400 font-bold">기타 경기</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">기타 경기</span>
                     <div class="flex-1 h-px bg-slate-200"></div>
                 </div>`;
                 dividerInserted = true;
@@ -792,17 +826,19 @@ public BoardResponseDto(Board board) {
         container.innerHTML = html;
     }
 
-    const RANK_MEDALS = ['🥇', '🥈', '🥉'];
+    const RANK_MEDALS = ['1위', '2위', '3위'];
     const RANK_COLORS = ['text-amber-500', 'text-slate-400', 'text-amber-700'];
 
     async function loadRanking(sport) {
+
+        currentSport = sport;
         // 탭 스타일 업데이트
         document.querySelectorAll('.rank-tab').forEach(btn => {
-            btn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+            btn.className = 'rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
         });
         const activeId = sport ? `rankTab-${sport}` : 'rankTab-all';
         const activeBtn = document.getElementById(activeId);
-        if (activeBtn) activeBtn.className = 'rank-tab text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white';
+        if (activeBtn) activeBtn.className = 'rank-tab text-[0.6875rem] font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white';
 
         const container = document.getElementById('rankingList');
         const url = `${BASE_URL}/api/predictions/ranking${sport ? `?sport=${sport}` : ''}`;
@@ -839,10 +875,247 @@ public BoardResponseDto(Board board) {
         }
     }
 
+    function goNewsPage() {
+        console.log("뉴스 이동 currentSport =", currentSport);
+
+        if (currentSport === "soccer") {
+            window.location.href = "/news?sport=축구";
+            return;
+        }
+
+        if (currentSport === "baseball") {
+            window.location.href = "/news?sport=야구";
+            return;
+        }
+
+        if (currentSport === "lol") {
+            window.location.href = "/news?sport=LOL";
+            return;
+        }
+
+        window.location.href = "/news";
+    }
+
+    function cleanNewsText(text) {
+        const stripped = (text || "").replace(/<[^>]*>/g, "");
+        const el = document.createElement("textarea");
+        el.innerHTML = stripped;          // HTML 엔티티(&quot; 등) 디코드
+        return el.value;
+    }
+
+    function openHomeNewsDetail(news) {
+        const title = cleanNewsText(news.title);
+        const description = cleanNewsText(news.description);
+        const link = news.originallink || news.link;
+        const pubDate = news.pubDate || "";
+        const thumbnailUrl = news.thumbnailUrl || "";
+
+        sessionStorage.setItem("detailNewsTitle", title);
+        sessionStorage.setItem("detailNewsDescription", description);
+        sessionStorage.setItem("detailNewsLink", link);
+        sessionStorage.setItem("detailNewsPubDate", pubDate);
+        sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl);
+
+        location.href = "/news?detail=true&from=home";
+    }
+
+    async function loadHomePopularNews() {
+        const response = await fetch("/news/search-filter?sort=popular&page=1");
+        const data = await response.json();
+
+        if (!data.items || data.items.length === 0) {
+            return;
+        }
+
+        const items = data.items.slice(0, 5);
+
+        // 메인 큰 뉴스
+        const mainNews = items[0];
+
+        const title = cleanNewsText(mainNews.title);
+        const description = cleanNewsText(mainNews.description);
+        const thumbnailUrl = mainNews.thumbnailUrl;
+        const link = mainNews.originallink || mainNews.link;
+        const pubDate = mainNews.pubDate || "";
+
+        document.getElementById("homePopularNewsTitle").innerText = title;
+
+        const imageBox = document.getElementById("homePopularNewsImage");
+
+        if (thumbnailUrl) {
+            imageBox.innerHTML = `
+            <img
+                src="${thumbnailUrl}"
+                class="w-full h-full object-cover"
+                alt="인기 뉴스 이미지">
+        `;
+        } else {
+            imageBox.innerHTML = "[대표 경기장 전경 썸네일]";
+        }
+
+        document.getElementById("newsMain").onclick = function () {
+            sessionStorage.setItem("detailNewsTitle", title);
+            sessionStorage.setItem("detailNewsDescription", description);
+            sessionStorage.setItem("detailNewsLink", link);
+            sessionStorage.setItem("detailNewsPubDate", pubDate);
+            sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl || "");
+
+            location.href = "/news?detail=true&from=home";
+        };
+
+        // 오른쪽 작은 뉴스 4개
+        const boxNewsList = document.getElementById("boxNewsList");
+        boxNewsList.innerHTML = "";
+
+        items.slice(1, 5).forEach((news, index) => {
+            const smallTitle = cleanNewsText(news.title);
+
+            const itemDiv = document.createElement("div");
+            itemDiv.className =
+                "border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11";
+
+            itemDiv.innerHTML = `
+            <span class="text-slate-700 font-bold truncate px-3">
+                ${index + 1}. ${smallTitle}
+            </span>
+        `;
+
+            itemDiv.onclick = function () {
+                openHomeNewsDetail(news);
+            };
+
+            boxNewsList.appendChild(itemDiv);
+        });
+    }
+
+    window.addEventListener("load", loadHomePopularNews);
+
+
+    async function loadHeroPredictionFeed() {
+        const feedEl            = document.getElementById('heroPredictionFeed');
+        const totalCountEl      = document.getElementById('heroTotalCount');
+        const accuracyEl        = document.getElementById('heroAccuracyRate');
+        const totalCountLabelEl = document.getElementById('heroTotalCountLabel');
+        const accuracyLabelEl   = document.getElementById('heroAccuracyRateLabel');
+        const dateStr           = todayStr();
+        const accessToken       = localStorage.getItem('accessToken');
+
+        // 통계 + 오늘 경기 동시 요청 (로그인 여부에 따라 통계 API 분기)
+        const statsUrl = accessToken
+            ? `${BASE_URL}/api/predictions/me/stats`
+            : `${BASE_URL}/api/ai-prediction/stats`;
+        const statsHeaders = accessToken
+            ? { 'Authorization': `Bearer ${accessToken}` }
+            : {};
+
+        const [statsRes, bbRes, scRes, lolRes] = await Promise.allSettled([
+            fetch(statsUrl, { headers: statsHeaders }),
+            fetch(`${BASE_URL}/api/schedule/baseball?date=${dateStr}`),
+            fetch(`${BASE_URL}/api/schedule/soccer?date=${dateStr}`),
+            fetch(`${BASE_URL}/api/schedule/lol?date=${dateStr}`)
+        ]);
+
+        // 통계 업데이트 (라벨도 로그인 여부에 따라 변경)
+        if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+            const s = await statsRes.value.json();
+            totalCountEl.textContent = s.totalCount.toLocaleString() + '건';
+            accuracyEl.textContent   = s.accuracyRate.toFixed(1) + '%';
+            if (accessToken) {
+                totalCountLabelEl.textContent = '내 예측 건수';
+                accuracyLabelEl.textContent   = '내 적중률';
+            } else {
+                totalCountLabelEl.textContent = 'AI 예측 건수';
+                accuracyLabelEl.textContent   = 'AI 적중률';
+            }
+        }
+
+        // 오늘 경기 수집
+        let matches = [];
+        if (bbRes.status === 'fulfilled' && bbRes.value.ok) {
+            const data = await bbRes.value.json();
+            data.forEach(m => matches.push({ ...m, sport: 'baseball' }));
+        }
+        if (scRes.status === 'fulfilled' && scRes.value.ok) {
+            const data = await scRes.value.json();
+            data.forEach(m => matches.push({ ...m, sport: 'soccer' }));
+        }
+        if (lolRes.status === 'fulfilled' && lolRes.value.ok) {
+            const data = await lolRes.value.json();
+            data.forEach(m => matches.push({ ...m, sport: 'lol' }));
+        }
+
+        // in_progress → finished → scheduled 순, 최대 2개
+        const ORDER = { in_progress: 0, finished: 1, scheduled: 2, cancelled: 3 };
+        matches.sort((a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9));
+        const picked = matches.filter(m => m.status !== 'cancelled').slice(0, 2);
+
+        if (!picked.length) {
+            feedEl.innerHTML = '<div class="text-center text-slate-500 text-[0.625rem] py-3">오늘 예정된 경기가 없습니다.</div>';
+            return;
+        }
+
+        feedEl.innerHTML = picked.map(m => {
+            const home = m.homeTeamName || m.homeTeamCode || '-';
+            const away = m.awayTeamName || m.awayTeamCode || '-';
+            const sportLabel = m.sport === 'baseball' ? '야구' : m.sport === 'soccer' ? '축구' : 'LOL';
+
+            let subText = sportLabel;
+            if (m.sport === 'baseball') {
+                if (m.status === 'in_progress' && m.currentPitcher)
+                    subText = `야구 · 현재 투수: ${m.currentPitcher}`;
+                else if (m.status === 'finished')
+                    subText = `야구 · 최종 ${m.homeScore} : ${m.awayScore}`;
+                else if (m.startingPitcherHome || m.startingPitcherAway)
+                    subText = `야구 · 선발 ${m.startingPitcherHome ?? '?'} vs ${m.startingPitcherAway ?? '?'}`;
+            } else if (m.sport === 'soccer') {
+                if (m.status === 'finished')
+                    subText = `축구 · 최종 ${m.homeScore} : ${m.awayScore}`;
+                else if (m.status === 'in_progress')
+                    subText = `축구 · ${m.homeScore} : ${m.awayScore} 진행 중`;
+                else
+                    subText = `축구 · ${m.scheduledAt ?? ''} 예정`;
+            } else {
+                subText = m.status === 'in_progress' ? 'LOL · 진행 중' : `LOL · ${m.scheduledAt ?? ''} 예정`;
+            }
+
+            let badge;
+            if (m.status === 'in_progress') {
+                badge = `<span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-[0.625rem] font-black animate-pulse">LIVE</span>`;
+            } else if (m.status === 'finished') {
+                badge = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[0.625rem] font-black">종료</span>`;
+            } else {
+                badge = `<span class="bg-slate-500/20 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded text-[0.625rem] font-black">예측 가능</span>`;
+            }
+
+            return `
+            <div class="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex justify-between items-center text-xs">
+                <div>
+                    <div class="font-extrabold text-slate-100">${home} vs ${away}</div>
+                    <div class="text-[0.625rem] text-slate-400 mt-0.5">${subText}</div>
+                </div>
+                ${badge}
+            </div>`;
+        }).join('');
+    }
+
+    async function refreshHeroPredictionFeed() {
+        const btn = document.getElementById('heroUpdateBtn');
+        btn.textContent = '갱신 중...';
+        btn.style.pointerEvents = 'none';
+        await loadHeroPredictionFeed();
+        btn.textContent = '✓ 완료';
+        setTimeout(() => {
+            btn.textContent = '+ 업데이트';
+            btn.style.pointerEvents = '';
+        }, 1500);
+    }
+
     // 페이지 로드 시 실행
     document.addEventListener('DOMContentLoaded', () => {
+        currentSport = null;
         loadTodayMatches();
         loadRanking(null);
+        loadHeroPredictionFeed();
     });
 </script>
 </body>

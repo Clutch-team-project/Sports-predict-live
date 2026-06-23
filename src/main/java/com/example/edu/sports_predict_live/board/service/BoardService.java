@@ -5,26 +5,39 @@ import com.example.edu.sports_predict_live.board.dto.BoardDTO;
 import com.example.edu.sports_predict_live.board.dto.BoardListAllDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
 import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public interface BoardService {
-    Long register(BoardDTO boardDTO); // 글 등록
-    BoardDTO readOne(Long boardId); // 글 상세 조회
-    BoardDTO getBoardOnly(Long boardId); // 글 수정용(조회수 증가 X)
-    void modify(BoardDTO boardDTO); // 글 수정
-    void remove(Long boardID); // 글 삭제
-    void toggleLike(Long boardId, Long userId); // 좋아요수 증가
+    Long register(BoardDTO boardDTO, String currentUserRole);
+    BoardDTO readOne(Long boardId);
+    BoardDTO getBoardOnly(Long boardId);
+    void modify(BoardDTO boardDTO);
+    void remove(Long boardID, Long currentUserId, String currentUserRole);
+    void toggleLike(Long boardId, Long userId);
     boolean checkIsLiked(Long boardId, Long userId);
     void report(Long boardId, Long userId);
     boolean checkIsReported(Long boardId, Long userId);
+    void toggleBlind(Long boardId);
 
     PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO);
 
+    List<BoardDTO> findTop5ViewCountToday(String boardType);
+
     default Board dtoToEntity(BoardDTO boardDTO) {
+        String correctedBoardType = boardDTO.getBoardType();
+        if (correctedBoardType != null) {
+            String trimmed = correctedBoardType.trim().toLowerCase();
+            if (trimmed.equals("football") || trimmed.equals("soccer")) {
+                correctedBoardType = "soccer";
+            } else if (trimmed.equals("baseball")) {
+                correctedBoardType = "baseball";
+            } else if (trimmed.equals("lol")) {
+                correctedBoardType = "lol";
+            }
+        }
+
         Board board = Board.builder()
                 .boardId(boardDTO.getBoardId())
                 .userId(boardDTO.getUserId())
@@ -32,7 +45,9 @@ public interface BoardService {
                 .title(boardDTO.getTitle())
                 .content(boardDTO.getContent())
                 .isNotice(boardDTO.isNotice())
+                .boardType(correctedBoardType)
                 .build();
+
         if(boardDTO.getFileNames() != null) {
             boardDTO.getFileNames().forEach(fileName -> {
                 String[] arr = fileName.split("_", 2);
@@ -48,7 +63,7 @@ public interface BoardService {
 
     default BoardDTO entityToDTO(Board board) {
         List<String> fileNames = board.getImageSet().stream()
-                .sorted() // ord 기준 정렬
+                .sorted()
                 .map(boardImage -> boardImage.getUuid() + "_" + boardImage.getFileName())
                 .collect(Collectors.toList());
 
@@ -67,4 +82,6 @@ public interface BoardService {
                 .fileNames(fileNames)
                 .build();
     }
+
+
 }

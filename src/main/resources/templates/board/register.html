@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
         .card { background: rgba(255,255,255,0.9); border: 2px solid rgba(59,130,246,0.55); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
@@ -33,7 +35,7 @@
 </head>
 <body class="min-h-screen text-slate-800">
 
-<main class="max-w-4xl mx-auto px-6 pb-28">
+<main class="mx-auto pb-28 pt-8" style="width: min(80rem, calc(100% - 3rem));">
     <div class="h-6"></div>
 
     <div class="flex items-center justify-between mb-4">
@@ -42,7 +44,7 @@
 
     <div class="card p-8">
         <form id="registerForm">
-
+            <input type="hidden" id="boardType" name="boardType" th:value="${param.boardType}">
             <div class="mb-6">
                 <label class="input-label" for="category">카테고리</label>
                 <select name="category" id="category" class="input-field" style="appearance:none; cursor:pointer;" required>
@@ -51,6 +53,7 @@
                     <option value="분석">분석</option>
                     <option value="응원">응원</option>
                     <option value="예측후기">예측후기</option>
+                    <option value="공지" th:if="${currentUserRole == 'ROLE_ADMIN'}">공지</option>
                 </select>
             </div>
 
@@ -64,6 +67,14 @@
                 <textarea name="content" id="content" class="input-field" rows="12" placeholder="내용을 입력하세요" style="resize:none;" required></textarea>
             </div>
 
+            <div class="mb-8">
+                <label class="input-label" for="files">이미지 첨부 (최대 5장)</label>
+                <input type="file" id="files" class="input-field bg-white" accept="image/*" multiple>
+
+                <div id="filePreview" class="mt-3 flex flex-col gap-2"></div>
+                <p class="text-xs text-slate-400 mt-2">※ 이미지는 최대 5장까지 첨부할 수 있으며, 10MB 이하의 이미지 파일만 가능합니다.</p>
+            </div>
+
             <div class="flex gap-3 justify-end">
                 <button type="button" class="btn-cancel" onclick="location.href='/board/list'">취소</button>
                 <button type="submit" class="btn-submit">등록하기</button>
@@ -72,70 +83,8 @@
     </div>
 </main>
 
+<script th:src="@{/gnb.js}"></script>
 <script th:src="@{/board.js}"></script>
 
-<script>
-    // 페이지 접속 시 로그인(JWT 토큰) 검사 로직
-    const token = localStorage.getItem('accessToken');
-
-    if (!token) {
-        // 토큰이 없으면 confirm 창 출력
-        const isLoginIntent = confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?');
-        if (isLoginIntent) {
-            location.href = '/login'; // 확인 누르면 로그인 창으로
-        } else {
-            location.href = '/board/list'; // 취소 누르면 리스트로
-        }
-    }
-
-    // 폼 제출 시 JWT 헤더에 담아서 API 통신
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // 새로고침 방지
-
-        const category = document.getElementById('category').value;
-        const title = document.getElementById('title').value.trim();
-        const content = document.getElementById('content').value.trim();
-
-        if(!category) { alert('카테고리를 선택해주세요.'); return; }
-        if(!title) { alert('제목을 입력해주세요.'); return; }
-        if(!content) { alert('내용을 입력해주세요.'); return; }
-
-        // Spring Controller (기존 폼 데이터 방식) 에 맞게 데이터 조립
-        const formData = new URLSearchParams();
-        formData.append('category', category);
-        formData.append('title', title);
-        formData.append('content', content);
-
-        // Fetch API를 사용해 Authorization 헤더에 토큰을 담아 보냄
-        fetch('/board/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Bearer ' + token
-            },
-            body: formData.toString()
-        })
-            .then(response => {
-                // 스프링 부트 컨트롤러가 'redirect:/board/list'를 반환하면 response.redirected가 true가 됨
-                if (response.redirected) {
-                    location.href = response.url;
-                } else if (response.status === 401 || response.status === 403) {
-                    alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-                    location.href = '/login';
-                } else if (response.ok) {
-                    alert('게시글이 등록되었습니다.');
-                    location.href = '/board/list';
-                } else {
-                    alert('게시글 등록에 실패했습니다.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            });
-    });
-</script>
-
-<script th:src="@{/gnb.js}"></script>
 </body>
 </html>

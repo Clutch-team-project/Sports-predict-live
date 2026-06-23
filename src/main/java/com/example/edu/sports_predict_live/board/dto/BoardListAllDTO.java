@@ -17,6 +17,7 @@ public class BoardListAllDTO {
     private Long userId;
     private String loginId;
     private String nickname;
+    private String writerId;
     private String category;
     private String title;
     private int viewCount;
@@ -24,11 +25,12 @@ public class BoardListAllDTO {
     private boolean isNotice;
     private boolean isBlinded;
     private boolean isDeleted;
+    private String boardType;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private Long replyCount;
 
-    private List<String> fileNames; // 첨부파일 이름 목록('uuid_파일명' 형태)
+    private List<String> fileNames;
 }

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH - 야구</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        /* 눈의 피로를 방지하는 톤다운 실버-그레이 스포츠 포털 배경 */
+        .light-portal-view {
+            background-color: #cbd5e1;
+            background-image: linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* 유리창 블러 효과 카드 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+        }
+
+        /* 마우스 드래그 차단 */
+        .no-select {
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="light-portal-view text-slate-800 min-h-screen flex flex-col antialiased">
+
+<!-- MAIN (중앙 정합 구조) -->
+<main class="flex-1 overflow-y-auto p-6" id="canvasViewport">
+    <div class="max-w-7xl mx-auto space-y-4">
+
+        <!-- [통합 GNB 헤더 바] gnb.js 가 런타임에 숨기고 통일 상단바를 주입한다 -->
+        <div id="boxHeaderBar"
+             class="w-full border border-slate-300 bg-white p-3.5 flex justify-between items-center shadow-md rounded-2xl">
+            <div class="flex items-center shrink-0">
+                <span class="text-blue-600 font-black tracking-tighter text-xl">AI.MATCH</span>
+            </div>
+            <div class="flex-grow flex justify-center px-4">
+                <div class="flex items-center gap-10 text-base md:text-lg text-slate-500 font-extrabold">
+                    <a href="/" class="hover:text-slate-800 transition-colors cursor-pointer">홈</a>
+                    <a href="/soccer" class="hover:text-slate-800 transition-colors cursor-pointer">축구</a>
+                    <a href="/baseball" class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">야구</a>
+                    <a href="/lol" class="hover:text-slate-800 transition-colors cursor-pointer">LOL</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-6 text-sm md:text-base font-black shrink-0">
+                <span class="text-slate-700 hover:text-slate-900 cursor-pointer transition-colors"
+                      onclick="location.href='/login'">로그인</span>
+            </div>
+        </div>
+
+        <!-- [2번째 줄] 페이지 네비게이션바 -->
+        <div id="boxPageNav"
+             class="w-full !mt-1.5 border border-slate-300 bg-white p-2.5 flex items-center justify-center text-base md:text-lg font-black rounded-2xl shadow-md">
+            <div class="flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full">
+                <a href="/news" class="hover:text-slate-800 transition-colors cursor-pointer">뉴스</a>
+                <a href="/baseball/schedule" class="hover:text-slate-800 transition-colors cursor-pointer">일정</a>
+                <a href="/baseball/standings" class="hover:text-slate-800 transition-colors cursor-pointer">순위</a>
+                <a href="/board/list?boardType=BASEBALL" class="hover:text-slate-800 transition-colors cursor-pointer">게시판</a>
+            </div>
+        </div>
+
+        <!-- [경기 목록 및 우측 예측 랭킹] -->
+        <div class="grid grid-cols-12 gap-4">
+
+            <!-- Left: 오늘의 야구 경기 목록 (동적 로드) -->
+            <div id="colMatches" class="col-span-12 md:col-span-8 space-y-2">
+                <div class="flex items-center justify-between px-1 pb-1">
+                    <span class="text-xs font-black text-slate-500 tracking-widest uppercase">오늘의 야구 경기</span>
+                    <span id="matchDateLabel" class="text-xs text-slate-400 font-bold"></span>
+                </div>
+                <div id="matchList" class="space-y-2">
+                    <div class="text-center text-slate-400 text-xs py-6">경기 정보를 불러오는 중...</div>
+                </div>
+            </div>
+
+            <!-- Right: 야구 승부예측 포인트 랭킹 -->
+            <div id="colPrediction"
+                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col min-h-[300px] shadow-md rounded-2xl">
+                <div class="w-full h-full flex flex-col text-left">
+                    <h4 class="text-sm font-black text-slate-800 border-b border-slate-200 pb-2.5 mb-3 flex items-center gap-1">
+                        야구 승부예측 포인트 랭킹
+                    </h4>
+                    <div id="rankingList" class="space-y-2 text-xs flex-1">
+                        <div class="text-center text-slate-400 py-6">불러오는 중...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- [뉴스 보드 및 인기 게시글] -->
+        <div class="grid grid-cols-12 gap-4">
+
+            <!-- 뉴스 큰화면 -->
+            <div id="newsMain"
+                 class="col-span-12 md:col-span-6 border border-slate-300 bg-white p-5 flex flex-col justify-center items-center text-sm font-bold cursor-pointer hover:bg-slate-50 min-h-[280px] relative shadow-md rounded-2xl">
+                <div class="w-full h-full flex flex-col justify-between text-left">
+                    <div id="homePopularNewsImage"
+                         class="h-40 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center overflow-hidden text-slate-400 text-sm font-bold">
+                        [대표 경기장 전경 썸네일]
+                    </div>
+                    <h4 id="homePopularNewsTitle"
+                        class="font-black text-sm md:text-base text-slate-800 line-clamp-1">
+                        인기 야구 뉴스 불러오는 중...
+                    </h4>
+                </div>
+            </div>
+
+            <!-- 큰화면 옆 서브 뉴스 리스트 (동적 로드) -->
+            <div id="boxNewsList"
+                 class="col-span-12 md:col-span-2 space-y-2 flex flex-col justify-between">
+                <div class="border border-slate-300 bg-white flex items-center justify-center text-xs md:text-sm font-bold flex-1 rounded-xl h-11">
+                    <span class="text-slate-400 font-bold truncate px-3">불러오는 중...</span>
+                </div>
+            </div>
+
+            <!-- 게시판 인기글 피드 -->
+            <div id="boxPopular"
+                 class="col-span-12 md:col-span-4 border border-slate-300 bg-white p-5 flex flex-col justify-start min-h-[210px] shadow-md rounded-2xl">
+                <div class="w-full flex flex-col justify-start text-left">
+                    <h4 class="text-[0.9375rem] font-black text-slate-800 border-b border-slate-200 pb-3 mb-3 flex items-center gap-1">
+                        커뮤니티 일별 인기 글 리스트</h4>
+                    <div class="flex flex-col gap-2 text-sm text-slate-600 font-medium">
+                        <a th:each="post, iterStat : ${findTop5ViewCountToday}"
+                           th:href="@{/board/read(boardId=${post.boardId})}"
+                           class="flex justify-between items-center hover:bg-slate-50 py-1.5 px-1 rounded transition-colors cursor-pointer group">
+                            <span class="truncate text-slate-700 font-bold group-hover:text-blue-600 pr-3">
+                                <span th:text="${iterStat.count} + '. ' + ${post.title}">1. 게시글 제목</span>
+                            </span>
+                            <span class="font-bold text-slate-400 text-xs whitespace-nowrap" th:text="${#strings.isEmpty(post.nickname) ? '익명' : post.nickname}">작성자</span>
+                        </a>
+                        <div th:if="${#lists.isEmpty(findTop5ViewCountToday)}" class="text-center text-slate-400 py-6 text-sm">
+                            오늘의 인기 게시글이 없습니다...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/gnb.js"></script>
+<script src="/notification.js"></script>
+
+<script>
+    // ===== 오늘의 야구 경기 동적 로드 + 관심 팀 경기 상단 표시 =====
+    const BASE_URL = 'http://localhost:8080';
+    const SPORT = 'baseball';
+    const SPORT_EMOJI = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
+
+    // 경기 카드 HTML 생성 (야구: 투수 정보 포함)
+    function matchCard(match, isFavorite) {
+        const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
+        const emoji = SPORT_EMOJI[match.sport] || '';
+        const isLive     = match.status === 'in_progress';
+        const isFinished = match.status === 'finished';
+        const isCancelled = match.status === 'cancelled';
+
+        const borderClass  = isFavorite ? 'border-yellow-300 bg-yellow-50/40' : 'border-slate-200 bg-slate-50';
+        const favoriteBar  = isFavorite
+            ? `<div class="absolute top-0 left-0 h-full w-1 bg-yellow-400 rounded-l-2xl"></div>`
+            : '';
+        const favBadge = isFavorite
+            ? `<span class="text-[0.625rem] font-black text-yellow-500">★</span>`
+            : '';
+
+        const homeVal = match.homeScore;
+        const awayVal = match.awayScore;
+
+        let centerHtml;
+        if (isCancelled) {
+            centerHtml = `<span class="text-xs font-black text-red-600 px-2.5 py-1 rounded-xl bg-red-50 border border-red-200">취소</span>`;
+        } else if (isLive || isFinished) {
+            const scoreColor = isLive ? 'text-red-500' : 'text-slate-800';
+            const badge = isLive
+                ? `<span class="text-[0.625rem] font-black text-red-500 animate-pulse">● LIVE</span>`
+                : `<span class="text-[0.625rem] font-bold text-slate-400">종료</span>`;
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    ${badge}
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xl font-black ${scoreColor}">${awayVal}</span>
+                        <span class="text-slate-300 text-sm">:</span>
+                        <span class="text-xl font-black ${scoreColor}">${homeVal}</span>
+                    </div>
+                </div>`;
+        } else {
+            centerHtml = `
+                <div class="flex flex-col items-center gap-0.5">
+                    <span class="text-sm font-black text-slate-700">${match.scheduledAt || '--:--'}</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">VS</span>
+                </div>`;
+        }
+
+        // 야구 투수 정보 (팀 이름 아래)
+        function pitcherLabel(isAway) {
+            if (isFinished) {
+                const awayWon = awayVal > homeVal;
+                const teamWon = isAway ? awayWon : !awayWon;
+                if (teamWon && match.winningPitcher)
+                    return `<div class="text-[0.625rem] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
+                if (!teamWon && match.losingPitcher)
+                    return `<div class="text-[0.625rem] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
+            } else if (match.status === 'scheduled' || match.status === 'in_progress') {
+                const name = isAway ? match.startingPitcherAway : match.startingPitcherHome;
+                if (name) return `<div class="text-[0.625rem] text-gray-500 mt-0.5">선 ${name}</div>`;
+            }
+            return '';
+        }
+
+        const livePitcherHtml = (isLive && match.currentPitcher)
+            ? `<div class="text-[0.625rem] text-slate-400 mt-0.5">${match.currentPitcher}</div>`
+            : '';
+
+        return `
+        <div class="relative border ${borderClass} rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
+            ${favoriteBar}
+            <div class="flex items-center px-4 py-3 gap-2">
+                <div class="w-20 shrink-0">
+                    <div class="text-[0.625rem] font-bold text-slate-400">${emoji} ${LEAGUE_LABEL[match.sport] || ''} ${favBadge}</div>
+                    <div class="text-sm font-black text-slate-500 mt-0.5">${match.scheduledAt || ''}</div>
+                </div>
+                <div class="flex-1 flex items-center justify-around">
+                    <div class="w-1/3 flex flex-col items-end">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span class="font-black text-slate-800 text-sm truncate">${match.awayTeamName}</span>
+                            ${match.awayTeamEmblem ? `<img src="${match.awayTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${match.awayTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                        </div>
+                        ${pitcherLabel(true)}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-center">
+                        ${centerHtml}
+                        ${livePitcherHtml}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-start">
+                        <div class="flex items-center gap-1.5">
+                            ${match.homeTeamEmblem ? `<img src="${match.homeTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${match.homeTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                            <span class="font-black text-slate-800 text-sm truncate">${match.homeTeamName}</span>
+                        </div>
+                        ${pitcherLabel(false)}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function todayStr() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}${m}${day}`;
+    }
+
+    function todayLabel() {
+        const d = new Date();
+        return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (오늘)`;
+    }
+
+    function statusOrder(status) {
+        if (status === 'in_progress') return 0;
+        if (status === 'scheduled') return 1;
+        if (status === 'finished') return 2;
+        return 3;
+    }
+
+    async function loadTodayMatches() {
+        const dateStr = todayStr();
+        const accessToken = localStorage.getItem('accessToken');
+
+        const dateLabel = document.getElementById('matchDateLabel');
+        if (dateLabel) dateLabel.textContent = todayLabel();
+
+        // 관심 팀 정보 (로그인 시, teamId 기반)
+        let favoriteIds = new Set();
+        if (accessToken) {
+            try {
+                const idsRes = await fetch(`${BASE_URL}/api/users/me/favorites/ids`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (idsRes.ok) {
+                    const ids = await idsRes.json();
+                    favoriteIds = new Set(ids.map(id => Number(id)));
+                }
+            } catch (e) { /* 관심 팀 로드 실패 시 무시 */ }
+        }
+
+        // 오늘 야구 경기만 로드
+        let matches = [];
+        try {
+            const res = await fetch(`${BASE_URL}/api/schedule/${SPORT}?date=${dateStr}`);
+            if (res.ok) {
+                const data = await res.json();
+                data.forEach(m => matches.push({ ...m, sport: SPORT }));
+            }
+        } catch (e) {
+            document.getElementById('matchList').innerHTML =
+                '<div class="text-center text-slate-400 text-xs py-6">경기 정보를 불러올 수 없습니다.</div>';
+            return;
+        }
+
+        function isFavoriteMatch(m) {
+            return favoriteIds.has(Number(m.homeTeamId)) || favoriteIds.has(Number(m.awayTeamId));
+        }
+
+        // 정렬: 관심 팀 경기 → 상태(LIVE > 예정 > 종료) → 시간
+        matches.sort((a, b) => {
+            const favA = isFavoriteMatch(a) ? 0 : 1;
+            const favB = isFavoriteMatch(b) ? 0 : 1;
+            if (favA !== favB) return favA - favB;
+            const stA = statusOrder(a.status);
+            const stB = statusOrder(b.status);
+            if (stA !== stB) return stA - stB;
+            return (a.scheduledAt || '00:00').localeCompare(b.scheduledAt || '00:00');
+        });
+
+        const container = document.getElementById('matchList');
+        if (matches.length === 0) {
+            container.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm">
+                    <p class="text-slate-700 font-black mb-1">오늘은 야구 경기가 없습니다</p>
+                    <p class="text-slate-400 text-xs mb-4">다가오는 경기 일정을 확인해보세요</p>
+                    <a href="/baseball/schedule" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">야구 일정 보기</a>
+                </div>`;
+            return;
+        }
+
+        const hasFav = matches.some(m => isFavoriteMatch(m));
+        const hasNonFav = matches.some(m => !isFavoriteMatch(m));
+        let html = '';
+        let dividerInserted = false;
+        matches.forEach((m) => {
+            const fav = isFavoriteMatch(m);
+            if (hasFav && hasNonFav && !fav && !dividerInserted) {
+                html += `<div class="flex items-center gap-2 py-1">
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">기타 경기</span>
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                </div>`;
+                dividerInserted = true;
+            }
+            html += matchCard(m, fav);
+        });
+        container.innerHTML = html;
+    }
+
+    const RANK_MEDALS = ['1위', '2위', '3위'];
+    const RANK_COLORS = ['text-amber-500', 'text-slate-400', 'text-amber-700'];
+
+    async function loadRanking() {
+        const container = document.getElementById('rankingList');
+        try {
+            const res = await fetch(`${BASE_URL}/api/predictions/ranking?sport=${SPORT}`);
+            if (!res.ok) throw new Error();
+            const list = await res.json();
+
+            if (!list.length) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">아직 예측 참여자가 없습니다.</div>';
+                return;
+            }
+
+            container.innerHTML = list.slice(0, 10).map((r, i) => {
+                const medal = i < 3 ? RANK_MEDALS[i] : `${r.rank}위`;
+                const color = i < 3 ? RANK_COLORS[i] : 'text-slate-500';
+                const pct = r.totalCount > 0
+                    ? Math.round(r.correctCount / r.totalCount * 100) + '%'
+                    : '-';
+                return `
+                <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+                    <span class="font-extrabold ${color} truncate max-w-[120px]">
+                        ${medal} ${r.nickname || '익명'}
+                    </span>
+                    <div class="text-right shrink-0">
+                        <span class="font-black text-blue-600">${r.totalPoints}P</span>
+                        <span class="text-slate-400 ml-1">(${pct})</span>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">랭킹을 불러올 수 없습니다.</div>';
+        }
+    }
+
+    // 야구 뉴스 로드 (대표 1개 + 서브 리스트)
+    async function loadSportNews() {
+        let data;
+        try {
+            const response = await fetch(`/news/search-filter?sport=${encodeURIComponent('야구')}&sort=popular&page=1`);
+            data = await response.json();
+        } catch (e) { return; }
+
+        if (!data.items || data.items.length === 0) return;
+
+        const items = data.items.slice(0, 5);
+        const main = items[0];
+        const _tt = document.createElement("textarea");
+        _tt.innerHTML = main.title.replace(/<[^>]*>/g, "");   // 태그 제거 + HTML 엔티티 디코드
+        const title = _tt.value;
+        const description = main.description.replace(/<[^>]*>/g, "");
+        const thumbnailUrl = main.thumbnailUrl;
+        const link = main.originallink || main.link;
+        const pubDate = main.pubDate || "";
+
+        document.getElementById("homePopularNewsTitle").innerText = title;
+        const imageBox = document.getElementById("homePopularNewsImage");
+        if (thumbnailUrl) {
+            imageBox.innerHTML = `<img src="${thumbnailUrl}" class="w-full h-full object-cover" alt="인기 뉴스 이미지">`;
+        } else {
+            imageBox.innerHTML = "[대표 경기장 전경 썸네일]";
+        }
+
+        document.getElementById("newsMain").onclick = function () {
+            sessionStorage.setItem("detailNewsTitle", title);
+            sessionStorage.setItem("detailNewsDescription", description);
+            sessionStorage.setItem("detailNewsLink", link);
+            sessionStorage.setItem("detailNewsPubDate", pubDate);
+            sessionStorage.setItem("detailNewsThumbnailUrl", thumbnailUrl || "");
+            location.href = "/news?detail=true";
+        };
+
+        // 서브 뉴스 리스트 (2~5위) - 클릭 시 기사 상세로 이동
+        const subBox = document.getElementById("boxNewsList");
+        const subs = items.slice(1, 5);
+        subBox.innerHTML = "";
+        subs.forEach((n, idx) => {
+            const t = n.title.replace(/<[^>]*>/g, "");
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "border border-slate-300 bg-white flex items-center text-xs md:text-sm font-bold flex-1 cursor-pointer hover:bg-slate-50 rounded-xl h-11";
+            itemDiv.innerHTML = `<span class="text-slate-700 font-bold truncate px-3">${idx + 2}. ${t}</span>`;
+            itemDiv.onclick = function () {
+                sessionStorage.setItem("detailNewsTitle", t);
+                sessionStorage.setItem("detailNewsDescription", (n.description || "").replace(/<[^>]*>/g, ""));
+                sessionStorage.setItem("detailNewsLink", n.originallink || n.link);
+                sessionStorage.setItem("detailNewsPubDate", n.pubDate || "");
+                sessionStorage.setItem("detailNewsThumbnailUrl", n.thumbnailUrl || "");
+                location.href = "/news?detail=true";
+            };
+            subBox.appendChild(itemDiv);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTodayMatches();
+        loadRanking();
+        loadSportNews();
+    });
+</script>
+</body>
+</html>

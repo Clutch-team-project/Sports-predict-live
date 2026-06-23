@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
           rel="stylesheet">
     <style>
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body {
             font-family: 'Noto Sans KR', sans-serif;
         }
@@ -653,12 +655,12 @@
 
 
 <!-- 메인 콘텐츠 -->
-<main class="max-w-6xl mx-auto px-6 py-8">
+<main class="max-w-7xl mx-auto px-6 py-8">
 
     <div class="page active" id="page-02">
         <p class="page-label">02 · 로그인 완료</p>
         <div class="card p-6 text-center">
-            <div class="text-4xl mb-4">✅</div>
+            <div class="mb-4"></div>
             <h2 class="text-lg font-black text-slate-800 mb-2">로그인 성공!</h2>
             <p class="text-sm text-slate-500 mb-6"><span id="welcome-nickname"></span> 님, 환영합니다.</p>
             <button class="btn-primary mb-3" onclick="location.href='/user-info'">내 정보 보기</button>
@@ -714,11 +716,11 @@
                     localStorage.setItem('loginId',  user.loginId  || '');
                 }
             } catch (e) { /* 닉네임 미표시만 발생, 로그인은 유지 */ }
-        }
 
-        // 닉네임 표시
-        const el = document.getElementById('welcome-nickname');
-        if (el) el.textContent = localStorage.getItem('nickname') || '회원';
+            // 토큰 저장 완료 후 홈으로 이동
+            location.href = '/';
+            return;
+        }
     }
 
     init();

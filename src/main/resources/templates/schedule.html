@@ -7,19 +7,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col antialiased">
 
-<main class="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-4">
+<main class="flex-1 max-w-7xl mx-auto w-full px-6 py-8 space-y-4">
 
     <!-- 주간 날짜 슬라이더 -->
     <div class="bg-white border border-slate-300 rounded-3xl p-5 shadow-md">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-3 text-sm">
             <button id="btn-prev-week"
                     class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">&lt; 이전 주</button>
-            <span id="week-label" class="font-black text-blue-600 text-base"></span>
+            <div class="flex items-center gap-2">
+                <span id="week-label" class="font-black text-blue-600 text-base"></span>
+                <button id="btn-today" class="text-xs font-black px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100">오늘</button>
+            </div>
             <button id="btn-next-week"
                     class="text-slate-400 hover:text-slate-800 font-extrabold px-3 py-1">다음 주 &gt;</button>
         </div>
@@ -91,33 +96,39 @@
 
     // ── 주간 슬라이더 ──────────────────────────────────────────
     function renderWeek() {
-        const weekStart = getWeekStart(currentDate);
+        const rangeStart = new Date(currentDate);
+        rangeStart.setDate(currentDate.getDate() - 3);
         document.getElementById('week-label').textContent =
-            `📅 ${selectedDate.getFullYear()}년 ${selectedDate.getMonth()+1}월`;
+            `${selectedDate.getFullYear()}년 ${selectedDate.getMonth()+1}월`;
 
         const container = document.getElementById('week-days');
         container.innerHTML = '';
 
         for (let i = 0; i < 7; i++) {
-            const d = new Date(weekStart);
-            d.setDate(weekStart.getDate() + i);
+            const d = new Date(rangeStart);
+            d.setDate(rangeStart.getDate() + i);
             const isToday    = isSameDay(d, new Date());
             const isSelected = isSameDay(d, selectedDate);
 
             const div = document.createElement('div');
             if (isSelected) {
                 div.className = 'p-2.5 bg-blue-600 rounded-2xl text-white shadow-md cursor-pointer';
-                div.innerHTML = `<div class="font-black mb-1 text-[11px]">${isToday ? '오늘' : DAY_NAMES[d.getDay()]}</div><div class="font-black text-base">${d.getDate()}</div>`;
+                div.innerHTML = `<div class="font-black mb-1 text-[0.6875rem]">${isToday ? '오늘' : DAY_NAMES[d.getDay()]}</div><div class="font-black text-base">${d.getDate()}</div>`;
             } else if (isToday) {
                 div.className = 'p-2.5 bg-blue-50 border border-blue-300 rounded-2xl cursor-pointer';
-                div.innerHTML = `<div class="text-blue-600 font-black mb-1 text-[11px]">오늘</div><div class="text-blue-600 font-black">${d.getDate()}</div>`;
+                div.innerHTML = `<div class="text-blue-600 font-black mb-1 text-[0.6875rem]">오늘</div><div class="text-blue-600 font-black">${d.getDate()}</div>`;
             } else {
                 div.className = 'p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer';
-                div.innerHTML = `<div class="text-slate-400 mb-1 text-[11px]">${DAY_NAMES[d.getDay()]}</div><div class="text-slate-800 font-extrabold">${d.getDate()}</div>`;
+                div.innerHTML = `<div class="text-slate-400 mb-1 text-[0.6875rem]">${DAY_NAMES[d.getDay()]}</div><div class="text-slate-800 font-extrabold">${d.getDate()}</div>`;
             }
 
             const captured = new Date(d);
-            div.addEventListener('click', () => { selectedDate = captured; renderWeek(); loadMatches(); });
+            div.addEventListener('click', () => {
+                selectedDate = captured;
+                currentDate = new Date(captured);
+                renderWeek();
+                loadMatches();
+            });
             container.appendChild(div);
         }
     }
@@ -129,6 +140,12 @@
     document.getElementById('btn-next-week').addEventListener('click', () => {
         currentDate.setDate(currentDate.getDate() + 7);
         renderWeek();
+    });
+    document.getElementById('btn-today').addEventListener('click', () => {
+        selectedDate = new Date();
+        currentDate = new Date();
+        renderWeek();
+        loadMatches();
     });
 
     // ── 종목 탭 ────────────────────────────────────────────────
@@ -193,7 +210,6 @@
             const label = currentSport ? (SPORT_EMOJI[currentSport] + ' ' + LEAGUE_LABEL[currentSport] + ' ') : '';
             container.innerHTML = `
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-10 text-center">
-                    <div class="text-4xl mb-3">📅</div>
                     <p class="text-slate-700 font-black mb-1">${label}경기가 없습니다</p>
                     <p class="text-slate-400 text-xs mb-4">다른 날짜 또는 종목을 선택해보세요</p>
                     ${!currentSport ? `
@@ -215,7 +231,7 @@
                 html += `
                     <div class="flex items-center gap-2 py-1 ${lastSport ? 'mt-1' : ''}">
                         <div class="flex-1 h-px bg-slate-200"></div>
-                        <span class="text-[11px] text-slate-500 font-black px-1">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</span>
+                        <span class="text-[0.6875rem] text-slate-500 font-black px-1">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</span>
                         <div class="flex-1 h-px bg-slate-200"></div>
                     </div>`;
                 lastSport = m.sport;
@@ -226,6 +242,23 @@
         container.innerHTML = html;
     }
 
+    // ── 야구 팀별 투수 HTML ──────────────────────────
+    function pitcherLabel(m, isAway) {
+        if (m.sport !== 'baseball') return '';
+        if (m.status === 'finished') {
+            const awayWon = m.awayScore > m.homeScore;
+            const teamWon = isAway ? awayWon : !awayWon;
+            if (teamWon && m.winningPitcher)
+                return `<div class="text-[0.625rem] text-blue-500 font-bold mt-0.5">승 ${m.winningPitcher}</div>`;
+            if (!teamWon && m.losingPitcher)
+                return `<div class="text-[0.625rem] text-red-400 font-bold mt-0.5">패 ${m.losingPitcher}</div>`;
+        } else if (m.status === 'scheduled' || m.status === 'in_progress') {
+            const name = isAway ? m.startingPitcherAway : m.startingPitcherHome;
+            if (name) return `<div class="text-[0.625rem] text-gray-500 mt-0.5">선 ${name}</div>`;
+        }
+        return '';
+    }
+
     // ── 경기 카드 HTML ─────────────────────────────────────────
     function matchCardHtml(m) {
         const predId  = getPredId(m);
@@ -233,44 +266,90 @@
         const isDone  = m.status === 'finished';
         const homeVal = m.sport === 'lol' ? m.homeWins : m.homeScore;
         const awayVal = m.sport === 'lol' ? m.awayWins : m.awayScore;
+        const isCancelled = m.status === 'cancelled';
 
         let centerHtml;
-        if (isLive || isDone) {
-            const color = isLive ? 'text-red-500' : 'text-slate-800';
-            const badge = isLive
-                ? `<span class="text-[10px] font-black text-red-500 animate-pulse">● LIVE</span>`
-                : `<span class="text-[10px] font-bold text-slate-400">종료</span>`;
-            centerHtml = `
-                <div class="flex flex-col items-center gap-0.5">
-                    ${badge}
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl font-black ${color}">${awayVal}</span>
-                        <span class="text-slate-300 text-sm">:</span>
-                        <span class="text-xl font-black ${color}">${homeVal}</span>
-                    </div>
-                </div>`;
+        if (isCancelled) {
+            centerHtml = `<span class="text-xs font-black text-red-600 px-2.5 py-1 rounded-xl bg-red-50 border border-red-200">취소</span>`;
+        } else if (m.sport === 'baseball') {
+            if (isLive || isDone) {
+                const color = isLive ? 'text-red-500' : 'text-slate-800';
+                const badge = isLive
+                    ? `<span class="text-[0.625rem] font-black text-red-500 animate-pulse">● LIVE</span>`
+                    : `<span class="text-[0.625rem] font-bold text-slate-400">종료</span>`;
+                centerHtml = `<div class="flex flex-col items-center gap-0.5">${badge}<div class="flex items-center gap-1.5"><span class="text-xl font-black ${color}">${awayVal}</span><span class="text-slate-300 text-sm">:</span><span class="text-xl font-black ${color}">${homeVal}</span></div></div>`;
+            } else {
+                centerHtml = `<div class="flex flex-col items-center gap-0.5"><span class="text-sm font-black text-slate-700">${m.scheduledAt || '--:--'}</span><span class="text-[0.625rem] text-slate-400 font-bold">VS</span></div>`;
+            }
+        } else if (m.sport === 'lol') {
+            if (isLive) {
+                centerHtml = `<div class="text-emerald-600 font-black animate-pulse text-xs">LIVE</div><div class="font-black text-sm mt-0.5">${awayVal} : ${homeVal}</div>`;
+            } else if (isDone) {
+                centerHtml = `<div class="font-black text-base">${awayVal} <span class="text-slate-400 text-sm">:</span> ${homeVal}</div><div class="text-[0.625rem] text-slate-400 mt-0.5">종료</div>`;
+            } else {
+                centerHtml = `<div class="font-black text-slate-500 text-sm">${m.scheduledAt || '--:--'}</div>`;
+            }
         } else {
-            centerHtml = `
-                <div class="flex flex-col items-center gap-0.5">
-                    <span class="text-sm font-black text-slate-700">${m.scheduledAt || '--:--'}</span>
-                    <span class="text-[10px] text-slate-400 font-bold">VS</span>
-                </div>`;
+            // soccer
+            if (isLive) {
+                centerHtml = `<div class="text-emerald-600 font-black animate-pulse text-xs">LIVE</div><div class="font-black text-sm mt-0.5">${awayVal} : ${homeVal}</div>`;
+            } else if (isDone) {
+                centerHtml = `<span class="text-xl font-black">${awayVal}</span><span class="text-slate-400 mx-1">:</span><span class="text-xl font-black">${homeVal}</span><div class="text-[0.625rem] text-slate-400 mt-0.5">종료</div>`;
+            } else {
+                centerHtml = `<div class="font-black text-slate-500 text-sm">${m.scheduledAt || '--:--'}</div>`;
+            }
         }
 
+        // 진행 중 야구: 현재 투수 표시 (센터 하단)
+        const livePitcherHtml = (m.sport === 'baseball' && isLive && m.currentPitcher)
+            ? `<div class="text-[0.625rem] text-slate-400 mt-0.5">${m.currentPitcher}</div>`
+            : '';
+
+        // 액션 버튼
+        const actionBtn = (() => {
+            if (m.status === 'in_progress') return `<button class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-xl animate-pulse">라이브</button>`;
+            if (m.status === 'finished')    return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">기록</button>`;
+            if (m.status === 'cancelled')   return '';
+            const aiClick = m.sport === 'lol'
+                ? `toggleSchedAi('${predId}', '${m.matchId}', '${m.awayTeamName}', '${m.homeTeamName}', 'lol')`
+                : `toggleSchedAi('${predId}', ${m.matchId}, '${m.awayTeamName}', '${m.homeTeamName}', '${m.sport}')`;
+            return `<div class="flex gap-1.5">
+                <button class="bg-slate-100 text-slate-700 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-all">전력</button>
+                <button onclick="${aiClick}" id="ai-btn-${predId}" class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-xs font-black px-3 py-1.5 rounded-xl hover:from-indigo-600 hover:to-blue-600 transition-all shadow-sm">AI 예측</button>
+            </div>`;
+        })();
+
         return `
-        <div class="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div class="flex items-center px-5 py-3 gap-2">
-                <div class="flex-1 flex flex-col items-start min-w-0">
-                    <span class="text-[10px] font-bold text-slate-400 mb-0.5">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</span>
-                    <span class="font-black text-slate-800 text-sm truncate">${m.awayTeamName}</span>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl hover:border-slate-300 transition-colors overflow-hidden">
+            <div class="flex items-center justify-between p-4">
+                <div class="w-20 shrink-0">
+                    <div class="text-[0.625rem] font-bold text-slate-400">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</div>
+                    <div class="text-sm font-black text-slate-500 mt-0.5">${m.scheduledAt || ''}</div>
                 </div>
-                <div class="flex-shrink-0 w-28 flex justify-center">${centerHtml}</div>
-                <div class="flex-1 flex flex-col items-end min-w-0">
-                    <span class="text-[10px] font-bold text-transparent mb-0.5">.</span>
-                    <span class="font-black text-slate-800 text-sm truncate">${m.homeTeamName}</span>
+                <div class="flex-1 flex items-center justify-around">
+                    <div class="w-1/3 flex flex-col items-end">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span class="font-bold text-slate-800 text-sm truncate">${m.awayTeamName}</span>
+                            ${m.awayTeamEmblem ? `<img src="${m.awayTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${m.awayTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                        </div>
+                        ${pitcherLabel(m, true)}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-center text-center">
+                        ${centerHtml}
+                        ${livePitcherHtml}
+                    </div>
+                    <div class="w-1/3 flex flex-col items-start">
+                        <div class="flex items-center gap-1.5">
+                            ${m.homeTeamEmblem ? `<img src="${m.homeTeamEmblem}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${m.homeTeamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                            <span class="font-bold text-slate-800 text-sm truncate">${m.homeTeamName}</span>
+                        </div>
+                        ${pitcherLabel(m, false)}
+                    </div>
                 </div>
+                <div class="shrink-0 ml-2">${actionBtn}</div>
             </div>
             <div class="border-t border-slate-100" id="pred-${predId}"></div>
+            <div id="ai-pred-${predId}" class="hidden"></div>
         </div>`;
     }
 
@@ -323,7 +402,7 @@
             if (!loggedIn) {
                 el.innerHTML = `
                     <div class="px-4 py-2 text-center">
-                        <a href="/login" class="text-[10px] text-slate-400 hover:text-blue-600 transition-colors">
+                        <a href="/login" class="text-[0.625rem] text-slate-400 hover:text-blue-600 transition-colors">
                             로그인하면 승부예측에 참여할 수 있어요
                         </a>
                     </div>`;
@@ -342,14 +421,41 @@
             el.innerHTML = `
                 <div class="px-4 pb-2.5 pt-2">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold shrink-0">승부예측</span>
+                        <span class="text-[0.625rem] text-slate-400 font-bold shrink-0">승부예측</span>
                         <button onclick="submitPrediction('${predId}', 'AWAY_WIN')"
                                 class="${predBtnClass(cur === 'AWAY_WIN')}">${awayName} 승</button>
                         ${drawBtn}
                         <button onclick="submitPrediction('${predId}', 'HOME_WIN')"
                                 class="${predBtnClass(cur === 'HOME_WIN')}">${homeName} 승</button>
                     </div>
-                    ${cur ? `<p class="text-[10px] text-slate-400 text-center mt-1">경기 시작 전까지 변경 가능</p>` : ''}
+                    ${cur ? `<p class="text-[0.625rem] text-slate-400 text-center mt-1">경기 시작 전까지 변경 가능</p>` : ''}
+                </div>`;
+            return;
+        }
+
+        if (m.status === 'cancelled') {
+            const predLabel = pred ? (pred.predictedResult === 'HOME_WIN' ? `${m.homeTeamName} 승`
+                            : pred.predictedResult === 'AWAY_WIN' ? `${m.awayTeamName} 승`
+                            : '무승부') : null;
+            el.innerHTML = pred ? `
+                <div class="flex items-center justify-center gap-2 px-4 pb-2.5 pt-2">
+                    <span class="text-[0.625rem] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">${predLabel}</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-100 text-slate-500 border border-slate-200">경기 취소</span>
+                </div>` : `
+                <div class="text-center px-4 pb-2.5 pt-2 text-xs text-slate-400 font-bold">경기가 취소되었습니다.</div>`;
+            return;
+        }
+
+        if (pred && m.status === 'in_progress') {
+            const predLabel = pred.predictedResult === 'HOME_WIN' ? `${m.homeTeamName} 승`
+                            : pred.predictedResult === 'AWAY_WIN' ? `${m.awayTeamName} 승`
+                            : '무승부';
+            el.innerHTML = `
+                <div class="flex items-center justify-center gap-2 px-4 pb-2.5 pt-2">
+                    <span class="text-[0.625rem] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">${predLabel}</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">진행중</span>
                 </div>`;
             return;
         }
@@ -359,7 +465,7 @@
             if (pred.isCorrect === null || pred.isCorrect === undefined) {
                 resultBadge = `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">집계 중...</span>`;
             } else if (pred.isCorrect) {
-                resultBadge = `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-green-50 text-green-700 border border-green-200">🎯 맞음 +100P</span>`;
+                resultBadge = `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-green-50 text-green-700 border border-green-200">맞음 +100P</span>`;
             } else {
                 resultBadge = `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-red-50 text-red-500 border border-red-200">✗ 틀림</span>`;
             }
@@ -368,10 +474,12 @@
                             : '무승부';
             el.innerHTML = `
                 <div class="flex items-center justify-center gap-2 px-4 pb-2.5 pt-2">
-                    <span class="text-[10px] text-slate-400 font-bold">내 예측</span>
+                    <span class="text-[0.625rem] text-slate-400 font-bold">내 예측</span>
                     <span class="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">${predLabel}</span>
                     ${resultBadge}
+                    <span id="ai-result-${predId}"></span>
                 </div>`;
+            loadSchedAiResult(predId, m);
         }
     }
 
@@ -405,6 +513,112 @@
         } catch (e) {
             alert('예측 제출 중 오류가 발생했습니다.');
         }
+    }
+
+    // ── AI 예측 ────────────────────────────────────────────────
+    const schedAiCache = {};
+
+    async function toggleSchedAi(predId, matchId, awayName, homeName, sport) {
+        const panel = document.getElementById(`ai-pred-${predId}`);
+        if (!panel) return;
+        if (!panel.classList.contains('hidden')) {
+            panel.classList.add('hidden');
+            const btn = document.getElementById(`ai-btn-${predId}`);
+            if (btn) btn.textContent = 'AI 예측';
+            return;
+        }
+        if (schedAiCache[predId]) {
+            renderSchedAi(predId, schedAiCache[predId], awayName, homeName);
+            const cachedBtn = document.getElementById(`ai-btn-${predId}`);
+            if (cachedBtn) cachedBtn.textContent = 'AI 예측 닫기';
+            return;
+        }
+        panel.classList.remove('hidden');
+        panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-4 text-center text-slate-400 text-xs font-bold">AI 분석 중...</div>`;
+        const btn = document.getElementById(`ai-btn-${predId}`);
+        if (btn) btn.textContent = '⏳ 분석 중...';
+        const url = sport === 'lol'
+            ? `${BASE_URL}/api/ai-prediction/lol/${matchId}`
+            : `${BASE_URL}/api/ai-prediction/${matchId}`;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            schedAiCache[predId] = data;
+            renderSchedAi(predId, data, awayName, homeName);
+            if (btn) btn.textContent = 'AI 예측 닫기';
+        } catch (e) {
+            panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-3 text-center text-red-400 text-xs font-bold">AI 예측을 불러올 수 없습니다.</div>`;
+            if (btn) btn.textContent = 'AI 예측';
+        }
+    }
+
+    async function loadSchedAiResult(predId, m) {
+        const span = document.getElementById(`ai-result-${predId}`);
+        if (!span) return;
+        try {
+            let data = schedAiCache[predId];
+            if (!data) {
+                const url = m.sport === 'lol'
+                    ? `${BASE_URL}/api/ai-prediction/lol/${m.matchId}`
+                    : `${BASE_URL}/api/ai-prediction/${m.matchId}`;
+                const res = await fetch(url);
+                if (!res.ok) return;
+                data = await res.json();
+                schedAiCache[predId] = data;
+            }
+            const ap = data.awayWinProb ?? 0, hp = data.homeWinProb ?? 0, dp = data.drawProb ?? 0;
+            let aiPred;
+            if (m.sport !== 'lol' && dp > ap && dp > hp) aiPred = 'DRAW';
+            else aiPred = hp >= ap ? 'HOME_WIN' : 'AWAY_WIN';
+            let actual;
+            if (m.sport === 'lol') {
+                const aw = m.awayWins, hw = m.homeWins;
+                if (aw == null || hw == null) return;
+                actual = aw > hw ? 'AWAY_WIN' : 'HOME_WIN';
+            } else {
+                const as = m.awayScore, hs = m.homeScore;
+                if (as == null || hs == null) return;
+                if (as > hs) actual = 'AWAY_WIN';
+                else if (hs > as) actual = 'HOME_WIN';
+                else actual = 'DRAW';
+            }
+            span.innerHTML = aiPred === actual
+                ? `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-violet-50 text-violet-600 border border-violet-200">AI 적중 ✓</span>`
+                : `<span class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-100 text-slate-500 border border-slate-200">AI 빗나감</span>`;
+        } catch (e) {}
+    }
+
+    function renderSchedAi(predId, data, awayName, homeName) {
+        const panel = document.getElementById(`ai-pred-${predId}`);
+        if (!panel) return;
+        panel.classList.remove('hidden');
+        const hp = data.homeWinProb, ap = data.awayWinProb;
+        const homeWin = hp >= ap;
+        const homeBg = homeWin ? 'bg-red-500 text-white' : 'bg-slate-200 text-slate-600';
+        const awayBg = !homeWin ? 'bg-red-500 text-white' : 'bg-slate-200 text-slate-600';
+        const homeBadge = homeWin ? `<span class="text-[0.625rem] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600 ml-1">예측 우세</span>` : '';
+        const awayBadge = !homeWin ? `<span class="text-[0.625rem] font-black px-2 py-0.5 rounded-lg bg-rose-100 text-rose-600 mr-1">예측 우세</span>` : '';
+        const keyFactors = data.keyFactors?.length
+            ? `<div class="flex flex-wrap gap-1 mt-2">${data.keyFactors.map(f => `<span class="text-[0.625rem] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">${f}</span>`).join('')}</div>` : '';
+        const reasoning = data.reasoning
+            ? `<div class="text-xs text-slate-600 leading-relaxed mt-2 bg-white rounded-xl p-3 border border-slate-100">${data.reasoning}</div>` : '';
+        panel.innerHTML = `<div class="border-t border-slate-100 px-4 py-3 bg-gradient-to-b from-slate-50 to-white rounded-b-2xl">
+            <div class="flex items-center gap-1 mb-2">
+                <span class="text-[0.625rem] font-black text-indigo-500">AI 승부 예측</span>
+                <span class="text-[0.625rem] text-slate-400 font-bold ml-auto">GPT-4o-mini</span>
+            </div>
+            <div class="flex rounded-xl overflow-hidden h-8 text-xs font-black">
+                <div class="flex items-center justify-start pl-3 transition-all duration-500 ${awayBg}" style="width:${ap.toFixed(1)}%">${ap.toFixed(1)}%</div>
+                <div class="flex items-center justify-end pr-3 transition-all duration-500 ${homeBg}" style="width:${hp.toFixed(1)}%">${hp.toFixed(1)}%</div>
+            </div>
+            <div class="flex justify-between text-[0.6875rem] font-black mt-1">
+                <span>${awayBadge}${awayName}</span>
+                <span>${homeName}${homeBadge}</span>
+            </div>
+            ${keyFactors}
+            ${reasoning}
+        </div>`;
     }
 
     // ── 초기화 ─────────────────────────────────────────────────

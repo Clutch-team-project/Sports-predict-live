@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
 
         .light-portal-view {
@@ -24,7 +26,7 @@
 </head>
 <body class="light-portal-view text-slate-800 min-h-screen antialiased">
 
-<main class="max-w-5xl mx-auto px-6 py-6 space-y-4">
+<main class="max-w-7xl mx-auto px-6 py-6 space-y-4">
 
     <!-- 선수 헤더 카드 -->
     <div id="player-header" class="glass-card border border-slate-300 rounded-2xl shadow-md p-6">
@@ -95,7 +97,7 @@
             <div class="grid grid-cols-3 md:grid-cols-6 gap-3 text-center">
                 ${list.map(([label, value]) => `
                     <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                        <div class="text-[11px] text-slate-400 font-bold">${label}</div>
+                        <div class="text-[0.6875rem] text-slate-400 font-bold">${label}</div>
                         <div class="text-lg font-black text-slate-800 mt-0.5">${value}</div>
                     </div>`).join('')}
             </div>`;

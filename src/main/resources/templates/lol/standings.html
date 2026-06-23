@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
         .light-portal-view {
             background-color: #cbd5e1;
@@ -40,7 +42,7 @@
 
 <!-- GNB -->
 <header class="bg-white border-b border-slate-300 p-4 shadow-sm">
-    <div class="max-w-5xl mx-auto w-full flex justify-between items-center">
+    <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
         <div class="flex items-center shrink-0">
             <span class="text-blue-600 font-black tracking-tighter text-xl cursor-pointer"
                   onclick="location.href='/'">AI.MATCH</span>
@@ -56,14 +58,13 @@
         <div class="flex items-center gap-6 text-sm md:text-base font-black shrink-0">
             <span class="text-slate-700 hover:text-slate-900 cursor-pointer"
                   onclick="location.href='/login'">로그인</span>
-            <span class="text-slate-700 hover:text-slate-900 cursor-pointer">사이트맵</span>
         </div>
     </div>
 </header>
 
 <!-- SUB NAV -->
 <nav class="w-full border-b border-slate-300 bg-white p-2.5 flex items-center justify-center shadow-sm">
-    <div class="max-w-5xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
+    <div class="max-w-7xl mx-auto flex items-center gap-14 justify-center text-slate-500 font-extrabold w-full text-base">
         <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/lol/news'">뉴스</span>
         <span class="hover:text-slate-800 cursor-pointer" onclick="location.href='/lol/schedule'">일정</span>
         <span class="text-blue-600 border-b-2 border-blue-500 pb-1 font-black cursor-pointer">순위</span>
@@ -72,7 +73,7 @@
 </nav>
 
 <!-- MAIN -->
-<main class="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-6">
+<main class="flex-1 max-w-7xl mx-auto w-full px-6 py-8 space-y-6">
 
     <!-- 시즌 타이틀 + 탭 -->
     <div class="flex flex-col items-center mb-4">
@@ -105,9 +106,9 @@
                         <tr>
                             <th class="p-3.5 text-left pl-6">순위</th>
                             <th class="p-3.5 text-left">팀</th>
-                            <th class="p-3.5 text-center sort-th" data-key="wins">승<span class="sort-icon">↕</span></th>
-                            <th class="p-3.5 text-center sort-th" data-key="losses">패<span class="sort-icon">↕</span></th>
-                            <th class="p-3.5 text-center sort-th" data-key="winRate">승률<span class="sort-icon">↕</span></th>
+                            <th class="p-3.5 text-center">승</th>
+                            <th class="p-3.5 text-center">패</th>
+                            <th class="p-3.5 text-center">승률</th>
                             <th class="p-3.5 text-center">최근5경기</th>
                             <th class="p-3.5 text-center">관심</th>
                         </tr>
@@ -240,28 +241,27 @@
             return dir === 'asc' ? av - bv : bv - av;
         });
     }
-    function initSort(tableId, getData, renderFn, defaultKey, defaultDir = 'desc') {
-        sortState[tableId] = { key: defaultKey, dir: defaultDir };
+    function initSort(tableId, getData, renderFn, defaultKey) {
+        sortState[tableId] = { key: defaultKey, dir: 'desc' };
         const thead = document.querySelector(`thead[data-table="${tableId}"]`);
         if (!thead) return;
         thead.querySelectorAll('th[data-key]').forEach(th => {
-            if (th.dataset.key === defaultKey) th.classList.add('sort-active');
+            if (th.dataset.key === defaultKey) {
+                th.classList.add('sort-active');
+                th.querySelector('.sort-icon').textContent = '↓';
+            }
             th.addEventListener('click', () => {
                 const key = th.dataset.key;
-                const cur = sortState[tableId];
-                sortState[tableId] = { key, dir: cur.key === key && cur.dir === 'desc' ? 'asc' : 'desc' };
+                sortState[tableId] = { key, dir: 'desc' };
                 thead.querySelectorAll('th[data-key]').forEach(t => {
                     t.classList.remove('sort-active');
                     t.querySelector('.sort-icon').textContent = '↕';
                 });
                 th.classList.add('sort-active');
-                th.querySelector('.sort-icon').textContent = sortState[tableId].dir === 'desc' ? '↓' : '↑';
+                th.querySelector('.sort-icon').textContent = '↓';
                 renderFn(applySort(getData(), sortState[tableId]));
             });
         });
-        // 초기 아이콘
-        const initTh = thead.querySelector(`th[data-key="${defaultKey}"]`);
-        if (initTh) initTh.querySelector('.sort-icon').textContent = defaultDir === 'desc' ? '↓' : '↑';
     }
 
     // ── 탭 전환 ──────────────────────────────────────────────────────────────
@@ -285,7 +285,7 @@
         if (!form) return '-';
         return [...form].map(c => {
             const cls = c === 'W' ? 'recent-w' : c === 'L' ? 'recent-l' : 'recent-d';
-            return `<span class="${cls} w-5 h-5 rounded flex items-center justify-center text-[10px] font-black">${c}</span>`;
+            return `<span class="${cls} w-5 h-5 rounded flex items-center justify-center text-[0.625rem] font-black">${c}</span>`;
         }).join('');
     }
 
@@ -319,7 +319,12 @@
         tbody.innerHTML = data.map((t, i) => `
             <tr class="table-row cursor-pointer" onclick="goTeamDetail(${t.teamId})">
                 <td class="p-4 pl-6 font-black ${rankClass(i)}">${t.rank ?? i + 1}</td>
-                <td class="p-4 font-black"><span class="detail-link">${t.teamName}</span></td>
+                <td class="p-4 font-black">
+                    <div class="flex items-center gap-2">
+                        ${t.emblemUrl ? `<img src="${t.emblemUrl}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'" alt="${t.teamName}">` : '<div class="w-6 h-6 shrink-0"></div>'}
+                        <span class="detail-link">${t.teamName}</span>
+                    </div>
+                </td>
                 <td class="p-4 text-center">${t.wins}</td>
                 <td class="p-4 text-center">${t.losses}</td>
                 <td class="p-4 text-center font-bold text-blue-600">${t.winRate ? (t.winRate * 100).toFixed(1) + '%' : '-'}</td>
@@ -406,8 +411,7 @@
     });
 
     // ── 초기화 ───────────────────────────────────────────────────────────────
-    initSort('standing', () => standingData, renderStanding, 'winRate', 'desc');
-    initSort('record',   () => recordData,   renderRecord,   'kda',     'desc');
+    initSort('record', () => recordData, renderRecord, 'kda');
     loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>

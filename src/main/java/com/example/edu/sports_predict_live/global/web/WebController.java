@@ -1,12 +1,20 @@
 package com.example.edu.sports_predict_live.global.web;
 
+import com.example.edu.sports_predict_live.board.service.BoardService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
+@RequiredArgsConstructor
 public class WebController {
+
+    private final BoardService boardService;
+
     @GetMapping("/")
-    public String home() {
+    public String home(Model model) {
+        model.addAttribute("findTop5ViewCountToday", boardService.findTop5ViewCountToday(null));
         return "home";
     }
 

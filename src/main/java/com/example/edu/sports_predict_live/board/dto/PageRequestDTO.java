@@ -17,15 +17,15 @@ import java.net.URLEncoder;
 @NoArgsConstructor
 public class PageRequestDTO {
     @Builder.Default
-    private int page = 1; // 페이지 기본값 1
+    private int page = 1;
 
     @Builder.Default
-    private int size = 10; // 페이지 기본 사이즈 10
-
+    private int size = 10;
     private String type;
     private String keyword;
     private String category;
     private String sort;
+    private String boardType;
 
     public String[] getTypes() {
         if(type == null || type.isEmpty()) {
@@ -44,7 +44,7 @@ public class PageRequestDTO {
         if (link == null) {
            StringBuilder builder = new StringBuilder();
            builder.append("page=").append(this.page);
-           builder.append("＆size=").append(this.size);
+           builder.append("&size=").append(this.size);
 
            if(type != null && !type.isEmpty()) {
                builder.append("&type=").append(this.type);

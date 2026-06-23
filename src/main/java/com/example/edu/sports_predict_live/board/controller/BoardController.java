@@ -13,14 +13,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @Log4j2
@@ -31,6 +37,7 @@ public class BoardController {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
 
+    // 현재 로그인 한 유저의 ID 가져오기
     private Long getCurrentUserId(Authentication authentication) {
         if(authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalArgumentException("로그인 후 이용 가능합니다.");
@@ -42,23 +49,33 @@ public class BoardController {
             return user.getUserId();
         }
     }
+    // 현재 로그인한 유저의 ROLE 가져오기
+    private String getCurrentUserRole(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "ROLE_USER";
+        }
+        return authentication.getAuthorities().iterator().next().getAuthority();
+    }
 
+    // board -> board/list 로 이동
     @GetMapping({"", "/"})
     public String index() {
         return "redirect:/board/list";
     }
 
     @GetMapping("/list")
-    public void list(PageRequestDTO pageRequestDTO, Model model) {
-        log.info("게시판 목록 조회 요청 : " + pageRequestDTO);
+    public void list(PageRequestDTO pageRequestDTO, Authentication authentication, Model model) {
+        log.info("게시판 목록 조회 요청 : ", pageRequestDTO);
         PageResponseDTO<BoardListAllDTO> responseDTO = boardService.listWithAll(pageRequestDTO);
+        String currentUserRole = getCurrentUserRole(authentication);
+        model.addAttribute("currentUserRole", currentUserRole);
         model.addAttribute("responseDTO", responseDTO);
         model.addAttribute("pageRequestDTO", pageRequestDTO);
-        log.info("프론트에 넘기는 데이터 : " + responseDTO);
+        log.info("프론트에 넘기는 데이터 : ", responseDTO);
     }
 
     @GetMapping("/read")
-    public void read(Long boardId, PageRequestDTO pageRequestDTO, Model model, HttpServletRequest request) {
+    public void read(Long boardId, PageRequestDTO pageRequestDTO, Model model, HttpServletRequest request, Authentication authentication) {
         BoardDTO boardDTO = boardService.readOne(boardId);
         model.addAttribute("dto", boardDTO);
 
@@ -86,31 +103,45 @@ public class BoardController {
             isReported = boardService.checkIsReported(boardId, currentUserId);
         }
 
+        String currentUserRole = getCurrentUserRole(authentication);
+
         model.addAttribute("currentUserId", currentUserId);
+        model.addAttribute("currentUserRole", currentUserRole);
         model.addAttribute("isLiked", isLiked);
         model.addAttribute("isReported", isReported);
+        model.addAttribute("pageRequestDTO", pageRequestDTO);
     }
 
     @GetMapping("/register")
-    public String registerGET() {
+    public String registerGET(Authentication authentication, Model model, PageRequestDTO pageRequestDTO) {
+        String currentUserRole = getCurrentUserRole(authentication);
+        model.addAttribute("currentUserRole", currentUserRole);
+        model.addAttribute("pageRequestDTO", pageRequestDTO);
         return "board/register";
     }
 
     @PostMapping("/register")
     public String registerPOST(BoardDTO boardDTO, Authentication authentication, RedirectAttributes redirectAttributes) {
         Long currentUserId = getCurrentUserId(authentication);
+        String currentUserRole = getCurrentUserRole(authentication);
         boardDTO.setUserId(currentUserId);
-
-        Long boardId = boardService.register(boardDTO);
+        Long boardId = boardService.register(boardDTO, currentUserRole);
 
         redirectAttributes.addFlashAttribute("result", boardId);
+
+        if(boardDTO.getBoardType() != null && !boardDTO.getBoardType().isEmpty()) {
+            redirectAttributes.addAttribute("boardType", boardDTO.getBoardType());
+        }
         return "redirect:/board/list";
     }
 
     @GetMapping("/modify")
-    public void modify(Long boardId, PageRequestDTO pageRequestDTO, Model model) {
+    public void modify(Long boardId, PageRequestDTO pageRequestDTO, Model model, Authentication authentication) {
         BoardDTO boardDTO = boardService.getBoardOnly(boardId);
+        String currentUserRole = getCurrentUserRole(authentication);
+        model.addAttribute("currentUserRole", currentUserRole);
         model.addAttribute("dto", boardDTO);
+        model.addAttribute("pageRequestDTO", pageRequestDTO);
     }
 
     @PostMapping("/modify")
@@ -121,54 +152,64 @@ public class BoardController {
         }
 
         try {
-            // 현재 로그인한 유저 ID 추출
             Long currentUserId = getCurrentUserId(authentication);
             BoardDTO existingBoard = boardService.getBoardOnly(boardDTO.getBoardId());
 
-            // DB에 userId가 null인 경우의 에러 방지 처리
             if (existingBoard.getUserId() == null || !existingBoard.getUserId().equals(currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("수정 권한이 없습니다.");
             }
 
-            // 정상적으로 권한이 확인되면 수정 진행
             boardDTO.setUserId(currentUserId);
             boardService.modify(boardDTO);
             return ResponseEntity.ok("success");
 
         } catch (Exception e) {
             log.error("게시글 수정 중 오류 발생: ", e);
-            // 에러가 났을 때 정확한 이유를 프론트엔드에 전달
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
         }
     }
-
+    // 게시글 삭제
     @PostMapping("/remove")
     @ResponseBody
-    public ResponseEntity<String> removePOST(@RequestParam("boardId") Long boardId, Authentication authentication) {
+    public ResponseEntity <Map<String, Object>> removePOST(@RequestParam("boardId") Long boardId, @RequestParam("boardType") String boardType, Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
         try {
             Long currentUserId = getCurrentUserId(authentication);
-            BoardDTO existingBoard = boardService.getBoardOnly(boardId);
+            String currentUserRole = getCurrentUserRole(authentication);
 
-            // 작성자 비교
-            if (!existingBoard.getUserId().equals(currentUserId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("삭제 권한이 없습니다.");
-            }
+            boardService.remove(boardId, currentUserId, currentUserRole);
 
-            boardService.remove(boardId);
-            return ResponseEntity.ok("success");
-
+            response.put("status", "success");
+            response.put("boardType", boardType);
+            return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류가 발생했습니다: " + e.getMessage());
+            response.put("status", "error");
+            response.put("message", "오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/admin/{boardId}/blind")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseBody
+    public ResponseEntity<String> blindPost(@PathVariable Long boardId) {
+        try {
+            boardService.toggleBlind(boardId);
+            return ResponseEntity.ok("success");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
     @PostMapping("/like")
     @ResponseBody
-    public ResponseEntity<String> like(@RequestParam("boardId") Long boardId, Authentication authentication){
+    public ResponseEntity<String> likePOST(@RequestParam("boardId") Long boardId, Authentication authentication){
         try {
-            // 현재 로그인한 사용자 id 가져오기
             Long currentUserId = getCurrentUserId(authentication);
-            // 좋아요 수 증가 or 감소
             boardService.toggleLike(boardId, currentUserId);
 
             return ResponseEntity.ok("");
@@ -181,7 +222,7 @@ public class BoardController {
 
     @PostMapping("/report")
     @ResponseBody
-    public ResponseEntity<String> report(@RequestParam("boardId") Long boardId, Authentication authentication) {
+    public ResponseEntity<String> reportPOST(@RequestParam("boardId") Long boardId, Authentication authentication) {
         try {
             Long currentUserId = getCurrentUserId(authentication);
             boardService.report(boardId, currentUserId);
@@ -192,6 +233,33 @@ public class BoardController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류가 발생하였습니다.");
         }
+    }
+
+    @Value("${com.example.upload.path}")
+    private String uploadPath;
+
+    @GetMapping("/view")
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> viewFileGet(@RequestParam("fileName") String fileName) {
+
+        // 경로 구분자가 겹치지 않도록 안전하게 조합
+        String basePath = uploadPath.endsWith("/") || uploadPath.endsWith("\\") ? uploadPath : uploadPath + java.io.File.separator;
+        String fullPath = basePath + fileName;
+
+        org.springframework.core.io.Resource resource = new org.springframework.core.io.FileSystemResource(fullPath);
+
+        if (!resource.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        try {
+            String contentType = java.nio.file.Files.probeContentType(resource.getFile().toPath());
+            headers.add("Content-Type", contentType != null ? contentType : "application/octet-stream");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok().headers(headers).body(resource);
     }
 
 

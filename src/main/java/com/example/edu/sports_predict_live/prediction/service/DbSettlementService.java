@@ -12,12 +12,13 @@ public class DbSettlementService {
 
     private final PredictionService predictionService;
 
-    // 1분마다 KBO·K리그 완료 경기 정산
+    // 1분마다 KBO·K리그 완료 경기 정산 + 취소 경기 예측 무효화
     @Scheduled(fixedDelay = 60_000)
     public void settle() {
         try {
             predictionService.settleDbMatches("baseball");
             predictionService.settleDbMatches("soccer");
+            predictionService.voidCancelledDbMatches();
         } catch (Exception e) {
             log.warn("DB 경기 정산 중 오류: {}", e.getMessage());
         }

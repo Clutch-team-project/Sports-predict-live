@@ -86,4 +86,11 @@ public class Prediction {
         this.isCorrect = this.predictedResult.equals(actualResult);
         this.pointsEarned = Boolean.TRUE.equals(this.isCorrect) ? 100 : 0;
     }
+
+    // 경기 취소 시 예측 무효화 — 적중/실패 판정 없이 0점 처리
+    public void voidByCancellation() {
+        this.actualResult = "CANCELLED";
+        this.isCorrect = null;
+        this.pointsEarned = 0;
+    }
 }

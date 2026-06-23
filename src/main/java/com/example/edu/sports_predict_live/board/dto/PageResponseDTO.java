@@ -19,7 +19,7 @@ public class PageResponseDTO <E>{
     private boolean prev;
     private boolean next;
 
-    private List<E> dtoList; // 조회된 결과 리스트 제네릭으로
+    private List<E> dtoList;
 
     @Builder(builderMethodName = "withAll")
     public PageResponseDTO(PageRequestDTO pageRequestDTO, List<E> dtoList, int total) {
@@ -27,14 +27,13 @@ public class PageResponseDTO <E>{
             return;
         }
 
-        // Request 정보
         this.page = pageRequestDTO.getPage();
         this.size = pageRequestDTO.getSize();
         this.total = total;
         this.dtoList = dtoList;
 
-        this.end = (int)(Math.ceil(this.page/10.0)) * 10; // 화면 끝 번호 10개 단위
-        this.start = this.end - 9; // 화면 시작 번호
+        this.end = (int)(Math.ceil(this.page/10.0)) * 10;
+        this.start = this.end - 9;
 
         int last = (int)(Math.ceil((total / (double)size)));
 

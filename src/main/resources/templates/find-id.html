@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
           rel="stylesheet">
     <style>
+        /* 전역 UI 스케일: 기본 1rem -> 1.125rem (폰트·여백·컨테이너 비례 확대) */
+        html { font-size: 20px; }
         body {
             font-family: 'Noto Sans KR', sans-serif;
         }
@@ -15,9 +17,9 @@
         /* 전체_홈 기준 라이트 배경 */
         .light-portal-view {
             background-color: #cbd5e1;
-            background-image: linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
-            background-size: 24px 24px;
+            background-image: linear-gradient(rgba(148, 163, 184, 0.1) 0.0625rem, transparent 0.0625rem),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.1) 0.0625rem, transparent 0.0625rem);
+            background-size: 1.5rem 1.5rem;
         }
 
         .page {
@@ -31,20 +33,20 @@
         /* 카드 */
         .card {
             background: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(59, 130, 246, 0.55);
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 0.125rem solid rgba(59, 130, 246, 0.55);
+            border-radius: 1rem;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
         }
 
         /* 입력 필드 */
         .input-field {
             width: 100%;
             background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 10px 14px;
+            border: 0.0625rem solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.625rem 0.875rem;
             color: #1e293b;
-            font-size: 14px;
+            font-size: 0.875rem;
             outline: none;
             transition: border-color 0.2s;
             font-family: 'Noto Sans KR', sans-serif;
@@ -64,9 +66,9 @@
             background: #2563eb;
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 14px;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 0.875rem;
             font-weight: 700;
             cursor: pointer;
             transition: background 0.2s;
@@ -81,10 +83,10 @@
             width: 100%;
             background: white;
             color: #475569;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 11px;
-            font-size: 14px;
+            border: 0.0625rem solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.6875rem;
+            font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -100,7 +102,7 @@
             background: transparent;
             color: #64748b;
             border: none;
-            font-size: 12px;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: color 0.2s;
             font-family: 'Noto Sans KR', sans-serif;
@@ -114,39 +116,39 @@
         /* 섹션 구분선 */
         .section-divider {
             border: none;
-            border-top: 1px solid #e2e8f0;
-            margin: 20px 0;
+            border-top: 0.0625rem solid #e2e8f0;
+            margin: 1.25rem 0;
         }
 
         /* 섹션 타이틀 */
         .section-title {
-            font-size: 11px;
+            font-size: 0.6875rem;
             font-weight: 700;
             color: #2563eb;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            margin-bottom: 12px;
+            margin-bottom: 0.75rem;
         }
 
         /* 레이블 */
         .field-label {
-            font-size: 12px;
+            font-size: 0.75rem;
             font-weight: 600;
             color: #475569;
-            margin-bottom: 6px;
+            margin-bottom: 0.375rem;
             display: block;
         }
 
         .required {
             color: #ef4444;
-            margin-left: 2px;
+            margin-left: 0.125rem;
         }
 
         .optional {
             color: #94a3b8;
             font-weight: 400;
-            font-size: 11px;
-            margin-left: 4px;
+            font-size: 0.6875rem;
+            margin-left: 0.25rem;
         }
 
         /* 토글 스위치 */
@@ -154,20 +156,20 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 0;
+            padding: 0.625rem 0;
         }
 
         .toggle-label {
-            font-size: 13px;
+            font-size: 0.8125rem;
             color: #475569;
         }
 
         .toggle {
             position: relative;
-            width: 44px;
-            height: 24px;
+            width: 2.75rem;
+            height: 1.5rem;
             background: #cbd5e1;
-            border-radius: 12px;
+            border-radius: 0.75rem;
             cursor: pointer;
             transition: background 0.2s;
             flex-shrink: 0;
@@ -180,27 +182,27 @@
         .toggle::after {
             content: '';
             position: absolute;
-            width: 18px;
-            height: 18px;
+            width: 1.125rem;
+            height: 1.125rem;
             border-radius: 50%;
             background: white;
-            top: 3px;
-            left: 3px;
+            top: 0.1875rem;
+            left: 0.1875rem;
             transition: transform 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.2);
         }
 
         .toggle.on::after {
-            transform: translateX(20px);
+            transform: translateX(1.25rem);
         }
 
         /* 사이드바 메뉴 */
         .sidebar-menu-item {
-            padding: 12px 16px;
-            font-size: 13px;
+            padding: 0.75rem 1rem;
+            font-size: 0.8125rem;
             color: #64748b;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 0.5rem;
             transition: all 0.15s;
             font-weight: 500;
         }
@@ -225,20 +227,20 @@
         .data-table th {
             background: #f1f5f9;
             color: #64748b;
-            font-size: 11px;
+            font-size: 0.6875rem;
             font-weight: 700;
-            padding: 10px 14px;
+            padding: 0.625rem 0.875rem;
             text-align: center;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 0.0625rem solid #e2e8f0;
             letter-spacing: 0.05em;
         }
 
         .data-table td {
-            padding: 12px 14px;
-            font-size: 13px;
+            padding: 0.75rem 0.875rem;
+            font-size: 0.8125rem;
             color: #475569;
             text-align: center;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 0.0625rem solid #f1f5f9;
         }
 
         .data-table tr:hover td {
@@ -273,10 +275,10 @@
 
         /* 체크박스 */
         .checkbox-custom {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #cbd5e1;
-            border-radius: 4px;
+            width: 1.125rem;
+            height: 1.125rem;
+            border: 0.125rem solid #cbd5e1;
+            border-radius: 0.25rem;
             cursor: pointer;
             transition: all 0.15s;
             flex-shrink: 0;
@@ -294,22 +296,22 @@
         .checkbox-custom.checked::after {
             content: '✓';
             color: white;
-            font-size: 11px;
+            font-size: 0.6875rem;
             font-weight: 700;
         }
 
         /* 프로필 이미지 */
         .avatar-placeholder {
-            width: 72px;
-            height: 72px;
+            width: 4.5rem;
+            height: 4.5rem;
             background: #e2e8f0;
             border-radius: 50%;
-            border: 2px solid #cbd5e1;
+            border: 0.125rem solid #cbd5e1;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #94a3b8;
-            font-size: 11px;
+            font-size: 0.6875rem;
             text-align: center;
             flex-shrink: 0;
         }
@@ -318,20 +320,20 @@
         .social-divider {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin: 16px 0;
+            gap: 0.75rem;
+            margin: 1rem 0;
         }
 
         .social-divider::before,
         .social-divider::after {
             content: '';
             flex: 1;
-            height: 1px;
+            height: 0.0625rem;
             background: #e2e8f0;
         }
 
         .social-divider span {
-            font-size: 11px;
+            font-size: 0.6875rem;
             color: #94a3b8;
             white-space: nowrap;
         }
@@ -339,10 +341,10 @@
         /* 정보 박스 */
         .info-box {
             background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 12px;
+            border: 0.0625rem solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.875rem;
+            font-size: 0.75rem;
             color: #64748b;
             text-align: center;
             line-height: 1.7;
@@ -351,17 +353,17 @@
         /* GNB */
         .gnb {
             background: white;
-            border-bottom: 1px solid #cbd5e1;
+            border-bottom: 0.0625rem solid #cbd5e1;
         }
 
         /* 네비 탭 */
         .nav-tab {
-            padding: 8px 16px;
-            font-size: 13px;
+            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
             font-weight: 500;
             color: #64748b;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
+            border-bottom: 0.125rem solid transparent;
             transition: all 0.15s;
         }
 
@@ -377,31 +379,31 @@
 
         /* 안내 메시지 */
         .hint-text {
-            font-size: 11px;
+            font-size: 0.6875rem;
             color: #94a3b8;
-            margin-top: 4px;
+            margin-top: 0.25rem;
         }
 
         /* 페이지 인디케이터 */
         .page-indicator {
             position: fixed;
-            bottom: 20px;
+            bottom: 1.25rem;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 6px;
+            gap: 0.375rem;
             background: rgba(255, 255, 255, 0.92);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid #cbd5e1;
+            padding: 0.5rem 1rem;
+            border-radius: 1.25rem;
+            border: 0.0625rem solid #cbd5e1;
             z-index: 100;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(0.5rem);
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
         }
 
         .dot {
-            width: 8px;
-            height: 8px;
+            width: 0.5rem;
+            height: 0.5rem;
             border-radius: 50%;
             background: #cbd5e1;
             cursor: pointer;
@@ -410,29 +412,29 @@
 
         .dot.active {
             background: #2563eb;
-            width: 20px;
-            border-radius: 4px;
+            width: 1.25rem;
+            border-radius: 0.25rem;
         }
 
         /* 페이지 레이블 */
         .page-label {
-            font-size: 10px;
+            font-size: 0.625rem;
             color: #2563eb;
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
         }
 
         /* 비밀번호 변경 버튼 */
         .btn-sm {
-            padding: 6px 14px;
-            font-size: 12px;
+            padding: 0.375rem 0.875rem;
+            font-size: 0.75rem;
             font-weight: 700;
             background: #eff6ff;
             color: #2563eb;
-            border: 1px solid #bfdbfe;
-            border-radius: 6px;
+            border: 0.0625rem solid #bfdbfe;
+            border-radius: 0.375rem;
             cursor: pointer;
             transition: all 0.15s;
             white-space: nowrap;
@@ -447,12 +449,12 @@
         /* 카카오/구글 버튼 */
         .btn-kakao {
             width: 100%;
-            padding: 11px;
+            padding: 0.6875rem;
             background: #FEE500;
             color: #3C1E1E;
             border: none;
-            border-radius: 8px;
-            font-size: 13px;
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
             font-weight: 700;
             cursor: pointer;
             transition: opacity 0.15s;
@@ -465,12 +467,12 @@
 
         .btn-google {
             width: 100%;
-            padding: 11px;
+            padding: 0.6875rem;
             background: white;
             color: #475569;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 13px;
+            border: 0.0625rem solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.15s;
@@ -484,7 +486,7 @@
 
         /* 탈퇴 링크 */
         .danger-link {
-            font-size: 12px;
+            font-size: 0.75rem;
             color: #ef4444;
             text-decoration: underline;
             cursor: pointer;
@@ -496,7 +498,7 @@
 
         /* 스크롤바 */
         ::-webkit-scrollbar {
-            width: 4px;
+            width: 0.25rem;
         }
 
         ::-webkit-scrollbar-track {
@@ -505,7 +507,7 @@
 
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border-radius: 2px;
+            border-radius: 0.125rem;
         }
     </style>
 </head>
@@ -653,7 +655,7 @@
 
 
 <!-- 메인 콘텐츠 -->
-<main class="max-w-6xl mx-auto px-6 py-8">
+<main class="max-w-7xl mx-auto px-6 py-8">
 
     <div class="page active" id="page-03">
         <p class="page-label">03 · 아이디 찾기</p>
@@ -663,30 +665,30 @@
             <div class="mb-4">
                 <label class="field-label">이메일</label>
                 <div id="msg-box"
-                     style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:12px;"></div>
+                     style="display:none;padding:0.625rem 0.875rem;border-radius:0.5rem;font-size:0.8125rem;font-weight:600;margin-bottom:0.75rem;"></div>
                 <div class="flex gap-2 mb-3">
                     <input id="inp-email" class="input-field" type="email" placeholder="example@email.com"
                            style="flex:1">
                     <button onclick="sendFindIdCode()" id="btn-send"
-                            style="white-space:nowrap;padding:0 12px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+                            style="white-space:nowrap;padding:0 0.75rem;background:#eff6ff;color:#2563eb;border:0.0625rem solid #bfdbfe;border-radius:0.5rem;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">
                         인증코드 발송
                     </button>
                 </div>
-                <div id="verify-area" style="display:none;margin-bottom:12px;">
+                <div id="verify-area" style="display:none;margin-bottom:0.75rem;">
                     <div class="flex gap-2">
                         <input id="inp-code" class="input-field" type="text" placeholder="인증코드 6자리" maxlength="6"
                                style="flex:1">
                         <button onclick="verifyFindIdCode()"
-                                style="white-space:nowrap;padding:0 12px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+                                style="white-space:nowrap;padding:0 0.75rem;background:#eff6ff;color:#2563eb;border:0.0625rem solid #bfdbfe;border-radius:0.5rem;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">
                             확인
                         </button>
                     </div>
-                    <p id="verify-timer" style="font-size:11px;color:#ef4444;margin-top:4px;"></p>
+                    <p id="verify-timer" style="font-size:0.6875rem;color:#ef4444;margin-top:0.25rem;"></p>
                 </div>
                 <div id="result-area"
-                     style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;margin-bottom:12px;text-align:center;">
-                    <p style="font-size:13px;color:#64748b;margin-bottom:4px;">회원님의 아이디는</p>
-                    <p id="result-id" style="font-size:20px;font-weight:900;color:#1e293b;"></p>
+                     style="display:none;background:#f0fdf4;border:0.0625rem solid #86efac;border-radius:0.5rem;padding:0.75rem;margin-bottom:0.75rem;text-align:center;">
+                    <p style="font-size:0.8125rem;color:#64748b;margin-bottom:0.25rem;">회원님의 아이디는</p>
+                    <p id="result-id" style="font-size:1.25rem;font-weight:900;color:#1e293b;"></p>
                 </div>
             </div>
             <button class="btn-primary mb-4" id="btn-find" onclick="findId()">아이디 찾기</button>

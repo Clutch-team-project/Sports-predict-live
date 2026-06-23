@@ -53,4 +53,8 @@ public class PlayerSeasonStatBaseball {
 
     @Column(name = "holds")
     private Integer holds;
+
+    // 규정타석/규정이닝 충족 여부 — true면 전체 랭킹에 노출, false면 팀 선택 시에만 노출
+    @Column(name = "qualified")
+    private Boolean qualified;
 }
