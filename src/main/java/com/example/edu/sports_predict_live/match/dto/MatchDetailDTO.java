@@ -1,9 +1,9 @@
 package com.example.edu.sports_predict_live.match.dto;
 
-import com.example.edu.sports_predict_live.livematch.dto.MatchEventDTO;
-import com.example.edu.sports_predict_live.livematch.dto.MatchLineupDTO;
-import com.example.edu.sports_predict_live.livematch.dto.MatchPlayerStatDTO;
-import com.example.edu.sports_predict_live.livematch.dto.MatchTeamStatDTO;
+import com.example.edu.sports_predict_live.livematch.event.dto.MatchEventDTO;
+import com.example.edu.sports_predict_live.livematch.lineup.dto.MatchLineupDTO;
+import com.example.edu.sports_predict_live.livematch.stat.dto.MatchPlayerStatDTO;
+import com.example.edu.sports_predict_live.livematch.stat.dto.MatchTeamStatDTO;
 import com.example.edu.sports_predict_live.player.dto.response.PlayerResponseDTO;
 
 import java.util.List;

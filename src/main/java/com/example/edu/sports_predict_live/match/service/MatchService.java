@@ -1,9 +1,9 @@
 package com.example.edu.sports_predict_live.match.service;
 
-import com.example.edu.sports_predict_live.livematch.service.MatchEventService;
-import com.example.edu.sports_predict_live.livematch.service.MatchLineupService;
-import com.example.edu.sports_predict_live.livematch.service.MatchPlayerStatService;
-import com.example.edu.sports_predict_live.livematch.service.MatchTeamStatService;
+import com.example.edu.sports_predict_live.livematch.event.service.MatchEventService;
+import com.example.edu.sports_predict_live.livematch.lineup.service.MatchLineupService;
+import com.example.edu.sports_predict_live.livematch.stat.service.MatchPlayerStatService;
+import com.example.edu.sports_predict_live.livematch.stat.service.MatchTeamStatService;
 import com.example.edu.sports_predict_live.match.dto.MatchDTO;
 import com.example.edu.sports_predict_live.match.dto.MatchDetailDTO;
 import com.example.edu.sports_predict_live.match.dto.MatchListDTO;

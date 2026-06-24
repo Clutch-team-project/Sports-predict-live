@@ -1,9 +1,9 @@
 package com.example.edu.sports_predict_live.match.service;
 
 
-import com.example.edu.sports_predict_live.livematch.dto.BaseballLiveDTO;
-import com.example.edu.sports_predict_live.livematch.repository.MatchEventRepository;
-import com.example.edu.sports_predict_live.livematch.service.BaseballLiveStateService;
+import com.example.edu.sports_predict_live.livematch.baseball.dto.BaseballLiveDTO;
+import com.example.edu.sports_predict_live.livematch.event.repository.MatchEventRepository;
+import com.example.edu.sports_predict_live.livematch.baseball.service.BaseballLiveStateService;
 import com.example.edu.sports_predict_live.match.dto.response.MatchResponseDTO;
 import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
