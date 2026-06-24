@@ -26,6 +26,7 @@ public class BaseballAdminCommandService {
     private final MatchRepository matchRepository;
     private final MatchEventRepository matchEventRepository;
     private final BaseballLiveStateService baseballLiveStateService;
+    private final BaseballAdminLineupService baseballAdminLineupService;
 
     @Transactional
     public BaseballLiveDTO apply(Long matchId, BaseballAdminCommandDTO command) {
@@ -38,6 +39,9 @@ public class BaseballAdminCommandService {
         if (command.action() == BaseballAdminAction.UNDO_LAST_EVENT) {
             return undoLastEvent(matchId);
         }
+
+        // 선발 라인업이 완성되지 않은 경기는 진행 제어 이벤트를 등록하지 않는다.
+        baseballAdminLineupService.assertReady(matchId);
 
         Match match = matchRepository.findByIdWithTeams(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("match not found: " + matchId));

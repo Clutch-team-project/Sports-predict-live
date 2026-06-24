@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
@@ -57,6 +57,8 @@
             border-radius: 14px;
             background: #0c1322;
             box-shadow: var(--shadow);
+            text-decoration: none;
+            cursor: pointer;
         }
         .brand strong { color: #72a2ff; font-size: 19px; letter-spacing: .5px; }
         .brand span { color: var(--muted); font-size: 12px; font-weight: 900; }
@@ -87,15 +89,21 @@
         .sidebar-foot {
             margin-top: auto;
             border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 12px;
-            background: #0c1322;
+            border-radius: 18px;
+            padding: 14px;
+            background: linear-gradient(180deg, rgba(18, 31, 52, .96), rgba(10, 16, 28, .96));
             color: #b7c5dd;
             font-size: 12px;
             font-weight: 800;
-            display: none;
-            gap: 6px;
+            display: grid;
+            gap: 10px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
         }
+        .admin-profile { display:flex; gap:10px; align-items:center; }
+        .admin-avatar { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:rgba(92,141,255,.16); border:1px solid rgba(92,141,255,.34); color:#dbe7ff; font-weight:950; }
+        .admin-profile strong { color:#fff; display:block; font-size:13px; }
+        .admin-profile span { color:#8fa6c9; display:block; font-size:12px; margin-top:2px; }
+        .admin-logout-btn { width:100%; min-height:36px; border-radius:10px; border:1px solid #31486d; background:#121d30; color:#dbe7ff; font-weight:950; cursor:pointer; }
         .main { min-width: 0; padding: 18px 20px 44px; }
         .topbar {
             min-height: 66px;
@@ -601,6 +609,25 @@
             z-index: 99;
         }
         .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* 운영용 설명 박스는 실제 조작 화면에서 공간만 차지하므로 숨긴다. */
+        .operator-note,
+        .event-helper-list,
+        .cluster-note,
+        .panel-sub {
+            display: none !important;
+        }
+        .team-score.home {
+            justify-self: end;
+            width: min(100%, 260px);
+        }
+        .team-score.home .team-name {
+            text-align: right;
+        }
+        .mini-scoreboard .team-score:not(.home) {
+            justify-self: start;
+            width: min(100%, 260px);
+        }
         @media (max-width: 1200px) {
             .admin-page { grid-template-columns: 1fr; }
             .sidebar { position: static; height: auto; }
@@ -619,132 +646,43 @@
 <body>
 <div class="admin-page">
     <aside class="sidebar">
-        <div class="brand"><strong>AI.MATCH</strong><span>ADMIN</span></div>
+        <a class="brand" href="/" aria-label="AI.MATCH 홈으로 이동"><strong>AI.MATCH</strong><span>ADMIN</span></a>
         <nav class="nav">
-            <!--      <button class="nav-btn active" data-view="dashboard"><span>대시보드</span><small>home</small></button>-->
-            <button class="nav-btn" data-view="matchEdit"><span>경기 등록/편집</span><small>match</small></button>
+            <button class="nav-btn active" data-view="matchEdit"><span>경기 일정 관리</span><small>schedule</small></button>
             <button class="nav-btn" data-view="control"><span>경기 진행 제어</span><small>live</small></button>
-            <!--      <button class="nav-btn" data-view="scenario"><span>이벤트 시나리오 관리</span><small>flow</small></button>-->
-            <!--      <button class="nav-btn" data-view="teamPlayer"><span>팀/선수 관리</span><small>roster</small></button>-->
-            <!--      <button class="nav-btn" data-view="logs"><span>운영 로그</span><small>log</small></button>-->
+            <button class="nav-btn" data-view="lineup"><span>경기 라인업 관리</span><small>lineup</small></button>
         </nav>
         <div class="sidebar-foot">
-            <strong>운영자: 명균</strong>
-            <span>권한: 전체 운영</span>
-            <span>최근 접속: 오늘 19:25</span>
+            <div class="admin-profile">
+                <div class="admin-avatar">A</div>
+                <div>
+                    <strong id="adminProfileName">관리자</strong>
+                    <span id="adminProfileRole">ADMIN</span>
+                </div>
+            </div>
+            <button class="admin-logout-btn" id="adminLogoutBtn" type="button">로그아웃 →</button>
         </div>
     </aside>
 
     <main class="main">
         <header class="topbar">
             <div>
-                <h1 id="pageTitle">대시보드</h1>
-                <p id="pageDesc">오늘 경기 운영 상태와 확인이 필요한 항목을 확인합니다.</p>
+                <h1 id="pageTitle">경기 일정 관리</h1>
+                <p id="pageDesc">등록된 경기를 날짜별로 모두 표시합니다. 오늘 경기는 항상 상단에 먼저 표시됩니다.</p>
             </div>
             <div class="top-actions"></div>
         </header>
 
-        <section class="view active" id="dashboard">
-            <div class="grid six">
-                <article class="kpi-card"><div class="kpi-label">오늘 경기</div><div class="kpi-value">8</div><div class="kpi-foot"><span class="dot blue"></span>등록된 경기</div></article>
-                <article class="kpi-card"><div class="kpi-label">진행 중</div><div class="kpi-value">3</div><div class="kpi-foot"><span class="dot green"></span>중계 화면 반영 중</div></article>
-                <article class="kpi-card"><div class="kpi-label">예정 경기</div><div class="kpi-value">4</div><div class="kpi-foot"><span class="dot yellow"></span>시작 대기</div></article>
-                <article class="kpi-card"><div class="kpi-label">종료 처리</div><div class="kpi-value">1</div><div class="kpi-foot"><span class="dot red"></span>최종 결과 반영 완료</div></article>
-                <article class="kpi-card"><div class="kpi-label">송출 이벤트</div><div class="kpi-value">128</div><div class="kpi-foot"><span class="dot blue"></span>오늘 누적</div></article>
-                <article class="kpi-card"><div class="kpi-label">운영 확인</div><div class="kpi-value">5</div><div class="kpi-foot"><span class="dot yellow"></span>라인업·시나리오·예측 노출</div></article>
-            </div>
-            <div class="grid two">
-                <section class="panel">
-                    <div class="panel-head"><div><div class="panel-title">오늘 경기 운영 현황</div><div class="panel-sub">등록된 경기와 현재 운영 상태</div></div></div>
-                    <div class="panel-body table-wrap">
-                        <table>
-                            <thead><tr><th>종목</th><th>경기명</th><th>경기 시간</th><th>경기장</th><th>상태</th><th>현재 스코어</th><th>등록 이벤트 수</th><th>운영 포인트</th><th>작업</th></tr></thead>
-                            <tbody>
-                            <tr><td>야구</td><td><strong>한화 이글스 vs 삼성 라이온즈</strong></td><td>18:30</td><td>대구</td><td><span class="badge live">진행 중</span></td><td>3 : 4</td><td>42</td><td><span class="badge warn">6회말 득점권</span></td><td><button class="btn" data-jump="control">운영</button><button class="btn" data-jump="matchEdit">수정</button></td></tr>
-                            <tr><td>축구</td><td><strong>인천 Utd vs 광주FC</strong></td><td>19:00</td><td>숭의아레나</td><td><span class="badge end">종료</span></td><td>4 : 0</td><td>31</td><td><span class="badge live">종료 처리 완료</span></td><td><button class="btn" data-jump="control">운영</button><button class="btn" data-jump="matchEdit">수정</button></td></tr>
-                            <tr><td>LoL</td><td><strong>T1 vs Gen.G</strong></td><td>20:00</td><td>LoL Park</td><td><span class="badge ready">예정</span></td><td>0 : 0</td><td>0</td><td><span class="badge">밴픽 대기</span></td><td><button class="btn" data-jump="control">운영</button><button class="btn" data-jump="matchEdit">수정</button></td></tr>
-                            <tr><td>야구</td><td><strong>LG 트윈스 vs KIA 타이거즈</strong></td><td>18:30</td><td>잠실</td><td><span class="badge ready">예정</span></td><td>0 : 0</td><td>0</td><td><span class="badge">선발 라인업 확인</span></td><td><button class="btn" data-jump="control">운영</button><button class="btn" data-jump="matchEdit">수정</button></td></tr>
-                            <tr><td>축구</td><td><strong>서울FC vs 제주 Utd</strong></td><td>20:30</td><td>상암</td><td><span class="badge ready">예정</span></td><td>0 : 0</td><td>0</td><td><span class="badge warn">선발 명단 미등록</span></td><td><button class="btn" data-jump="control">운영</button><button class="btn" data-jump="matchEdit">수정</button></td></tr>
-                            <tr><td>야구</td><td><strong>두산 베어스 vs SSG 랜더스</strong></td><td>18:30</td><td>문학</td><td><span class="badge live">우천 지연</span></td><td>1 : 1</td><td>18</td><td><span class="badge warn">재개 시간 확인</span></td><td><button class="btn" data-jump="control">운영</button><button class="btn" data-jump="matchEdit">수정</button></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                <section class="panel">
-                    <div class="panel-head"><div><div class="panel-title">운영 알림</div><div class="panel-sub">우선 확인할 운영 항목</div></div></div>
-                    <div class="panel-body alert-list">
-                        <div class="alert-item"><span>두산 vs SSG 우천 지연 상태 갱신 필요</span><span class="badge warn">확인</span></div>
-                        <div class="alert-item"><span>축구 서울FC 경기 선발 명단 등록 필요</span><span class="badge warn">라인업</span></div>
-                        <div class="alert-item"><span>경기별 승부 예측 노출 여부 확인 필요</span><span class="badge ready">설정</span></div>
-                        <div class="alert-item"><span>예정 경기 시나리오 점검 필요</span><span class="badge">4건</span></div>
-                        <div class="alert-item"><span>종료 경기 결과 반영 완료</span><span class="badge live">완료</span></div>
-                    </div>
-                </section>
-            </div>
-        </section>
-
-        <section class="view" id="matchEdit">
+        <section class="view active" id="matchEdit">
             <section class="panel">
-                <div class="panel-head"><div><div class="panel-title">경기 등록/편집</div><div class="panel-sub">시연용 경기 기본 정보와 중계 옵션을 구성합니다.</div></div><button class="btn primary" id="saveMatchBtn">경기 저장</button></div>
-                <div class="panel-body">
-                    <div class="field-grid">
-                        <label class="field">종목 선택<select id="matchSport"><option value="baseball">야구</option><option value="soccer">축구</option><option value="lol">LoL</option></select></label>
-                        <label class="field">시즌<input value="2026 시즌" /></label>
-                        <label class="field">리그명<input value="KBO 리그" /></label>
-                        <label class="field">홈팀<input id="homeTeamInput" value="삼성 라이온즈" /></label>
-                        <label class="field">원정팀<input id="awayTeamInput" value="한화 이글스" /></label>
-                        <label class="field">경기 예정일시<input type="datetime-local" value="2026-05-21T18:30" /></label>
-                        <label class="field">경기장<input value="대구 삼성라이온즈파크" /></label>
-                        <label class="field">경기 상태<select><option>예정</option><option selected>진행중</option><option>일시정지</option><option>종료</option></select></label>
-                        <label class="field">공개 여부<select><option selected>공개</option><option>비공개</option></select></label>
-                        <label class="field">중계 사용 여부<select><option selected>사용</option><option>미사용</option></select></label>
-                        <label class="field">운영 메모<input value="6회말 득점권 상황 중점 관리" /></label>
-                        <label class="field">라인업 공개 여부<select><option selected>공개</option><option>비공개</option></select></label>
-                    </div>
-                    <div id="extra-baseball" class="sport-extra active">
-                        <div class="field-grid">
-                            <label class="field">이닝 수<input value="9" /></label><label class="field">연장전 사용 여부<select><option selected>사용</option><option>미사용</option></select></label>
-                            <label class="field">선공팀<input value="한화 이글스" /></label><label class="field">후공팀<input value="삼성 라이온즈" /></label>
-                            <label class="field">홈 선발 투수<input value="원태인" /></label><label class="field">원정 선발 투수<input value="후라도" /></label>
-                        </div>
-                        <div class="btn-group"><button class="btn">선발 라인업 등록</button><button class="btn">직접 입력</button><button class="btn">JSON 업로드</button><button class="btn green">기본 샘플 생성</button></div>
-                    </div>
-                    <div id="extra-soccer" class="sport-extra">
-                        <div class="field-grid">
-                            <label class="field">전후반 경기 시간<input value="45분" /></label><label class="field">추가시간 사용 여부<select><option selected>사용</option><option>미사용</option></select></label>
-                            <label class="field">홈 포메이션<input value="4-4-2" /></label><label class="field">원정 포메이션<input value="4-2-3-1" /></label>
-                            <label class="field">홈 감독명<input value="윤정환" /></label><label class="field">원정 감독명<input value="이정규" /></label>
-                        </div>
-                        <div class="btn-group"><button class="btn">선발 라인업 등록</button><button class="btn">교체 명단 등록</button><button class="btn">직접 입력</button><button class="btn">JSON 업로드</button><button class="btn green">기본 샘플 생성</button></div>
-                    </div>
-                    <div id="extra-lol" class="sport-extra">
-                        <div class="field-grid">
-                            <label class="field">세트 번호<input value="1세트" /></label><label class="field">블루팀<input value="T1" /></label><label class="field">레드팀<input value="Gen.G" /></label>
-                            <label class="field">밴픽 사용 여부<select><option selected>사용</option><option>미사용</option></select></label>
-                            <label class="field full">주요 오브젝트 사용 여부<div class="btn-group"><button class="btn green">드래곤</button><button class="btn green">전령</button><button class="btn green">바론</button><button class="btn green">타워</button><button class="btn green">킬</button></div></label>
-                        </div>
-                        <div class="btn-group"><button class="btn">밴픽 등록</button><button class="btn">라인업 등록</button></div>
-                    </div>
-                    <div class="control-cluster">
-                        <div class="cluster-head"><div><div class="cluster-title">경기별 승부 예측 옵션</div><div class="cluster-note">예측은 경기 데이터 기반으로 생성되며, 관리자는 사용자 화면 노출 여부만 제어합니다.</div></div><span class="badge live">자동 생성</span></div>
-                        <div class="field-grid">
-                            <label class="field">승부 예측 사용 여부<select><option selected>사용</option><option>미사용</option></select></label>
-                            <label class="field">AI 예측 생성 상태<select><option>생성 대기</option><option selected>생성 완료</option><option>데이터 부족</option></select></label>
-                            <label class="field">사용자 화면 노출 여부<select><option selected>노출</option><option>비노출</option></select></label>
-                            <label class="field">마지막 생성 시각<input value="2026-05-21 17:42:10" readonly /></label>
-                            <label class="field full">예측 결과 미리보기<textarea readonly>삼성 승리 가능성이 상대적으로 높게 계산되었습니다. 최근 타선 흐름과 홈 경기 보정, 선발 투수 지표가 반영된 결과입니다.</textarea></label>
-                        </div>
+                <div class="panel-head">
+                    <div>
+                        <div class="panel-title">경기 일정 관리</div>
+                        <div class="panel-sub">경기 목록을 불러오는 중입니다.</div>
                     </div>
                 </div>
-            </section>
-            <section class="panel">
-                <div class="panel-head"><div><div class="panel-title">등록 미리보기</div><div class="panel-sub">사용자 화면에 표시될 경기 카드</div></div></div>
                 <div class="panel-body">
-                    <div class="preview-card">
-                        <div class="score-line"><strong id="previewAway">한화 이글스</strong><span class="badge live">진행중</span><strong id="previewHome">삼성 라이온즈</strong></div>
-                        <div class="score-big">3 : 4</div>
-                        <div class="score-line"><span>오늘 18:30 · 대구</span><button class="btn primary">중계</button></div>
-                    </div>
+                    <div class="admin-empty-block">경기 일정 관리 화면을 준비하는 중입니다.</div>
                 </div>
             </section>
         </section>
@@ -1037,855 +975,53 @@
             <section class="panel"><div class="panel-head"><div><div class="panel-title">최근 송출 이벤트</div><div class="panel-sub">최근 등록된 이벤트 목록</div></div></div><div class="panel-body"><div class="timeline-list" id="recentEvents"></div></div></section>
         </section>
 
-        <section class="view" id="scenario">
+
+        <section class="view" id="lineup">
             <section class="panel">
-                <div class="panel-head"><div><div class="panel-title">이벤트 시나리오 관리</div><div class="panel-sub">경기 흐름을 미리 구성하고 순서대로 송출합니다.</div></div><button class="btn primary" id="runScenarioBtn">시나리오 실행</button></div>
-                <div class="panel-body">
-                    <div class="scenario-toolbar"><select id="scenarioSport"><option value="baseball">야구</option><option value="soccer">축구</option><option value="lol">LoL</option></select><select id="scenarioMatch"><option value="hanwha-samsung">[진행 중] 2026-05-21 18:30 · 한화 이글스 vs 삼성 라이온즈</option><option value="lg-kia">[예정] 2026-05-21 18:30 · LG 트윈스 vs KIA 타이거즈</option><option value="doosan-ssg">[우천 지연] 2026-05-21 18:30 · 두산 베어스 vs SSG 랜더스</option></select><input id="scenarioName" value="1~9회 경기 운영 타임라인" /><select><option>수동</option><option>3초</option><option>5초</option><option>10초</option></select></div>
-                    <div class="grid scenario-context">
-                        <div class="state-box"><b>대상 경기</b><strong id="scenarioMatchName">한화 이글스 vs 삼성 라이온즈</strong></div>
-                        <div class="state-box"><b>경기 일시</b><strong id="scenarioMatchTime">2026-05-21 18:30</strong></div>
-                        <div class="state-box"><b>경기장</b><strong id="scenarioVenue">대구</strong></div>
-                        <div class="state-box"><b>시나리오 범위</b><strong id="scenarioScope">1회~9회 전체 흐름</strong></div>
+                <div class="panel-head">
+                    <div>
+                        <div class="panel-title">경기 라인업 관리</div>
+                        <div class="panel-sub">경기별 홈/원정 팀 선수 목록을 불러와 선발투수, 선발 타순, 후보 선수를 등록합니다.</div>
                     </div>
-                    <div class="btn-group"><button class="btn" id="addScenarioBtn">이벤트 추가</button><button class="btn">순서 변경</button><button class="btn red" id="deleteScenarioBtn">이벤트 삭제</button><button class="btn">JSON 가져오기</button><button class="btn">JSON 내보내기</button><button class="btn green">샘플 시나리오 생성</button><button class="btn primary">시나리오 저장</button><button class="btn yellow" id="nextScenarioBtn">다음 이벤트 송출</button></div>
-                    <div class="table-wrap"><table id="scenarioTable"><thead id="scenarioHead"></thead><tbody id="scenarioBody"></tbody></table></div>
+                    <div class="btn-group">
+                        <button class="btn" id="lineupReloadBtn">라인업 다시 불러오기</button>
+                        <button class="btn primary" id="lineupSaveBtn">라인업 저장</button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="lineup-toolbar">
+                        <label class="field">종목
+                            <select id="lineupSportSelect">
+                                <option value="baseball" selected>야구</option>
+                            </select>
+                        </label>
+                        <label class="field">경기
+                            <select id="lineupMatchSelect"><option value="">경기 목록 로딩 중</option></select>
+                        </label>
+                    </div>
+                    <div class="operator-note">
+                        선발 라인업이 완성되지 않은 경기는 경기 진행 제어로 이동하지 않습니다. 야구 기준으로 각 팀은 선발투수 1명과 1~9번 타자 9명이 필요합니다. 후보로 남긴 선수만 중계 화면 후보/교체 대상에 표시됩니다.
+                    </div>
+                    <div class="lineup-summary" id="lineupSummary">경기를 선택하면 라인업 상태가 표시됩니다.</div>
+                    <div class="lineup-team-grid" id="lineupTeamGrid"></div>
                 </div>
             </section>
         </section>
 
-        <section class="view" id="teamPlayer">
-            <section class="panel"><div class="panel-head"><div><div class="panel-title">팀/선수 관리</div><div class="panel-sub">팀과 선수 정보를 등록하고 시즌 성적을 확인합니다.</div></div><div class="btn-group"><button class="btn primary" id="registerTeamBtn">팀 등록</button><button class="btn primary" id="registerPlayerBtn">선수 등록</button></div></div>
-                <div class="panel-body">
-                    <div class="field-grid"><label class="field">종목 필터<select><option>전체</option><option>야구</option><option>축구</option><option>LoL</option></select></label><label class="field">상태<select><option>활성</option><option>비활성</option></select></label></div>
-                    <div class="grid two">
-                        <div class="control-cluster">
-                            <div class="cluster-head"><div><div class="cluster-title">팀 등록</div><div class="cluster-note">경기 등록/편집에서 선택할 팀 마스터 데이터</div></div></div>
-                            <div class="field-grid">
-                                <label class="field">팀명<input id="teamNameInput" value="KIA 타이거즈" /></label>
-                                <label class="field">종목<select id="teamSportInput"><option>야구</option><option>축구</option><option>LoL</option></select></label>
-                                <label class="field">리그<input id="teamLeagueInput" value="KBO" /></label>
-                                <label class="field">연고/경기장<input id="teamVenueInput" value="광주" /></label>
-                                <label class="field">시즌 성적<input id="teamRecordInput" value="27승 24패" /></label>
-                                <label class="field">상태<select id="teamStateInput"><option>활성</option><option>비활성</option></select></label>
-                            </div>
-                        </div>
-                        <div class="control-cluster">
-                            <div class="cluster-head"><div><div class="cluster-title">선수 등록</div><div class="cluster-note">라인업, 이벤트 입력, 선수별 기록에 연결되는 선수 데이터</div></div></div>
-                            <div class="field-grid">
-                                <label class="field">선수명<input id="playerNameInput" value="김도영" /></label>
-                                <label class="field">소속팀<input id="playerTeamInput" value="KIA 타이거즈" /></label>
-                                <label class="field">포지션<input id="playerPositionInput" value="3B" /></label>
-                                <label class="field">등번호<input id="playerNumberInput" value="5" /></label>
-                                <label class="field">프로필 이미지 URL<input id="playerImageInput" value="https://image.example/kdy.png" /></label>
-                                <label class="field">상태<select id="playerStateInput"><option>활성</option><option>비활성</option><option>부상</option></select></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid two">
-                        <div class="table-wrap"><table><thead><tr><th>팀</th><th>종목</th><th>리그</th><th>연고/경기장</th><th>상태</th><th>시즌 성적</th><th>작업</th></tr></thead><tbody id="teamTableBody"><tr><td>삼성 라이온즈</td><td>야구</td><td>KBO</td><td>대구</td><td><span class="badge live">활성</span></td><td>28승 22패</td><td><button class="btn">수정</button></td></tr><tr><td>한화 이글스</td><td>야구</td><td>KBO</td><td>대전</td><td><span class="badge live">활성</span></td><td>25승 26패</td><td><button class="btn">수정</button></td></tr><tr><td>인천 Utd</td><td>축구</td><td>K리그</td><td>숭의아레나</td><td><span class="badge live">활성</span></td><td>7승 4무 5패</td><td><button class="btn">수정</button></td></tr><tr><td>T1</td><td>LoL</td><td>LCK</td><td>LoL Park</td><td><span class="badge live">활성</span></td><td>12승 4패</td><td><button class="btn">수정</button></td></tr></tbody></table></div>
-                        <div class="table-wrap"><table><thead><tr><th>선수</th><th>팀</th><th>포지션</th><th>등번호</th><th>프로필 이미지 URL</th><th>상태</th><th>작업</th></tr></thead><tbody id="playerTableBody"><tr><td>장승현</td><td>삼성 라이온즈</td><td>DH</td><td>8</td><td>https://image.example/player.png</td><td><span class="badge live">활성</span></td><td><button class="btn">수정</button></td></tr><tr><td>구자욱</td><td>삼성 라이온즈</td><td>RF</td><td>5</td><td>https://image.example/koo.png</td><td><span class="badge live">활성</span></td><td><button class="btn">수정</button></td></tr><tr><td>제르소</td><td>인천 Utd</td><td>FW</td><td>11</td><td>https://image.example/gerso.png</td><td><span class="badge live">활성</span></td><td><button class="btn">수정</button></td></tr><tr><td>Oner</td><td>T1</td><td>JGL</td><td>-</td><td>https://image.example/oner.png</td><td><span class="badge live">활성</span></td><td><button class="btn">수정</button></td></tr></tbody></table></div>
-                    </div>
-                </div>
-            </section>
-        </section>
-
-        <section class="view" id="logs">
-            <section class="panel"><div class="panel-head"><div><div class="panel-title">운영 로그</div><div class="panel-sub">관리자 작업 이력과 처리 결과를 확인합니다.</div></div><button class="btn">CSV 다운로드</button></div>
-                <div class="panel-body table-wrap"><table><thead><tr><th>관리자</th><th>작업 시간</th><th>작업 유형</th><th>대상 경기</th><th>작업 내용</th><th>결과</th><th>실패 사유</th><th>작업</th></tr></thead><tbody id="logBody"></tbody></table></div>
-            </section>
-        </section>
     </main>
 </div>
 <div class="toast" id="toast">저장되었습니다.</div>
 
 <script>
-    const titles = {
-        dashboard: ['대시보드', '오늘 경기 운영 상태와 확인이 필요한 항목을 확인합니다.'],
-        matchEdit: ['경기 등록/편집', '경기 일정, 공개 옵션, 종목별 운영 설정을 관리합니다.'],
-        control: ['경기 진행 제어', '경기 상태, 스코어, 이벤트를 사용자 중계 화면에 반영합니다.'],
-        scenario: ['이벤트 시나리오 관리', '경기 흐름을 미리 구성하고 순서대로 송출합니다.'],
-        teamPlayer: ['팀/선수 관리', '팀과 선수의 기본 정보 및 시즌 성적을 관리합니다.'],
-        logs: ['운영 로그', '관리자 작업 이력과 처리 결과를 확인합니다.']
-    };
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const views = document.querySelectorAll('.view');
     const toast = document.getElementById('toast');
-    function showView(id) {
-        if (!titles[id]) return;
-        navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.view === id));
-        views.forEach(view => view.classList.toggle('active', view.id === id));
-        document.getElementById('pageTitle').textContent = titles[id][0];
-        document.getElementById('pageDesc').textContent = titles[id][1];
-    }
-    navButtons.forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
-    document.querySelectorAll('[data-jump]').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.jump)));
+
     function notify(text) {
+        if (!toast) return;
         toast.textContent = text;
         toast.classList.add('show');
         clearTimeout(window.toastTimer);
         window.toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
     }
-
-    const matchSport = document.getElementById('matchSport');
-    function updateSportExtras() {
-        document.querySelectorAll('.sport-extra').forEach(node => node.classList.remove('active'));
-        document.getElementById(`extra-${matchSport.value}`).classList.add('active');
-    }
-    matchSport.addEventListener('change', updateSportExtras);
-    document.getElementById('homeTeamInput').addEventListener('input', e => document.getElementById('previewHome').textContent = e.target.value || '홈팀');
-    document.getElementById('awayTeamInput').addEventListener('input', e => document.getElementById('previewAway').textContent = e.target.value || '원정팀');
-    document.getElementById('saveMatchBtn').addEventListener('click', () => notify('경기 정보가 저장되었습니다.'));
-
-    document.getElementById('registerTeamBtn').addEventListener('click', () => {
-        const state = document.getElementById('teamStateInput').value;
-        document.getElementById('teamTableBody').insertAdjacentHTML('afterbegin', `<tr><td>${document.getElementById('teamNameInput').value}</td><td>${document.getElementById('teamSportInput').value}</td><td>${document.getElementById('teamLeagueInput').value}</td><td>${document.getElementById('teamVenueInput').value}</td><td><span class="badge ${state === '활성' ? 'live' : ''}">${state}</span></td><td>${document.getElementById('teamRecordInput').value}</td><td><button class="btn">수정</button></td></tr>`);
-        notify('팀 정보가 등록되었습니다.');
-    });
-
-    document.getElementById('registerPlayerBtn').addEventListener('click', () => {
-        const state = document.getElementById('playerStateInput').value;
-        const badgeClass = state === '활성' ? 'live' : state === '부상' ? 'warn' : '';
-        document.getElementById('playerTableBody').insertAdjacentHTML('afterbegin', `<tr><td>${document.getElementById('playerNameInput').value}</td><td>${document.getElementById('playerTeamInput').value}</td><td>${document.getElementById('playerPositionInput').value}</td><td>${document.getElementById('playerNumberInput').value}</td><td>${document.getElementById('playerImageInput').value}</td><td><span class="badge ${badgeClass}">${state}</span></td><td><button class="btn">수정</button></td></tr>`);
-        notify('선수 정보가 등록되었습니다.');
-    });
-
-    const controlSport = document.getElementById('controlSport');
-    const controlPresets = {
-        baseball: {
-            sport: '야구',
-            match: '한화 vs 삼성',
-            phase: '6회말',
-            away: '한화',
-            home: '삼성',
-            awayScore: 3,
-            homeScore: 4,
-            teamLabel: '공격팀',
-            teams: ['삼성 라이온즈', '한화 이글스'],
-            opponentLabel: '상대 투수',
-            opponent: '후라도',
-            player: '장승현',
-            types: [
-                { value: 'at_bat_start', label: '타석 시작' },
-                { value: 'ball', label: '볼' },
-                { value: 'called_strike', label: '루킹 스트라이크' },
-                { value: 'swinging_strike', label: '헛스윙' },
-                { value: 'foul', label: '파울' },
-                { value: 'bunt_foul', label: '번트 파울' },
-                { value: 'single', label: '1루타' },
-                { value: 'double', label: '2루타' },
-                { value: 'triple', label: '3루타' },
-                { value: 'homerun', label: '홈런' },
-                { value: 'walk', label: '볼넷' },
-                { value: 'intentional_walk', label: '고의4구' },
-                { value: 'hit_by_pitch', label: '사구' },
-                { value: 'groundout', label: '땅볼아웃' },
-                { value: 'flyout', label: '플라이아웃' },
-                { value: 'lineout', label: '직선타' },
-                { value: 'popout', label: '팝아웃' },
-                { value: 'sac_bunt', label: '희생번트' },
-                { value: 'sac_fly', label: '희생플라이' },
-                { value: 'double_play', label: '병살타' },
-                { value: 'runner_advance', label: '주자 진루' },
-                { value: 'score', label: '득점' },
-                { value: 'stolen_base', label: '도루 성공' },
-                { value: 'caught_stealing', label: '도루 실패' },
-                { value: 'pickoff_out', label: '견제 아웃' },
-                { value: 'force_out', label: '포스 아웃' },
-                { value: 'runner_out', label: '주자 아웃' },
-                { value: 'wild_pitch', label: '폭투' },
-                { value: 'passed_ball', label: '포일' },
-                { value: 'balk', label: '보크' },
-                { value: 'pitcher_change', label: '투수 교체' },
-                { value: 'pinch_hitter', label: '대타' },
-                { value: 'pinch_runner', label: '대주자' },
-                { value: 'defensive_substitution', label: '수비 교체' },
-                { value: 'inning_end', label: '이닝 종료' },
-                { value: 'game_end', label: '경기 종료' }
-            ],
-            context: '6회말 1사 2·3루 · B 1 S 2',
-            matchupLabel: '타석',
-            matchup: '장승현 vs 후라도',
-            event: '좌익수 희생플라이, 3루 주자 홈인',
-            areas: '스코어보드, 문자 중계, 이닝 타임라인',
-            scoreCheck: '삼성 +1 반영 예정',
-            stateLabel: '주자',
-            stateCheck: '3루 주자 홈인, 2루 주자 유지',
-            recordCheck: '타점 1, 희생플라이 1'
-        },
-        soccer: {
-            sport: '축구',
-            match: '인천 Utd vs 광주FC',
-            phase: '후반 87분',
-            away: '광주',
-            home: '인천',
-            awayScore: 0,
-            homeScore: 4,
-            teamLabel: '팀',
-            teams: ['인천 Utd', '광주FC'],
-            opponentLabel: '상대/보조 선수',
-            opponent: '이동준',
-            player: '제르소',
-            types: ['골','슈팅','유효슈팅','파울','코너킥','오프사이드','경고','퇴장','선수 교체','VAR','페널티킥','자책골'],
-            context: '후반 87분 · 추가시간 +3 · 인천 공격',
-            matchupLabel: '장면',
-            matchup: '제르소 · 왼쪽 측면 돌파',
-            event: '제르소 슈팅이 골키퍼 선방에 막혔습니다.',
-            areas: '스코어보드, 문자 중계, 경기 타임라인',
-            scoreCheck: '득점 이벤트 선택 시 인천 +1',
-            stateLabel: '경기 흐름',
-            stateCheck: '후반 막판 공격 지표와 카드 현황 유지',
-            recordCheck: '슈팅/유효슈팅/카드/교체 기록 반영'
-        },
-        lol: {
-            sport: 'LoL',
-            match: 'T1 vs Gen.G',
-            phase: '1세트 18:24',
-            away: 'Gen.G',
-            home: 'T1',
-            awayScore: 5,
-            homeScore: 7,
-            teamLabel: '팀',
-            teams: ['T1', 'Gen.G'],
-            opponentLabel: '상대/오브젝트',
-            opponent: '드래곤',
-            player: 'Oner',
-            types: ['킬','어시스트','드래곤 처치','전령 처치','바론 처치','타워 파괴','억제기 파괴','세트 시작','세트 종료'],
-            context: '1세트 18:24 · 드래곤 앞 교전',
-            matchupLabel: '장면',
-            matchup: 'Oner · 세 번째 드래곤 시도',
-            event: 'T1이 드래곤을 처치했습니다.',
-            areas: '스코어보드, 문자 중계, 오브젝트 타임라인',
-            scoreCheck: '오브젝트/킬 스코어 반영 예정',
-            stateLabel: '오브젝트',
-            stateCheck: '드래곤 2 : 1, 타워 4 : 3',
-            recordCheck: '킬/오브젝트/타워 기록 반영'
-        }
-    };
-
-    function setOptions(select, options) {
-        select.innerHTML = options.map((option, index) => {
-            const value = typeof option === 'string' ? option : option.value;
-            const label = typeof option === 'string' ? option : option.label;
-            return `<option value="${value}"${index === 0 ? ' selected' : ''}>${label}</option>`;
-        }).join('');
-    }
-
-    function updateControlPanel() {
-        const preset = controlPresets[controlSport.value];
-        document.querySelectorAll('.control-panel').forEach(node => node.classList.remove('active'));
-        document.getElementById(`panel-${controlSport.value}`).classList.add('active');
-        document.getElementById('selectedSportLabel').textContent = preset.sport;
-        document.getElementById('selectedMatchName').textContent = preset.match;
-        document.getElementById('phaseLabel').textContent = preset.phase;
-        document.getElementById('awayScore').textContent = preset.awayScore;
-        document.getElementById('homeScore').textContent = preset.homeScore;
-        document.getElementById('previewAwayScore').textContent = preset.awayScore;
-        document.getElementById('previewHomeScore').textContent = preset.homeScore;
-        document.getElementById('controlPreviewAway').textContent = preset.away;
-        document.getElementById('controlPreviewHome').textContent = preset.home;
-        document.getElementById('eventTeamLabel').childNodes[0].textContent = preset.teamLabel;
-        setOptions(document.getElementById('eventTeamSelect'), preset.teams);
-        const opponentLabel = document.getElementById('eventOpponentLabel');
-        const opponentInput = document.getElementById('eventOpponentInput');
-        if (opponentLabel) opponentLabel.childNodes[0].textContent = preset.opponentLabel;
-        if (opponentInput) opponentInput.value = preset.opponent;
-        document.getElementById('eventPlayer').value = preset.player;
-        setOptions(document.getElementById('eventType'), preset.types);
-        document.getElementById('eventText').value = preset.event;
-        document.getElementById('previewContext').textContent = preset.context;
-        document.getElementById('previewMatchupLabel').textContent = preset.matchupLabel;
-        document.getElementById('previewMatchup').textContent = preset.matchup;
-        document.getElementById('previewEvent').textContent = preset.event;
-        document.getElementById('previewAreas').textContent = preset.areas;
-        document.getElementById('precheckScore').textContent = preset.scoreCheck;
-        document.getElementById('precheckStateLabel').textContent = preset.stateLabel;
-        document.getElementById('precheckState').textContent = preset.stateCheck;
-        document.getElementById('precheckRecord').textContent = preset.recordCheck;
-        const homeMini = document.getElementById('homeScoreMini');
-        const awayMini = document.getElementById('awayScoreMini');
-        if (homeMini) homeMini.textContent = controlPresets.baseball.homeScore;
-        if (awayMini) awayMini.textContent = controlPresets.baseball.awayScore;
-    }
-    controlSport.addEventListener('change', updateControlPanel);
-    updateControlPanel();
-    document.querySelectorAll('[data-status]').forEach(btn => btn.addEventListener('click', () => {
-        document.getElementById('statusLabel').textContent = btn.dataset.status;
-        document.getElementById('previewStatus').textContent = btn.dataset.status;
-        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('ko-KR', { hour12: false });
-        if (btn.dataset.status === '종료') {
-            const endState = document.getElementById('endProcessState');
-            endState.textContent = '종료 처리 완료';
-            endState.className = 'badge live';
-        }
-        notify('경기 상태가 갱신되었습니다.');
-    }));
-    function incrementScore(side) {
-        const id = side === 'home' ? 'homeScore' : 'awayScore';
-        const target = document.getElementById(id);
-        target.textContent = Number(target.textContent) + 1;
-        document.getElementById('previewHomeScore').textContent = document.getElementById('homeScore').textContent;
-        document.getElementById('previewAwayScore').textContent = document.getElementById('awayScore').textContent;
-        const homeMini = document.getElementById('homeScoreMini');
-        const awayMini = document.getElementById('awayScoreMini');
-        if (homeMini) homeMini.textContent = document.getElementById('homeScore').textContent;
-        if (awayMini) awayMini.textContent = document.getElementById('awayScore').textContent;
-    }
-
-    document.querySelectorAll('.score-plus').forEach(btn => btn.addEventListener('click', () => {
-        incrementScore(btn.dataset.side);
-        notify('스코어가 반영되었습니다.');
-    }));
-
-    function formatEventDateTime(date = new Date()) {
-        const pad = value => String(value).padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-    }
-
-    function setEventTime(date = new Date()) {
-        const value = formatEventDateTime(date);
-        const input = document.getElementById('eventTimeInput');
-        const preview = document.getElementById('previewEventTime');
-        if (input) input.value = value;
-        if (preview) preview.textContent = value;
-        document.getElementById('lastUpdated').textContent = date.toLocaleTimeString('ko-KR', { hour12: false });
-        return value;
-    }
-
-    document.querySelectorAll('[data-event-template]').forEach(btn => btn.addEventListener('click', () => {
-        if (btn.dataset.eventType) return;
-        const text = btn.dataset.eventTemplate || '';
-        const type = btn.dataset.eventType;
-        const eventType = document.getElementById('eventType');
-        if (type && [...eventType.options].some(option => option.value === type)) {
-            eventType.value = type;
-        }
-        document.getElementById('eventText').value = text;
-        document.getElementById('previewEvent').textContent = text || eventTypeLabels[type] || '이벤트 입력';
-        setEventTime();
-        notify('선택한 이벤트가 수동 입력 영역에 반영되었습니다.');
-    }));
-
-
-    const runnerOrder = ['first', 'second', 'third'];
-    const nextBase = { first: 'second', second: 'third', third: 'home' };
-    const baseLabels = { first: '1루', second: '2루', third: '3루', home: '홈' };
-
-    function runnerSelect(base) {
-        return document.querySelector(`.runner-select[data-base="${base}"]`);
-    }
-
-    function updateRunnerView(message) {
-        runnerOrder.forEach(base => {
-            const node = document.querySelector(`.base[data-base="${base}"]`);
-            const select = runnerSelect(base);
-            if (node && select) node.classList.toggle('active', Boolean(select.value));
-        });
-        const runners = runnerOrder
-            .map(base => {
-                const value = runnerSelect(base)?.value;
-                return value ? `${baseLabels[base]} ${value}` : '';
-            })
-            .filter(Boolean);
-        const status = document.getElementById('runnerStatusText');
-        if (status) status.textContent = message || (runners.length ? `현재 주자: ${runners.join(', ')}` : '현재 주자 없음');
-    }
-
-    function leadRunnerBase() {
-        return [...runnerOrder].reverse().find(base => runnerSelect(base)?.value) || null;
-    }
-
-    function canHandleRunner(from) {
-        const lead = leadRunnerBase();
-        if (lead && lead !== from) {
-            updateRunnerView(`먼저 ${baseLabels[lead]} 주자부터 처리하세요.`);
-            notify(`${baseLabels[lead]} 주자부터 처리해야 합니다.`);
-            return false;
-        }
-        return true;
-    }
-
-    function runnerMoveDescription(from, to) {
-        if (to === 'home') return `${baseLabels[from]} 주자 홈으로 득점`;
-        return `${baseLabels[from]} 주자 ${baseLabels[to]}까지 진루`;
-    }
-
-    function moveRunner(from, forcedTo) {
-        const fromSelect = runnerSelect(from);
-        const to = forcedTo || nextBase[from];
-        if (!fromSelect || !fromSelect.value) {
-            updateRunnerView(`${baseLabels[from]}에 이동할 주자가 없습니다.`);
-            return;
-        }
-        if (!canHandleRunner(from)) return;
-        const runnerName = fromSelect.value;
-        const description = runnerMoveDescription(from, to);
-        if (to === 'home') {
-            fromSelect.value = '';
-            incrementScore('home');
-            updateRunnerView(`${runnerName} 홈인`);
-            document.getElementById('eventType').value = 'score';
-            document.getElementById('eventText').value = description;
-            document.getElementById('previewEvent').textContent = description;
-            setEventTime();
-            return;
-        }
-        const toSelect = runnerSelect(to);
-        if (toSelect?.value) {
-            updateRunnerView(`${baseLabels[to]}가 비어 있어야 이동할 수 있습니다.`);
-            return;
-        }
-        toSelect.value = runnerName;
-        fromSelect.value = '';
-        updateRunnerView(`${runnerName} ${baseLabels[to]} 진루`);
-        document.getElementById('eventType').value = 'runner_advance';
-        document.getElementById('eventText').value = description;
-        document.getElementById('previewEvent').textContent = description;
-        setEventTime();
-    }
-
-    function removeRunnerFromBase(from, reason = '주자 아웃') {
-        const select = runnerSelect(from);
-        if (!select || !select.value) {
-            updateRunnerView(`${baseLabels[from]}에 아웃 처리할 주자가 없습니다.`);
-            return;
-        }
-        if (!canHandleRunner(from)) return;
-        const runnerName = select.value;
-        select.value = '';
-        const description = `${baseLabels[from]} 주자 ${reason}`;
-        updateRunnerView(`${runnerName} ${reason}`);
-        document.getElementById('eventType').value = reason.includes('도루 실패') ? 'caught_stealing' : 'runner_out';
-        document.getElementById('eventText').value = description;
-        document.getElementById('previewEvent').textContent = description;
-        setEventTime();
-    }
-
-
-    function advanceLeadRunner() {
-        const base = [...runnerOrder].reverse().find(item => runnerSelect(item)?.value);
-        if (base) moveRunner(base);
-        else updateRunnerView('진루시킬 주자가 없습니다.');
-    }
-
-    function removeLeadRunner(reason) {
-        const base = [...runnerOrder].reverse().find(item => runnerSelect(item)?.value);
-        if (!base) {
-            updateRunnerView('아웃 처리할 주자가 없습니다.');
-            return;
-        }
-        const runnerName = runnerSelect(base).value;
-        runnerSelect(base).value = '';
-        updateRunnerView(`${runnerName} ${reason}`);
-        document.getElementById('eventText').value = `${runnerName} ${reason}`;
-        document.getElementById('previewEvent').textContent = `${runnerName} ${reason}`;
-        setEventTime();
-    }
-
-    updateRunnerView();
-
-    const recentEvents = document.getElementById('recentEvents');
-    const eventTypeLabels = {
-        at_bat_start: '타석 시작',
-        inning_start: '이닝 시작',
-        inning_end: '이닝 종료',
-        game_end: '경기 종료',
-        ball: '볼',
-        called_strike: '루킹 스트라이크',
-        swinging_strike: '헛스윙',
-        foul: '파울',
-        bunt_foul: '번트 파울',
-        called_strikeout: '루킹 삼진',
-        swinging_strikeout: '헛스윙 삼진',
-        bunt_foul_strikeout: '번트 파울 삼진',
-        single: '1루타',
-        double: '2루타',
-        triple: '3루타',
-        homerun: '홈런',
-        walk: '볼넷',
-        intentional_walk: '고의4구',
-        hit_by_pitch: '사구',
-        groundout: '땅볼아웃',
-        flyout: '플라이아웃',
-        lineout: '직선타',
-        popout: '팝아웃',
-        sac_bunt: '희생번트',
-        sac_fly: '희생플라이',
-        double_play: '병살타',
-        runner_advance: '주자 진루',
-        score: '득점',
-        stolen_base: '도루 성공',
-        caught_stealing: '도루 실패',
-        pickoff_out: '견제 아웃',
-        force_out: '포스 아웃',
-        runner_out: '주자 아웃',
-        wild_pitch: '폭투',
-        passed_ball: '포일',
-        balk: '보크',
-        pitcher_change: '투수 교체',
-        pinch_hitter: '대타',
-        pinch_runner: '대주자',
-        defensive_substitution: '수비 교체'
-    };
-    const baseballState = {
-        matchId: 1,
-        playerId: 31,
-        teamId: 2,
-        inning: 6,
-        half: 'BOTTOM',
-        pitchNo: 0,
-        balls: 1,
-        strikes: 2,
-        outs: 1,
-        currentAtBatEvents: []
-    };
-    const eventLogs = {
-        baseball: [
-            { matchId: 1, playerId: 31, teamId: 2, eventType: 'sac_fly', eventTime: 3, eventPeriod: '6회말', description: '장승현 좌익수 희생플라이, 3루 주자 홈인', createdAt: '2026-05-21 19:25:11' },
-            { matchId: 1, playerId: 29, teamId: 2, eventType: 'walk', eventTime: 2, eventPeriod: '6회말', description: '김영웅 볼넷 출루', createdAt: '2026-05-21 19:23:02' },
-            { matchId: 1, playerId: 27, teamId: 2, eventType: 'single', eventTime: 1, eventPeriod: '6회말', description: '이재현 좌전 안타', createdAt: '2026-05-21 19:20:44' }
-        ],
-        soccer: [
-            { matchId: 2, playerId: 81, teamId: 5, eventType: '유효슈팅', eventTime: 3, eventPeriod: '후반 87분', description: '제르소 슈팅, 광주 골키퍼 선방', createdAt: '2026-05-21 20:47:00' },
-            { matchId: 2, playerId: 82, teamId: 5, eventType: '선수 교체', eventTime: 2, eventPeriod: '후반 83분', description: '인천 무고사 투입, 제르소 교체 아웃', createdAt: '2026-05-21 20:43:00' },
-            { matchId: 2, playerId: 91, teamId: 6, eventType: '경고', eventTime: 1, eventPeriod: '후반 79분', description: '광주 문민서 경고', createdAt: '2026-05-21 20:39:00' }
-        ],
-        lol: [
-            { matchId: 3, playerId: 121, teamId: 9, eventType: '드래곤 처치', eventTime: 3, eventPeriod: '1세트 18:24', description: 'T1 세 번째 드래곤 처치', createdAt: '2026-05-21 18:24:00' },
-            { matchId: 3, playerId: 122, teamId: 9, eventType: '타워 파괴', eventTime: 2, eventPeriod: '1세트 17:52', description: 'T1 미드 1차 타워 파괴', createdAt: '2026-05-21 17:52:00' },
-            { matchId: 3, playerId: 132, teamId: 10, eventType: '킬', eventTime: 1, eventPeriod: '1세트 16:40', description: 'Gen.G 바텀 교전 1킬', createdAt: '2026-05-21 16:40:00' }
-        ]
-    };
-
-    function currentBaseballPeriod() {
-        return `${baseballState.inning}회${baseballState.half === 'TOP' ? '초' : '말'}`;
-    }
-
-    function pitchMetaText() {
-        const speed = document.getElementById('pitchSpeedInput')?.value || '149';
-        const type = document.getElementById('pitchTypeInput')?.value || '직구';
-        return `${speed}km/h ${type}`;
-    }
-
-    function createMatchEvent({ sport = controlSport.value, eventType, description, playerId, teamId, eventPeriod }) {
-        const now = new Date();
-        // event_time은 created_at이 아니라 실제 백엔드에서 경기 내 이벤트 정렬 순서값으로 사용한다.
-        return {
-            matchId: sport === 'baseball' ? baseballState.matchId : sport === 'soccer' ? 2 : 3,
-            playerId: playerId || (sport === 'baseball' ? baseballState.playerId : null),
-            teamId: teamId || (sport === 'baseball' ? baseballState.teamId : null),
-            eventType,
-            eventTime: eventLogs[sport].length + 1,
-            eventPeriod: eventPeriod || (sport === 'baseball' ? currentBaseballPeriod() : controlPresets[sport].phase),
-            description,
-            createdAt: formatEventDateTime(now)
-        };
-    }
-
-    function pushEventLog(event, { atBatFlow = false } = {}) {
-        eventLogs[controlSport.value].unshift(event);
-        if ([...document.getElementById('eventType').options].some(option => option.value === event.eventType)) {
-            document.getElementById('eventType').value = event.eventType;
-        }
-        document.getElementById('eventText').value = event.description || '';
-        document.getElementById('previewEvent').textContent = event.description || eventTypeLabels[event.eventType] || event.eventType;
-        setEventTime(new Date(event.createdAt.replace(' ', 'T')));
-        if (atBatFlow) baseballState.currentAtBatEvents.push(event);
-        if (controlSport.value === 'baseball') renderBaseballState();
-        renderEventList();
-    }
-
-    function renderBaseballState(message) {
-        const period = currentBaseballPeriod();
-        const outsText = `${baseballState.outs}사`;
-        const chip = document.getElementById('baseballInningChip');
-        if (chip) chip.innerHTML = `${period}<br>${outsText}`;
-        document.getElementById('phaseLabel').textContent = period;
-        const context = message || `${period} ${outsText} 2·3루 · B ${baseballState.balls} S ${baseballState.strikes} O ${baseballState.outs}`;
-        document.getElementById('previewContext').textContent = context;
-        document.querySelectorAll('#ballLights .light').forEach((node, index) => {
-            node.classList.toggle('on', index < baseballState.balls);
-            node.classList.toggle('ball', index < baseballState.balls);
-        });
-        document.querySelectorAll('#strikeLights .light').forEach((node, index) => {
-            node.classList.toggle('on', index < baseballState.strikes);
-            node.classList.toggle('strike', index < baseballState.strikes);
-        });
-        document.querySelectorAll('#outLights .light').forEach((node, index) => {
-            node.classList.toggle('on', index < baseballState.outs);
-            node.classList.toggle('out', index < baseballState.outs);
-        });
-    }
-
-    function resetAtBatCount() {
-        baseballState.pitchNo = 0;
-        baseballState.balls = 0;
-        baseballState.strikes = 0;
-        baseballState.currentAtBatEvents = [];
-    }
-
-    function advanceInning() {
-        if (baseballState.half === 'TOP') baseballState.half = 'BOTTOM';
-        else {
-            baseballState.half = 'TOP';
-            baseballState.inning += 1;
-        }
-    }
-
-    function startAtBat() {
-        resetAtBatCount();
-        // at_bat_start는 타석 구분용 메타 이벤트이므로 일반 상황에서 description을 비워 둔다.
-        pushEventLog(createMatchEvent({
-            eventType: 'at_bat_start',
-            description: ''
-        }), { atBatFlow: true });
-        notify('새 타석 흐름이 시작되었습니다.');
-    }
-
-    function publishPitchEvent(kind) {
-        let eventType = kind;
-        let shouldIncreaseStrike = false;
-        baseballState.pitchNo += 1;
-
-        if (kind === 'ball') {
-            baseballState.balls += 1;
-        }
-        if (kind === 'called_strike' || kind === 'swinging_strike') {
-            if (baseballState.strikes >= 2) {
-                eventType = kind === 'called_strike' ? 'called_strikeout' : 'swinging_strikeout';
-                baseballState.outs += 1;
-            } else {
-                shouldIncreaseStrike = true;
-            }
-        }
-        if (kind === 'foul') {
-            if (baseballState.strikes < 2) shouldIncreaseStrike = true;
-        }
-        if (kind === 'bunt_foul') {
-            if (baseballState.strikes >= 2) {
-                eventType = 'bunt_foul_strikeout';
-                baseballState.outs += 1;
-            } else {
-                shouldIncreaseStrike = true;
-            }
-        }
-        if (shouldIncreaseStrike) baseballState.strikes += 1;
-
-        // 실제 투구 이벤트 description에는 구속/구종만 남긴다. 볼카운트·아웃카운트는 event_type과 순서로 계산한다.
-        pushEventLog(createMatchEvent({ eventType, description: pitchMetaText() }), { atBatFlow: true });
-
-        if (baseballState.balls >= 4) {
-            pushEventLog(createMatchEvent({ eventType: 'walk', description: '볼넷' }), { atBatFlow: true });
-            resetAtBatCount();
-            renderBaseballState(`${currentBaseballPeriod()} ${baseballState.outs}사 · 다음 타자 대기 · B 0 S 0 O ${baseballState.outs}`);
-        } else if (eventType.includes('strikeout')) {
-            resetAtBatCount();
-            if (baseballState.outs >= 3) finishInningState('이닝 종료');
-            else renderBaseballState(`${currentBaseballPeriod()} ${baseballState.outs}사 · 다음 타자 대기 · B 0 S 0 O ${baseballState.outs}`);
-        }
-    }
-
-    function addOut() {
-        baseballState.outs += 1;
-        const ended = baseballState.outs >= 3;
-        pushEventLog(createMatchEvent({ eventType: 'groundout', description: ended ? '이닝 종료' : '아웃 카운트 추가' }));
-        if (ended) finishInningState('이닝 종료');
-    }
-
-    function finishInningState(message = '이닝 종료') {
-        resetAtBatCount();
-        baseballState.outs = 0;
-        advanceInning();
-        renderBaseballState(`${currentBaseballPeriod()} 시작 · B 0 S 0 O 0`);
-        if (message) notify(message);
-    }
-
-    function endInning(description = '이닝 종료') {
-        finishInningState('');
-        pushEventLog(createMatchEvent({ eventType: 'inning_end', description }));
-        renderBaseballState(`${currentBaseballPeriod()} 시작 · B 0 S 0 O 0`);
-    }
-
-    function renderEventList() {
-        const list = eventLogs[controlSport.value];
-        recentEvents.innerHTML = list.map(e => {
-            const minute = e.createdAt ? e.createdAt.slice(11, 16) : '';
-            const title = eventTypeLabels[e.eventType] ? `${e.eventType} · ${eventTypeLabels[e.eventType]}` : e.eventType;
-            return `<article class="timeline-item"><div class="minute">${minute}</div><div><div class="timeline-title">${title}</div><div class="timeline-desc">${e.description}</div></div><span class="badge ready">송출됨</span></article>`;
-        }).join('');
-        if (!window.__lastBaseballLive) {
-            document.getElementById('eventCount').textContent = String(list.length);
-        }
-    }
-    controlSport.addEventListener('change', () => {
-        renderEventList();
-        if (controlSport.value === 'baseball') renderBaseballState();
-    });
-    renderEventList();
-    renderBaseballState();
-    document.getElementById('resetCountBtn')?.addEventListener('click', () => {
-        baseballState.pitchNo = 0;
-        baseballState.balls = 0;
-        baseballState.strikes = 0;
-        renderBaseballState('카운트 초기화 · B 0 S 0');
-        notify('볼카운트가 초기화되었습니다.');
-    });
-    document.getElementById('toggleHalfBtn')?.addEventListener('click', () => {
-        advanceInning();
-        resetAtBatCount();
-        renderBaseballState(`${currentBaseballPeriod()} 전환 · B 0 S 0 O ${baseballState.outs}`);
-        notify('초/말이 전환되었습니다.');
-    });
-    document.getElementById('addEventBtn').addEventListener('click', () => {
-        const type = document.getElementById('eventType').value;
-        const text = document.getElementById('eventText').value;
-        pushEventLog(createMatchEvent({ eventType: type, description: text }));
-        notify('이벤트가 중계 화면에 반영되었습니다.');
-    });
-    document.getElementById('undoEventBtn').addEventListener('click', () => {
-        eventLogs[controlSport.value].shift();
-        renderEventList();
-        notify('마지막 이벤트가 취소되었습니다.');
-    });
-    document.getElementById('viewResultBtn').addEventListener('click', () => notify('현재 누적 기록 화면을 표시합니다.'));
-
-    const scenarioRowsByMatch = {
-        'hanwha-samsung': [
-            ['1', '1회', '초', '문현빈', '원태인', '선두타자 안타', '1-1', '0', '1루 출루', '0-0', '1회초 한화 선두타자 중전 안타', '대기'],
-            ['2', '1회', '말', '구자욱', '후라도', '희생플라이', '2-1', '1', '3루 주자 홈인', '1-1', '1회말 삼성 희생플라이로 동점', '대기'],
-            ['3', '2회', '초', '노시환', '원태인', '비디오 판독', '0-2', '2', '1루 세이프 유지', '1-1', '1루 접전 상황 비디오 판독 후 세이프', '대기'],
-            ['4', '3회', '말', '김영웅', '후라도', '2루타', '1-0', '0', '2·3루', '1-1', '삼성 김영웅 좌중간 2루타, 득점권 기회', '대기'],
-            ['5', '4회', '초', '채은성', '원태인', '홈런', '2-2', '1', '주자 없음', '3-1', '한화 채은성 투런 홈런으로 재역전', '대기'],
-            ['6', '5회', '말', '이재현', '후라도', '도루 성공', '1-1', '1', '1루 → 2루', '3-1', '이재현 2루 도루 성공', '대기'],
-            ['7', '6회', '말', '장승현', '후라도', '희생플라이', '1-2', '1', '3루 주자 홈인', '3-4', '6회말 희생플라이로 삼성 역전', '대기'],
-            ['8', '7회', '초', '김태연', '불펜투수', '투수 교체', '0-0', '0', '없음', '3-4', '삼성 불펜 교체, 좌완 투수 투입', '대기'],
-            ['9', '8회', '말', '강민호', '한화불펜', '병살타', '0-1', '1', '1·2루 → 이닝 종료', '3-4', '삼성 추가 득점 기회에서 병살타', '대기'],
-            ['10', '9회', '초', '페라자', '마무리투수', '삼진', '2-2', '2', '주자 없음', '3-4', '9회초 마지막 타자 헛스윙 삼진, 경기 종료', '대기']
-        ],
-        'lg-kia': [
-            ['1', '경기 전', '-', '관리자', '-', '라인업 등록', '-', '-', '선발 라인업 공개', '0-0', 'LG vs KIA 선발 라인업 사용자 화면 반영', '대기'],
-            ['2', '1회', '초', '박찬호', 'LG선발', '볼넷', '3-1', '0', '1루 출루', '0-0', 'KIA 선두타자 볼넷 출루', '대기'],
-            ['3', '1회', '말', '홍창기', 'KIA선발', '안타', '1-2', '0', '1루 출루', '0-0', 'LG 첫 공격 안타로 출루', '대기']
-        ],
-        'doosan-ssg': [
-            ['1', '3회', '말', '운영자', '-', '우천 지연', '-', '-', '경기 일시 중단', '1-1', '문학 경기 우천으로 일시 중단', '대기'],
-            ['2', '재개 전', '-', '운영자', '-', '재개 안내', '-', '-', '그라운드 정비 완료', '1-1', '경기 재개 예정 시간이 안내되었습니다.', '대기'],
-            ['3', '4회', '초', '정수빈', 'SSG투수', '경기 재개', '0-0', '0', '주자 없음', '1-1', '두산 공격으로 경기가 재개됩니다.', '대기']
-        ],
-        'incheon-gwangju': [
-            ['1', '18분', '전반', '인천', '제르소', '골', '이동준', '1-0', '제르소 선제골', '대기'],
-            ['2', '39분', '전반', '인천', '이청용', '골', '-', '2-0', '이청용 중거리 슈팅 득점', '대기'],
-            ['3', '87분', '후반', '광주', '문민서', '경고', '-', '4-0', '문민서 경고', '대기']
-        ],
-        'seoul-jeju': [
-            ['1', '경기 전', '대기', '서울FC', '관리자', '선발 명단 등록', '-', '0-0', '선발 명단 사용자 화면 반영', '대기'],
-            ['2', '12분', '전반', '제주', '서진수', '슈팅', '-', '0-0', '제주 첫 슈팅 기록', '대기'],
-            ['3', '31분', '전반', '서울FC', '린가드', '프리킥', '-', '0-0', '서울FC 위험 지역 프리킥 획득', '대기']
-        ],
-        't1-geng': [
-            ['1', '03:12', 'T1', 'Oner', '오브젝트 처치', '드래곤', 'T1 드래곤 1', '첫 드래곤 처치', '대기'],
-            ['2', '12:44', 'Gen.G', 'Peyz', '킬', '-', '킬 스코어 5-4', '바텀 교전 킬', '대기'],
-            ['3', '22:10', 'T1', 'Faker', '타워 파괴', '미드 1차', '타워 4-3', '미드 1차 타워 파괴', '대기']
-        ]
-    };
-    const scenarioHeads = {
-        baseball: ['순서','이닝','초/말','타자','투수','이벤트 유형','볼카운트','아웃카운트','주자 변화','점수 변화','화면 문구','실행 상태'],
-        soccer: ['순서','시간','전반/후반','팀','선수','이벤트 유형','보조 선수','점수 변화','화면 문구','실행 상태'],
-        lol: ['순서','경기 시간','팀','선수','이벤트 유형','오브젝트','점수/상태 변화','화면 문구','실행 상태']
-    };
-    const scenarioMatches = {
-        baseball: [
-            { id: 'hanwha-samsung', name: '한화 이글스 vs 삼성 라이온즈', time: '2026-05-21 18:30', venue: '대구', status: '진행 중', scope: '1회~9회 전체 흐름', scenarioName: '한화 vs 삼성 1~9회 운영 타임라인' },
-            { id: 'lg-kia', name: 'LG 트윈스 vs KIA 타이거즈', time: '2026-05-21 18:30', venue: '잠실', status: '예정', scope: '경기 전 라인업~초반 이벤트', scenarioName: 'LG vs KIA 선발 라인업 및 초반 운영' },
-            { id: 'doosan-ssg', name: '두산 베어스 vs SSG 랜더스', time: '2026-05-21 18:30', venue: '문학', status: '우천 지연', scope: '우천 지연 재개 운영', scenarioName: '두산 vs SSG 우천 지연 재개 시나리오' }
-        ],
-        soccer: [
-            { id: 'incheon-gwangju', name: '인천 Utd vs 광주FC', time: '2026-05-21 19:00', venue: '숭의아레나', status: '종료', scope: '후반 막판 이벤트 운영', scenarioName: '인천 vs 광주 후반 이벤트 타임라인' },
-            { id: 'seoul-jeju', name: '서울FC vs 제주 Utd', time: '2026-05-21 20:30', venue: '상암', status: '예정', scope: '선발 명단~전반 주요 이벤트', scenarioName: '서울 vs 제주 경기 시작 운영' }
-        ],
-        lol: [
-            { id: 't1-geng', name: 'T1 vs Gen.G', time: '2026-05-21 20:00', venue: 'LoL Park', status: '예정', scope: '1세트 오브젝트 운영', scenarioName: 'T1 vs Gen.G 1세트 오브젝트 타임라인' }
-        ]
-    };
-    const scenarioSport = document.getElementById('scenarioSport');
-    const scenarioMatch = document.getElementById('scenarioMatch');
-
-    function updateScenarioMatches() {
-        const matches = scenarioMatches[scenarioSport.value];
-        if (!matches || !matches.length) return;
-        scenarioMatch.innerHTML = matches.map(match => `<option value="${match.id}">[${match.status}] ${match.time} · ${match.name}</option>`).join('');
-        renderScenarioContext();
-    }
-
-    function selectedScenarioMatch() {
-        return scenarioMatches[scenarioSport.value].find(match => match.id === scenarioMatch.value) || scenarioMatches[scenarioSport.value][0];
-    }
-
-    function renderScenarioContext() {
-        const match = selectedScenarioMatch();
-        if (!match) return;
-        document.getElementById('scenarioMatchName').textContent = match.name;
-        document.getElementById('scenarioMatchTime').textContent = match.time;
-        document.getElementById('scenarioVenue').textContent = match.venue;
-        document.getElementById('scenarioScope').textContent = `${match.status} · ${match.scope}`;
-        document.getElementById('scenarioName').value = match.scenarioName;
-    }
-
-    function renderScenario() {
-        const sport = scenarioSport.value;
-        const match = selectedScenarioMatch();
-        if (!match) return;
-        if (!scenarioRowsByMatch[match.id]) scenarioRowsByMatch[match.id] = [];
-        const rows = scenarioRowsByMatch[match.id] || [];
-        renderScenarioContext();
-        document.getElementById('scenarioHead').innerHTML = `<tr>${scenarioHeads[sport].map(h => `<th>${h}</th>`).join('')}</tr>`;
-        document.getElementById('scenarioBody').innerHTML = rows.map(row => `<tr>${row.map((c, i) => `<td>${i === row.length - 1 ? `<span class="badge">${c}</span>` : c}</td>`).join('')}</tr>`).join('');
-    }
-    scenarioSport.addEventListener('change', () => {
-        updateScenarioMatches();
-        renderScenario();
-    });
-    scenarioMatch.addEventListener('change', renderScenario);
-    updateScenarioMatches();
-    renderScenario();
-    document.getElementById('addScenarioBtn').addEventListener('click', () => {
-        const emptyRows = {
-            baseball: ['추가', '현재회', '초/말', '타자', '투수', '이벤트', '0-0', '0', '주자 변화', '점수 변화', '화면 문구', '대기'],
-            soccer: ['추가', '현재분', '전반/후반', '팀', '선수', '이벤트', '보조 선수', '점수 변화', '화면 문구', '대기'],
-            lol: ['추가', '현재시간', '팀', '선수', '이벤트', '오브젝트', '상태 변화', '화면 문구', '대기']
-        };
-        const match = selectedScenarioMatch();
-        if (!match) return;
-        if (!scenarioRowsByMatch[match.id]) scenarioRowsByMatch[match.id] = [];
-        scenarioRowsByMatch[match.id].push(emptyRows[scenarioSport.value]);
-        renderScenario();
-        notify('시나리오 이벤트가 추가되었습니다.');
-    });
-    document.getElementById('deleteScenarioBtn').addEventListener('click', () => {
-        const match = selectedScenarioMatch();
-        if (!match || !scenarioRowsByMatch[match.id]) return;
-        scenarioRowsByMatch[match.id].pop();
-        renderScenario();
-        notify('시나리오 이벤트가 삭제되었습니다.');
-    });
-    document.getElementById('nextScenarioBtn').addEventListener('click', () => notify('다음 이벤트를 송출했습니다.'));
-    document.getElementById('runScenarioBtn').addEventListener('click', () => notify('시나리오 실행을 시작했습니다.'));
-
-    const logRows = [
-        ['명균', '19:25:11', '이벤트 송출', '한화 vs 삼성', '희생플라이 이벤트 등록', '성공', '-', ''],
-        ['명균', '19:22:40', '스코어 변경', '한화 vs 삼성', '홈팀 득점 1점 추가', '성공', '-', ''],
-        ['운영자2', '19:10:02', '경기 종료', '인천 vs 광주', '현재 스코어와 누적 기록 최종 결과 반영', '성공', '-', ''],
-        ['운영자3', '18:55:18', '승부 예측 노출 설정', 'T1 vs Gen.G', '경기별 예측 결과 사용자 화면 노출 전환', '성공', '-', ''],
-        ['명균', '18:40:33', '시나리오 저장', 'LG vs KIA', '예정 경기 초반 운영 시나리오 저장', '성공', '-', '']
-    ];
-    document.getElementById('logBody').innerHTML = logRows.map(r => `<tr>${r.map((c, i) => `<td>${i === 5 ? `<span class="badge ${c === '성공' ? 'live' : 'warn'}">${c}</span>` : c}</td>`).join('')}</tr>`).join('');
-    document.querySelectorAll('button').forEach(btn => {
-        if (!btn.id && !btn.dataset.view && !btn.dataset.jump && !btn.dataset.status && !btn.dataset.eventTemplate && !btn.classList.contains('score-plus') && !btn.classList.contains('runner-advance') && !btn.classList.contains('runner-score') && !btn.classList.contains('runner-steal') && !btn.classList.contains('runner-out') && !btn.classList.contains('runner-wildpitch')) {
-            btn.addEventListener('click', () => {
-                if (btn.type !== 'submit') notify(`${btn.textContent.trim()} 처리되었습니다.`);
-            });
-        }
-    });
 </script>
 <script>
     (function () {
@@ -2064,17 +1200,46 @@
             return 'ready';
         }
 
-        function showAdminView(id) {
-            document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === id));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === id));
-            if (id === 'matchEdit') {
+        const DEFAULT_VIEW = 'matchEdit';
+        const ALLOWED_VIEWS = new Set(['matchEdit', 'control', 'lineup']);
+
+        function currentHashView() {
+            const id = (location.hash || '').replace('#', '');
+            return ALLOWED_VIEWS.has(id) ? id : DEFAULT_VIEW;
+        }
+
+        function showAdminView(id, pushHistory = true) {
+            const target = ALLOWED_VIEWS.has(id) ? id : DEFAULT_VIEW;
+            document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === target));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === target));
+
+            if (target === 'matchEdit') {
                 setText('pageTitle', text.scheduleTitle);
                 setText('pageDesc', text.scheduleDesc);
             }
-            if (id === 'control') {
+            if (target === 'control') {
                 setText('pageTitle', text.controlTitle);
                 setText('pageDesc', text.controlDesc);
             }
+            if (target === 'lineup') {
+                setText('pageTitle', '경기 라인업 관리');
+                setText('pageDesc', '경기별 선발 라인업과 후보 선수를 등록합니다.');
+            }
+
+            if (pushHistory && location.hash !== `#${target}`) {
+                history.pushState({ adminView: target }, '', `#${target}`);
+            }
+        }
+
+        function installNavigation() {
+            if (!location.hash || !ALLOWED_VIEWS.has(location.hash.replace('#', ''))) {
+                history.replaceState({ adminView: DEFAULT_VIEW }, '', `${location.pathname}${location.search}#${DEFAULT_VIEW}`);
+            }
+            document.querySelectorAll('.nav-btn[data-view]').forEach(button => {
+                button.addEventListener('click', () => showAdminView(button.dataset.view, true));
+            });
+            window.addEventListener('popstate', () => showAdminView(currentHashView(), false));
+            showAdminView(currentHashView(), false);
         }
 
         function installStyles() {
@@ -2160,6 +1325,85 @@
       .admin-match-score { min-width:74px; text-align:center; font-size:23px; font-weight:1000; color:#fff; white-space:nowrap; }
       .admin-date-chip { display:inline-flex; align-items:center; min-height:26px; border-radius:999px; padding:0 10px; background:rgba(92,141,255,.14); border:1px solid rgba(92,141,255,.38); color:#bcd0ff; font-size:12px; font-weight:950; }
       .admin-empty-block { border:1px dashed #344764; border-radius:14px; padding:24px; color:var(--muted); font-weight:900; text-align:center; }
+
+      .admin-lineup-needed {
+        min-width: 140px;
+        text-align:center;
+        font-size:13px;
+        font-weight:1000;
+        color:#ffe59a;
+        border:1px solid rgba(255,212,90,.42);
+        background:rgba(255,212,90,.14);
+        border-radius:12px;
+        padding:10px 12px;
+        line-height:1.25;
+      }
+      .admin-lineup-ok {
+        color:#bff5d4;
+        font-weight:950;
+      }
+      .lineup-toolbar {
+        display:grid;
+        grid-template-columns: 180px minmax(280px, 1fr);
+        gap:12px;
+      }
+      .lineup-summary {
+        border:1px solid rgba(92,141,255,.28);
+        background:rgba(92,141,255,.08);
+        border-radius:14px;
+        padding:12px;
+        color:#dbe7ff;
+        font-size:13px;
+        font-weight:900;
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        flex-wrap:wrap;
+      }
+      .lineup-team-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px; align-items:start; }
+      .lineup-team-panel {
+        border:1px solid var(--line);
+        background:#0d1626;
+        border-radius:16px;
+        overflow:hidden;
+        min-width:0;
+      }
+      .lineup-team-head {
+        padding:13px 14px;
+        border-bottom:1px solid rgba(255,255,255,.08);
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:10px;
+        background:rgba(255,255,255,.035);
+      }
+      .lineup-team-head h3 { font-size:16px; font-weight:1000; }
+      .lineup-team-body { padding:12px; display:grid; gap:12px; }
+      .lineup-starter-summary {
+        display:grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap:7px;
+      }
+      .lineup-slot {
+        border:1px solid rgba(255,255,255,.08);
+        background:#0b1220;
+        border-radius:10px;
+        padding:8px;
+        min-height:58px;
+        display:grid;
+        gap:4px;
+      }
+      .lineup-slot b { color:#8ea0bd; font-size:11px; font-weight:950; }
+      .lineup-slot span { color:#fff; font-size:12px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .lineup-table-wrap { overflow-x:auto; }
+      .lineup-table { min-width:720px; }
+      .lineup-table select { min-height:34px; padding:6px 8px; }
+      .lineup-player-meta { color:#8ea0bd; font-size:11px; font-weight:850; margin-top:2px; }
+      .lineup-status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--red); }
+      .lineup-status-dot.ready { background:var(--green); }
+      @media (max-width:1100px) { .lineup-team-grid { grid-template-columns:1fr; } .lineup-starter-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      @media (max-width:760px) { .lineup-toolbar { grid-template-columns:1fr; } .lineup-starter-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
       @media (max-width:1100px) { .admin-schedule-toolbar { grid-template-columns:1fr 1fr; } }
       @media (max-width:760px) { .admin-schedule-toolbar { grid-template-columns:1fr; } .admin-schedule-list { grid-template-columns:1fr; } }
     `;
@@ -2226,7 +1470,13 @@
             select.addEventListener('change', () => {
                 state.matchId = select.value ? Number(select.value) : null;
                 renderSchedule();
-                if (state.matchId) loadState(state.matchId);
+                if (!state.matchId) return;
+                const game = findGame(state.matchId);
+                if (game && game.lineupReady === false) {
+                    openLineupEditor(state.matchId);
+                    return;
+                }
+                loadState(state.matchId);
             });
         }
 
@@ -2238,6 +1488,31 @@
                 || '';
         }
 
+        function getRefreshToken() {
+            return localStorage.getItem('refreshToken')
+                || sessionStorage.getItem('refreshToken')
+                || '';
+        }
+
+        function saveAuthTokens(data) {
+            if (!data) return;
+            if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+            if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+        }
+
+        function clearAdminAuthAndRedirect() {
+            const keys = [
+                'accessToken', 'refreshToken', 'token', 'jwt',
+                'user', 'loginUser', 'member', 'nickname', 'loginId',
+                'role', 'roles', 'sessionActive'
+            ];
+            keys.forEach(key => {
+                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
+            });
+            location.href = '/login';
+        }
+
         function authHeaders(extra = {}) {
             const headers = { 'Accept': 'application/json', ...extra };
             const token = getAccessToken();
@@ -2245,12 +1520,38 @@
             return headers;
         }
 
+        async function reissueAccessToken() {
+            const refreshToken = getRefreshToken();
+            if (!refreshToken) return false;
+            const res = await fetch('/api/auth/reissue', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${refreshToken}`, 'Accept': 'application/json' }
+            });
+            if (!res.ok) return false;
+            saveAuthTokens(await res.json());
+            return true;
+        }
+
+        async function requestWithAuth(url, options = {}, retry = true) {
+            const headers = authHeaders(options.headers || {});
+            const res = await fetch(url, {
+                ...options,
+                credentials: 'same-origin',
+                headers
+            });
+            if (res.status === 401 && retry && await reissueAccessToken()) {
+                return requestWithAuth(url, options, false);
+            }
+            return res;
+        }
+
         async function fetchJson(url) {
-            const res = await fetch(url, { headers: authHeaders() });
+            const res = await requestWithAuth(url);
             if (!res.ok) {
                 const body = await res.text();
                 const error = new Error(body || String(res.status));
                 error.status = res.status;
+                if (res.status === 401) clearAdminAuthAndRedirect();
                 throw error;
             }
             return res.json();
@@ -2263,6 +1564,7 @@
             try {
                 const rawGames = await fetchJson(`${API}/games`);
                 state.games = (Array.isArray(rawGames) ? rawGames : []).map(normalizeAdminGame);
+                await attachLineupStatuses();
 
                 const orderedGames = [...state.games].sort(compareAdminGames);
                 const first = orderedGames.find(game => statusKey(game.status) === 'live') || orderedGames[0];
@@ -2310,6 +1612,35 @@
             return (a.sortAt || 0) - (b.sortAt || 0) || numberValue(a.matchId) - numberValue(b.matchId);
         }
 
+
+
+        function findGame(matchId) {
+            return state.games.find(game => Number(game.matchId) === Number(matchId)) || null;
+        }
+
+        async function attachLineupStatuses() {
+            const ids = state.games.map(game => game.matchId).filter(Boolean);
+            if (!ids.length) return;
+            const query = ids.map(id => `matchIds=${encodeURIComponent(id)}`).join('&');
+            try {
+                const statuses = await fetchJson(`${API}/games/lineup-status?${query}`);
+                const byId = new Map((statuses || []).map(row => [Number(row.matchId), row]));
+                state.games.forEach(game => {
+                    const status = byId.get(Number(game.matchId));
+                    game.lineupStatus = status || null;
+                    game.lineupReady = Boolean(status?.ready);
+                    game.lineupMessage = status?.message || '선발 라인업 등록 필요';
+                });
+            } catch (error) {
+                console.error(error);
+                state.games.forEach(game => {
+                    game.lineupStatus = null;
+                    game.lineupReady = false;
+                    game.lineupMessage = '라인업 상태 확인 실패';
+                });
+            }
+        }
+
         function compareByTime(a, b) {
             return (a.sortAt || 0) - (b.sortAt || 0) || statusSortValue(a.status) - statusSortValue(b.status) || numberValue(a.matchId) - numberValue(b.matchId);
         }
@@ -2338,15 +1669,22 @@
         function renderAdminMatchCard(game) {
             const key = statusKey(game.status);
             const timeText = game.scheduledAt || '--:--';
+            const needsLineup = key === 'scheduled' && game.lineupReady === false;
+            const centerHtml = needsLineup
+                ? '<div class="admin-lineup-needed">선발 라인업<br>등록 필요</div>'
+                : `<div class="admin-match-score">${game.awayScore ?? 0} : ${game.homeScore ?? 0}</div>`;
+            const lineupText = game.lineupReady
+                ? '<span class="admin-lineup-ok">라인업 완료</span>'
+                : '<span style="color:#ffe59a;font-weight:950">라인업 필요</span>';
             return `
       <article class="admin-match-card ${Number(game.matchId) === Number(state.matchId) ? 'selected' : ''} ${key === 'live' ? 'live-first' : ''} ${key === 'finished' ? 'finished-soft' : ''}" data-match-id="${game.matchId}">
         <div class="admin-match-top"><span>${sportLabel(game.sportCode)} · match ${game.matchId}</span><span>${timeText}</span></div>
         <div class="admin-match-teams">
           <div class="admin-match-team"><b>${game.awayTeamName || '-'}</b><span>${text.away}</span></div>
-          <div class="admin-match-score">${game.awayScore ?? 0} : ${game.homeScore ?? 0}</div>
+          ${centerHtml}
           <div class="admin-match-team" style="text-align:right"><b>${game.homeTeamName || '-'}</b><span>${text.home}</span></div>
         </div>
-        <div class="admin-match-foot"><span class="badge ${badgeClass(game.status)}">${statusLabel(game.status)}</span><span>${game.venue || text.noVenue}</span></div>
+        <div class="admin-match-foot"><span class="badge ${badgeClass(game.status)}">${statusLabel(game.status)}</span><span>${game.venue || text.noVenue} · ${lineupText}</span></div>
       </article>
     `;
         }
@@ -2433,6 +1771,13 @@
             const select = document.getElementById('adminBaseballMatchSelect');
             if (select) select.value = String(matchId);
             renderSchedule();
+
+            const game = findGame(matchId);
+            if (moveControl && game && game.lineupReady === false) {
+                await openLineupEditor(matchId);
+                return;
+            }
+
             await loadState(matchId);
             if (moveControl) showAdminView('control');
         }
@@ -2622,6 +1967,18 @@
             fillPitcherChangeOptions(live, pitcher);
         }
 
+        function updatePitcherChangeText() {
+            const select = document.getElementById('pitcherChangeSelect');
+            const textInput = document.getElementById('pitcherChangeText');
+            if (!select || !textInput) return;
+            const currentName = window.__lastBaseballLive?.currentPitcher?.name || '현재 투수';
+            const option = select.options[select.selectedIndex];
+            const nextName = option?.dataset?.name || option?.textContent?.replace(/\s*\([^)]*\)\s*/g, '').trim() || '';
+            textInput.value = nextName && select.value
+                ? `${currentName}에서 ${nextName}로 투수 교체`
+                : `${currentName}에서 교체 투수 선택`;
+        }
+
         function fillPitcherChangeOptions(live, pitcher) {
             const select = document.getElementById('pitcherChangeSelect');
             if (!select) return;
@@ -2632,12 +1989,8 @@
                 .filter(row => normalizePosition(row.position) === 'P')
                 .filter(row => Number(row.playerId) !== Number(pitcher?.playerId))
                 .map(row => ({ id: row.playerId, name: row.playerName || row.name || `player ${row.playerId}`, position: row.position || 'P' }));
-            select.innerHTML = rows.map(row => `<option value="${row.id}">${row.name} (${row.position})</option>`).join('') || '<option value="">교체 가능한 투수 없음</option>';
-            const textInput = document.getElementById('pitcherChangeText');
-            if (textInput) {
-                const next = rows[0]?.name || '-';
-                textInput.value = `${pitcher?.name || '현재 투수'}에서 ${next}로 투수 교체`;
-            }
+            select.innerHTML = rows.map(row => `<option value="${row.id}" data-name="${row.name}">${row.name} (${row.position})</option>`).join('') || '<option value="">교체 가능한 투수 없음</option>';
+            updatePitcherChangeText();
         }
 
         function normalizePosition(position) {
@@ -2698,9 +2051,9 @@
         }
 
         async function postBaseballCommand(body) {
-            const res = await fetch(`${API}/games/${state.matchId}/command`, {
+            const res = await requestWithAuth(`${API}/games/${state.matchId}/command`, {
                 method: 'POST',
-                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
             if (!res.ok) {
@@ -2907,6 +2260,7 @@
             document.getElementById('eventText')?.addEventListener('input', event => {
                 event.currentTarget.dataset.userEdited = 'true';
             });
+            document.getElementById('pitcherChangeSelect')?.addEventListener('change', updatePitcherChangeText);
             document.querySelectorAll('[data-status]').forEach(button => {
                 const label = button.textContent.replace(/\s+/g, '');
                 const action = label.includes('\uc2dc\uc791') ? 'START_GAME'
@@ -3022,9 +2376,251 @@
             });
         }
 
+
+
+        const FIELD_POSITIONS = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'];
+        const FIELD_POSITION_LABELS = { C: '포수', '1B': '1루수', '2B': '2루수', '3B': '3루수', SS: '유격수', LF: '좌익수', CF: '중견수', RF: '우익수', DH: '지명타자', P: '투수' };
+        let lineupEditor = null;
+
+        function installLineupTab() {
+            document.getElementById('lineupReloadBtn')?.addEventListener('click', () => {
+                const matchId = Number(document.getElementById('lineupMatchSelect')?.value || state.matchId || 0);
+                if (matchId) loadLineupEditor(matchId);
+            });
+            document.getElementById('lineupSaveBtn')?.addEventListener('click', saveLineupEditor);
+            document.getElementById('lineupMatchSelect')?.addEventListener('change', event => {
+                const matchId = Number(event.target.value || 0);
+                if (matchId) loadLineupEditor(matchId);
+            });
+            document.getElementById('lineupTeamGrid')?.addEventListener('change', handleLineupChange);
+        }
+
+        function renderLineupMatchOptions() {
+            const select = document.getElementById('lineupMatchSelect');
+            if (!select) return;
+            const orderedGames = [...state.games].sort(compareAdminGames);
+            select.innerHTML = orderedGames.map(game => `<option value="${game.matchId}">${gameLabel(game)} · ${game.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
+            if (state.matchId) select.value = String(state.matchId);
+        }
+
+        async function openLineupEditor(matchId) {
+            state.matchId = Number(matchId);
+            const controlSelect = document.getElementById('adminBaseballMatchSelect');
+            if (controlSelect) controlSelect.value = String(matchId);
+            renderLineupMatchOptions();
+            showAdminView('lineup');
+            await loadLineupEditor(matchId);
+        }
+
+        async function loadLineupEditor(matchId) {
+            const summary = document.getElementById('lineupSummary');
+            const grid = document.getElementById('lineupTeamGrid');
+            if (summary) summary.textContent = '라인업 데이터를 불러오는 중입니다.';
+            if (grid) grid.innerHTML = '';
+            try {
+                lineupEditor = await fetchJson(`${API}/games/${matchId}/lineup-editor`);
+                renderLineupMatchOptions();
+                renderLineupEditor();
+            } catch (error) {
+                if (summary) summary.textContent = error.message || '라인업 데이터를 불러오지 못했습니다.';
+            }
+        }
+
+        function renderLineupEditor() {
+            if (!lineupEditor) return;
+            const summary = document.getElementById('lineupSummary');
+            const status = lineupEditor.lineupStatus || {};
+            if (summary) {
+                summary.innerHTML = `
+                  <span><span class="lineup-status-dot ${status.ready ? 'ready' : ''}"></span><strong>match ${lineupEditor.matchId}</strong> · ${lineupEditor.awayTeam?.name || '-'} vs ${lineupEditor.homeTeam?.name || '-'}</span>
+                  <span>홈 ${status.homeStarterCount || 0}/9 + 투수 ${status.homePitcherCount || 0}/1 · 원정 ${status.awayStarterCount || 0}/9 + 투수 ${status.awayPitcherCount || 0}/1</span>
+                `;
+            }
+            const grid = document.getElementById('lineupTeamGrid');
+            if (!grid) return;
+            grid.innerHTML = [
+                renderTeamLineup(lineupEditor.awayTeam, lineupEditor.awayLineup || [], 'away'),
+                renderTeamLineup(lineupEditor.homeTeam, lineupEditor.homeLineup || [], 'home')
+            ].join('');
+        }
+
+        function renderTeamLineup(team, entries, side) {
+            const starters = entries.filter(entry => entry.included && entry.starter);
+            const pitcher = starters.find(entry => isPitcherPosition(entry.position || entry.playerPosition));
+            const batting = starters
+                .filter(entry => !isPitcherPosition(entry.position || entry.playerPosition))
+                .sort((a, b) => Number(a.orderNum || 99) - Number(b.orderNum || 99));
+            const ready = pitcher && batting.length === 9 && new Set(batting.map(row => row.orderNum)).size === 9;
+            return `
+              <article class="lineup-team-panel" data-side="${side}" data-team-id="${team?.teamId || ''}">
+                <div class="lineup-team-head">
+                  <div><h3>${team?.name || '-'}</h3><div class="panel-sub">${side === 'home' ? '홈팀' : '원정팀'} · ${ready ? '선발 구성 완료' : '선발 구성 필요'}</div></div>
+                  <span class="badge ${ready ? 'live' : 'warn'}">${ready ? '완료' : '등록 필요'}</span>
+                </div>
+                <div class="lineup-team-body">
+                  <div class="lineup-starter-summary">
+                    <div class="lineup-slot"><b>SP</b><span>${pitcher?.playerName || '선발투수 미지정'}</span></div>
+                    ${Array.from({ length: 9 }, (_, index) => {
+                const order = index + 1;
+                const row = batting.find(item => Number(item.orderNum) === order);
+                return `<div class="lineup-slot"><b>${order}번 ${row?.position ? `· ${positionLabel(row.position)}` : ''}</b><span>${row?.playerName || '미지정'}</span></div>`;
+            }).join('')}
+                  </div>
+                  <div class="lineup-table-wrap">
+                    <table class="lineup-table">
+                      <thead><tr><th>선수</th><th>구분</th><th>역할</th><th>타순</th><th>포지션</th></tr></thead>
+                      <tbody>${entries.map(entry => renderLineupRow(entry)).join('')}</tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
+            `;
+        }
+
+        function renderLineupRow(entry) {
+            const role = !entry.included ? 'excluded' : entry.starter ? 'starter' : 'candidate';
+            const pitcher = isPitcherPosition(entry.position || entry.playerPosition);
+            const orderOptions = [''].concat(Array.from({ length: 9 }, (_, i) => String(i + 1)))
+                .map(value => `<option value="${value}"${String(entry.orderNum || '') === value ? ' selected' : ''}>${value || '-'}</option>`)
+                .join('');
+            const positionOptions = (pitcher ? ['P'] : FIELD_POSITIONS)
+                .map(value => `<option value="${value}"${normalizePositionCode(entry.position || entry.playerPosition) === value ? ' selected' : ''}>${positionLabel(value)}</option>`)
+                .join('');
+            return `
+              <tr data-player-id="${entry.playerId}" data-team-id="${entry.teamId}">
+                <td><strong>${entry.playerName || '-'}</strong><div class="lineup-player-meta">#${entry.jerseyNumber ?? '-'} · 기본 ${entry.playerPosition || '-'}</div></td>
+                <td>${pitcher ? '<span class="badge ready">투수</span>' : '<span class="badge">야수</span>'}</td>
+                <td><select class="lineup-role"><option value="excluded"${role === 'excluded' ? ' selected' : ''}>제외</option><option value="candidate"${role === 'candidate' ? ' selected' : ''}>후보</option><option value="starter"${role === 'starter' ? ' selected' : ''}>선발</option></select></td>
+                <td><select class="lineup-order" ${pitcher ? 'disabled' : ''}>${orderOptions}</select></td>
+                <td><select class="lineup-position">${positionOptions}</select></td>
+              </tr>
+            `;
+        }
+
+        function handleLineupChange(event) {
+            const row = event.target.closest('tr[data-player-id]');
+            if (!row || !lineupEditor) return;
+            const playerId = Number(row.dataset.playerId);
+            const entry = findLineupEntry(playerId);
+            if (!entry) return;
+            const role = row.querySelector('.lineup-role')?.value || 'excluded';
+            const position = row.querySelector('.lineup-position')?.value || entry.position || entry.playerPosition;
+            const orderValue = row.querySelector('.lineup-order')?.value || '';
+            entry.included = role !== 'excluded';
+            entry.starter = role === 'starter';
+            entry.position = position;
+            entry.orderNum = entry.starter && !isPitcherPosition(position) && orderValue ? Number(orderValue) : null;
+            renderLineupEditor();
+        }
+
+        function findLineupEntry(playerId) {
+            return [...(lineupEditor.homeLineup || []), ...(lineupEditor.awayLineup || [])]
+                .find(entry => Number(entry.playerId) === Number(playerId));
+        }
+
+        async function saveLineupEditor() {
+            if (!lineupEditor) {
+                window.alert('먼저 경기를 선택하세요.');
+                return;
+            }
+            const entries = [...(lineupEditor.homeLineup || []), ...(lineupEditor.awayLineup || [])]
+                .map(entry => ({
+                    teamId: entry.teamId,
+                    playerId: entry.playerId,
+                    included: Boolean(entry.included),
+                    starter: Boolean(entry.included && entry.starter),
+                    orderNum: entry.included && entry.starter && !isPitcherPosition(entry.position) ? entry.orderNum : null,
+                    position: entry.position || entry.playerPosition
+                }));
+            try {
+                lineupEditor = await putJson(`${API}/games/${lineupEditor.matchId}/lineup`, { entries });
+                await attachLineupStatuses();
+                renderSchedule();
+                renderLineupMatchOptions();
+                renderLineupEditor();
+                notify('라인업이 저장되었습니다.');
+            } catch (error) {
+                window.alert(error.message || '라인업 저장 실패');
+            }
+        }
+
+        async function putJson(url, body) {
+            const res = await requestWithAuth(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) {
+                const message = await res.text();
+                if (res.status === 401) clearAdminAuthAndRedirect();
+                throw new Error(message || String(res.status));
+            }
+            return res.json();
+        }
+
+        function isPitcherPosition(position) {
+            return normalizePositionCode(position) === 'P';
+        }
+
+        function normalizePositionCode(position) {
+            const value = String(position || '').trim().toUpperCase();
+            if (['P', 'SP', 'RP', 'RHP', 'LHP'].includes(value) || value.includes('투수')) return 'P';
+            if (value.includes('포수')) return 'C';
+            if (value.includes('1루')) return '1B';
+            if (value.includes('2루')) return '2B';
+            if (value.includes('3루')) return '3B';
+            if (value.includes('유격')) return 'SS';
+            if (value.includes('좌익')) return 'LF';
+            if (value.includes('중견')) return 'CF';
+            if (value.includes('우익')) return 'RF';
+            if (value.includes('지명')) return 'DH';
+            return value || '-';
+        }
+
+        function positionLabel(position) {
+            const code = normalizePositionCode(position);
+            return FIELD_POSITION_LABELS[code] || code;
+        }
+
+        function decodeJwtPayload(token) {
+            try {
+                const payload = token.split('.')[1];
+                if (!payload) return {};
+                const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+                const json = decodeURIComponent(atob(base64).split('').map(ch => '%' + ('00' + ch.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                return JSON.parse(json);
+            } catch (e) {
+                return {};
+            }
+        }
+
+        async function fillAdminProfile() {
+            const token = getAccessToken();
+            const payload = decodeJwtPayload(token);
+            const name = localStorage.getItem('nickname') || localStorage.getItem('loginId') || payload.sub || '관리자';
+            const role = localStorage.getItem('role') || payload.role || 'ADMIN';
+            setText('adminProfileName', name);
+            setText('adminProfileRole', role === 'ADMIN' ? 'ADMIN' : role);
+            document.getElementById('adminLogoutBtn')?.addEventListener('click', () => {
+                const accessToken = getAccessToken();
+                const finish = () => clearAdminAuthAndRedirect();
+                if (!accessToken) { finish(); return; }
+                fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                }).finally(finish);
+            }, { once: true });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             installStyles();
             installScheduleTab();
+            installLineupTab();
+            installNavigation();
+            fillAdminProfile();
             ensureControlSelect();
             bindCommandButtons();
             loadGames();

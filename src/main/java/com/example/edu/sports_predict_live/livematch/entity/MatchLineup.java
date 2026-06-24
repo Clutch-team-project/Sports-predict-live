@@ -32,4 +32,21 @@ public class MatchLineup {
 
     @Column(name = "position", length = 30)
     private String position;
+
+    public static MatchLineup create(Long matchId, Long teamId, Long playerId, boolean starter, Integer orderNum, String position) {
+        MatchLineup lineup = new MatchLineup();
+        lineup.matchId = matchId;
+        lineup.teamId = teamId;
+        lineup.playerId = playerId;
+        lineup.starter = starter;
+        lineup.orderNum = orderNum;
+        lineup.position = position;
+        return lineup;
+    }
+
+    public void update(boolean starter, Integer orderNum, String position) {
+        this.starter = starter;
+        this.orderNum = orderNum;
+        this.position = position;
+    }
 }

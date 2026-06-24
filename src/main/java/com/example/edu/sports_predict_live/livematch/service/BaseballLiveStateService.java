@@ -112,6 +112,8 @@ public class BaseballLiveStateService {
                 match.getStatus(),
                 match.getScheduledAt(),
                 match.getVenue(),
+                match.getWinningPitcher(),
+                match.getLosingPitcher(),
                 state.currentPeriod,
                 teamInfo(match.getHomeTeam()),
                 teamInfo(match.getAwayTeam()),

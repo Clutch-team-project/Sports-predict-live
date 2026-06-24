@@ -1988,9 +1988,10 @@
         .live-toolbar-actions {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
             flex-wrap: wrap;
             justify-content: flex-end;
+            margin-left: auto;
         }
 
         .auto-refresh-toggle {
@@ -2019,6 +2020,51 @@
             font-size: 11px;
             font-style: normal;
             font-weight: 850;
+        }
+
+        .game-finished-summary {
+            margin: 16px 24px 0;
+            padding: 18px 22px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #ffffff;
+            color: var(--text);
+        }
+
+        .game-finished-summary strong {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .game-finished-summary div {
+            padding: 8px 0;
+            border-top: 1px solid #e5edf7;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .game-finished-summary span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .game-finished-summary .win-mark {
+            background: #2563eb;
+        }
+
+        .game-finished-summary .lose-mark {
+            background: #be123c;
         }
     </style>
 </head>
@@ -2080,13 +2126,11 @@
             <!-- ================= Relay Tab ================= -->
             <section id="relay" class="tab-view relay-card">
                 <div class="relay-toolbar">
-
-
                     <div class="live-toolbar-actions">
                         <label class="auto-refresh-toggle">
                             <input type="checkbox" id="autoRefreshToggle" checked>
                             <span>자동 업데이트</span>
-                            <em id="autoRefreshStatus">5초마다</em>
+                            <em id="autoRefreshStatus"></em>
                         </label>
 
                         <button class="refresh-label" type="button" id="refreshButton">
@@ -2170,6 +2214,7 @@
 
                 <!-- Timeline -->
                 <section class="br-timeline-panel">
+                    <div id="gameFinishedSummary"></div>
                     <div class="br-inning-tabs" id="inningTabs"></div>
                     <div class="br-timeline-body" id="timelineBody">
                         <div class="empty-state">match_event 데이터가 없습니다.</div>
@@ -2604,7 +2649,7 @@
                 clearTimeout(window.__autoRefreshStatusTimer);
                 window.__autoRefreshStatusTimer = setTimeout(() => {
                     if (document.getElementById('autoRefreshToggle')?.checked) {
-                        target.textContent = `${AUTO_REFRESH_MS / 1000}초마다`;
+                        target.textContent = '';
                     }
                 }, 1200);
             }
@@ -2612,7 +2657,7 @@
             return;
         }
 
-        target.textContent = `${AUTO_REFRESH_MS / 1000}초마다`;
+        target.textContent = '';
     }
 
     function startAutoRefresh() {
@@ -2622,7 +2667,7 @@
             loadBaseballLive({ silent: true });
         }, AUTO_REFRESH_MS);
 
-        updateAutoRefreshStatus(`${AUTO_REFRESH_MS / 1000}초마다`);
+        updateAutoRefreshStatus('');
     }
 
     function stopAutoRefresh() {
@@ -2639,7 +2684,7 @@
         toggle.addEventListener('change', () => {
             if (toggle.checked) {
                 startAutoRefresh();
-                updateAutoRefreshStatus(`${AUTO_REFRESH_MS / 1000}초마다`);
+                updateAutoRefreshStatus('');
             } else {
                 stopAutoRefresh();
                 updateAutoRefreshStatus('꺼짐');
@@ -2676,6 +2721,8 @@
             scoreboard,
             scheduledAt: data.scheduledAt || null,
             venue: data.venue || '',
+            winningPitcher: data.winningPitcher || '',
+            losingPitcher: data.losingPitcher || '',
             score: {
                 home: scoreboard.homeScore ?? 0,
                 away: scoreboard.awayScore ?? 0
@@ -3022,8 +3069,27 @@
        06. Render: Timeline
     ========================================================= */
     function renderTimeline(data) {
+        renderGameFinishedSummary(data);
         renderInningTabs(data);
         renderTimelinePeriod(data, data.currentPeriod);
+    }
+
+    function renderGameFinishedSummary(data) {
+        const target = $('#gameFinishedSummary');
+        if (!target) return;
+
+        if (statusKind(data) !== 'finished') {
+            target.innerHTML = '';
+            return;
+        }
+
+        target.innerHTML = `
+            <div class="game-finished-summary">
+                <strong>경기가 종료되었습니다.</strong>
+                <div><span class="win-mark">승</span>승리투수 · ${escapeHtml(data.winningPitcher || '-')}</div>
+                <div><span class="lose-mark">패</span>패전투수 · ${escapeHtml(data.losingPitcher || '-')}</div>
+            </div>
+        `;
     }
 
     function renderInningTabs(data) {

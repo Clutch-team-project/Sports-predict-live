@@ -10,6 +10,8 @@ public record BaseballLiveDTO(
         String status,
         LocalDateTime scheduledAt,
         String venue,
+        String winningPitcher,
+        String losingPitcher,
         String currentPeriod,
         TeamInfo homeTeam,
         TeamInfo awayTeam,
