@@ -16,6 +16,7 @@ public enum BaseballAdminAction {
     TRIPLE,
     HOMERUN,
     WALK,
+    INTENTIONAL_WALK,
     HIT_BY_PITCH,
     GROUNDOUT,
     FLYOUT,
@@ -26,6 +27,9 @@ public enum BaseballAdminAction {
     DOUBLE_PLAY,
     STOLEN_BASE,
     CAUGHT_STEALING,
+    WILD_PITCH,
+    PASSED_BALL,
+    BALK,
     RUNNER_ADVANCE,
     SCORE,
     FORCE_OUT,
@@ -36,5 +40,6 @@ public enum BaseballAdminAction {
     PINCH_RUNNER,
     DEFENSIVE_SUBSTITUTION,
     END_INNING,
+    UNDO_LAST_EVENT,
     CLEAR_EVENTS
 }

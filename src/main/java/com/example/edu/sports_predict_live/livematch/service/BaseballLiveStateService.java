@@ -9,7 +9,10 @@ import com.example.edu.sports_predict_live.livematch.repository.MatchLineupRepos
 import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import com.example.edu.sports_predict_live.player.entity.Player;
+import com.example.edu.sports_predict_live.player.entity.PlayerSeasonStatBaseball;
 import com.example.edu.sports_predict_live.player.repository.PlayerRepository;
+import com.example.edu.sports_predict_live.player.repository.PlayerSeasonStatBaseballRepository;
+import com.example.edu.sports_predict_live.prediction.service.PredictionService;
 import com.example.edu.sports_predict_live.team.entity.Team;
 import com.example.edu.sports_predict_live.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +86,9 @@ public class BaseballLiveStateService {
     private final MatchEventRepository matchEventRepository;
     private final MatchLineupRepository matchLineupRepository;
     private final PlayerRepository playerRepository;
+    private final PlayerSeasonStatBaseballRepository playerSeasonStatBaseballRepository;
     private final TeamRepository teamRepository;
+    private final PredictionService predictionService;
 
     public BaseballLiveDTO getBaseballLive(Long matchId) {
         Match match = matchRepository.findByIdWithTeams(matchId)
@@ -92,18 +97,21 @@ public class BaseballLiveStateService {
         List<MatchLineup> lineups = matchLineupRepository.findByMatchIdOrderByTeamIdAscStarterDescOrderNumAscMatchLineupIdAsc(matchId);
 
         Map<Long, Player> playerById = loadPlayerMap(events, lineups);
+        Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId = loadSeasonStatMap(playerById.keySet(), match.getSeason());
         Map<Long, Team> teamById = loadTeamMap(match, lineups);
         List<MatchLineupDTO> lineupDtos = lineups.stream()
                 .map(lineup -> MatchLineupDTO.from(lineup, teamById.get(lineup.getTeamId()), playerById.get(lineup.getPlayerId())))
                 .toList();
 
-        State state = buildState(match, events, lineups, playerById, teamById);
+        State state = buildState(match, events, lineups, playerById, teamById, seasonStatByPlayerId);
         Long fieldingTeamId = fieldingTeamId(match, state.currentPeriod);
         Long battingTeamId = battingTeamId(match, state.currentPeriod);
 
         return new BaseballLiveDTO(
                 match.getMatchId(),
                 match.getStatus(),
+                match.getScheduledAt(),
+                match.getVenue(),
                 state.currentPeriod,
                 teamInfo(match.getHomeTeam()),
                 teamInfo(match.getAwayTeam()),
@@ -114,26 +122,29 @@ public class BaseballLiveStateService {
                 fielders(lineups, playerById, fieldingTeamId),
                 onDeck(lineups, playerById, battingTeamId, state.lastBatterId),
                 atBatCards(state.atBats, state.playerStats, state.currentAtBat),
+                events.size(),
                 state.playerStats.values().stream().map(PlayerStatBuilder::toDto).toList(),
                 state.pitcherStats.values().stream().map(PitcherStatBuilder::toDto).toList(),
-                lineupDtos
+                lineupDtos,
+                predictionService.getMatchSummary(matchId)
         );
     }
 
     private State buildState(Match match, List<MatchEvent> events, List<MatchLineup> lineups,
-                             Map<Long, Player> playerById, Map<Long, Team> teamById) {
-        State state = new State(match, playerById, teamById);
-        String lastPeriod = events.isEmpty() ? "경기 전" : null;
+                             Map<Long, Player> playerById, Map<Long, Team> teamById,
+                             Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId) {
+        State state = new State(match, playerById, teamById, seasonStatByPlayerId);
+        String lastPeriod = events.isEmpty() ? "PRE_GAME" : null;
 
         for (MatchEvent event : events) {
             String type = type(event);
-            String period = blankToDefault(event.getEventPeriod(), lastPeriod == null ? "경기 전" : lastPeriod);
+            String period = blankToDefault(event.getEventPeriod(), lastPeriod == null ? "PRE_GAME" : lastPeriod);
             state.currentPeriod = period;
             lastPeriod = period;
 
             Long defenseTeamId = fieldingTeamId(match, period);
             Long battingTeamId = battingTeamId(match, period);
-            state.ensurePitcher(defenseTeamId, starterPitcher(lineups, playerById, teamById, defenseTeamId));
+            state.ensurePitcher(defenseTeamId, starterPitcher(lineups, playerById, teamById, defenseTeamId, seasonStatByPlayerId));
 
             if ("inning_start".equals(type)) {
                 state.resetCount();
@@ -143,7 +154,7 @@ public class BaseballLiveStateService {
                 state.resetAtBat(event, playerById, lineups, battingTeamId);
             }
             if ("pitcher_change".equals(type)) {
-                state.changePitcher(defenseTeamId, pitcherFromPlayer(event.getPlayerId(), defenseTeamId, playerById, teamById));
+                state.changePitcher(defenseTeamId, pitcherFromPlayer(event.getPlayerId(), defenseTeamId, playerById, teamById, seasonStatByPlayerId));
             }
 
             PitcherStatBuilder pitcher = state.currentPitcher(defenseTeamId);
@@ -155,6 +166,15 @@ public class BaseballLiveStateService {
             }
             if (WALK_TYPES.contains(type) && pitcher != null) {
                 pitcher.walksAllowed++;
+            }
+            if ("hit_by_pitch".equals(type) && pitcher != null) {
+                pitcher.hitByPitchAllowed++;
+            }
+            if ("homerun".equals(type) && pitcher != null) {
+                pitcher.homeRunsAllowed++;
+            }
+            if ("score".equals(type) && pitcher != null) {
+                pitcher.runsAllowed++;
             }
             if (STRIKEOUT_TYPES.contains(type) && pitcher != null) {
                 pitcher.strikeouts++;
@@ -194,6 +214,21 @@ public class BaseballLiveStateService {
                 .collect(Collectors.toMap(Player::getPlayerId, player -> player));
     }
 
+    private Map<Long, PlayerSeasonStatBaseball> loadSeasonStatMap(Set<Long> playerIds, String season) {
+        if (playerIds == null || playerIds.isEmpty()) {
+            return Map.of();
+        }
+        String targetSeason = season == null || season.isBlank() ? "2026" : season;
+        return playerSeasonStatBaseballRepository.findByPlayerIdsAndSeason(playerIds, targetSeason).stream()
+                .filter(stat -> stat.getPlayerSeasonStat() != null)
+                .filter(stat -> stat.getPlayerSeasonStat().getPlayer() != null)
+                .collect(Collectors.toMap(
+                        stat -> stat.getPlayerSeasonStat().getPlayer().getPlayerId(),
+                        stat -> stat,
+                        (left, right) -> left
+                ));
+    }
+
     private Map<Long, Team> loadTeamMap(Match match, List<MatchLineup> lineups) {
         Set<Long> ids = new HashSet<>();
         ids.add(match.getHomeTeam().getTeamId());
@@ -205,7 +240,12 @@ public class BaseballLiveStateService {
 
     private BaseballLiveDTO.TeamInfo teamInfo(Team team) {
         String name = team.getName();
-        return new BaseballLiveDTO.TeamInfo(team.getTeamId(), name, name == null || name.isBlank() ? "-" : name.substring(0, 1));
+        return new BaseballLiveDTO.TeamInfo(
+                team.getTeamId(),
+                name,
+                name == null || name.isBlank() ? "-" : name.substring(0, 1),
+                team.getEmblemUrl()
+        );
     }
 
     private List<BaseballLiveDTO.Fielder> fielders(List<MatchLineup> lineups, Map<Long, Player> playerById, Long teamId) {
@@ -275,17 +315,19 @@ public class BaseballLiveStateService {
     }
 
     private PitcherStatBuilder starterPitcher(List<MatchLineup> lineups, Map<Long, Player> playerById,
-                                              Map<Long, Team> teamById, Long defenseTeamId) {
+                                              Map<Long, Team> teamById, Long defenseTeamId,
+                                              Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId) {
         return lineups.stream()
                 .filter(MatchLineup::isStarter)
                 .filter(lineup -> Objects.equals(lineup.getTeamId(), defenseTeamId))
                 .filter(lineup -> "P".equals(positionCode(lineup.getPosition())))
                 .findFirst()
-                .map(lineup -> pitcherFromPlayer(lineup.getPlayerId(), defenseTeamId, playerById, teamById))
+                .map(lineup -> pitcherFromPlayer(lineup.getPlayerId(), defenseTeamId, playerById, teamById, seasonStatByPlayerId))
                 .orElse(null);
     }
 
-    private PitcherStatBuilder pitcherFromPlayer(Long playerId, Long teamId, Map<Long, Player> playerById, Map<Long, Team> teamById) {
+    private PitcherStatBuilder pitcherFromPlayer(Long playerId, Long teamId, Map<Long, Player> playerById, Map<Long, Team> teamById,
+                                                 Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId) {
         if (playerId == null) {
             return null;
         }
@@ -296,7 +338,8 @@ public class BaseballLiveStateService {
                 playerName(player, playerId),
                 teamId,
                 team != null ? team.getName() : null,
-                player != null ? positionCode(player.getPosition()) : "P"
+                player != null ? positionCode(player.getPosition()) : "P",
+                seasonStatByPlayerId.get(playerId)
         );
     }
 
@@ -369,9 +412,8 @@ public class BaseballLiveStateService {
         };
     }
 
+    // 더블 플레이 트리플 플레이에 대한 아웃처리 로직 수정 전부다 아웃카운트 하나로 처리.
     private int outDelta(String type) {
-        if ("double_play".equals(type)) return 2;
-        if ("triple_play".equals(type)) return 3;
         return OUT_TYPES.contains(type) ? 1 : 0;
     }
 
@@ -385,37 +427,43 @@ public class BaseballLiveStateService {
 
     private String eventLabel(String type) {
         return switch (type) {
-            case "ball", "pitch_clock_ball" -> "볼";
-            case "called_strike", "swinging_strike", "check_swing_strike" -> "스트라이크";
-            case "pitch_clock_strike" -> "피치클락 스트라이크";
-            case "foul" -> "파울";
-            case "foul_tip" -> "파울팁";
-            case "bunt_foul" -> "번트 파울";
-            case "single", "double", "triple", "homerun", "field_error", "fielder_choice" -> "타격";
-            case "walk", "intentional_walk", "hit_by_pitch" -> "출루";
-            case "groundout", "flyout", "lineout", "popout", "double_play", "triple_play", "sac_bunt", "sac_fly" -> "아웃";
-            case "stolen_base" -> "도루";
-            case "caught_stealing" -> "도루 실패";
-            case "runner_advance" -> "주자 진루";
-            case "score" -> "득점";
-            case "pitcher_change" -> "투수 교체";
-            case "inning_end" -> "이닝 종료";
-            default -> STRIKEOUT_TYPES.contains(type) ? "삼진" : type;
+            case "ball", "pitch_clock_ball" -> "\uBCFC";
+            case "called_strike", "swinging_strike", "check_swing_strike" -> "\uC2A4\uD2B8\uB77C\uC774\uD06C";
+            case "pitch_clock_strike" -> "\uD53C\uCE58\uD074\uB77D \uC2A4\uD2B8\uB77C\uC774\uD06C";
+            case "foul" -> "\uD30C\uC6B8";
+            case "foul_tip" -> "\uD30C\uC6B8\uD301";
+            case "bunt_foul" -> "\uBC88\uD2B8 \uD30C\uC6B8";
+            case "single", "double", "triple", "homerun", "field_error", "fielder_choice" -> "\uD0C0\uACA9";
+            case "walk" -> "\uBCFC\uB137";
+            case "intentional_walk" -> "\uACE0\uC7584\uAD6C";
+            case "hit_by_pitch" -> "\uC0AC\uAD6C";
+            case "groundout", "flyout", "lineout", "popout", "double_play", "triple_play", "sac_bunt", "sac_fly" -> "\uC544\uC6C3";
+            case "stolen_base" -> "\uB3C4\uB8E8";
+            case "caught_stealing" -> "\uB3C4\uB8E8 \uC2E4\uD328";
+            case "runner_advance" -> "\uC8FC\uC790 \uC9C4\uB8E8";
+            case "score" -> "\uB4DD\uC810";
+            case "pitcher_change" -> "\uD22C\uC218 \uAD50\uCCB4";
+            case "inning_end" -> "\uC774\uB2DD \uC885\uB8CC";
+            default -> STRIKEOUT_TYPES.contains(type) ? "\uC0BC\uC9C4" : type;
         };
     }
-
     private String countText(int balls, int strikes) {
         return balls + " - " + Math.min(strikes, 2);
     }
 
     private String inningsPitched(int outs) {
-        return (outs / 3) + "." + (outs % 3) + "이닝";
+        return (outs / 3) + "." + (outs % 3) + "\uC774\uB2DD";
+    }
+
+    private int valueOrZero(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private class State {
         private final Match match;
         private final Map<Long, Player> playerById;
         private final Map<Long, Team> teamById;
+        private final Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId;
         private final Map<Long, int[]> inningRunsByTeam = new HashMap<>();
         private final Map<Long, TeamTotals> teamTotals = new HashMap<>();
         private final Map<Long, PlayerStatBuilder> playerStats = new LinkedHashMap<>();
@@ -434,10 +482,12 @@ public class BaseballLiveStateService {
         private Long lastBatterId;
         private BaseballLiveDTO.PitcherGameStat currentPitcherStat;
 
-        private State(Match match, Map<Long, Player> playerById, Map<Long, Team> teamById) {
+        private State(Match match, Map<Long, Player> playerById, Map<Long, Team> teamById,
+                      Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId) {
             this.match = match;
             this.playerById = playerById;
             this.teamById = teamById;
+            this.seasonStatByPlayerId = seasonStatByPlayerId;
             teamTotals.put(match.getHomeTeam().getTeamId(), new TeamTotals());
             teamTotals.put(match.getAwayTeam().getTeamId(), new TeamTotals());
             inningRunsByTeam.put(match.getHomeTeam().getTeamId(), new int[9]);
@@ -456,6 +506,9 @@ public class BaseballLiveStateService {
             Long batterId = event.getPlayerId() != null ? event.getPlayerId() : nextBatterId(lineups, battingTeamId);
             lastBatterId = batterId;
             currentAtBat = new AtBatBuilder(atBats.size() + 1, event.getEventPeriod(), batterId, playerById, lineups);
+            if (batterId != null) {
+                currentAtBat.battingAvg = playerStat(batterId, battingTeamId, playerById, lineups).battingAverageText();
+            }
             atBats.add(currentAtBat);
 
         }
@@ -616,6 +669,7 @@ public class BaseballLiveStateService {
 
             if (currentAtBat == null || !Objects.equals(currentAtBat.batterId, actorId)) return;
             if (HIT_TYPES.contains(type)) stat.hits++;
+            if ("homerun".equals(type)) stat.homeRuns++;
             if (WALK_TYPES.contains(type)) stat.walks++;
             if (STRIKEOUT_TYPES.contains(type)) stat.strikeouts++;
             if (TERMINAL_TYPES.contains(type) && !currentAtBat.terminalApplied) {
@@ -656,7 +710,8 @@ public class BaseballLiveStateService {
                         playerName(player, playerId),
                         teamId,
                         lineup != null ? lineup.getOrderNum() : null,
-                        lineup != null ? positionCode(lineup.getPosition()) : (player != null ? positionCode(player.getPosition()) : "-")
+                        lineup != null ? positionCode(lineup.getPosition()) : (player != null ? positionCode(player.getPosition()) : "-"),
+                        seasonStatByPlayerId.get(playerId)
                 );
             });
         }
@@ -715,6 +770,7 @@ public class BaseballLiveStateService {
         private String terminalType;
         private String resultLabel = "진행 중";
         private String summary = "진행 중";
+        private String battingAvg = "-";
         private BaseballLiveDTO.PlayerGameStat statSnapshot;
 
         private AtBatBuilder(int order, String period, Long batterId, Map<Long, Player> playerById, List<MatchLineup> lineups) {
@@ -739,7 +795,7 @@ public class BaseballLiveStateService {
         private BaseballLiveDTO.AtBatCard toDto(PlayerStatBuilder stat, boolean current) {
             PlayerStatBuilder safeStat = stat != null
                     ? stat
-                    : new PlayerStatBuilder(batterId, batterName, null, orderNum, position);
+                    : new PlayerStatBuilder(batterId, batterName, null, orderNum, position, null);
 
             BaseballLiveDTO.PlayerGameStat displayStat;
 
@@ -760,6 +816,7 @@ public class BaseballLiveStateService {
                     current,
                     resultLabel,
                     summary,
+                    battingAvg,
                     displayStat,
                     rows
             );
@@ -772,6 +829,7 @@ public class BaseballLiveStateService {
         private final Long teamId;
         private final Integer orderNum;
         private final String position;
+        private final PlayerSeasonStatBaseball seasonStat;
         private int plateAppearances;
         private int atBats;
         private int hits;
@@ -780,17 +838,80 @@ public class BaseballLiveStateService {
         private int walks;
         private int strikeouts;
         private int steals;
+        private int homeRuns;
 
-        private PlayerStatBuilder(Long playerId, String name, Long teamId, Integer orderNum, String position) {
+        private PlayerStatBuilder(Long playerId, String name, Long teamId, Integer orderNum, String position,
+                                  PlayerSeasonStatBaseball seasonStat) {
             this.playerId = playerId;
             this.name = name;
             this.teamId = teamId;
             this.orderNum = orderNum;
             this.position = position;
+            this.seasonStat = seasonStat;
         }
 
         private BaseballLiveDTO.PlayerGameStat toDto() {
-            return new BaseballLiveDTO.PlayerGameStat(playerId, name, teamId, orderNum, position, plateAppearances, atBats, hits, runs, rbi, walks, strikeouts, steals);
+            return new BaseballLiveDTO.PlayerGameStat(
+                    playerId,
+                    name,
+                    teamId,
+                    orderNum,
+                    position,
+                    plateAppearances,
+                    atBats,
+                    hits,
+                    runs,
+                    rbi,
+                    walks,
+                    strikeouts,
+                    steals,
+                    homeRuns,
+                    battingAverageText(),
+                    seasonGamesPlayed(),
+                    seasonHits(),
+                    seasonHomeRuns(),
+                    seasonRbi()
+            );
+        }
+
+        private String battingAverageText() {
+            if (seasonStat == null || seasonStat.getBattingAvg() == null) {
+                return "-";
+            }
+            int baseHits = valueOrZero(seasonStat.getHits());
+            int baseAtBats = inferBaseAtBats(baseHits, seasonStat.getBattingAvg());
+            int totalAtBats = baseAtBats + atBats;
+            if (totalAtBats <= 0) {
+                return ".000";
+            }
+            String text = String.format(Locale.US, "%.3f", (baseHits + hits) / (double) totalAtBats);
+            return text.startsWith("0") ? text.substring(1) : text;
+        }
+
+        private int inferBaseAtBats(int baseHits, java.math.BigDecimal battingAvg) {
+            double avg = battingAvg.doubleValue();
+            if (avg <= 0) {
+                return baseHits == 0 ? 0 : baseHits;
+            }
+            return (int) Math.round(baseHits / avg);
+        }
+
+        private Integer seasonGamesPlayed() {
+            return seasonStat != null && seasonStat.getPlayerSeasonStat() != null
+                    ? seasonStat.getPlayerSeasonStat().getGamesPlayed()
+                    : null;
+        }
+
+        private Integer seasonHits() {
+            return seasonStat != null ? seasonStat.getHits() : null;
+        }
+
+        private Integer seasonHomeRuns() {
+            return seasonStat != null ? seasonStat.getHomeRuns() : null;
+        }
+
+        private Integer seasonRbi() {
+            return seasonStat != null ? seasonStat.getRbi() : null;
         }
     }
 
@@ -804,14 +925,20 @@ public class BaseballLiveStateService {
         private int hitsAllowed;
         private int strikeouts;
         private int walksAllowed;
+        private int hitByPitchAllowed;
+        private int runsAllowed;
+        private int homeRunsAllowed;
         private int outsPitched;
+        private final PlayerSeasonStatBaseball seasonStat;
 
-        private PitcherStatBuilder(Long playerId, String name, Long teamId, String teamName, String position) {
+        private PitcherStatBuilder(Long playerId, String name, Long teamId, String teamName, String position,
+                                   PlayerSeasonStatBaseball seasonStat) {
             this.playerId = playerId;
             this.name = name;
             this.teamId = teamId;
             this.teamName = teamName;
             this.position = position;
+            this.seasonStat = seasonStat;
         }
 
         private BaseballLiveDTO.PitcherGameStat toDto() {
@@ -826,8 +953,51 @@ public class BaseballLiveStateService {
                     hitsAllowed,
                     strikeouts,
                     walksAllowed,
-                    outsPitched
+                    hitByPitchAllowed,
+                    runsAllowed,
+                    homeRunsAllowed,
+                    outsPitched,
+                    gameEraText(),
+                    seasonEraText(),
+                    seasonGamesPlayed(),
+                    seasonWins(),
+                    seasonLosses(),
+                    seasonSaves(),
+                    seasonStrikeouts()
             );
+        }
+
+        private String gameEraText() {
+            if (seasonStat == null || outsPitched <= 0) {
+                return "-";
+            }
+            return String.format(Locale.US, "%.2f", runsAllowed * 27.0 / outsPitched);
+        }
+
+        private String seasonEraText() {
+            return seasonStat != null && seasonStat.getEra() != null ? seasonStat.getEra().toPlainString() : "-";
+        }
+
+        private Integer seasonGamesPlayed() {
+            return seasonStat != null && seasonStat.getPlayerSeasonStat() != null
+                    ? seasonStat.getPlayerSeasonStat().getGamesPlayed()
+                    : null;
+        }
+
+        private Integer seasonWins() {
+            return seasonStat != null ? seasonStat.getWins() : null;
+        }
+
+        private Integer seasonLosses() {
+            return seasonStat != null ? seasonStat.getLosses() : null;
+        }
+
+        private Integer seasonSaves() {
+            return seasonStat != null ? seasonStat.getSaves() : null;
+        }
+
+        private Integer seasonStrikeouts() {
+            return seasonStat != null ? seasonStat.getStrikeouts() : null;
         }
     }
 

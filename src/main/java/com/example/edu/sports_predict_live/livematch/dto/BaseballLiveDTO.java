@@ -1,10 +1,15 @@
 package com.example.edu.sports_predict_live.livematch.dto;
 
+import com.example.edu.sports_predict_live.prediction.dto.response.PredictionSummaryDTO;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record BaseballLiveDTO(
         Long matchId,
         String status,
+        LocalDateTime scheduledAt,
+        String venue,
         String currentPeriod,
         TeamInfo homeTeam,
         TeamInfo awayTeam,
@@ -15,12 +20,14 @@ public record BaseballLiveDTO(
         List<Fielder> fielders,
         List<LineupPlayer> onDeck,
         List<AtBatCard> timeline,
+        int eventCount,
         List<PlayerGameStat> playerGameStats,
         List<PitcherGameStat> pitcherGameStats,
-        List<MatchLineupDTO> lineup
+        List<MatchLineupDTO> lineup,
+        PredictionSummaryDTO prediction
 ) {
 
-    public record TeamInfo(Long teamId, String name, String logoText) {
+    public record TeamInfo(Long teamId, String name, String logoText, String emblemUrl) {
     }
 
     public record Scoreboard(
@@ -59,7 +66,17 @@ public record BaseballLiveDTO(
             int hitsAllowed,
             int strikeouts,
             int walksAllowed,
-            int outsPitched
+            int hitByPitchAllowed,
+            int runsAllowed,
+            int homeRunsAllowed,
+            int outsPitched,
+            String era,
+            String seasonEra,
+            Integer seasonGamesPlayed,
+            Integer seasonWins,
+            Integer seasonLosses,
+            Integer seasonSaves,
+            Integer seasonStrikeouts
     ) {
     }
 
@@ -86,6 +103,7 @@ public record BaseballLiveDTO(
             boolean current,
             String resultLabel,
             String summary,
+            String battingAvg,
             PlayerGameStat stat,
             List<PitchRow> pitches
     ) {
@@ -115,7 +133,13 @@ public record BaseballLiveDTO(
             int rbi,
             int walks,
             int strikeouts,
-            int steals
+            int steals,
+            int homeRuns,
+            String battingAvg,
+            Integer seasonGamesPlayed,
+            Integer seasonHits,
+            Integer seasonHomeRuns,
+            Integer seasonRbi
     ) {
     }
 }

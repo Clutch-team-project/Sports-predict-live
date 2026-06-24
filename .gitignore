@@ -50,3 +50,4 @@ docs/
 
 # Local crawler scripts
 tools/
+/crawlers/

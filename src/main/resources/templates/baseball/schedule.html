@@ -169,12 +169,18 @@
                 </div>
             </div>`;
         }
-        if (match.status === 'in_progress' || match.status === 'in_progress') {
+        if (match.status === 'live' || match.status === 'in_progress') {
             const pitcherHtml = match.currentPitcher
                 ? `<div class="text-[0.625rem] text-slate-400 mt-0.5">${match.currentPitcher}</div>`
                 : '';
+            // 이명균 수정: 중계 계산 결과의 현재 이닝(currentPeriod)을 일정 카드 LIVE 영역에 표시
+            // LMK-CODEX: show baseball live currentPeriod on schedule card
+            const livePeriodHtml = match.currentPeriod
+                ? `<div class="text-[0.625rem] text-red-500 font-black mt-0.5">${match.currentPeriod}</div>`
+                : '';
             return `<div class="w-1/3 text-center">
                 <div class="text-red-500 font-black animate-pulse text-[0.625rem]">● LIVE</div>
+                ${livePeriodHtml}
                 <div class="flex items-center justify-center gap-1 mt-0.5">
                     <span class="text-xl font-black text-red-500">${match.awayScore}</span>
                     <span class="text-slate-300 text-sm">:</span>
@@ -201,7 +207,7 @@
                 return `<div class="text-[0.625rem] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
             if (!teamWon && match.losingPitcher)
                 return `<div class="text-[0.625rem] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
-        } else if (match.status === 'scheduled' || match.status === 'in_progress') {
+        } else if (match.status === 'scheduled' || match.status === 'live' || match.status === 'in_progress') {
             const name = isAway ? match.startingPitcherAway : match.startingPitcherHome;
             if (name) return `<div class="text-[0.625rem] text-gray-500 mt-0.5">선 ${name}</div>`;
         }
@@ -209,7 +215,7 @@
     }
 
     function renderActionBtn(match) {
-        if (match.status === 'in_progress' || match.status === 'in_progress') {
+        if (match.status === 'live' || match.status === 'in_progress') {
             return `<button class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-xl animate-pulse">라이브</button>`;
         }
         if (match.status === 'finished') {
@@ -390,13 +396,13 @@
             }
 
             container.innerHTML = matches.map(m => `
-            <div onclick="goBaseballLive(${m.matchId})"
-                class="bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer">
+            <div class="bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors">
                     <div class="flex items-center justify-between p-4">
                         <div class="w-20 shrink-0">
                             <span class="font-black text-slate-500 text-sm">${m.scheduledAt}</span>
                         </div>
-                        <div class="flex-grow flex justify-around items-center px-4">
+                        <div onclick="goBaseballLive(${m.matchId})"
+                             class="flex-grow flex justify-around items-center px-4 cursor-pointer">
                             <div class="w-1/3 flex flex-col items-end">
                                 <div class="flex items-center justify-end gap-1.5">
                                     <span class="font-bold text-slate-800 text-sm">${m.awayTeamName}</span>
@@ -413,15 +419,25 @@
                                 ${pitcherHtml(m, false)}
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 ml-2 shrink-0">
+                        <div class="schedule-action-cell flex items-center gap-2 ml-2 shrink-0" data-match-id="${m.matchId}">
                             <span class="text-slate-400 text-xs">${m.venue ?? ''}</span>
                             ${renderActionBtn(m)}
                         </div>
                     </div>
-                    <div class="border-t border-slate-100" id="pred-${m.matchId}" onclick="event.stopPropagation()></div>
+                    <div class="border-t border-slate-100" id="pred-${m.matchId}"></div>
                     <div id="ai-pred-${m.matchId}" class="hidden"></div>
                 </div>
             `).join('');
+
+            document.querySelectorAll('.schedule-action-cell').forEach(cell => {
+                const matchId = cell.dataset.matchId;
+                const firstButton = cell.querySelector('button:not([disabled])');
+                if (!matchId || !firstButton) return;
+                firstButton.addEventListener('click', event => {
+                    event.stopPropagation();
+                    goBaseballLive(matchId);
+                });
+            });
 
             if (localStorage.getItem('accessToken')) {
                 loadPredictions(matches);
@@ -581,14 +597,14 @@
     }
 
 
-    //  초기화
+    //  일정 자동 새로고침
     renderWeek();
     loadMatches();
     setInterval(() => {
         if (currentMatches.some(match => match.status === 'live' || match.status === 'in_progress')) {
             loadMatches();
         }
-    }, 10000);
+    }, 60000);
 </script>
 </body>
 </html>

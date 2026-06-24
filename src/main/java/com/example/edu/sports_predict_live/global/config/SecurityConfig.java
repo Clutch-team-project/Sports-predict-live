@@ -93,8 +93,12 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
+                        .requestMatchers("/admin/control").permitAll()
                         .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
+                        .requestMatchers("/games/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/games/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
                         .requestMatchers(

@@ -38,6 +38,12 @@ public class PredictionController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
+
+    @GetMapping("/match/{matchId}/summary")
+    public ResponseEntity<?> getMatchSummary(@PathVariable Long matchId) {
+        return ResponseEntity.ok(predictionService.getMatchSummary(matchId));
+    }
+
     // 내 예측 조회 — LOL
     @GetMapping("/lol/{lolMatchId}")
     public ResponseEntity<?> getMyLolPrediction(

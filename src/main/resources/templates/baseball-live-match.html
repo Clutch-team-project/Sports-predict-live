@@ -195,6 +195,12 @@
             color: #1d4ed8;
         }
 
+        .team-logo img {
+            max-width: 48px;
+            max-height: 48px;
+            object-fit: contain;
+        }
+
         .team-name {
             color: var(--text);
             font-size: 16px;
@@ -235,6 +241,39 @@
             box-shadow: 0 0 0 5px rgba(239, 68, 68, .14);
         }
 
+        .scoreboard.status-scheduled .status-pill {
+            border-color: #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .scoreboard.status-scheduled .status-dot {
+            background: #3b82f6;
+            box-shadow: 0 0 0 5px rgba(59, 130, 246, .14);
+        }
+
+        .scoreboard.status-live .status-pill {
+            border-color: #bbf7d0;
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .scoreboard.status-live .status-dot {
+            background: #10b981;
+            box-shadow: 0 0 0 5px rgba(16, 185, 129, .14);
+        }
+
+        .scoreboard.status-finished .status-pill {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .scoreboard.status-finished .status-dot {
+            background: #64748b;
+            box-shadow: 0 0 0 5px rgba(100, 116, 139, .14);
+        }
+
         .score-number {
             color: var(--text);
             font-size: 38px;
@@ -245,8 +284,19 @@
         .score-caption {
             margin-top: 5px;
             color: var(--muted);
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 800;
+            white-space: pre-line;
+        }
+
+        .scoreboard.status-scheduled .score-number {
+            font-size: 16px;
+            letter-spacing: 0;
+            line-height: 1.45;
+        }
+
+        .scoreboard.status-scheduled .inning-board {
+            display: none;
         }
 
         .inning-board {
@@ -1371,10 +1421,9 @@
         /* =========================================================
            11. Prediction / Chat
         ========================================================= */
-        .prediction,
-        .chat { background: #ffffff; }
+        .prediction { background: #ffffff;
+                      padding: 15px; }
 
-        .prediction { padding: 15px; }
 
         .vote-title {
             display: flex;
@@ -1405,6 +1454,12 @@
             border-radius: 12px;
             background: #ffffff;
             text-align: center;
+            cursor: pointer;
+        }
+
+        .vote-team.disabled {
+            cursor: default;
+            opacity: .78;
         }
 
         .vote-team strong {
@@ -1445,74 +1500,456 @@
             font-weight: 800;
         }
 
+        /* =========================================================
+           11. Chat / Support Talk
+        ========================================================= */
+
         .chat {
             height: 680px;
             display: flex;
             flex-direction: column;
+            background: #ffffff;
         }
 
-        .chat-list {
-            flex: 1;
-            display: grid;
-            align-content: start;
-            gap: 8px;
-            padding: 12px;
-            overflow-y: auto;
-            scrollbar-width: none;
-        }
-
-        .chat-list::-webkit-scrollbar { width: 0; height: 0; }
-
-        .chat-msg {
-            padding: 9px 10px;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            background: var(--soft);
-        }
-
-        .chat-user {
+        /* 헤더 */
+        .chat-head {
+            min-height: 58px;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            margin-bottom: 5px;
+            gap: 12px;
+
+            padding: 0 14px 0 18px;
+            border-bottom: 1px solid var(--line-soft);
+            background: #ffffff;
+        }
+
+        /* 응원톡 0개 - 너무 크지 않게 자연스럽게 */
+        .chat-count {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 4px;
+
+            color: var(--text);
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -.04em;
+        }
+
+        .chat-count span {
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 950;
+        }
+
+        /* 꺽새 위치 고정 */
+        .chat-toggle {
+            width: 38px;
+            height: 38px;
+
+            display: grid;
+            place-items: center;
+
+            flex: 0 0 38px;
+            align-self: center;
+
+            margin: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 10px;
+
+            background: transparent;
+            color: var(--text);
+
+            font-size: 20px;
+            line-height: 1;
+            font-weight: 950;
+
+            cursor: pointer;
+        }
+
+        .chat-toggle:hover {
+            background: #f1f5f9;
+        }
+
+        /* 접힘 상태 */
+        .chat.collapsed {
+            height: auto;
+        }
+
+        .chat.collapsed .chat-body {
+            display: none;
+        }
+
+        .chat-collapsed-preview {
+            display: none;
+        }
+
+        .chat.collapsed .chat-collapsed-preview {
+            min-height: 220px;
+
+            display: grid;
+            place-items: center;
+            align-content: center;
+            gap: 8px;
+
+            padding: 36px 18px 40px;
+            border-top: 1px solid var(--line-soft);
+
+            background: #ffffff;
+            text-align: center;
+        }
+
+        .chat-collapsed-preview strong {
+            color: #4b5563;
+            font-size: 15px;
+            line-height: 1.25;
+            font-weight: 850;
+            letter-spacing: -.02em;
+        }
+
+        .chat-collapsed-preview p {
+            margin: 0;
+            color: #8a94a6;
+            font-size: 12px;
+            line-height: 1.35;
+            font-weight: 700;
+        }
+
+        /* 접힘 상태 말풍선 아이콘 */
+        .chat-preview-illust {
+            position: relative;
+            width: 86px;
+            height: 58px;
+            margin-bottom: 6px;
+        }
+
+        .chat-preview-illust .bubble {
+            position: absolute;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-preview-illust .bubble-main {
+            left: 8px;
+            bottom: 6px;
+            width: 62px;
+            height: 38px;
+
+            border: 1.5px solid #d5dde8;
+            border-radius: 999px;
+
+            background: #ffffff;
+            color: #c4ccd8;
+
+            font-size: 20px;
+            line-height: 1;
+            font-weight: 950;
+
+            z-index: 2;
+        }
+
+        .chat-preview-illust .bubble-main::after {
+            content: "";
+            position: absolute;
+            left: 12px;
+            bottom: -7px;
+
+            width: 12px;
+            height: 12px;
+
+            border-left: 1.5px solid #d5dde8;
+            border-bottom: 1.5px solid #d5dde8;
+
+            background: #ffffff;
+            transform: rotate(-18deg);
+        }
+
+        .chat-preview-illust .bubble-back {
+            right: 5px;
+            top: 2px;
+            width: 56px;
+            height: 40px;
+
+            border-radius: 999px;
+            background: #e5e7eb;
+
+            z-index: 1;
+        }
+
+        /* 본문 */
+        .chat-body {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 팀 선택 영역 */
+        .chat-team-picker {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+
+            padding: 10px 12px 0;
+
+            border-bottom: 0;
+            background: #ffffff;
+        }
+
+        .chat-team-cell {
+            min-width: 0;
+            min-height: 48px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+
+            background: #ffffff;
+        }
+
+
+        /* 실제 클릭 가능한 영역 */
+        .chat-team-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            width: fit-content;
+            max-width: calc(100% - 18px);
+
+            padding: 7px 10px;
+            border-radius: 999px;
+
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 900;
+            line-height: 1;
+
+            cursor: pointer;
+        }
+
+        .chat-team-action:hover {
+            background: #f8fafc;
+        }
+
+        /* 선택된 팀 */
+        .chat-team-action:has(input:checked),
+        .chat-team-action.selected {
+            background: #f8fafc;
+        }
+
+        .chat-team-action input {
+            width: 24px;
+            height: 24px;
+            margin: 0;
+            flex: 0 0 auto;
+            accent-color: #334155;
+            cursor: pointer;
+        }
+
+        .chat-team-action img,
+        .chat-team-fallback {
+            width: 26px;
+            height: 26px;
+            flex: 0 0 auto;
+            border-radius: 999px;
+            object-fit: contain;
+        }
+
+        .chat-team-fallback {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid var(--line);
+            background: #ffffff;
+
             color: var(--blue);
             font-size: 12px;
             font-weight: 950;
         }
 
-        .chat-user span:last-child { color: var(--muted); }
-
-        .chat-text {
-            color: #475569;
-            font-size: 13px;
-            line-height: 1.32;
+        .chat-team-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
+        /* 입력 */
         .chat-form {
             display: flex;
             gap: 8px;
-            padding: 12px;
-            border-top: 1px solid var(--line-soft);
+
+            padding: 12px 16px 0;
             background: #ffffff;
         }
 
         .chat-form input {
             flex: 1;
             min-width: 0;
-            padding: 10px;
+
+            padding: 10px 12px;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
+
             background: var(--soft);
             color: var(--text);
+
             outline: none;
         }
 
         .chat-form button {
+            min-width: 64px;
             padding: 0 14px;
+
             border: 0;
             border-radius: 10px;
+
             background: var(--blue);
             color: #ffffff;
+
             font-weight: 950;
+        }
+
+        /* 안내 문구 */
+        .chat-culture-note {
+            margin: 10px 16px 0;
+            padding: 10px 12px;
+
+            border: 1px solid var(--line);
+            border-radius: 8px;
+
+            background: #ffffff;
+            color: #16a34a;
+
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        /* 메시지 리스트 */
+        .chat-list {
+            flex: 1;
+            display: grid;
+            align-content: start;
+            gap: 8px;
+
+            padding: 12px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .chat-list::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+
+        .chat-empty {
+            min-height: 260px;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            color: var(--muted);
+            text-align: center;
+
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.45;
+        }
+
+        .chat-empty-icon {
+            width: 42px;
+            height: 34px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 2px solid #cbd5e1;
+            border-radius: 18px;
+
+            color: #94a3b8;
+            font-size: 18px;
+            font-weight: 950;
+        }
+
+        .chat-msg {
+            max-width: 82%;
+            padding: 13px 14px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--soft);
+        }
+
+        .chat-msg.mine {
+            justify-self: end;
+            background: #dbeafe;
+        }
+
+        .chat-user {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+
+            margin-bottom: 5px;
+
+            color: var(--blue);
+            font-size: 12px;
+            font-weight: 950;
+        }
+
+        .chat-user-main {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+        }
+
+        .chat-support-emblem {
+            width: 16px;
+            height: 16px;
+            border-radius: 999px;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+
+        .chat-user span:last-child {
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .chat-report {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .chat-delete {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .chat-text {
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.32;
         }
 
         /* =========================================================
@@ -1777,12 +2214,12 @@
                     <small data-bind="predictionStatus">-</small>
                 </div>
                 <div class="vote-match">
-                    <div class="vote-team">
+                    <div class="vote-team" data-prediction-choice="HOME_WIN">
                         <strong data-bind="predictionHomeName">홈</strong>
                         <span data-bind="predictionHomeMeta">-</span>
                     </div>
                     <div class="vs">VS</div>
-                    <div class="vote-team">
+                    <div class="vote-team" data-prediction-choice="AWAY_WIN">
                         <strong data-bind="predictionAwayName">원정</strong>
                         <span data-bind="predictionAwayMeta">-</span>
                     </div>
@@ -1796,24 +2233,55 @@
 
             <!-- Chat -->
             <section class="side-panel chat">
-                <div class="panel-head">
-                    <div>
-                        <div class="panel-title">실시간 댓글</div>
-                        <div class="panel-sub"><span id="chatCount">0</span>개 댓글</div>
+                <div class="chat-head">
+                    <div class="chat-count">
+                        응원톡 <span id="chatCount">0</span>개
+                    </div>
+
+                    <button
+                            type="button"
+                            class="chat-toggle"
+                            id="chatToggle"
+                            aria-label="응원톡 접기"
+                            aria-expanded="true"
+                    >⌃</button>
+                </div>
+
+                <div class="chat-body">
+                    <div class="chat-team-picker" id="chatTeamPicker"></div>
+
+                    <form class="chat-form" id="chatForm">
+                        <input id="chatInput" placeholder="댓글을 입력하세요" maxlength="300">
+                        <button type="submit">전송</button>
+                    </form>
+
+                    <div class="chat-culture-note">서로를 존중하는 응원 문화를 함께 만들어 주세요.</div>
+
+                    <div class="chat-list" id="chatList">
+                        <div class="chat-empty">
+                            <div class="chat-empty-icon">…</div>
+                            <div>등록된 메시지가 없습니다.<br>첫번째 메시지를 남겨주세요.</div>
+                        </div>
                     </div>
                 </div>
-                <div class="chat-list" id="chatList">
-                    <div class="empty-state">댓글 데이터가 없습니다.</div>
+
+                <!-- 접었을 때 보여줄 영역 -->
+                <div class="chat-collapsed-preview" aria-hidden="true">
+                    <div class="chat-preview-illust">
+                        <span class="bubble bubble-main">···</span>
+                        <span class="bubble bubble-back"></span>
+                    </div>
+
+                    <strong>응원 톡이 접혀있어요</strong>
+                    <p>톡을 열어 응원 메시지를 남겨 보세요!</p>
                 </div>
-                <form class="chat-form" id="chatForm">
-                    <input id="chatInput" placeholder="댓글을 입력하세요">
-                    <button type="submit">전송</button>
-                </form>
             </section>
         </aside>
     </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script th:inline="none">
     /* =========================================================
        01. Constants / Utilities
@@ -1842,6 +2310,10 @@
 
     let autoRefreshTimer = null;
     let liveLoading = false;
+    let commentStompClient = null;
+    let commentSubscription = null;
+    let loadedCommentIds = new Set();
+    let selectedSupportTeamId = null;
 
     function $(selector) {
         return document.querySelector(selector);
@@ -2192,14 +2664,18 @@
             homeTeam: {
                 ...homeTeam,
                 name: homeTeam.name || '-',
-                logoText: homeTeam.logoText || shortName(homeTeam.name).slice(0, 1) || '-'
+                logoText: homeTeam.logoText || shortName(homeTeam.name).slice(0, 1) || '-',
+                emblemUrl: homeTeam.emblemUrl || ''
             },
             awayTeam: {
                 ...awayTeam,
                 name: awayTeam.name || '-',
-                logoText: awayTeam.logoText || shortName(awayTeam.name).slice(0, 1) || '-'
+                logoText: awayTeam.logoText || shortName(awayTeam.name).slice(0, 1) || '-',
+                emblemUrl: awayTeam.emblemUrl || ''
             },
             scoreboard,
+            scheduledAt: data.scheduledAt || null,
+            venue: data.venue || '',
             score: {
                 home: scoreboard.homeScore ?? 0,
                 away: scoreboard.awayScore ?? 0
@@ -2225,6 +2701,31 @@
         return ['scheduled', 'pre_game', 'before_game', '예정'].includes(status);
     }
 
+    function statusKind(data) {
+        const status = String(data?.status ?? '').toLowerCase();
+        if (isScheduledStatus(data)) return 'scheduled';
+        if (['finished', 'ended', 'final', '경기종료', '종료'].includes(status)) return 'finished';
+        return 'live';
+    }
+
+    function statusLabel(data) {
+        const kind = statusKind(data);
+        if (kind === 'scheduled') return '경기전';
+        if (kind === 'finished') return '경기종료';
+        return data.currentPeriod || '진행중';
+    }
+
+    function formatScheduleText(value) {
+        if (!value) return '경기 일정 확인 중';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return `${month}.${day} ${hour}:${minute}`;
+    }
+
     function renderScheduledTabMessage(tabId, message) {
         const tab = document.getElementById(tabId);
         if (!tab) return;
@@ -2248,7 +2749,10 @@
         window.__liveData = data;
         renderScoreboard(data);
         renderPrediction(data);
-        renderComments(data.comments);
+        renderChatTeams(data);
+        if (Array.isArray(data.comments) && data.comments.length > 0) {
+            renderComments(data.comments);
+        }
 
         if (isScheduledStatus(data)) {
             renderScheduledTabs();
@@ -2270,22 +2774,42 @@
        04. Render: Scoreboard
     ========================================================= */
     function renderScoreboard(data) {
+        const kind = statusKind(data);
         const inningRows = normalizeInningScores(data);
         const homeScoreRow = inningRows.find(row => String(row.teamId) === String(data.homeTeam.teamId));
         const awayScoreRow = inningRows.find(row => String(row.teamId) === String(data.awayTeam.teamId));
         const homeDisplayScore = data.scoreboard?.homeScore ?? homeScoreRow?.runs ?? data.score.home;
         const awayDisplayScore = data.scoreboard?.awayScore ?? awayScoreRow?.runs ?? data.score.away;
+        const board = $('.scoreboard');
+        const scoreNumber = $('.score-number');
 
-        setText('homeLogo', data.homeTeam.logoText);
+        if (board) {
+            board.classList.remove('status-scheduled', 'status-live', 'status-finished');
+            board.classList.add(`status-${kind}`);
+        }
+
+        renderTeamLogo('homeLogo', data.homeTeam);
         setText('homeName', data.homeTeam.name);
         setText('homeMeta', '홈');
-        setText('awayLogo', data.awayTeam.logoText);
+        renderTeamLogo('awayLogo', data.awayTeam);
         setText('awayName', data.awayTeam.name);
         setText('awayMeta', '원정');
-        setText('statusText', `${data.status} · ${data.currentPeriod}`);
-        setText('homeScore', homeDisplayScore);
-        setText('awayScore', awayDisplayScore);
-        setText('scoreCaption', '');
+        setText('statusText', statusLabel(data));
+
+        if (kind === 'scheduled') {
+            if (scoreNumber) {
+                scoreNumber.innerHTML = `<span>${escapeHtml(formatScheduleText(data.scheduledAt))}</span>`;
+            }
+            setText('scoreCaption', data.venue || '장소 미정');
+        } else {
+            if (scoreNumber) {
+                scoreNumber.innerHTML = `<span data-bind="homeScore">${escapeHtml(homeDisplayScore)}</span> : <span data-bind="awayScore">${escapeHtml(awayDisplayScore)}</span>`;
+            }
+
+            const scheduleText = formatScheduleText(data.scheduledAt);
+            const venueText = data.venue || '장소 미정';
+            setText('scoreCaption', `${scheduleText}\n${venueText}`);
+        }
 
         setText('boardHomeName', shortName(data.homeTeam.name));
         setText('boardAwayName', shortName(data.awayTeam.name));
@@ -2302,6 +2826,17 @@
             : '-');
 
         renderInningScoreboard(data);
+    }
+
+    function renderTeamLogo(bindName, team) {
+        const target = document.querySelector(`[data-bind="${bindName}"]`);
+        if (!target) return;
+        const emblemUrl = team?.emblemUrl;
+        if (emblemUrl) {
+            target.innerHTML = `<img src="${escapeHtml(emblemUrl)}" alt="${escapeHtml(team?.name || '팀 로고')}">`;
+            return;
+        }
+        target.textContent = team?.logoText || '-';
     }
 
     function renderCountDots(selector, activeCount) {
@@ -2562,7 +3097,7 @@
             <div class="pitcher-mark">투</div>
             <div>
                 <strong>${escapeHtml(pitcher.name || pitcher.playerName || '-')}</strong>
-                <span>${escapeHtml(displayPosition(pitcher.position))} · ${escapeHtml(pitcher.inningsPitched ?? '0.0이닝')} · ${escapeHtml(pitcher.pitchCount ?? 0)}구 · ${escapeHtml(pitcher.hitsAllowed ?? 0)}피안타 · ${escapeHtml(pitcher.strikeouts ?? 0)}K</span>
+                <span>${escapeHtml(displayPosition(pitcher.position))} · ${escapeHtml(pitcher.inningsPitched ?? '0.0이닝')} · ${escapeHtml(pitcher.pitchCount ?? 0)}구 · ${escapeHtml(pitcher.hitsAllowed ?? 0)}피안타 · ${escapeHtml(pitcher.strikeouts ?? 0)}K · ERA ${escapeHtml(pitcher.era ?? '-')}</span>
             </div>
         </div>`;
     }
@@ -2584,6 +3119,7 @@
                     ${escapeHtml(card.orderNum ? `${card.orderNum}번 타자` : '타순 미등록')}
                     ·
                     ${escapeHtml(displayPosition(card.position))}
+                    · 타율 ${escapeHtml(card.battingAvg || stat.battingAvg || '-')}
                 </div>
             </div>
             ${card.current
@@ -2714,11 +3250,13 @@
                     <th>타석</th>
                     <th>타수</th>
                     <th>안타</th>
+                    <th>홈런</th>
                     <th>득점</th>
                     <th>타점</th>
                     <th>볼넷</th>
                     <th>삼진</th>
                     <th>도루</th>
+                    <th>타율</th>
                 </tr>
             </thead>
             <tbody>
@@ -2728,11 +3266,13 @@
                         <td>${escapeHtml(stat.plateAppearances ?? 0)}</td>
                         <td>${escapeHtml(stat.atBats ?? 0)}</td>
                         <td>${escapeHtml(stat.hits ?? 0)}</td>
+                        <td>${escapeHtml(stat.homeRuns ?? 0)}</td>
                         <td>${escapeHtml(stat.runs ?? 0)}</td>
                         <td>${escapeHtml(stat.rbi ?? 0)}</td>
                         <td>${escapeHtml(stat.walks ?? 0)}</td>
                         <td>${escapeHtml(stat.strikeouts ?? 0)}</td>
                         <td>${escapeHtml(stat.steals ?? 0)}</td>
+                        <td>${escapeHtml(stat.battingAvg ?? '-')}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -2745,22 +3285,36 @@
             <thead>
                 <tr>
                     <th>투수명</th>
+                    <th>경기</th>
+                    <th>승리</th>
+                    <th>패전</th>
+                    <th>세이브</th>
                     <th>이닝</th>
                     <th>투구수</th>
+                    <th>실점</th>
                     <th>피안타</th>
+                    <th>피홈런</th>
                     <th>K</th>
-                    <th>볼넷</th>
+                    <th>사사구</th>
+                    <th>평균자책점</th>
                 </tr>
             </thead>
             <tbody>
                 ${rows.map(stat => `
                     <tr>
                         <td>${escapeHtml(stat.name)}</td>
+                        <td>${escapeHtml(stat.seasonGamesPlayed ?? '-')}</td>
+                        <td>${escapeHtml(stat.seasonWins ?? '-')}</td>
+                        <td>${escapeHtml(stat.seasonLosses ?? '-')}</td>
+                        <td>${escapeHtml(stat.seasonSaves ?? '-')}</td>
                         <td>${escapeHtml(stat.inningsPitched)}</td>
                         <td>${escapeHtml(stat.pitchCount)}</td>
+                        <td>${escapeHtml(stat.runsAllowed ?? 0)}</td>
                         <td>${escapeHtml(stat.hitsAllowed)}</td>
+                        <td>${escapeHtml(stat.homeRunsAllowed ?? 0)}</td>
                         <td>${escapeHtml(stat.strikeouts)}</td>
-                        <td>${escapeHtml(stat.walksAllowed)}</td>
+                        <td>${escapeHtml(numberOrZero(stat.walksAllowed) + numberOrZero(stat.hitByPitchAllowed))}</td>
+                        <td>${escapeHtml(stat.era ?? '-')}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -2869,16 +3423,97 @@
 
         const homePercent = Math.max(0, Math.min(100, numberOrZero(prediction.homePercent)));
         const awayPercent = Math.max(0, Math.min(100, numberOrZero(prediction.awayPercent)));
+        const totalVoteCount = numberOrZero(prediction.totalVoteCount);
 
         setText('predictionStatus', prediction.closed ? '투표 마감' : '투표 진행');
         setText('predictionHomeName', prediction.homeTeamName || data.homeTeam.name);
         setText('predictionAwayName', prediction.awayTeamName || data.awayTeam.name);
         setText('predictionHomeMeta', `${homePercent}% · ${prediction.homeVoteCount ?? 0}표`);
         setText('predictionAwayMeta', `${awayPercent}% · ${prediction.awayVoteCount ?? 0}표`);
-        setText('predictionNote', prediction.closed ? '경기 시작 전 참여한 예측 결과입니다.' : '참여 가능한 예측입니다.');
+        setText('predictionNote', prediction.closed
+            ? `투표 마감 · ${totalVoteCount}명 참여`
+            : `${totalVoteCount}명 참여 · 경기 시작 전까지 변경 가능`);
 
         $('#predictionHomeBar').style.width = `${homePercent}%`;
         $('#predictionAwayBar').style.flex = Math.max(0, awayPercent);
+
+        $all('[data-prediction-choice]').forEach(button => {
+            button.classList.toggle('disabled', prediction.closed);
+        });
+    }
+
+    async function submitLivePrediction(predictedResult) {
+        const data = window.__liveData;
+        const matchId = getMatchIdFromPath();
+        if (!matchId || !data) return;
+
+        if (data.prediction?.closed) {
+            return;
+        }
+
+        if (!localStorage.getItem('accessToken')) {
+            location.href = '/login';
+            return;
+        }
+
+        const request = {
+            matchId: Number(matchId),
+            sportCode: 'baseball',
+            predictedResult
+        };
+
+        const fetcher = window.authFetch || fetch;
+        const response = await fetcher('/api/predictions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(request)
+        });
+
+        if (!response.ok) {
+            alert('승부예측 등록에 실패했습니다.');
+            return;
+        }
+
+        await loadBaseballLive({ silent: true });
+    }
+
+    function renderChatTeams(data) {
+        const picker = $('#chatTeamPicker');
+        if (!picker || !data) return;
+
+        const teams = [data.homeTeam, data.awayTeam].filter(team => team?.teamId);
+
+        if (teams.length === 0) {
+            picker.innerHTML = '';
+            selectedSupportTeamId = null;
+            return;
+        }
+
+        if (!selectedSupportTeamId || !teams.some(team => sameId(team.teamId, selectedSupportTeamId))) {
+            selectedSupportTeamId = teams[0].teamId;
+        }
+
+        picker.innerHTML = teams.map(team => {
+            const checked = sameId(team.teamId, selectedSupportTeamId);
+            const emblem = team.emblemUrl
+                ? `<img src="${escapeHtml(team.emblemUrl)}" alt="${escapeHtml(team.name)}">`
+                : `<span class="chat-team-fallback">${escapeHtml(shortName(team.name).slice(0, 1))}</span>`;
+
+            return `
+            <div class="chat-team-cell">
+                <label class="chat-team-action ${checked ? 'selected' : ''}">
+                    <input
+                        type="radio"
+                        name="supportTeam"
+                        value="${escapeHtml(team.teamId)}"
+                        ${checked ? 'checked' : ''}
+                    >
+                    ${emblem}
+                    <span class="chat-team-name">${escapeHtml(team.name)}</span>
+                </label>
+            </div>
+        `;
+        }).join('');
     }
 
     function renderComments(comments) {
@@ -2887,19 +3522,186 @@
         if (!list || !count) return;
 
         const rows = Array.isArray(comments) ? comments : [];
+        loadedCommentIds = new Set(rows.map(comment => String(comment.commentId)).filter(Boolean));
         count.textContent = rows.length;
 
         if (rows.length === 0) {
-            list.innerHTML = '<div class="empty-state">댓글 데이터가 없습니다.</div>';
+            list.innerHTML = `
+                <div class="chat-empty">
+                    <div class="chat-empty-icon">…</div>
+                    <div>등록된 메시지가 없습니다.<br>첫번째 메시지를 남겨주세요.</div>
+                </div>
+            `;
             return;
         }
 
-        list.innerHTML = rows.map(comment => `
-            <div class="chat-msg">
-                <div class="chat-user"><b>${escapeHtml(comment.userName || comment.nickname || '-')}</b><span>${escapeHtml(comment.writtenAt || comment.createdAt || '')}</span></div>
-                <div class="chat-text">${escapeHtml(comment.text || comment.content || '')}</div>
+        list.innerHTML = rows.map(renderCommentItem).join('');
+    }
+
+    function renderCommentItem(comment) {
+        const emblem = comment.supportTeamEmblemUrl
+            ? `<img class="chat-support-emblem" src="${escapeHtml(comment.supportTeamEmblemUrl)}" alt="${escapeHtml(comment.supportTeamName || '응원팀')}">`
+            : '';
+        const isMine = sameId(comment.userId, localStorage.getItem('userId'));
+        const action = isMine
+            ? `<button type="button" class="chat-delete" data-delete-comment-id="${escapeHtml(comment.commentId || '')}">삭제</button>`
+            : `<button type="button" class="chat-report" data-report-comment-id="${escapeHtml(comment.commentId || '')}">신고</button>`;
+        return `
+            <div class="chat-msg ${isMine ? 'mine' : ''}" data-comment-id="${escapeHtml(comment.commentId || '')}">
+                <div class="chat-user">
+                    <span class="chat-user-main">${emblem}<b>${escapeHtml(comment.nickname || comment.userName || '-')}</b></span>
+                    <span>
+                        ${escapeHtml(formatCommentTime(comment.createdAt || comment.writtenAt))}
+                        ${action}
+                    </span>
+                </div>
+                <div class="chat-text">${escapeHtml(comment.content || comment.text || '')}</div>
             </div>
-        `).join('');
+        `;
+    }
+
+    function formatCommentTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        const diff = Date.now() - date.getTime();
+        if (diff < 0) return '방금 전';
+
+        const minute = 60000;
+        const hour = minute * 60;
+        const day = hour * 24;
+        const month = day * 30;
+
+        if (diff < minute) return '방금 전';
+        if (diff < hour) return `${Math.floor(diff / minute)}분 전`;
+        if (diff < day) return `${Math.floor(diff / hour)}시간 전`;
+        if (diff < month) return `${Math.floor(diff / day)}일 전`;
+        return `${Math.floor(diff / month)}개월 전`;
+    }
+
+    async function loadMatchComments() {
+        const matchId = getMatchIdFromPath();
+        if (!matchId) return;
+
+        const response = await fetch(`/api/games/${encodeURIComponent(matchId)}/comments`);
+        if (!response.ok) return;
+        const comments = await response.json();
+        renderComments(comments);
+    }
+
+    async function submitMatchComment() {
+        const input = $('#chatInput');
+        const matchId = getMatchIdFromPath();
+        const content = input?.value?.trim();
+        if (!input || !matchId || !content) return;
+
+        if (!localStorage.getItem('accessToken')) {
+            alert('로그인 후 이용해 주시기 바랍니다.');
+            location.href = '/login';
+            return;
+        }
+
+        const fetcher = window.authFetch || fetch;
+        const response = await fetcher(`/api/games/${encodeURIComponent(matchId)}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, supportTeamId: selectedSupportTeamId ? Number(selectedSupportTeamId) : null })
+        });
+
+        if (!response.ok) {
+            alert('댓글 등록에 실패했습니다.');
+            return;
+        }
+
+        input.value = '';
+    }
+
+    async function reportMatchComment(commentId) {
+        if (!commentId) return;
+        if (!localStorage.getItem('accessToken')) {
+            alert('로그인 후 이용해 주시기 바랍니다.');
+            location.href = '/login';
+            return;
+        }
+        if (!confirm('이 댓글을 신고하시겠습니까?')) return;
+
+        const matchId = getMatchIdFromPath();
+        const fetcher = window.authFetch || fetch;
+        const response = await fetcher(`/api/games/${encodeURIComponent(matchId)}/comments/${encodeURIComponent(commentId)}/reports`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: 'USER_REPORT' })
+        });
+
+        alert(response.ok ? '신고가 접수되었습니다.' : '신고 처리에 실패했습니다.');
+    }
+
+    async function deleteMatchComment(commentId) {
+        if (!commentId) return;
+        if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
+
+        const matchId = getMatchIdFromPath();
+        const fetcher = window.authFetch || fetch;
+        const response = await fetcher(`/api/games/${encodeURIComponent(matchId)}/comments/${encodeURIComponent(commentId)}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            alert('댓글 삭제에 실패했습니다.');
+        }
+    }
+
+    function removeComment(commentId) {
+        const target = document.querySelector(`[data-comment-id="${CSS.escape(String(commentId))}"]`);
+        if (target) target.remove();
+        loadedCommentIds.delete(String(commentId));
+        const count = $('#chatCount');
+        if (count) count.textContent = String(Math.max(0, Number(count.textContent || 0) - 1));
+        const list = $('#chatList');
+        if (list && !list.querySelector('.chat-msg')) {
+            list.innerHTML = `
+                <div class="chat-empty">
+                    <div class="chat-empty-icon">…</div>
+                    <div>등록된 메시지가 없습니다.<br>첫번째 메시지를 남겨주세요.</div>
+                </div>
+            `;
+        }
+    }
+
+    function prependComment(comment) {
+        if (!comment || !comment.commentId || loadedCommentIds.has(String(comment.commentId))) return;
+
+        const list = $('#chatList');
+        const count = $('#chatCount');
+        if (!list || !count) return;
+
+        loadedCommentIds.add(String(comment.commentId));
+        const empty = list.querySelector('.empty-state');
+        const chatEmpty = list.querySelector('.chat-empty');
+        if (empty || chatEmpty) list.innerHTML = '';
+        list.insertAdjacentHTML('afterbegin', renderCommentItem(comment));
+        count.textContent = String(Number(count.textContent || 0) + 1);
+    }
+
+    function connectCommentSocket() {
+        const matchId = getMatchIdFromPath();
+        if (!matchId || typeof SockJS === 'undefined' || typeof Stomp === 'undefined') return;
+        if (commentStompClient?.connected) return;
+
+        const socket = new SockJS('/ws');
+        commentStompClient = Stomp.over(socket);
+        commentStompClient.debug = () => {};
+        commentStompClient.connect({}, () => {
+            if (commentSubscription) commentSubscription.unsubscribe();
+            commentSubscription = commentStompClient.subscribe(`/topic/games/${matchId}/comments`, message => {
+                const payload = JSON.parse(message.body);
+                if (payload.type === 'delete') {
+                    removeComment(payload.commentId);
+                    return;
+                }
+                prependComment(payload);
+            });
+        });
     }
 
     /* =========================================================
@@ -2935,6 +3737,26 @@
             $all('[data-inning]').forEach(button => button.classList.remove('active'));
             inningButton.classList.add('active');
             if (window.__liveData) renderTimelineInning(window.__liveData, inning);
+            return;
+        }
+
+        const reportButton = event.target.closest('[data-report-comment-id]');
+        if (reportButton) {
+            reportMatchComment(reportButton.dataset.reportCommentId);
+            return;
+        }
+
+        const deleteButton = event.target.closest('[data-delete-comment-id]');
+        if (deleteButton) {
+            deleteMatchComment(deleteButton.dataset.deleteCommentId);
+            return;
+        }
+
+        const supportTeamInput = event.target.closest('input[name="supportTeam"]');
+
+        if (supportTeamInput) {
+            selectedSupportTeamId = supportTeamInput.value;
+            return;
         }
     });
 
@@ -2942,14 +3764,41 @@
         loadBaseballLive({ silent: false });
     });
 
+    $all('[data-prediction-choice]').forEach(button => {
+        button.addEventListener('click', () => {
+            submitLivePrediction(button.dataset.predictionChoice);
+        });
+    });
+
     $('#chatForm')?.addEventListener('submit', event => {
         event.preventDefault();
-        const input = $('#chatInput');
-        if (input) input.value = '';
+        submitMatchComment();
+    });
+
+    $('#chatToggle')?.addEventListener('click', () => {
+        const chat = document.querySelector('.chat');
+        const toggle = $('#chatToggle');
+        if (!chat || !toggle) return;
+
+        const collapsed = chat.classList.toggle('collapsed');
+
+        toggle.textContent = collapsed ? '⌄' : '⌃';
+        toggle.setAttribute('aria-label', collapsed ? '응원톡 펼치기' : '응원톡 접기');
+        toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        const chatInput = $('#chatInput');
+        if (chatInput && !localStorage.getItem('accessToken')) {
+            chatInput.placeholder = '댓글을 작성하려면 로그인 해주세요';
+            chatInput.addEventListener('focus', () => {
+                alert('로그인 후 이용해 주시기 바랍니다.');
+                location.href = '/login';
+            }, { once: true });
+        }
         loadBaseballLive({ silent: false });
+        loadMatchComments();
+        connectCommentSocket();
         bindAutoRefreshControls();
     });
 

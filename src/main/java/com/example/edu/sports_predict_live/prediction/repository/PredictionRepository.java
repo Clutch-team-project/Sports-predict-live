@@ -14,6 +14,8 @@ public interface PredictionRepository extends JpaRepository<Prediction, Long> {
     Optional<Prediction> findByUser_UserIdAndMatch_MatchId(Long userId, Long matchId);
 
     Optional<Prediction> findByUser_UserIdAndLolMatchId(Long userId, String lolMatchId);
+    long countByMatch_MatchIdAndPredictedResult(Long matchId, String predictedResult);
+    long countByMatch_MatchId(Long matchId);
 
     // 미정산 LOL 예측 전체 (자동 정산용) — 취소 무효화된 예측은 재조회 대상에서 제외
     List<Prediction> findBySportCodeAndIsCorrectIsNullAndActualResultIsNull(String sportCode);

@@ -27,5 +27,7 @@ public interface MatchEventRepository extends JpaRepository<MatchEvent, Long> {
 
     void deleteByMatchId(Long matchId);
 
+    Optional<MatchEvent> findTopByMatchIdOrderByEventTimeDescMatchEventIdDesc(Long matchId);
+
     Optional<MatchEvent> findTopByMatchIdAndEventPeriodOrderByEventTimeDescMatchEventIdDesc(Long matchId, String eventPeriod);
 }

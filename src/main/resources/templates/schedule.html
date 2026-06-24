@@ -60,7 +60,7 @@
     const DAY_NAMES    = ['일', '월', '화', '수', '목', '금', '토'];
     const SPORT_EMOJI  = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
     const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
-    const STATUS_ORDER = { in_progress: 0, scheduled: 1, finished: 2 };
+    const STATUS_ORDER = { in_progress: 0, live: 0, scheduled: 1, finished: 2 , cancelled : 3};
 
     let currentDate      = new Date();
     let selectedDate     = new Date();
@@ -92,6 +92,52 @@
     // 경기별 고유 ID (LOL과 DB matchId 충돌 방지)
     function getPredId(m) {
         return m.sport === 'lol' ? `lol-${m.matchId}` : `db-${m.matchId}`;
+    }
+
+    // 일정 카드의 팀/스코어 영역 클릭 시 경기 상세/중계 화면으로 이동
+    function goMatchDetail(matchId, sport) {
+        if (!matchId) return;
+
+        if (sport === 'baseball') {
+            location.href = `/baseball/live-match?matchId=${encodeURIComponent(matchId)}`;
+            return;
+        }
+
+        // 축구/LOL 중계 화면이 완성되면 각 종목 live-match URL로 교체
+        if (sport === 'soccer') {
+            location.href = '/soccer/schedule'; // // 일정 카드의 팀/스코어 영역 클릭 시 경기 상세/중계 화면으로 이동
+            function goMatchDetail(matchId, sport) {
+                if (!matchId) return;
+
+                if (sport === 'baseball') {
+                    location.href = `/baseball/live-match?matchId=${encodeURIComponent(matchId)}`;
+                    return;
+                }
+
+                // 축구/LOL 중계 화면이 완성되면 각 종목 live-match URL로 교체
+                if (sport === 'soccer') {
+                    location.href = '/soccer/schedule'; // location.href = `/soccer/live-match?matchId=${encodeURIComponent(matchId)}`;
+                    return;
+                }
+
+                if (sport === 'lol') {
+                    location.href = '/lol/schedule';
+                    return;
+                }
+
+                location.href = '/schedule';
+            }
+            return;
+        }
+
+
+
+        if (sport === 'lol') {
+            location.href = '/lol/schedule';
+            return;
+        }
+
+        location.href = '/schedule';
     }
 
     // ── 주간 슬라이더 ──────────────────────────────────────────
@@ -252,7 +298,7 @@
                 return `<div class="text-[0.625rem] text-blue-500 font-bold mt-0.5">승 ${m.winningPitcher}</div>`;
             if (!teamWon && m.losingPitcher)
                 return `<div class="text-[0.625rem] text-red-400 font-bold mt-0.5">패 ${m.losingPitcher}</div>`;
-        } else if (m.status === 'scheduled' || m.status === 'in_progress') {
+        } else if (m.status === 'scheduled' || m.status === 'in_progress' || m.status === 'live') {
             const name = isAway ? m.startingPitcherAway : m.startingPitcherHome;
             if (name) return `<div class="text-[0.625rem] text-gray-500 mt-0.5">선 ${name}</div>`;
         }
@@ -262,7 +308,7 @@
     // ── 경기 카드 HTML ─────────────────────────────────────────
     function matchCardHtml(m) {
         const predId  = getPredId(m);
-        const isLive  = m.status === 'in_progress';
+        const isLive  = m.status === 'in_progress' || m.status === 'live';
         const isDone  = m.status === 'finished';
         const homeVal = m.sport === 'lol' ? m.homeWins : m.homeScore;
         const awayVal = m.sport === 'lol' ? m.awayWins : m.awayScore;
@@ -277,7 +323,22 @@
                 const badge = isLive
                     ? `<span class="text-[0.625rem] font-black text-red-500 animate-pulse">● LIVE</span>`
                     : `<span class="text-[0.625rem] font-bold text-slate-400">종료</span>`;
-                centerHtml = `<div class="flex flex-col items-center gap-0.5">${badge}<div class="flex items-center gap-1.5"><span class="text-xl font-black ${color}">${awayVal}</span><span class="text-slate-300 text-sm">:</span><span class="text-xl font-black ${color}">${homeVal}</span></div></div>`;
+
+                // 야구 진행중 경기라면 현재 이닝을 함께 표시
+                const periodHtml = isLive && m.currentPeriod
+                    ? `<span class="text-[0.625rem] text-red-500 font-black">${m.currentPeriod}</span>`
+                    : '';
+
+                centerHtml = `
+        <div class="flex flex-col items-center gap-0.5">
+            ${badge}
+            ${periodHtml}
+            <div class="flex items-center gap-1.5">
+                <span class="text-xl font-black ${color}">${awayVal ?? 0}</span>
+                <span class="text-slate-300 text-sm">:</span>
+                <span class="text-xl font-black ${color}">${homeVal ?? 0}</span>
+            </div>
+        </div>`;
             } else {
                 centerHtml = `<div class="flex flex-col items-center gap-0.5"><span class="text-sm font-black text-slate-700">${m.scheduledAt || '--:--'}</span><span class="text-[0.625rem] text-slate-400 font-bold">VS</span></div>`;
             }
@@ -307,7 +368,7 @@
 
         // 액션 버튼
         const actionBtn = (() => {
-            if (m.status === 'in_progress') return `<button class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-xl animate-pulse">라이브</button>`;
+            if (m.status === 'in_progress' || m.status === 'live') return `<button class="bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-xl animate-pulse">라이브</button>`;
             if (m.status === 'finished')    return `<button class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-1.5 rounded-xl">기록</button>`;
             if (m.status === 'cancelled')   return '';
             const aiClick = m.sport === 'lol'
@@ -326,7 +387,8 @@
                     <div class="text-[0.625rem] font-bold text-slate-400">${SPORT_EMOJI[m.sport]} ${LEAGUE_LABEL[m.sport]}</div>
                     <div class="text-sm font-black text-slate-500 mt-0.5">${m.scheduledAt || ''}</div>
                 </div>
-                <div class="flex-1 flex items-center justify-around">
+                <div onclick="goMatchDetail('${m.matchId}', '${m.sport}')"
+                    class="flex-1 flex items-center justify-around cursor-pointer">
                     <div class="w-1/3 flex flex-col items-end">
                         <div class="flex items-center justify-end gap-1.5">
                             <span class="font-bold text-slate-800 text-sm truncate">${m.awayTeamName}</span>
@@ -447,7 +509,7 @@
             return;
         }
 
-        if (pred && m.status === 'in_progress') {
+        if (pred && (m.status === 'in_progress' || m.status === 'live') ) {
             const predLabel = pred.predictedResult === 'HOME_WIN' ? `${m.homeTeamName} 승`
                             : pred.predictedResult === 'AWAY_WIN' ? `${m.awayTeamName} 승`
                             : '무승부';
@@ -624,6 +686,13 @@
     // ── 초기화 ─────────────────────────────────────────────────
     renderWeek();
     loadMatches();
+
+    // 선택한 날짜가 오늘이면 경기 상태/점수/이닝 변화를 주기적으로 다시 반영
+    setInterval(() => {
+        if (isSameDay(selectedDate, new Date())) {
+            loadMatches();
+        }
+    }, 60000);
 </script>
 </body>
 </html>

@@ -35,6 +35,9 @@ public class BaseballAdminCommandService {
         if (command.action() == BaseballAdminAction.CLEAR_EVENTS) {
             return clearEvents(matchId);
         }
+        if (command.action() == BaseballAdminAction.UNDO_LAST_EVENT) {
+            return undoLastEvent(matchId);
+        }
 
         Match match = matchRepository.findByIdWithTeams(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("match not found: " + matchId));
@@ -56,17 +59,21 @@ public class BaseballAdminCommandService {
             case DOUBLE -> terminalBatterEvent(match, state, command, writer, "double", 0);
             case TRIPLE -> terminalBatterEvent(match, state, command, writer, "triple", 0);
             case HOMERUN -> homerun(match, state, command, writer);
-            case WALK -> terminalBatterEvent(match, state, command, writer, "walk", 0);
-            case HIT_BY_PITCH -> terminalBatterEvent(match, state, command, writer, "hit_by_pitch", 0);
+            case WALK -> forceBatterToFirst(match, state, command, writer, "walk", "\uBCFC\uB137", "\uD0C0\uC790 \uC8FC\uC790 1\uB8E8\uB85C \uCD9C\uB8E8");
+            case INTENTIONAL_WALK -> forceBatterToFirst(match, state, command, writer, "intentional_walk", "\uACE0\uC7584\uAD6C", "\uD0C0\uC790 \uC8FC\uC790 1\uB8E8\uB85C \uCD9C\uB8E8");
+            case HIT_BY_PITCH -> forceBatterToFirst(match, state, command, writer, "hit_by_pitch", "\uC0AC\uAD6C", "\uD0C0\uC790 \uC8FC\uC790 1\uB8E8\uB85C \uCD9C\uB8E8");
             case GROUNDOUT -> terminalBatterEvent(match, state, command, writer, "groundout", 1);
             case FLYOUT -> terminalBatterEvent(match, state, command, writer, "flyout", 1);
             case LINEOUT -> terminalBatterEvent(match, state, command, writer, "lineout", 1);
             case POPOUT -> terminalBatterEvent(match, state, command, writer, "popout", 1);
             case SAC_BUNT -> terminalBatterEvent(match, state, command, writer, "sac_bunt", 1);
-            case SAC_FLY -> terminalBatterEvent(match, state, command, writer, "sac_fly", 1);
-            case DOUBLE_PLAY -> terminalBatterEvent(match, state, command, writer, "double_play", 2);
+            case SAC_FLY -> sacrificeFly(match, state, command, writer);
+            case DOUBLE_PLAY -> terminalBatterEvent(match, state, command, writer, "double_play", 1);
             case STOLEN_BASE -> runnerEvent(match, state, command, writer, "stolen_base", 0);
             case CAUGHT_STEALING -> runnerEvent(match, state, command, writer, "caught_stealing", 1);
+            case WILD_PITCH -> runnerEvent(match, state, command, writer, "wild_pitch", 0);
+            case PASSED_BALL -> runnerEvent(match, state, command, writer, "passed_ball", 0);
+            case BALK -> runnerEvent(match, state, command, writer, "balk", 0);
             case RUNNER_ADVANCE -> runnerEvent(match, state, command, writer, "runner_advance", 0);
             case SCORE -> runnerEvent(match, state, command, writer, "score", 0);
             case FORCE_OUT -> runnerEvent(match, state, command, writer, "force_out", 1);
@@ -97,10 +104,28 @@ public class BaseballAdminCommandService {
         return baseballLiveStateService.getBaseballLive(matchId);
     }
 
+    @Transactional
+    public BaseballLiveDTO undoLastEvent(Long matchId) {
+        Match match = matchRepository.findByIdWithTeams(matchId)
+                .orElseThrow(() -> new IllegalArgumentException("match not found: " + matchId));
+        matchEventRepository.findTopByMatchIdOrderByEventTimeDescMatchEventIdDesc(matchId)
+                .ifPresent(matchEventRepository::delete);
+        matchEventRepository.flush();
+
+        if (matchEventRepository.countByMatchId(matchId) == 0) {
+            match.updateScore(0, 0);
+            match.updateStatus("scheduled");
+            return baseballLiveStateService.getBaseballLive(matchId);
+        }
+        BaseballLiveDTO updated = baseballLiveStateService.getBaseballLive(matchId);
+        syncMatchScore(match, updated);
+        return updated;
+    }
+
     private void startGame(Match match, EventWriter writer) {
         match.updateStatus("live");
         if (matchEventRepository.countByMatchId(match.getMatchId()) == 0) {
-            writer.add("1회초", match.getAwayTeam().getTeamId(), null, "inning_start", null);
+            writer.add("1\uD68C\uCD08", match.getAwayTeam().getTeamId(), null, "inning_start", null);
         }
     }
 
@@ -125,7 +150,8 @@ public class BaseballAdminCommandService {
         ensureAtBatStarted(match, state, writer, period, batterId);
         writer.add(period, battingTeamId(match, period), batterId, "ball", command.normalizedPitchDescription());
         if (state.count() != null && state.count().balls() >= 3) {
-            writer.add(period, battingTeamId(match, period), batterId, "walk", "볼넷");
+            addForcedRunnerAdvances(match, state, writer, period);
+            writer.add(period, battingTeamId(match, period), batterId, "walk", "\uD0C0\uC790 \uC8FC\uC790 1\uB8E8\uB85C \uCD9C\uB8E8");
         }
     }
 
@@ -172,6 +198,39 @@ public class BaseballAdminCommandService {
         if (outDelta > 0) {
             autoEndInningIfNeeded(match, state, writer, outDelta);
         }
+    }
+
+    private void forceBatterToFirst(Match match, BaseballLiveDTO state, BaseballAdminCommandDTO command,
+                                    EventWriter writer, String eventType, String defaultLabel, String defaultDescription) {
+        String period = currentPeriodOrFirst(state);
+        Long batterId = requireCurrentBatter(state, command);
+        ensureAtBatStarted(match, state, writer, period, batterId);
+        addForcedRunnerAdvances(match, state, writer, period);
+        String description = command.description() == null || command.description().isBlank() ? defaultDescription : command.description();
+        writer.add(period, battingTeamId(match, period), batterId, eventType, description == null ? defaultLabel : description);
+    }
+
+    private void addForcedRunnerAdvances(Match match, BaseballLiveDTO state, EventWriter writer, String period) {
+        BaseballLiveDTO.BaseState bases = state.baseState();
+        if (bases == null || bases.first() == null) {
+            return;
+        }
+        Long teamId = battingTeamId(match, period);
+        if (bases.second() != null && bases.third() != null) {
+            writer.add(period, teamId, bases.third().playerId(), "score", "3\uB8E8 \uC8FC\uC790 \uB4DD\uC810");
+        }
+        if (bases.second() != null) {
+            writer.add(period, teamId, bases.second().playerId(), "runner_advance", "2\uB8E8 \uC8FC\uC790 3\uB8E8\uAE4C\uC9C0 \uC9C4\uB8E8");
+        }
+        writer.add(period, teamId, bases.first().playerId(), "runner_advance", "1\uB8E8 \uC8FC\uC790 2\uB8E8\uAE4C\uC9C0 \uC9C4\uB8E8");
+    }
+
+    private void sacrificeFly(Match match, BaseballLiveDTO state, BaseballAdminCommandDTO command, EventWriter writer) {
+        BaseballLiveDTO.BaseState bases = state.baseState();
+        if (bases == null || bases.third() == null) {
+            throw new IllegalArgumentException("sac_fly requires runner on third base");
+        }
+        terminalBatterEvent(match, state, command, writer, "sac_fly", 1);
     }
 
     private void homerun(Match match, BaseballLiveDTO state, BaseballAdminCommandDTO command, EventWriter writer) {
@@ -248,10 +307,26 @@ public class BaseballAdminCommandService {
                 .anyMatch(card -> card.current() && Objects.equals(card.batterId(), batterId));
     }
 
-    private void autoEndInningIfNeeded(Match match, BaseballLiveDTO state, EventWriter writer, int outDelta) {
+    private boolean autoEndInningIfNeeded(Match match, BaseballLiveDTO state, EventWriter writer, int outDelta) {
         int outs = state.count() == null ? 0 : state.count().outs();
         if (outs + outDelta >= 3) {
             endInning(match, state, writer, false);
+            return true;
+        }
+        return false;
+    }
+
+    private void startNextAtBatIfPossible(Match match, BaseballLiveDTO state, EventWriter writer) {
+        String period = currentPeriodOrFirst(state);
+        Long currentBatterId = state.timeline() == null ? null : state.timeline().stream()
+                .filter(BaseballLiveDTO.AtBatCard::current)
+                .map(BaseballLiveDTO.AtBatCard::batterId)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        Long nextBatterId = nextOnDeckBatter(state, currentBatterId);
+        if (nextBatterId != null) {
+            writer.add(period, battingTeamId(match, period), nextBatterId, "at_bat_start", null);
         }
     }
 
@@ -273,6 +348,16 @@ public class BaseballAdminCommandService {
         return state.onDeck().get(0).playerId();
     }
 
+    private Long nextOnDeckBatter(BaseballLiveDTO state, Long currentBatterId) {
+        if (state.onDeck() == null || state.onDeck().isEmpty()) return null;
+        return state.onDeck().stream()
+                .map(BaseballLiveDTO.LineupPlayer::playerId)
+                .filter(Objects::nonNull)
+                .filter(playerId -> !Objects.equals(playerId, currentBatterId))
+                .findFirst()
+                .orElse(null);
+    }
+
     private boolean runnerExists(BaseballLiveDTO state, Long runnerId) {
         BaseballLiveDTO.BaseState bases = state.baseState();
         if (bases == null || runnerId == null) return false;
@@ -283,8 +368,8 @@ public class BaseballAdminCommandService {
 
     private String currentPeriodOrFirst(BaseballLiveDTO state) {
         String period = state.currentPeriod();
-        if (period == null || period.isBlank() || !period.matches("\\d+회[초말]")) {
-            return "1회초";
+        if (period == null || period.isBlank() || !period.matches("\\d+\uD68C[\uCD08\uB9D0]")) {
+            return "1\uD68C\uCD08";
         }
         return period;
     }
@@ -298,13 +383,13 @@ public class BaseballAdminCommandService {
     }
 
     private boolean isBottom(String period) {
-        return period != null && period.contains("말");
+        return period != null && period.contains("\uB9D0");
     }
 
     private String nextPeriod(String period) {
         int inning = inningNumber(period);
-        if (inning <= 0) return "1회초";
-        return isBottom(period) ? (inning + 1) + "회초" : inning + "회말";
+        if (inning <= 0) return "1\uD68C\uCD08";
+        return isBottom(period) ? (inning + 1) + "\uD68C\uCD08" : inning + "\uD68C\uB9D0";
     }
 
     private int inningNumber(String period) {
@@ -348,3 +433,5 @@ public class BaseballAdminCommandService {
         }
     }
 }
+
+
