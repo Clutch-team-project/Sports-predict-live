@@ -140,6 +140,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
                     .updatedAt(b.getUpdatedAt())
                     .fileNames(fileNames)
                     .replyCount(replyCount != null ? replyCount : 0L)
+                    .profileImage(u != null ? u.getProfileImage() : null)
                     .build();
         }).collect(Collectors.toList());
 

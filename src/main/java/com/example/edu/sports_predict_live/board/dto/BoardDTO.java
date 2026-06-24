@@ -49,4 +49,5 @@ public class BoardDTO {
     private List<String> fileNames;
 
     private String boardType;
+    private String profileImage;
 }

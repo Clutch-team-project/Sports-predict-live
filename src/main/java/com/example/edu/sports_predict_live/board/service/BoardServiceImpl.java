@@ -84,6 +84,7 @@ public class BoardServiceImpl implements BoardService{
             User user = userOptional.get();
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
+            boardDTO.setProfileImage(user.getProfileImage());
         }
         return boardDTO;
     }
@@ -100,6 +101,7 @@ public class BoardServiceImpl implements BoardService{
             User user = userOptional.get();
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
+            boardDTO.setProfileImage(user.getProfileImage());
         }
         return boardDTO;
     }

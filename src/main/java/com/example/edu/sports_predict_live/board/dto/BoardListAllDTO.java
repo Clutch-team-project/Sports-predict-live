@@ -33,4 +33,5 @@ public class BoardListAllDTO {
     private Long replyCount;
 
     private List<String> fileNames;
+    private String profileImage;
 }
