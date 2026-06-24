@@ -173,6 +173,9 @@ public class BoardServiceImpl implements BoardService{
     @Override
     public void remove(Long boardId, Long currentUserId, String currentUserRole) {
         Board board = boardRepository.findById(boardId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        if(board.getDeletedAt() != null) {
+            throw new IllegalStateException("이미 삭제된 게시글입니다.");
+        }
 
         boolean isOwner = board.getUserId().equals(currentUserId);
         boolean isAdmin = "ROLE_ADMIN".equals(currentUserRole);
@@ -223,6 +226,9 @@ public class BoardServiceImpl implements BoardService{
     public void toggleLike(Long boardId, Long userId) {
         Optional<Board> result = boardRepository.findById(boardId);
         Board board = result.orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
+        if (board.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 게시글에는 좋아요를 누를 수 없습니다.");
+        }
         Optional<BoardLike> boardLikeOp = boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId);
         if(boardLikeOp.isPresent()) {
             boardLikeRepository.delete(boardLikeOp.get());
@@ -252,6 +258,9 @@ public class BoardServiceImpl implements BoardService{
     public void report(Long boardId, Long userId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        if (board.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 게시글은 신고할 수 없습니다.");
+        }
         if (board.getUserId().equals(userId)) {
             throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
         }
@@ -284,6 +293,9 @@ public class BoardServiceImpl implements BoardService{
     public void toggleBlind(Long boardId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        if (board.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 게시글은 블라인드 처리할 수 없습니다.");
+        }
         board.changeBlind(!board.isBlinded());
 
         boardRepository.save(board);
