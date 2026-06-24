@@ -29,11 +29,8 @@ import java.util.Map;
 public class AiModerationService {
     private final BoardRepository boardRepository;
     private final BoardReplyRepository boardReplyRepository;
-    @Value("${gemini.api.key}")
-    private String apiKey;
-
-    @Value("${gemini.api.url}")
-    private String apiUrl;
+    @Value("${openai.api-key}")
+    private String openAiApiKey;
 
     private final ObjectMapper objectMapper;
 
@@ -43,30 +40,38 @@ public class AiModerationService {
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                Map<String, Object> part = new HashMap<>();
-                part.put("text", prompt);
-
-                Map<String, Object> content = new HashMap<>();
-                content.put("parts", List.of(part));
+                Map<String, Object> message = new HashMap<>();
+                message.put("role", "user");
+                message.put("content", prompt);
 
                 Map<String, Object> requestBody = new HashMap<>();
-                requestBody.put("contents", List.of(content));
+                requestBody.put("model", "gpt-4o-mini");
+                requestBody.put("messages", List.of(message));
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+                headers.set("Authorization", "Bearer " + openAiApiKey);
 
+                HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
                 RestTemplate restTemplate = new RestTemplate();
-                String requestUrl = apiUrl + "?key=" + apiKey;
+
+                String requestUrl = "https://api.openai.com/v1/chat/completions";
                 ResponseEntity<String> response = restTemplate.postForEntity(requestUrl, requestEntity, String.class);
 
                 JsonNode rootNode = objectMapper.readTree(response.getBody());
-                String aiResponse = rootNode.path("candidates").get(0)
-                        .path("content").path("parts").get(0)
-                        .path("text").asText().trim().toLowerCase();
+                String aiResponse = rootNode.path("choices").get(0)
+                        .path("message").path("content").asText().trim().toLowerCase();
+
                 log.info("AI 검사 결과 (원본 텍스트 일부: {}...): {}", text.substring(0, Math.min(text.length(), 10)), aiResponse);
 
                 return aiResponse.contains("true");
+
+            } catch (org.springframework.web.client.HttpClientErrorException.TooManyRequests e) {
+                log.error("OpenAI API 할당량 초과 에러(429 Too Many Requests) 발생. 크레딧 잔액을 확인해 주세요. 상세: {}", e.getMessage());
+                return false;
+            } catch (org.springframework.web.client.HttpClientErrorException e) {
+                log.error("OpenAI API 호출 중 클라이언트 에러(4xx) 발생. API 키 설정을 확인해 주세요. 상세: {}", e.getMessage());
+                return false;
             } catch (org.springframework.web.client.HttpServerErrorException e) {
                 log.warn("AI 서버 통신 지연 (재시도 {}/{}): {}", attempt, maxRetries, e.getMessage());
                 if (attempt == maxRetries) {
@@ -79,7 +84,7 @@ public class AiModerationService {
                     Thread.currentThread().interrupt();
                 }
             } catch (Exception e) {
-                log.error("AI 검사 중 오류 발생", e);
+                log.error("AI 검사 중 예외 발생", e);
                 return false;
             }
         }
