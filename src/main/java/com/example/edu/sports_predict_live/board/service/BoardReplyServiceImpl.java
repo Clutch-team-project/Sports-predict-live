@@ -43,6 +43,9 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     @Transactional
     public Long register(BoardReplyDTO boardReplyDTO) {
         Board board = boardRepository.findById(boardReplyDTO.getBoardId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+        if (board.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 게시글에는 댓글을 등록할 수 없습니다.");
+        }
 
         User user = userRepository.findById(boardReplyDTO.getUserId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
@@ -73,6 +76,9 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     @Override
     public void modifyReply(BoardReplyDTO boardReplyDTO, Long currentUserId) {
         BoardReply reply = boardReplyRepository.findById(boardReplyDTO.getReplyId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+        if (reply.getDeletedAt() != null) {
+            throw new IllegalStateException("이미 삭제된 댓글입니다.");
+        }
         if (!reply.getUserId().equals(currentUserId)) {
             throw new AccessDeniedException("댓글 수정 권한이 없습니다.");
         }
@@ -155,6 +161,9 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     @Transactional
     public void toggleLikeReply(Long replyId, Long currentUserId) {
         BoardReply reply = boardReplyRepository.findById(replyId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+        if (reply.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 댓글에는 좋아요를 누를 수 없습니다.");
+        }
         boardReplyLikeRepository.findByBoardReply_ReplyIdAndUserId(replyId, currentUserId).ifPresentOrElse(
                 like -> {
                     boardReplyLikeRepository.delete(like);
@@ -177,6 +186,9 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     @Transactional
     public void reportReply(Long replyId, Long currentUserId) {
         BoardReply reply = boardReplyRepository.findById(replyId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+        if (reply.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 댓글은 신고할 수 없습니다.");
+        }
         if (boardReplyReportRepository.findByBoardReply_ReplyIdAndUserId(replyId, currentUserId).isPresent()) {
             throw new IllegalArgumentException("이미 신고한 댓글입니다.");
         }
@@ -195,6 +207,9 @@ public class BoardReplyServiceImpl implements BoardReplyService {
             throw new org.springframework.security.access.AccessDeniedException("관리자만 접근 가능한 기능입니다.");
         }
         BoardReply reply = boardReplyRepository.findById(replyId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+        if (reply.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 댓글은 블라인드 처리할 수 없습니다.");
+        }
         reply.changeBlind(!reply.isBlinded());
         boardReplyRepository.save(reply);
     }
