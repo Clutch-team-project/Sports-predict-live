@@ -12,11 +12,17 @@ import com.example.edu.sports_predict_live.user.entity.User;
 import com.example.edu.sports_predict_live.user.repository.EmailVerifyRepository;
 import com.example.edu.sports_predict_live.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Map;
+import java.util.UUID;
 
 // 회원 가입/로그인/토큰 재발급/내 정보 관리 (조회·수정·비밀번호 변경·탈퇴)
 @Service
@@ -28,6 +34,9 @@ public class UserService {
     private final EmailVerifyRepository emailVerifyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+
+    @Value("${com.example.upload.path}")
+    private String uploadPath;
 
     public UserResponseDTO signup(SignupRequestDTO dto) {
         EmailVerify verify = emailVerifyRepository
@@ -143,12 +152,48 @@ public class UserService {
                 throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
-        user.updateProfile(dto.getNickname(), dto.getPhone(),
-                dto.getBirthDate(), dto.getProfileImage());
+        String savedImagePath = saveProfileImage(dto.getProfileImage(), user.getProfileImage());
+
+        user.updateProfile(dto.getNickname(), dto.getPhone(), dto.getBirthDate(), savedImagePath);
         user.updateAlertSettings(dto.getMarketingAgreed(), dto.getMatchStartAlert(),
                 dto.getPredictionResultAlert(), dto.getAlertBeforeMinutes());
 
         return UserResponseDTO.from(user);
+    }
+
+    private String saveProfileImage(MultipartFile file, String existingImagePath) {
+        if (file == null || file.isEmpty()) {
+            return null; // null이면 User.updateProfile()에서 기존 값 유지
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new CustomException(ErrorCode.INVALID_FILE_TYPE);
+        }
+
+        String profileDir = Paths.get(uploadPath, "profile").toAbsolutePath().toString();
+        File dir = new File(profileDir);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        // 기존 프로필 이미지 삭제
+        if (existingImagePath != null) {
+            File oldFile = new File(Paths.get(uploadPath, "profile", existingImagePath).toString());
+            if (oldFile.exists()) {
+                oldFile.delete();
+            }
+        }
+
+        String originalName = file.getOriginalFilename();
+        String saveName = UUID.randomUUID() + "_" + originalName;
+        try {
+            file.transferTo(Paths.get(profileDir, saveName));
+        } catch (IOException e) {
+            throw new RuntimeException("프로필 이미지 저장 중 오류가 발생했습니다.", e);
+        }
+
+        return saveName;
     }
 
     @Transactional

@@ -21,6 +21,7 @@ public class UserResponseDTO {
 
     private String phone;
     private LocalDate birthDate;
+    private String profileImage;
     private boolean marketingAgreed;
     private boolean matchStartAlert;
     private boolean predictionResultAlert;
@@ -36,6 +37,7 @@ public class UserResponseDTO {
                 .role(user.getRole().name())
                 .phone(user.getPhone())
                 .birthDate(user.getBirthDate())
+                .profileImage(user.getProfileImage())
                 .marketingAgreed(user.isMarketingAgreed())
                 .matchStartAlert(user.isMatchStartAlert())
                 .predictionResultAlert(user.isPredictionResultAlert())

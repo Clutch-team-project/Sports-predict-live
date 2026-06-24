@@ -46,7 +46,10 @@ public enum ErrorCode {
 
     // 승부 예측
     ALREADY_PREDICTED(409, "이미 예측에 참여했습니다."),
-    INVALID_PREDICTION_RESULT(400, "유효하지 않은 예측 결과입니다.");
+    INVALID_PREDICTION_RESULT(400, "유효하지 않은 예측 결과입니다."),
+
+    // 파일
+    INVALID_FILE_TYPE(400, "이미지 파일만 업로드할 수 있습니다.");
 
     private final int status;
     private final String message;

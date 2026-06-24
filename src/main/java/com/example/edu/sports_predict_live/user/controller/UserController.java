@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -28,10 +29,10 @@ public class UserController {
         return ResponseEntity.ok(userService.getMe(userId));
     }
 
-    @PutMapping("/me")
+    @PutMapping(value = "/me", consumes = {"multipart/form-data", "application/x-www-form-urlencoded", "application/json"})
     public ResponseEntity<UserResponseDTO> updateMe(
             @AuthenticationPrincipal Long userId,
-            @RequestBody UserUpdateDTO dto) {
+            @ModelAttribute UserUpdateDTO dto) {
         return ResponseEntity.ok(userService.updateMe(userId, dto));
     }
 
