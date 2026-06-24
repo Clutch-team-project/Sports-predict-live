@@ -64,6 +64,7 @@ public class SecurityConfig {
             "/board", "/board/list/**", "/board/read/**",
             "/replies/**", "/templates/**",
             "/team-detail", "/player-detail", "/news", "/sitemap",
+            "/files/**",
     };
 
     // 공개 정적 리소스
@@ -93,7 +94,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "board/modify").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "/board/modify").permitAll()
                         .requestMatchers(
                                 "/", "/schedule",
                                 "/login", "/signup", "/notification-agreement",
