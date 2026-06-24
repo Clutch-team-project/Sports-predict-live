@@ -131,29 +131,4 @@ public class BoardReplyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("처리 중 오류가 발생했습니다.");
         }
     }
-
-    @Value("${com.example.upload.path}")
-    private String uploadPath;
-
-    @GetMapping("/view")
-    @ResponseBody
-    public ResponseEntity<org.springframework.core.io.Resource> viewFileGet(@RequestParam("fileName") String fileName) {
-        String basePath = uploadPath.endsWith("/") || uploadPath.endsWith("\\") ? uploadPath : uploadPath + java.io.File.separator;
-        String fullPath = basePath + fileName;
-
-        org.springframework.core.io.Resource resource = new org.springframework.core.io.FileSystemResource(fullPath);
-
-        if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        try {
-            String contentType = java.nio.file.Files.probeContentType(resource.getFile().toPath());
-            headers.add("Content-Type", contentType != null ? contentType : "application/octet-stream");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-        return ResponseEntity.ok().headers(headers).body(resource);
-    }
 }
