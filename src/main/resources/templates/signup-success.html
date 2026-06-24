@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -401,6 +401,7 @@
   function showNav(sport) {
     clearTimeout(hideTimer);
     const bar = document.getElementById('pageNavBar');
+    if (!bar) return;
     currentSport = sport || currentSport;
     renderTabs(currentSport);
     bar.style.maxHeight = '52px';
@@ -417,6 +418,7 @@
   function hideNav() {
     hideTimer = setTimeout(() => {
       const bar = document.getElementById('pageNavBar');
+      if (!bar) return;
       bar.style.maxHeight = '0';
       bar.style.opacity   = '0';
     }, 250);
@@ -444,9 +446,10 @@
 
     // 두 번째 줄 위에 있을 때 유지
     const bar = document.getElementById('pageNavBar');
-    bar.addEventListener('mouseenter', () => clearTimeout(hideTimer));
-    bar.addEventListener('mouseleave', hideNav);
-
+    if (bar) {
+      bar.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+      bar.addEventListener('mouseleave', hideNav);
+    }
     // 초기 렌더
     renderTabs('home');
   });
