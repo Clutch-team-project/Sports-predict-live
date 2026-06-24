@@ -58,7 +58,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
         BoardReply saveReply = boardReplyRepository.saveAndFlush(reply);
         aiModerationService.checkAndReplyAsync(saveReply);
 
-        return boardReplyRepository.save(reply).getReplyId();
+        return saveReply.getReplyId();
     }
 
     @Override
