@@ -230,7 +230,12 @@
             <div class="card p-4">
                 <p class="section-title">작성자 정보</p>
                 <div class="flex items-center gap-3 mb-3">
-                    <div style="width:44px;height:44px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8;">USER</div>
+                    <!-- 작성자 프로필 이미지 -->
+                    <img th:if="${!dto.isNotice and dto.profileImage != null and dto.profileImage != ''}"
+                         th:src="@{/files/view(fileName='profile/' + ${dto.profileImage})}"
+                         style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="프로필">
+                    <div th:unless="${!dto.isNotice and dto.profileImage != null and dto.profileImage != ''}"
+                         style="width:44px;height:44px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8;">USER</div>
                     <div>
                         <p style="font-size:13px;font-weight:700;color:#334155"
                            th:text="${dto.isNotice ? '관리자' : (dto.nickname != null and dto.nickname != '' ? dto.nickname : '익명')}">닉네임</p>
