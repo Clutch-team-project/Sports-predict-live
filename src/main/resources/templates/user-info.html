@@ -589,6 +589,7 @@
     function renderTabs(sport, activeTab) {
         const tabs = SPORT_TABS[sport] || [];
         const list = document.getElementById('pageTabList');
+        if (!list) return;
         list.innerHTML = tabs.map((t, i) =>
             `<span class="page-tab${i === 0 ? ' active-tab' : ''}" onclick="selectTab(this)">${t}</span>`
         ).join('');
@@ -838,7 +839,10 @@
             else document.getElementById('toggle-predict').classList.remove('on');
 
             if (data.profileImage) {
-                document.getElementById('profile-preview').src = BASE_URL + '/files/view?fileName=profile/' + data.profileImage;
+                const imgSrc = data.profileImage.startsWith('http')
+                    ? data.profileImage
+                    : BASE_URL + '/files/view?fileName=profile/' + data.profileImage;
+                document.getElementById('profile-preview').src = imgSrc;
                 document.getElementById('profile-preview').style.display = 'block';
                 document.getElementById('avatar-text').style.display = 'none';
                 document.getElementById('btn-remove-image').style.display = 'inline-block';

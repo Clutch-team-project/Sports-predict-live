@@ -177,8 +177,8 @@ public class UserService {
             dir.mkdirs();
         }
 
-        // 기존 프로필 이미지 삭제
-        if (existingImagePath != null) {
+        // 기존 프로필 이미지 삭제 (소셜 로그인의 외부 URL은 로컬 파일이 없으므로 건너뜀)
+        if (existingImagePath != null && !existingImagePath.startsWith("http")) {
             File oldFile = new File(Paths.get(uploadPath, "profile", existingImagePath).toString());
             if (oldFile.exists()) {
                 oldFile.delete();
