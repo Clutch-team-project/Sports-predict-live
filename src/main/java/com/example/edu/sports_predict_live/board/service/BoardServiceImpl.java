@@ -62,27 +62,7 @@ public class BoardServiceImpl implements BoardService{
 
         Board board = dtoToEntity(boardDTO);
 
-        if(boardDTO.getFiles() != null && !boardDTO.getFiles().isEmpty()) {
-            String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
-            java.io.File uploadDir = new java.io.File(absolutePath);
-            if (!uploadDir.exists()) uploadDir.mkdirs();
-
-            for (org.springframework.web.multipart.MultipartFile multipartFile : boardDTO.getFiles()) {
-                if (multipartFile.isEmpty()) continue;
-
-                String originalName = multipartFile.getOriginalFilename();
-                String uuid = java.util.UUID.randomUUID().toString();
-                String saveName = uuid + "_" + originalName;
-                java.nio.file.Path savePath = java.nio.file.Paths.get(absolutePath, saveName);
-
-                try {
-                    multipartFile.transferTo(savePath);
-                    board.addImage(uuid, originalName);
-                } catch (java.io.IOException e) {
-                    throw new RuntimeException("이미지 저장 중 에러 발생", e);
-                }
-            }
-        }
+        saveUploadedFiles(board, boardDTO.getFiles());
 
         Long boardId = boardRepository.save(board).getBoardId();
 
@@ -146,27 +126,7 @@ public class BoardServiceImpl implements BoardService{
             }
         }
 
-        if(boardDTO.getFiles() != null && !boardDTO.getFiles().isEmpty()) {
-            String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
-            java.io.File uploadDir = new java.io.File(absolutePath);
-            if (!uploadDir.exists()) uploadDir.mkdirs();
-
-            for (org.springframework.web.multipart.MultipartFile multipartFile : boardDTO.getFiles()) {
-                if (multipartFile.isEmpty()) continue;
-
-                String originalName = multipartFile.getOriginalFilename();
-                String uuid = java.util.UUID.randomUUID().toString();
-                String saveName = uuid + "_" + originalName;
-                java.nio.file.Path savePath = java.nio.file.Paths.get(absolutePath, saveName);
-
-                try {
-                    multipartFile.transferTo(savePath);
-                    board.addImage(uuid, originalName);
-                } catch (java.io.IOException e) {
-                    throw new RuntimeException("새 이미지 저장 중 에러 발생", e);
-                }
-            }
-        }
+        saveUploadedFiles(board, boardDTO.getFiles());
         boardRepository.save(board);
     }
 
@@ -335,4 +295,35 @@ public class BoardServiceImpl implements BoardService{
                 })
                 .collect(Collectors.toList());
         }
+
+    // 업로드된 이미지 파일 저장 및 게시글에 등록
+    private void saveUploadedFiles(Board board, List<org.springframework.web.multipart.MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
+        java.io.File uploadDir = new java.io.File(absolutePath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        for (org.springframework.web.multipart.MultipartFile multipartFile : files) {
+            if (multipartFile.isEmpty()) {
+                continue;
+            }
+
+            String originalName = multipartFile.getOriginalFilename();
+            String uuid = java.util.UUID.randomUUID().toString();
+            String saveName = uuid + "_" + originalName;
+            java.nio.file.Path savePath = java.nio.file.Paths.get(absolutePath, saveName);
+
+            try {
+                multipartFile.transferTo(savePath);
+                board.addImage(uuid, originalName);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("이미지 저장 중 에러 발생", e);
+            }
+        }
+    }
 }
