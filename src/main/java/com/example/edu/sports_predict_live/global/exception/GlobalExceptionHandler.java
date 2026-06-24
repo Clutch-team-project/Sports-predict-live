@@ -31,9 +31,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(Map.of("status", 400, "message", message));
     }
-    // ai 에러 발생시
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+    // 비즈니스 검증 및 인자 예외 발생 시 메시지 반환
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<String> handleIllegalException(RuntimeException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
