@@ -20,6 +20,7 @@ import java.util.Map;
 public class BoardReplyController {
     private final BoardReplyService boardReplyService;
 
+    // 특정 게시글의 댓글 목록 조회
     @GetMapping("/list/{boardId}")
     public ResponseEntity<PageResponseDTO<BoardReplyDTO>> getList(
             @PathVariable("boardId") Long boardId,
@@ -80,7 +81,7 @@ public class BoardReplyController {
         }
     }
 
-    // 댓글 좋아요
+    // 댓글 좋아요 토글
     @PostMapping("/like")
     public ResponseEntity<String> likeReply(@RequestBody Map<String, Long> payload, Authentication authentication) {
         if(authentication == null || !authentication.isAuthenticated()) {
@@ -114,7 +115,7 @@ public class BoardReplyController {
         }
     }
 
-    // 댓글 블라인드
+    // 댓글 블라인드 토글 (관리자 전용)
     @PutMapping("/admin/{replyId}/blind")
     public ResponseEntity<String> blindReply(@PathVariable("replyId") Long replyId,
                                              Authentication authentication) {

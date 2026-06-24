@@ -23,7 +23,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +44,7 @@ public class BoardServiceImpl implements BoardService{
     @Value("${com.example.upload.path}")
     private String uploadPath;
 
-    // 게시글 생성
+    // 게시글 작성
     public Long register(BoardDTO boardDTO, String currentUserRole) {
         if("공지".equals(boardDTO.getCategory()) && !currentUserRole.equals("ROLE_ADMIN")) {
             throw new AccessDeniedException("공지사항은 관리자만 작성할 수 있습니다.");
@@ -91,6 +90,7 @@ public class BoardServiceImpl implements BoardService{
         aiModerationService.checkAndBlindAsync(boardId, textToAnalyze);
         return boardId;
     }
+
     // 게시글 상세 확인(조회수 증가)
     @Override
     public BoardDTO readOne(Long boardId){
@@ -107,7 +107,8 @@ public class BoardServiceImpl implements BoardService{
         }
         return boardDTO;
     }
-    // 게시글 수정용 게시글 상세확인(조회수 증가 X)
+
+    // 게시글 수정용 상세 확인(조회수 증가 X)
     @Override
     public BoardDTO getBoardOnly(Long boardId) {
         Optional<Board> result = boardRepository.findByIdWithImages(boardId);
@@ -122,6 +123,7 @@ public class BoardServiceImpl implements BoardService{
         }
         return boardDTO;
     }
+
     // 게시글 수정
     @Override
     public void modify(BoardDTO boardDTO) {
@@ -133,7 +135,6 @@ public class BoardServiceImpl implements BoardService{
 
         board.clearImage();
 
-        // 기존에 있던 파일명 다시 담기
         if(boardDTO.getFileNames() != null) {
             for(String fileName : boardDTO.getFileNames()) {
                 String[] arr = fileName.split("_", 2);
@@ -145,7 +146,6 @@ public class BoardServiceImpl implements BoardService{
             }
         }
 
-        // 새로 추가된 파일 저장하기
         if(boardDTO.getFiles() != null && !boardDTO.getFiles().isEmpty()) {
             String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
             java.io.File uploadDir = new java.io.File(absolutePath);
@@ -169,6 +169,7 @@ public class BoardServiceImpl implements BoardService{
         }
         boardRepository.save(board);
     }
+
     // 게시글 삭제
     @Override
     public void remove(Long boardId, Long currentUserId, String currentUserRole) {
@@ -187,7 +188,8 @@ public class BoardServiceImpl implements BoardService{
         board.softDelete();
         boardRepository.save(board);
     }
-    // 리스트 조회
+
+    // 검색 조건 및 페이징처리 적용된 게시글 목록 조회
     @Override
     public PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO) {
         String[] types = pageRequestDTO.getTypes();
@@ -221,7 +223,8 @@ public class BoardServiceImpl implements BoardService{
                 .total((int) result.getTotalElements())
                 .build();
     }
-    // 좋아요 토글
+
+    // 게시글 좋아요 토글
     @Override
     public void toggleLike(Long boardId, Long userId) {
         Optional<Board> result = boardRepository.findById(boardId);
@@ -244,7 +247,7 @@ public class BoardServiceImpl implements BoardService{
         boardRepository.save(board);
         boardRepository.flush();
     }
-    // 좋아요 여부 확인
+    // 게시글 좋아요 여부 확인
     @Override
     public boolean checkIsLiked(Long boardId, Long userId) {
         if(userId == null){
@@ -252,7 +255,7 @@ public class BoardServiceImpl implements BoardService{
         }
         return boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId).isPresent();
     }
-    // 신고 기능
+    // 게시글 신고
     @Override
     @Transactional
     public void report(Long boardId, Long userId) {
@@ -279,7 +282,8 @@ public class BoardServiceImpl implements BoardService{
 
         boardReportRepository.save(newReport);
     }
-    // 신고 여부 확인
+
+    // 게시글 신고 여부 확인
     @Override
     public boolean checkIsReported(Long boardId, Long userId) {
         if(userId == null) return false;
@@ -288,6 +292,7 @@ public class BoardServiceImpl implements BoardService{
                 .build();
         return boardReportRepository.findByBoard_BoardIdAndUserId(board.getBoardId(), userId).isPresent();
     }
+
     // 게시글 블라인드 처리
     @Override
     public void toggleBlind(Long boardId) {
@@ -301,7 +306,7 @@ public class BoardServiceImpl implements BoardService{
         boardRepository.save(board);
     }
 
-    // 메인홈 일별 인기글 5개 출력
+    // 메인홈용 일별 인기글 5개 조회
     @Override
     public List<BoardDTO> findTop5ViewCountToday(String boardType) {
         if (boardType != null) {

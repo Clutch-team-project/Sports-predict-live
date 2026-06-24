@@ -38,6 +38,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
 
     private final ModelMapper modelMapper;
 
+    // 댓글 등록 (ai 필터링)
     @Override
     @Transactional
     public Long register(BoardReplyDTO boardReplyDTO) {
@@ -61,12 +62,14 @@ public class BoardReplyServiceImpl implements BoardReplyService {
         return saveReply.getReplyId();
     }
 
+    // 댓글 조회
     @Override
     public BoardReplyDTO read(Long replyId) {
         BoardReply reply = boardReplyRepository.findById(replyId).orElseThrow();
         return modelMapper.map(reply, BoardReplyDTO.class);
     }
 
+    // 댓글 수정
     @Override
     public void modifyReply(BoardReplyDTO boardReplyDTO, Long currentUserId) {
         BoardReply reply = boardReplyRepository.findById(boardReplyDTO.getReplyId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
@@ -77,6 +80,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
         boardReplyRepository.save(reply);
     }
 
+    // 댓글 삭제
     @Override
     public void removeReply(Long replyId, Long currentUserId, String currentUserRole) {
         BoardReply reply = boardReplyRepository.findById(replyId)
@@ -90,7 +94,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
         }
     }
 
-
+    // 특정 게시글의 페이징된 댓글 목록 조회(좋아요, 신고 포함)
     @Override
     public PageResponseDTO<BoardReplyDTO> getListOfBoard(Long boardId, PageRequestDTO pageRequestDTO, Long currentUserId) {
 
@@ -146,7 +150,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 .build();
     }
 
-    // 댓글 좋아요 기능
+    // 댓글 좋아요 토글
     @Override
     @Transactional
     public void toggleLikeReply(Long replyId, Long currentUserId) {
@@ -168,7 +172,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
         boardReplyRepository.save(reply);
     }
 
-    // 댓글 신고 기능
+    // 댓글 신고
     @Override
     @Transactional
     public void reportReply(Long replyId, Long currentUserId) {
@@ -183,7 +187,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
         boardReplyReportRepository.save(report);
     }
 
-    // 댓글 블라인드
+    // 댓글 블라인드 여부 토글 (관리자 전용)
     @Override
     @Transactional
     public void toggleBlindReply(Long replyId, String currentUserRole) {
