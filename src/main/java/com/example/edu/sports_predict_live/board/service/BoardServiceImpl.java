@@ -313,6 +313,11 @@ public class BoardServiceImpl implements BoardService{
                 continue;
             }
 
+            String contentType = multipartFile.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
+            }
+
             String originalName = multipartFile.getOriginalFilename();
             String uuid = java.util.UUID.randomUUID().toString();
             String saveName = uuid + "_" + originalName;

@@ -286,7 +286,7 @@ if (registerForm) {
             method: 'POST',
             body: formData
         })
-            .then(response => {
+            .then(async response => {
                 if (response.redirected) {
                     location.href = response.url;
                 } else if (response.status === 401 || response.status === 403) {
@@ -296,7 +296,8 @@ if (registerForm) {
                     alert('게시글이 등록되었습니다.');
                     location.href = boardType ? '/board/list?boardType=' + boardType : '/board/list';
                 } else {
-                    alert('게시글 등록에 실패했습니다.');
+                    const errorMsg = await response.text();
+                    alert(errorMsg || '게시글 등록에 실패했습니다.');
                 }
             })
             .catch(error => { console.error(error); alert('서버 통신 오류'); });
