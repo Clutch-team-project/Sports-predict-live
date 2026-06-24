@@ -65,7 +65,6 @@ public class Board extends BaseEntity {
     }
 
     public void changeViewCount(int viewCount) {
-        this.boardId = boardId;
         this.viewCount = viewCount;
     }
 

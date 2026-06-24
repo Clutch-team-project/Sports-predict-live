@@ -49,6 +49,7 @@ public class BoardController {
             return user.getUserId();
         }
     }
+
     // 현재 로그인한 유저의 ROLE 가져오기
     private String getCurrentUserRole(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -63,6 +64,7 @@ public class BoardController {
         return "redirect:/board/list";
     }
 
+    // 게시글 목록 조회
     @GetMapping("/list")
     public void list(PageRequestDTO pageRequestDTO, Authentication authentication, Model model) {
         log.info("게시판 목록 조회 요청 : ", pageRequestDTO);
@@ -74,6 +76,7 @@ public class BoardController {
         log.info("프론트에 넘기는 데이터 : ", responseDTO);
     }
 
+    // 게시글 상세 조회
     @GetMapping("/read")
     public void read(Long boardId, PageRequestDTO pageRequestDTO, Model model, HttpServletRequest request, Authentication authentication) {
         BoardDTO boardDTO = boardService.readOne(boardId);
@@ -112,6 +115,7 @@ public class BoardController {
         model.addAttribute("pageRequestDTO", pageRequestDTO);
     }
 
+    // 게시글 작성 페이지로 이동
     @GetMapping("/register")
     public String registerGET(Authentication authentication, Model model, PageRequestDTO pageRequestDTO) {
         String currentUserRole = getCurrentUserRole(authentication);
@@ -120,6 +124,7 @@ public class BoardController {
         return "board/register";
     }
 
+    // 게시글 등록
     @PostMapping("/register")
     public String registerPOST(BoardDTO boardDTO, Authentication authentication, RedirectAttributes redirectAttributes) {
         Long currentUserId = getCurrentUserId(authentication);
@@ -135,6 +140,7 @@ public class BoardController {
         return "redirect:/board/list";
     }
 
+    // 게시글 수정 페이지로 이동
     @GetMapping("/modify")
     public void modify(Long boardId, PageRequestDTO pageRequestDTO, Model model, Authentication authentication) {
         BoardDTO boardDTO = boardService.getBoardOnly(boardId);
@@ -144,6 +150,7 @@ public class BoardController {
         model.addAttribute("pageRequestDTO", pageRequestDTO);
     }
 
+    // 게시글 수정
     @PostMapping("/modify")
     @ResponseBody
     public ResponseEntity<String> modifyPOST(@Valid BoardDTO boardDTO, BindingResult bindingResult, Authentication authentication) {
@@ -168,6 +175,7 @@ public class BoardController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류: " + e.getMessage());
         }
     }
+
     // 게시글 삭제
     @PostMapping("/remove")
     @ResponseBody
@@ -193,6 +201,7 @@ public class BoardController {
         }
     }
 
+    // 게시글 블라인드 토글 (관리자 전용)
     @PutMapping("/admin/{boardId}/blind")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseBody
@@ -205,6 +214,7 @@ public class BoardController {
         }
     }
 
+    // 게시글 좋아요 토글
     @PostMapping("/like")
     @ResponseBody
     public ResponseEntity<String> likePOST(@RequestParam("boardId") Long boardId, Authentication authentication){
@@ -220,6 +230,7 @@ public class BoardController {
         }
     }
 
+    // 게시글 신고
     @PostMapping("/report")
     @ResponseBody
     public ResponseEntity<String> reportPOST(@RequestParam("boardId") Long boardId, Authentication authentication) {
@@ -234,34 +245,5 @@ public class BoardController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류가 발생하였습니다.");
         }
     }
-
-    @Value("${com.example.upload.path}")
-    private String uploadPath;
-
-    @GetMapping("/view")
-    @ResponseBody
-    public ResponseEntity<org.springframework.core.io.Resource> viewFileGet(@RequestParam("fileName") String fileName) {
-
-        // 경로 구분자가 겹치지 않도록 안전하게 조합
-        String basePath = uploadPath.endsWith("/") || uploadPath.endsWith("\\") ? uploadPath : uploadPath + java.io.File.separator;
-        String fullPath = basePath + fileName;
-
-        org.springframework.core.io.Resource resource = new org.springframework.core.io.FileSystemResource(fullPath);
-
-        if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        try {
-            String contentType = java.nio.file.Files.probeContentType(resource.getFile().toPath());
-            headers.add("Content-Type", contentType != null ? contentType : "application/octet-stream");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-        return ResponseEntity.ok().headers(headers).body(resource);
-    }
-
-
 
 }

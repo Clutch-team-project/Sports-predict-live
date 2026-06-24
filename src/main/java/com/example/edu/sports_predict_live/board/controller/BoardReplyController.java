@@ -20,6 +20,7 @@ import java.util.Map;
 public class BoardReplyController {
     private final BoardReplyService boardReplyService;
 
+    // 특정 게시글의 댓글 목록 조회
     @GetMapping("/list/{boardId}")
     public ResponseEntity<PageResponseDTO<BoardReplyDTO>> getList(
             @PathVariable("boardId") Long boardId,
@@ -80,7 +81,7 @@ public class BoardReplyController {
         }
     }
 
-    // 댓글 좋아요
+    // 댓글 좋아요 토글
     @PostMapping("/like")
     public ResponseEntity<String> likeReply(@RequestBody Map<String, Long> payload, Authentication authentication) {
         if(authentication == null || !authentication.isAuthenticated()) {
@@ -114,7 +115,7 @@ public class BoardReplyController {
         }
     }
 
-    // 댓글 블라인드
+    // 댓글 블라인드 토글 (관리자 전용)
     @PutMapping("/admin/{replyId}/blind")
     public ResponseEntity<String> blindReply(@PathVariable("replyId") Long replyId,
                                              Authentication authentication) {
@@ -130,30 +131,5 @@ public class BoardReplyController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("처리 중 오류가 발생했습니다.");
         }
-    }
-
-    @Value("${com.example.upload.path}")
-    private String uploadPath;
-
-    @GetMapping("/view")
-    @ResponseBody
-    public ResponseEntity<org.springframework.core.io.Resource> viewFileGet(@RequestParam("fileName") String fileName) {
-        String basePath = uploadPath.endsWith("/") || uploadPath.endsWith("\\") ? uploadPath : uploadPath + java.io.File.separator;
-        String fullPath = basePath + fileName;
-
-        org.springframework.core.io.Resource resource = new org.springframework.core.io.FileSystemResource(fullPath);
-
-        if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        try {
-            String contentType = java.nio.file.Files.probeContentType(resource.getFile().toPath());
-            headers.add("Content-Type", contentType != null ? contentType : "application/octet-stream");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-        return ResponseEntity.ok().headers(headers).body(resource);
     }
 }

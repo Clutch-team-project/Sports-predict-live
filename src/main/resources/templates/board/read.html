@@ -145,7 +145,7 @@
             <div class="image-area mt-6 mb-4 flex flex-col gap-4" th:if="${dto.fileNames != null and !dto.fileNames.isEmpty()}">
                 <th:block th:each="fileName : ${dto.fileNames}">
                     <div>
-                        <img th:src="@{/board/view(fileName=${fileName})}" alt="첨부 이미지" style="max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <img th:src="@{/files/view(fileName=${fileName})}" alt="첨부 이미지" style="max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;">
                     </div>
                 </th:block>
             </div>
