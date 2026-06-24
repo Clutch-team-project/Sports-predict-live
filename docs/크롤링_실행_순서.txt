@@ -1,0 +1,58 @@
+## 초기 실행 순서
+
+### 1. DB 초기 데이터 (MySQL에서 순서대로 실행)
+1. sql/init/01_kbo_init_data.sql       → sport, KBO 팀
+2. sql/init/02_kleague_init_data.sql   → K리그1 팀
+3. sql/init/03_lck_init_data.sql       → LCK 팀 (선수 FK 참조용)
+4. sql/init/04_lck_players_init.sql    → LCK 선수 (네이버 API nickname 기준)
+
+※ LCK 팀 순위(team_season_stat)는 lolesports API 실시간 조회로 제공되므로
+   초기 데이터 입력 불필요.
+
+---
+
+### 2. 크롤러 실행
+
+pip install requests beautifulsoup4 pymysql selenium webdriver-manager
+
+# KBO (경기 일정 과거 데이터 초기 수집 → 이후 당일 자동)
+python crawlers/kbo/kbo_crawler.py --start 20260321 --end 오늘날짜   # 시즌 시작일부터 오늘까지
+python crawlers/kbo/kbo_crawler.py                                   # 이후 매일 당일 실행
+
+# K리그 (당월 전체 일정 수집 → 이후 당일 자동)
+python crawlers/kleague/kleague_crawler.py --month 03    # 시즌 시작 월부터 월별 실행
+python crawlers/kleague/kleague_crawler.py --month 04
+python crawlers/kleague/kleague_crawler.py --month 05
+python crawlers/kleague/kleague_crawler.py               # 이후 매일 당일 실행 (순위+일정+선수기록)
+
+# LCK (선수 기록만 수집 / 팀 순위·일정은 API 실시간)
+python crawlers/lck/lck_crawler.py
+
+---
+
+### 3. 정기 실행 권장 주기
+
+| 크롤러 | 주기 | 비고 |
+|--------|------|------|
+| crawlers/kbo/kbo_crawler.py | 매일 경기 후 (약 23시) | 일정+순위+선수기록 |
+| crawlers/kbo/kbo_roster_crawler.py | 주 1회 | 선수 명단 (트레이드/등록 변동) |
+| crawlers/kleague/kleague_crawler.py | 매일 경기 후 | 일정+순위+선수기록 |
+| crawlers/kleague/kleague_roster_crawler.py | 주 1회 | 선수 명단 (이적/등록 변동) |
+| crawlers/lck/lck_crawler.py | 주 1회 이상 | 선수 기록만 (순위·일정은 API 실시간) |
+
+---
+
+### 4. 시즌 변경 시 업데이트 항목
+
+| 항목 | 파일 | 업데이트 내용 |
+|------|------|-------------|
+| KBO 시즌 | crawlers/kbo/kbo_crawler.py | SEASON = "20XX" |
+| K리그 시즌 | crawlers/kleague/kleague_crawler.py | SEASON = "20XX" |
+| LCK 스플릿 | crawlers/lck/lck_crawler.py | NAVER_LEAGUE_ID = "lck_20XX" |
+| LCK 팀·선수 | sql/init/03_lck_init_data.sql, sql/init/04_lck_players_init.sql | 로스터 변경분 반영 후 재실행 |
+
+---
+
+### 5. 테스트 쿼리
+- sql/test/브라우저_알림_테스트.sql   → 경기 시작 예정시간 변경 테스트
+- sql/test/승부_예측_테스트.sql       → 예측 승패 정산 테스트
