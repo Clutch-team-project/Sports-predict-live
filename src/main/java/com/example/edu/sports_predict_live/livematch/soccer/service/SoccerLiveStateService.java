@@ -36,6 +36,12 @@ public class SoccerLiveStateService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
+    private static final Map<String, List<String>> FORMATION_SLOTS = Map.of(
+            "4-4-2", List.of("GK", "LB", "CB", "CB", "RB", "LM", "CM", "CM", "RM", "ST", "ST"),
+            "4-3-3", List.of("GK", "LB", "CB", "CB", "RB", "CM", "CM", "CM", "LW", "ST", "RW"),
+            "4-2-3-1", List.of("GK", "LB", "CB", "CB", "RB", "DM", "DM", "AM", "LW", "RW", "ST")
+    );
+
     private final MatchRepository matchRepository;
     private final MatchEventRepository matchEventRepository;
     private final MatchLineupRepository matchLineupRepository;
@@ -144,13 +150,6 @@ public class SoccerLiveStateService {
                     if (team != null) team.saves++;
                     if (player != null) player.saves++;
                 }
-                case "assist" -> {
-                    if (player != null) player.assists++;
-                }
-                case "pass" -> {
-                    if (team != null) team.passes++;
-                    if (player != null) player.passes++;
-                }
                 default -> {
                 }
             }
@@ -213,12 +212,12 @@ public class SoccerLiveStateService {
         List<SoccerLiveDTO.PlayerStat> home = state.players.values().stream()
                 .filter(stat -> Objects.equals(stat.teamId, homeId))
                 .sorted(playerStatOrder())
-                .map(PlayerStatBuilder::toDto)
+                .map(stat -> stat.toDto(state.elapsedMinute()))
                 .toList();
         List<SoccerLiveDTO.PlayerStat> away = state.players.values().stream()
                 .filter(stat -> Objects.equals(stat.teamId, awayId))
                 .sorted(playerStatOrder())
-                .map(PlayerStatBuilder::toDto)
+                .map(stat -> stat.toDto(state.elapsedMinute()))
                 .toList();
         return new SoccerLiveDTO.Records(
                 new SoccerLiveDTO.TeamRecords(state.team(homeId).toDto(), state.team(awayId).toDto()),
@@ -333,8 +332,6 @@ public class SoccerLiveStateService {
             case "own_goal" -> "자책골";
             case "penalty_goal" -> "PK 골";
             case "penalty_miss" -> "PK 실축";
-            case "assist" -> "도움";
-            case "pass" -> "패스";
             case "shot" -> "슈팅";
             case "shot_on_target" -> "유효슈팅";
             case "corner_kick" -> "코너킥";
@@ -373,19 +370,76 @@ public class SoccerLiveStateService {
     }
 
     private String formation(List<SoccerLiveDTO.LineupPlayer> rows) {
-        List<String> positions = rows.stream()
+        List<SoccerLiveDTO.LineupPlayer> starters = rows.stream()
                 .filter(SoccerLiveDTO.LineupPlayer::starter)
+                .toList();
+
+        Map<Integer, String> bySlot = new HashMap<>();
+        for (SoccerLiveDTO.LineupPlayer player : starters) {
+            Integer orderNum = player.orderNum();
+            if (orderNum == null || orderNum < 1 || orderNum > 11) continue;
+            bySlot.putIfAbsent(orderNum, normalizeSoccerPosition(player.position()));
+        }
+
+        if (!bySlot.isEmpty()) {
+            for (Map.Entry<String, List<String>> entry : FORMATION_SLOTS.entrySet()) {
+                if (matchesFormation(bySlot, entry.getValue())) {
+                    return entry.getKey();
+                }
+            }
+        }
+
+        List<String> positions = starters.stream()
                 .map(SoccerLiveDTO.LineupPlayer::position)
                 .filter(Objects::nonNull)
-                .map(position -> position.toUpperCase(Locale.ROOT))
+                .map(this::normalizeSoccerPosition)
                 .toList();
-        long forwards = positions.stream().filter(Set.of("ST", "FW", "LW", "RW")::contains).count();
+        long defenders = positions.stream().filter(Set.of("LB", "CB", "RB", "LWB", "RWB", "DF")::contains).count();
         long mids = positions.stream().filter(Set.of("DM", "CM", "AM", "LM", "RM", "MF")::contains).count();
-        long defs = positions.stream().filter(Set.of("LB", "CB", "RB", "LWB", "RWB", "DF")::contains).count();
-        if (defs == 4 && mids == 4 && forwards == 2) return "4-4-2";
-        if (defs == 4 && mids == 3 && forwards == 3) return "4-3-3";
-        if (defs == 4 && mids == 5 && forwards == 1) return "4-2-3-1";
+        long attackers = positions.stream().filter(Set.of("ST", "FW", "LW", "RW")::contains).count();
+
+        if (defenders == 4
+                && positions.stream().filter("DM"::equals).count() >= 2
+                && positions.contains("AM")
+                && positions.contains("ST")) {
+            return "4-2-3-1";
+        }
+        if (defenders == 4 && mids == 4 && attackers == 2) return "4-4-2";
+        if (defenders == 4 && mids == 3 && attackers == 3) return "4-3-3";
+        if (defenders == 4 && mids == 5 && attackers == 1) return "4-2-3-1";
         return "4-4-2";
+    }
+
+    private boolean matchesFormation(Map<Integer, String> bySlot, List<String> expectedSlots) {
+        for (int i = 0; i < expectedSlots.size(); i++) {
+            String actual = bySlot.get(i + 1);
+            if (actual == null) continue;
+            String expected = expectedSlots.get(i);
+            if (!sameSlot(actual, expected)) return false;
+        }
+        return true;
+    }
+
+    private boolean sameSlot(String actual, String expected) {
+        String a = normalizeSoccerPosition(actual);
+        String e = normalizeSoccerPosition(expected);
+        if (Objects.equals(a, e)) return true;
+        if ((Objects.equals(a, "LW") || Objects.equals(a, "LM")) && (Objects.equals(e, "LW") || Objects.equals(e, "LM"))) return true;
+        if ((Objects.equals(a, "RW") || Objects.equals(a, "RM")) && (Objects.equals(e, "RW") || Objects.equals(e, "RM"))) return true;
+        if ((Objects.equals(a, "ST") || Objects.equals(a, "FW")) && (Objects.equals(e, "ST") || Objects.equals(e, "FW"))) return true;
+        return false;
+    }
+
+    private String normalizeSoccerPosition(String raw) {
+        String value = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+        return switch (value) {
+            case "FWD", "CF", "ATT" -> "ST";
+            case "MID" -> "CM";
+            case "DEF" -> "CB";
+            case "LWF" -> "LW";
+            case "RWF" -> "RW";
+            default -> value;
+        };
     }
 
     private class State {
@@ -423,6 +477,18 @@ public class SoccerLiveStateService {
                     .map(PlayerStatBuilder::toLineupPlayer)
                     .toList();
             return SoccerLiveStateService.this.formation(rows);
+        }
+
+        private int elapsedMinute() {
+            if (currentMinute == null || currentMinute.isBlank()) return 0;
+            String[] parts = currentMinute.split("\\+");
+            try {
+                int base = Integer.parseInt(parts[0].trim());
+                int added = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 0;
+                return Math.max(0, Math.min(130, base + added));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
         }
     }
 
@@ -485,8 +551,9 @@ public class SoccerLiveStateService {
             this.jerseyNumber = player != null ? player.getJerseyNumber() : null;
         }
 
-        private SoccerLiveDTO.PlayerStat toDto() {
-            return new SoccerLiveDTO.PlayerStat(playerId, playerName, teamId, teamName, orderNum, position, starter, starter ? 90 : 0,
+        private SoccerLiveDTO.PlayerStat toDto(int elapsedMinute) {
+            int minutes = starter ? Math.min(90, Math.max(0, elapsedMinute)) : 0;
+            return new SoccerLiveDTO.PlayerStat(playerId, playerName, teamId, teamName, orderNum, position, starter, minutes,
                     goals, assists, passes, shots, shotsOnTarget, fouls, offsides, yellowCards, redCards, saves);
         }
 

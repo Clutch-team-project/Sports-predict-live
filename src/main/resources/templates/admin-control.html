@@ -4,6 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI.MATCH 관리자 콘솔</title>
+    <script>
+        (() => {
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || sessionStorage.getItem('accessToken') || sessionStorage.getItem('token');
+            const decodeJwtPayload = value => {
+                try {
+                    const payload = String(value || '').split('.')[1];
+                    if (!payload) return {};
+                    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+                    const json = decodeURIComponent(atob(base64).split('').map(ch => '%' + ('00' + ch.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                    return JSON.parse(json);
+                } catch (e) {
+                    return {};
+                }
+            };
+            const role = localStorage.getItem('role') || localStorage.getItem('userRole') || decodeJwtPayload(token).role;
+            if (!token || (role !== 'ADMIN' && role !== 'ROLE_ADMIN')) {
+                window.location.replace('/login');
+            }
+        })();
+    </script>
     <style>
         :root {
             --bg: #070b14;
@@ -2148,6 +2168,9 @@
                 });
                 window.__lastBaseballLive = live;
             }
+            if (pendingBatterAdvance && runnerIdFromBase(pendingBatterAdvance.target) === pendingBatterAdvance.batterId) {
+                clearPendingBatterAdvance();
+            }
             applyLoadedState(live);
         }
 
@@ -2298,6 +2321,10 @@
         async function completePendingBatterAdvance() {
             if (!pendingBatterAdvance) return;
             const pending = pendingBatterAdvance;
+            if (runnerIdFromBase(pending.target) === pending.batterId) {
+                clearPendingBatterAdvance();
+                return;
+            }
             if (baseOccupied(pending.target)) {
                 window.alert(`${baseKorean(pending.target)}가 아직 비어 있지 않습니다. 기존 주자를 먼저 처리하세요.`);
                 return;
@@ -2742,7 +2769,7 @@
     .soccer-field-dual { position:relative; min-height:640px; width:100%; border:1px solid rgba(56,216,120,.38); border-radius:16px; background:linear-gradient(90deg,rgba(11,117,60,.95),rgba(9,153,82,.95) 50%,rgba(11,117,60,.95)); overflow:hidden; }
     .soccer-field-dual::before { content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,.45) 50%, transparent calc(50% + 1px)); pointer-events:none; }
     .soccer-field-dual::after { content:""; position:absolute; left:50%; top:50%; width:96px; height:96px; margin-left:-48px; margin-top:-48px; border:1px solid rgba(255,255,255,.28); border-radius:50%; pointer-events:none; }
-    .soccer-slot { position:absolute; width:118px; min-height:48px; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.22); background:rgba(7,11,20,.72); border-radius:12px; padding:7px; display:grid; gap:3px; cursor:pointer; }
+    .soccer-slot { position:absolute; width:100px; min-height:48px; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.22); background:rgba(7,11,20,.72); border-radius:12px; padding:7px; display:grid; gap:3px; cursor:pointer; }
     .soccer-slot.drag-over { border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
     .soccer-slot b { color:#cfe0ff; font-size:11px; font-weight:1000; }
     .soccer-slot span { color:#fff; font-size:12px; font-weight:950; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -3024,16 +3051,30 @@
         const grid = $('#lineupTeamGrid');
         const summary = $('#lineupSummary');
         if (!editor || !grid) return;
+
         grid.classList.add('soccer-mode');
+
         const home = soccerState.lineups.home;
         const away = soccerState.lineups.away;
-        const homeCount = starterCount(home); const awayCount = starterCount(away);
-        if (summary) summary.innerHTML = `<span><strong>축구 match ${editor.matchId}</strong> · ${away.team?.name || '-'} vs ${home.team?.name || '-'}</span><span>홈 ${homeCount}/11 · 원정 ${awayCount}/11</span>`;
+        const homeCount = starterCount(home);
+        const awayCount = starterCount(away);
+
+        const matchTitle = `축구 match ${editor.matchId} · ${away.team?.name || '-'} vs ${home.team?.name || '-'}`;
+
+        if (summary) {
+            summary.innerHTML = '';
+            summary.style.display = 'none';
+        }
+
         grid.innerHTML = `<div class="soccer-lineup-root">
-            <div class="soccer-lineup-matchbar"><span>드래그로 선수를 포지션 슬롯에 배치하세요. 슬롯에 들어간 선수는 선발, 남은 선수는 후보입니다.</span><span class="badge ${homeCount===11 && awayCount===11 ? 'live':'warn'}">홈 ${homeCount}/11 · 원정 ${awayCount}/11</span></div>
-            <div class="soccer-field-dual" id="soccerFieldDual">${renderFieldSlots('away')}${renderFieldSlots('home')}</div>
-            <div class="soccer-lineup-teams">${renderTeamRoster('away')}${renderTeamRoster('home')}</div>
-        </div>`;
+        <div class="soccer-lineup-matchbar">
+            <span><strong>${matchTitle}</strong></span>
+            <span class="badge ${homeCount===11 && awayCount===11 ? 'live':'warn'}">홈 ${homeCount}/11 · 원정 ${awayCount}/11</span>
+        </div>
+        <div class="soccer-field-dual" id="soccerFieldDual">${renderFieldSlots('away')}${renderFieldSlots('home')}</div>
+        <div class="soccer-lineup-teams">${renderTeamRoster('away')}${renderTeamRoster('home')}</div>
+    </div>`;
+
         bindSoccerLineupDnD();
     }
     function starterCount(teamState){ return teamState.players.filter(p => p.slot && !p.removed).length; }
@@ -3046,14 +3087,25 @@
         const left = side === 'away';
         const xBase = left ? 7 : 93;
         const dir = left ? 1 : -1;
-        const cols = {
+        let cols = {
             GK: xBase,
             DF: xBase + dir * 9,
             DM: xBase + dir * 18,
             MF: xBase + dir * 26,
             AM: xBase + dir * 34,
-            FW: xBase + dir * 42
+            FW: xBase + dir * 36
         };
+
+        if (formation === '4-2-3-1') {
+            cols = {
+                GK: xBase,
+                DF: xBase + dir * 9,
+                DM: xBase + dir * 18,
+                MF: xBase + dir * 26,
+                AM: xBase + dir * 29,
+                FW: xBase + dir * 38
+            };
+        }
         const layout = formation === '4-3-3'
             ? {1:['GK',50],2:['DF',18],3:['DF',39],4:['DF',61],5:['DF',82],6:['MF',28],7:['MF',50],8:['MF',72],9:['FW',22],10:['FW',50],11:['FW',78]}
             : formation === '4-2-3-1'
@@ -3127,6 +3179,31 @@
         showControlPanel('soccer');
         renderSoccerControl(live);
     }
+    const SOCCER_ACTION_OPTIONS = [
+        ['GOAL','골'], ['OWN_GOAL','자책골'], ['PENALTY_GOAL','PK 골'], ['PENALTY_MISS','PK 실축'],
+        ['SHOT','슈팅'], ['SHOT_ON_TARGET','유효슈팅'], ['CORNER_KICK','코너킥'], ['FOUL','파울'],
+        ['OFFSIDE','오프사이드'], ['SAVE','세이브'], ['YELLOW_CARD','경고'], ['RED_CARD','퇴장']
+    ];
+
+    const SOCCER_EVENT_TEMPLATES = {
+        GOAL: ['{player}가 문전에서 침착하게 마무리하며 골망을 흔듭니다.', '{player}가 강한 슈팅으로 득점에 성공합니다.', '{player}가 측면 크로스를 받아 마무리합니다.', '{player}가 수비 뒷공간을 파고든 뒤 득점에 성공합니다.'],
+        OWN_GOAL: ['{player}의 몸에 맞은 공이 그대로 골문 안으로 들어갑니다.', '{player}가 걷어내려던 공이 자책골로 연결됩니다.', '{player}의 수비 과정에서 불운한 자책골이 나옵니다.'],
+        PENALTY_GOAL: ['{player}가 페널티킥을 침착하게 성공시킵니다.', '{player}가 골키퍼를 속이고 페널티킥을 마무리합니다.', '{player}가 골문 구석으로 정확하게 차 넣습니다.'],
+        PENALTY_MISS: ['{player}의 페널티킥이 골문을 벗어납니다.', '{player}의 페널티킥을 골키퍼가 막아냅니다.', '{player}가 찬 페널티킥이 골대를 맞고 나옵니다.'],
+        SHOT: ['{player}가 페널티 박스 바깥에서 슈팅을 시도합니다.', '{player}가 오른발 슈팅을 가져갔지만 골문을 벗어납니다.', '{player}가 중거리 슈팅을 시도합니다.', '{player}가 수비 견제를 이겨내고 슈팅까지 연결합니다.'],
+        SHOT_ON_TARGET: ['{player}가 유효슈팅을 기록합니다.', '{player}의 강한 슈팅이 골키퍼 선방에 막힙니다.', '{player}가 골문 구석을 노렸지만 골키퍼가 쳐냅니다.', '{player}가 결정적인 기회를 잡았지만 골키퍼가 막아냅니다.'],
+        CORNER_KICK: ['{team}이 코너킥 기회를 얻습니다.', '{player}가 코너킥을 준비합니다.', '{player}의 크로스가 문전으로 올라갑니다.', '{team}이 세트피스 상황에서 공격을 이어갑니다.'],
+        FOUL: ['{player}가 상대 선수와의 경합 과정에서 파울을 범합니다.', '{player}의 거친 수비로 파울이 선언됩니다.', '{player}가 상대의 돌파를 저지하다 파울을 기록합니다.'],
+        OFFSIDE: ['{player}가 오프사이드 위치에 있었습니다.', '{player}의 침투가 좋았지만 오프사이드가 선언됩니다.', '{player}에게 연결된 패스가 오프사이드로 무산됩니다.'],
+        SAVE: ['{player}가 결정적인 슈팅을 막아냅니다.', '{player}가 몸을 날려 실점 위기를 막습니다.', '{player}가 골문 구석으로 향한 공을 쳐냅니다.'],
+        YELLOW_CARD: ['{player}에게 경고가 주어집니다.', '{player}가 거친 파울로 옐로카드를 받습니다.', '{player}가 경기 지연 행위로 경고를 받습니다.'],
+        RED_CARD: ['{player}에게 퇴장이 선언됩니다.', '{player}가 위험한 반칙으로 레드카드를 받습니다.', '{player}가 두 번째 경고를 받으며 퇴장당합니다.'],
+        START_MATCH: ['주심의 휘슬과 함께 경기가 시작됩니다.'],
+        END_FIRST_HALF: ['주심의 휘슬과 함께 전반전이 마무리됩니다.'],
+        START_SECOND_HALF: ['후반전 킥오프가 진행됩니다.'],
+        END_MATCH: ['주심의 휘슬과 함께 경기가 종료됩니다.']
+    };
+
     function soccerEventCount(live) {
         return (live.timeline?.sections || []).reduce((sum, section) => sum + (section.events || []).length, 0);
     }
@@ -3135,19 +3212,39 @@
         const added = Number($('#soccerAddedMinute')?.value || 0);
         return added > 0 ? `${minute}+${added}'` : `${minute}'`;
     }
+    function soccerPhaseMinuteText() {
+        const minute = Number($('#soccerMinute')?.value || 0);
+        const added = Number($('#soccerAddedMinute')?.value || 0);
+        const total = minute + added;
+        const phase = total >= 46 ? '후반' : '전반';
+        const display = added > 0 ? `${minute}+${added}'` : `${minute}'`;
+        return `${phase} · ${display}`;
+    }
     let soccerClockTimer = null;
+    let soccerClockBaseMinute = 0;
+    let soccerClockStartedAt = 0;
+    function syncSoccerClockFromInputs() {
+        const text = soccerPhaseMinuteText();
+        setText('phaseLabel', text);
+        setText('soccerClockLabel', text);
+        updateSoccerPreview();
+    }
     function startSoccerClock(startMinute) {
         clearInterval(soccerClockTimer);
+        soccerClockBaseMinute = Math.max(1, Number(startMinute || $('#soccerMinute')?.value || 1));
+        soccerClockStartedAt = Date.now();
         const input = $('#soccerMinute');
-        if (input) input.value = String(startMinute);
+        if (input) input.value = String(soccerClockBaseMinute);
         soccerClockTimer = setInterval(() => {
             const node = $('#soccerMinute');
             if (!node) return;
-            const next = Math.min(130, Number(node.value || 0) + 1);
+            const elapsed = Math.floor((Date.now() - soccerClockStartedAt) / 60000);
+            const next = Math.min(90, soccerClockBaseMinute + elapsed);
             node.value = String(next);
-            updateSoccerPreview();
+            syncSoccerClockFromInputs();
+            if (next >= 90) stopSoccerClock();
         }, 60000);
-        updateSoccerPreview();
+        syncSoccerClockFromInputs();
     }
     function stopSoccerClock() {
         clearInterval(soccerClockTimer);
@@ -3156,9 +3253,12 @@
     }
     function updateSoccerPreview() {
         setText('soccerPreviewMinute', soccerMinuteText());
-        const action = $('#soccerPreviewAction')?.textContent || '대기';
+        const clockText = soccerPhaseMinuteText();
+        setText('phaseLabel', clockText);
+        setText('soccerClockLabel', clockText);
+        const action = $('#soccerActionSelect')?.value || $('#soccerPreviewAction')?.textContent || 'SHOT';
         const desc = ($('#soccerDescription')?.value || '').trim();
-        setText('soccerPreviewText', desc || action);
+        setText('soccerPreviewText', desc || defaultSoccerDescription(action));
     }
     function renderSoccerControl(live) {
         const panel = $('#panel-soccer');
@@ -3175,7 +3275,7 @@
         setText('eventCount', live.eventCount ?? soccerEventCount(live));
         panel.innerHTML = `<div class="soccer-admin-board">
             <div class="soccer-admin-score"><div class="team-block"><b>${s.awayTeamName || '-'}</b><span>원정</span></div><div class="score-mid">${s.awayScore ?? 0} : ${s.homeScore ?? 0}<small>${s.phase || '경기전'} · ${s.currentMinute || '0'}'</small></div><div class="team-block right"><b>${s.homeTeamName || '-'}</b><span>홈</span></div></div>
-            <div class="soccer-admin-card"><div class="cluster-title">이벤트 공통 입력</div><div class="soccer-admin-row"><label class="field">팀<select id="soccerEventTeam"></select></label><label class="field">선수<select id="soccerEventPlayer"></select></label><label class="field">분<input id="soccerMinute" type="number" min="0" max="130" value="${parseInt(s.currentMinute,10) || 0}"></label><label class="field">추가시간<input id="soccerAddedMinute" type="number" min="0" max="30" value="0"></label><label class="field full">문구<textarea id="soccerDescription" placeholder="예: 제르소가 페널티 박스 안에서 슈팅을 시도합니다."></textarea></label></div></div>
+            <div class="soccer-admin-card"><div class="cluster-title">이벤트 공통 입력</div><div class="soccer-admin-row"><label class="field">팀<select id="soccerEventTeam"></select></label><label class="field">선수<select id="soccerEventPlayer"></select></label><label class="field">이벤트<select id="soccerActionSelect"></select></label><label class="field">분<input id="soccerMinute" type="number" min="0" max="130" value="${parseInt(s.currentMinute,10) || 0}"></label><label class="field">추가시간<input id="soccerAddedMinute" type="number" min="0" max="30" value="0"></label><label class="field full">문구 템플릿<select id="soccerTemplate"></select></label><label class="field full">최종 송출 문구<textarea id="soccerDescription" placeholder="예: 제르소가 페널티 박스 안에서 슈팅을 시도합니다."></textarea></label><button class="btn" type="button" data-soccer-template-apply="1">선택 문구 적용</button><button class="btn primary" type="button" data-soccer-send-selected="1">선택 이벤트 송출</button></div></div>
             <div class="soccer-admin-card"><div class="cluster-title">경기 진행</div><div class="soccer-action-grid"><button class="btn green" data-soccer-action="START_MATCH" data-clock-start="1">경기 시작</button><button class="btn yellow" data-soccer-action="END_FIRST_HALF" data-clock-stop="1">전반 종료</button><button class="btn green" data-soccer-action="START_SECOND_HALF" data-clock-start="46">후반 시작</button><button class="btn red" data-soccer-action="END_MATCH" data-clock-stop="1">경기 종료</button><button class="btn" data-soccer-refresh="1">현재 상태 다시 반영</button><button class="btn red" data-soccer-action="UNDO_LAST_EVENT">마지막 이벤트 취소</button></div></div>
             <div class="soccer-admin-card"><div class="cluster-title">득점 · 슈팅</div><div class="soccer-action-grid"><button class="btn primary" data-soccer-action="GOAL">골</button><button class="btn" data-soccer-action="OWN_GOAL">자책골</button><button class="btn primary" data-soccer-action="PENALTY_GOAL">PK 골</button><button class="btn yellow" data-soccer-action="PENALTY_MISS">PK 실축</button><button class="btn" data-soccer-action="SHOT">슈팅</button><button class="btn" data-soccer-action="SHOT_ON_TARGET">유효슈팅</button></div></div>
             <div class="soccer-admin-card"><div class="cluster-title">경기 이벤트</div><div class="soccer-action-grid"><button class="btn" data-soccer-action="CORNER_KICK">코너킥</button><button class="btn" data-soccer-action="FOUL">파울</button><button class="btn" data-soccer-action="OFFSIDE">오프사이드</button><button class="btn" data-soccer-action="SAVE">세이브</button><button class="btn yellow" data-soccer-action="YELLOW_CARD">경고</button><button class="btn red" data-soccer-action="RED_CARD">퇴장</button></div></div>
@@ -3198,10 +3298,14 @@
     function fillSoccerSelects(live) {
         const teams = [{id:live.scoreboard?.awayTeamId,name:live.scoreboard?.awayTeamName},{id:live.scoreboard?.homeTeamId,name:live.scoreboard?.homeTeamName}].filter(t=>t.id);
         ['soccerEventTeam','soccerSubTeam'].forEach(id => { const el = $('#'+id); if(el) el.innerHTML = teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''); });
+        const actionSelect = $('#soccerActionSelect');
+        if (actionSelect) actionSelect.innerHTML = SOCCER_ACTION_OPTIONS.map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
         const refreshPlayers = () => {
             const teamId = Number($('#soccerEventTeam')?.value || teams[0]?.id || 0);
             const players = lineupPlayers(live, teamId);
             const p = $('#soccerEventPlayer'); if (p) p.innerHTML = players.map(x=>`<option value="${x.playerId}">${x.playerName}</option>`).join('');
+            fillSoccerTemplateSelect($('#soccerActionSelect')?.value || 'SHOT');
+            updateSoccerPreview();
         };
         $('#soccerEventTeam')?.addEventListener('change', refreshPlayers); refreshPlayers();
         const refreshSubPlayers = () => {
@@ -3214,23 +3318,78 @@
         $('#soccerSubTeam')?.addEventListener('change', refreshSubPlayers); refreshSubPlayers();
     }
     function soccerCommandPayload(action) {
-        const minute = Number($('#soccerMinute')?.value || 0) + Number($('#soccerAddedMinute')?.value || 0);
-        const period = action === 'START_SECOND_HALF' || minute > 45 ? 'second_half' : 'first_half';
-        return { action, teamId:Number($('#soccerEventTeam')?.value || 0) || null, playerId:Number($('#soccerEventPlayer')?.value || 0) || null, minute, period, description:($('#soccerDescription')?.value || '').trim() || defaultSoccerDescription(action) };
+        const minute = Number($('#soccerMinute')?.value || 0);
+        const addedMinute = Number($('#soccerAddedMinute')?.value || 0);
+        const period = action === 'START_SECOND_HALF' || minute + addedMinute > 45 ? 'second_half' : 'first_half';
+        syncSoccerClockFromInputs();
+        return { action, teamId:Number($('#soccerEventTeam')?.value || 0) || null, playerId:Number($('#soccerEventPlayer')?.value || 0) || null, minute, addedMinute, period, description:($('#soccerDescription')?.value || '').trim() || defaultSoccerDescription(action) };
+    }
+    function selectedSoccerPlayerName() {
+        return $('#soccerEventPlayer')?.selectedOptions?.[0]?.textContent || '선수';
+    }
+    function selectedSoccerTeamName() {
+        return $('#soccerEventTeam')?.selectedOptions?.[0]?.textContent || '팀';
+    }
+    function fillSoccerTemplateSelect(action) {
+        const select = $('#soccerTemplate');
+        if (!select) return;
+        const templates = SOCCER_EVENT_TEMPLATES[action] || [String(action || '이벤트')];
+        select.innerHTML = templates.map((template, index) => `<option value="${escapeAttr(template)}">${index + 1}. ${escapeHtml(applySoccerTemplate(template))}</option>`).join('');
+    }
+    function applySoccerTemplate(template) {
+        const player = selectedSoccerPlayerName();
+        const team = selectedSoccerTeamName();
+        return String(template || '')
+            .replaceAll('{player}', player)
+            .replaceAll('{team}', team)
+            .replaceAll('{inPlayer}', $('#soccerInPlayer')?.selectedOptions?.[0]?.textContent || '선수')
+            .replaceAll('{outPlayer}', $('#soccerOutPlayer')?.selectedOptions?.[0]?.textContent || '선수');
+    }
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    function escapeAttr(value) {
+        return escapeHtml(value).replace(/`/g, '&#96;');
     }
     function defaultSoccerDescription(action) {
-        const player = $('#soccerEventPlayer')?.selectedOptions?.[0]?.textContent || '선수';
-        const team = $('#soccerEventTeam')?.selectedOptions?.[0]?.textContent || '팀';
-        const map = { GOAL:`${player}가 침착하게 마무리하며 골망을 흔듭니다.`, OWN_GOAL:`${team} 자책골이 기록됩니다.`, PENALTY_GOAL:`${player}가 페널티킥을 성공시킵니다.`, PENALTY_MISS:`${player}의 페널티킥이 무산됩니다.`, SHOT:`${player}가 슈팅을 시도합니다.`, SHOT_ON_TARGET:`${player}의 슈팅이 골문 안쪽으로 향합니다.`, CORNER_KICK:`${team}이 코너킥 기회를 얻습니다.`, FOUL:`${player}의 파울이 선언됩니다.`, OFFSIDE:`${player}의 오프사이드가 선언됩니다.`, SAVE:`${player}가 결정적인 슈팅을 막아냅니다.`, YELLOW_CARD:`${player}에게 경고가 주어집니다.`, RED_CARD:`${player}에게 퇴장이 선언됩니다.`, START_MATCH:'경기가 시작되었습니다.', END_FIRST_HALF:'전반전이 종료되었습니다.', START_SECOND_HALF:'후반전이 시작되었습니다.', END_MATCH:'경기가 종료되었습니다.' };
-        return map[action] || action;
+        const selectedTemplate = $('#soccerTemplate')?.value;
+        if (selectedTemplate) return applySoccerTemplate(selectedTemplate);
+        const templates = SOCCER_EVENT_TEMPLATES[action] || [];
+        if (templates.length) return applySoccerTemplate(templates[0]);
+        return String(action || '이벤트');
     }
     function bindSoccerControl(matchId) {
-        ['soccerMinute','soccerAddedMinute','soccerDescription'].forEach(id => $('#'+id)?.addEventListener('input', updateSoccerPreview));
+        fillSoccerTemplateSelect($('#soccerActionSelect')?.value || 'SHOT');
+        ['soccerMinute','soccerAddedMinute'].forEach(id => $('#'+id)?.addEventListener('input', syncSoccerClockFromInputs));
+        $('#soccerDescription')?.addEventListener('input', updateSoccerPreview);
+        $('#soccerActionSelect')?.addEventListener('change', event => {
+            fillSoccerTemplateSelect(event.target.value);
+            setText('soccerPreviewAction', event.target.selectedOptions?.[0]?.textContent || event.target.value);
+            updateSoccerPreview();
+        });
+        $('#soccerEventPlayer')?.addEventListener('change', () => { fillSoccerTemplateSelect($('#soccerActionSelect')?.value || 'SHOT'); updateSoccerPreview(); });
+        $('#soccerTemplate')?.addEventListener('change', updateSoccerPreview);
+        $('[data-soccer-template-apply]')?.addEventListener('click', () => {
+            const action = $('#soccerActionSelect')?.value || 'SHOT';
+            $('#soccerDescription').value = defaultSoccerDescription(action);
+            updateSoccerPreview();
+        });
+        $('[data-soccer-send-selected]')?.addEventListener('click', async () => {
+            const action = $('#soccerActionSelect')?.value || 'SHOT';
+            setText('soccerPreviewAction', $('#soccerActionSelect')?.selectedOptions?.[0]?.textContent || action);
+            await postJson(`${SOCCER_API}/games/${matchId}/command`, soccerCommandPayload(action));
+            $('#soccerDescription').value = '';
+            await loadSoccerState(matchId);
+        });
         $all('[data-soccer-action]').forEach(btn => btn.addEventListener('click', async () => {
+            const action = btn.dataset.soccerAction;
             setText('soccerPreviewAction', btn.textContent.trim());
+            if ($('#soccerActionSelect')) $('#soccerActionSelect').value = SOCCER_ACTION_OPTIONS.some(([value]) => value === action) ? action : ($('#soccerActionSelect').value || 'SHOT');
+            fillSoccerTemplateSelect(action);
             if (btn.dataset.clockStart) startSoccerClock(Number(btn.dataset.clockStart));
             if (btn.dataset.clockStop) stopSoccerClock();
-            await postJson(`${SOCCER_API}/games/${matchId}/command`, soccerCommandPayload(btn.dataset.soccerAction));
+            await postJson(`${SOCCER_API}/games/${matchId}/command`, soccerCommandPayload(action));
+            $('#soccerDescription').value = '';
             await loadSoccerState(matchId);
         }));
         $('[data-soccer-refresh]')?.addEventListener('click', () => loadSoccerState(matchId));
@@ -3238,9 +3397,12 @@
             const teamId = Number($('#soccerSubTeam')?.value || 0);
             const inId = Number($('#soccerInPlayer')?.value || 0);
             const outId = Number($('#soccerOutPlayer')?.value || 0);
-            const minute = Number($('#soccerMinute')?.value || 0) + Number($('#soccerAddedMinute')?.value || 0);
+            const minute = Number($('#soccerMinute')?.value || 0);
+            const addedMinute = Number($('#soccerAddedMinute')?.value || 0);
             const desc = ($('#soccerDescription')?.value || '').trim() || `${$('#soccerInPlayer')?.selectedOptions?.[0]?.textContent || '선수'}가 투입되고 ${$('#soccerOutPlayer')?.selectedOptions?.[0]?.textContent || '선수'}가 벤치로 물러납니다.`;
-            await postJson(`${SOCCER_API}/games/${matchId}/command`, { action:'SUBSTITUTION', teamId, playerId:inId, inPlayerId:inId, outPlayerId:outId, minute, period: minute > 45 ? 'second_half' : 'first_half', description:desc });
+            syncSoccerClockFromInputs();
+            await postJson(`${SOCCER_API}/games/${matchId}/command`, { action:'SUBSTITUTION', teamId, playerId:inId, inPlayerId:inId, outPlayerId:outId, minute, addedMinute, period: minute + addedMinute > 45 ? 'second_half' : 'first_half', description:desc });
+            $('#soccerDescription').value = '';
             await loadSoccerState(matchId);
         });
     }

@@ -9,6 +9,7 @@ import com.example.edu.sports_predict_live.livematch.soccer.service.SoccerLiveSt
 import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class SoccerAdminCommandService {
     private final MatchRepository matchRepository;
     private final MatchEventRepository matchEventRepository;
     private final SoccerLiveStateService soccerLiveStateService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public SoccerLiveDTO apply(Long matchId, SoccerAdminCommandDTO command) {
@@ -71,7 +73,7 @@ public class SoccerAdminCommandService {
         matchEventRepository.flush();
         SoccerLiveDTO updated = soccerLiveStateService.getSoccerLive(matchId);
         syncMatchScore(match, updated);
-        return updated;
+        return publishLive(matchId, updated);
     }
 
     @Transactional
@@ -82,7 +84,7 @@ public class SoccerAdminCommandService {
         match.updateScore(0, 0);
         match.updateStatus("scheduled");
         matchEventRepository.flush();
-        return soccerLiveStateService.getSoccerLive(matchId);
+        return publishLive(matchId, soccerLiveStateService.getSoccerLive(matchId));
     }
 
     @Transactional
@@ -95,10 +97,16 @@ public class SoccerAdminCommandService {
         if (matchEventRepository.countByMatchId(matchId) == 0) {
             match.updateScore(0, 0);
             match.updateStatus("scheduled");
-            return soccerLiveStateService.getSoccerLive(matchId);
+            return publishLive(matchId, soccerLiveStateService.getSoccerLive(matchId));
         }
         SoccerLiveDTO updated = soccerLiveStateService.getSoccerLive(matchId);
         syncMatchScore(match, updated);
+        return publishLive(matchId, updated);
+    }
+
+
+    private SoccerLiveDTO publishLive(Long matchId, SoccerLiveDTO updated) {
+        messagingTemplate.convertAndSend("/topic/games/" + matchId + "/soccer-live", updated);
         return updated;
     }
 

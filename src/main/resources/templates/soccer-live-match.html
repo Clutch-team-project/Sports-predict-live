@@ -139,24 +139,27 @@
         .record-table th,.record-table td { padding:10px 9px; border-bottom:1px solid var(--line-soft); text-align:center; font-size:12px; white-space:nowrap; }
         .record-table th:first-child,.record-table td:first-child { text-align:left; font-weight:950; }
         .record-table th { color:var(--muted); background:#f8fafc; }
+        .record-table th:last-child,.record-table td:last-child { display:none; }
+        .record-team-title { margin:14px 0 0; padding:0 0 0 2px; color:var(--text); font-size:13px; font-weight:950; }
+        .record-table td.record-team-title { display:table-cell; background:#f8fafc; text-align:left; }
         .pitch-card { padding:14px; background:#fff; box-shadow:none; border:0; border-radius:0; }
-        .pitch { position:relative; min-height:330px; border-radius:18px; overflow:hidden; background:linear-gradient(90deg,rgba(255,255,255,.18) 49.7%,rgba(255,255,255,.55) 50%,rgba(255,255,255,.18) 50.3%),linear-gradient(180deg,#15803d,#16a34a); box-shadow:inset 0 0 0 2px rgba(255,255,255,.38), inset 0 0 0 14px rgba(255,255,255,.08); }
+        .pitch { position:relative; min-height:390px; border-radius:18px; overflow:hidden; background:linear-gradient(90deg,rgba(255,255,255,.18) 49.7%,rgba(255,255,255,.55) 50%,rgba(255,255,255,.18) 50.3%),linear-gradient(180deg,#15803d,#16a34a); box-shadow:inset 0 0 0 2px rgba(255,255,255,.38), inset 0 0 0 14px rgba(255,255,255,.08); }
         .pitch::before { content:""; position:absolute; left:50%; top:50%; width:106px; height:106px; transform:translate(-50%,-50%); border:3px solid rgba(255,255,255,.55); border-radius:50%; }
         .pitch::after { content:""; position:absolute; inset:28px; border:3px solid rgba(255,255,255,.55); border-radius:12px; }
-        .pitch-score { position:absolute; left:50%; top:20px; transform:translateX(-50%); min-width:260px; padding:12px 16px; border-radius:14px; background:rgba(15,23,42,.82); color:#fff; text-align:center; box-shadow:0 12px 24px rgba(0,0,0,.2); z-index:3; }
+        .pitch-score { display:none; position:absolute; left:50%; top:20px; transform:translateX(-50%); min-width:260px; padding:12px 16px; border-radius:14px; background:rgba(15,23,42,.82); color:#fff; text-align:center; box-shadow:0 12px 24px rgba(0,0,0,.2); z-index:3; }
         .pitch-score b { font-size:30px; letter-spacing:2px; }
         .pitch-score span { display:block; color:#cbd5e1; font-size:12px; font-weight:850; margin-top:2px; }
-        .lineup-grid { position:absolute; inset:90px 32px 26px; display:grid; grid-template-columns:1fr 1fr; gap:26px; z-index:2; }
-        .formation { display:grid; grid-template-rows:repeat(4,1fr); gap:8px; align-items:center; }
-        .formation.away { direction:rtl; }
-        .player-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; direction:ltr; }
-        .kit { min-width:58px; max-width:92px; min-height:38px; display:grid; place-items:center; padding:5px 7px; border-radius:999px; background:rgba(255,255,255,.92); color:#0f172a; font-size:11px; font-weight:950; box-shadow:0 4px 12px rgba(0,0,0,.16); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .lineup-grid { position:absolute; inset:42px 38px 34px; display:grid; grid-template-columns:1fr 1fr; gap:26px; z-index:2; }
+        .formation { position:relative; min-height:100%; }
+        .kit { position:absolute; min-width:58px; max-width:94px; min-height:38px; display:grid; place-items:center; padding:5px 7px; border-radius:999px; background:rgba(255,255,255,.92); color:#0f172a; font-size:11px; font-weight:950; box-shadow:0 4px 12px rgba(0,0,0,.16); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transform:translate(-50%,-50%); text-align:center; }
         .kit.empty { opacity:.32; background:rgba(255,255,255,.45); }
         .kit small { display:block; color:#64748b; font-size:9px; line-height:1; margin-top:2px; }
         .lineup-columns { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:14px; }
         .lineup-team { border:1px solid var(--line-soft); border-radius:14px; overflow:hidden; }
         .lineup-team h3 { margin:0; padding:12px 14px; background:#f8fafc; font-size:14px; }
         .lineup-list { display:grid; }
+        .lineup-group-label { padding:10px 12px; border-top:1px solid var(--line-soft); background:#f8fafc; color:var(--muted); font-size:12px; font-weight:950; }
+        .lineup-group-label.bench { background:#fff7ed; color:#c2410c; }
         .lineup-item { display:grid; grid-template-columns:42px minmax(0,1fr) 58px; gap:8px; padding:10px 12px; border-top:1px solid var(--line-soft); font-size:13px; align-items:center; }
         .lineup-item b { color:var(--muted); }
         .lineup-item span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:850; }
@@ -288,12 +291,12 @@
             </section>
 
             <section class="panel tab-view hidden" id="recordsView">
-                <div class="panel-head"><div><div class="panel-title">기록</div><div class="panel-sub">팀/선수 경기 기록</div></div></div>
+
                 <div class="table-wrap" id="records"></div>
             </section>
 
             <section class="panel tab-view hidden" id="lineupView">
-                <div class="panel-head"><div><div class="panel-title">라인업</div><div class="panel-sub">match_lineup 기준 선발/후보 명단</div></div></div>
+                <div class="panel-head"></div>
                 <div id="lineupContent">
                     <section class="pitch-card">
                         <div class="pitch">
@@ -351,13 +354,14 @@
 <script>
     const $ = selector => document.querySelector(selector);
     const $$ = selector => Array.from(document.querySelectorAll(selector));
-    const AUTO_REFRESH_MS = 15000;
+    const AUTO_REFRESH_MS = 5000;
 
     let liveData = null;
     let selectedSupportTeamId = null;
     let loadedCommentIds = new Set();
     let commentStompClient = null;
     let commentSubscription = null;
+    let liveSubscription = null;
     let autoRefreshTimer = null;
     let liveLoading = false;
 
@@ -524,6 +528,9 @@
 
         if (status === 'scheduled') {
             renderScheduledViews();
+            if (hasLineup(data?.lineup)) {
+                renderLineup(data?.lineup, status, scoreboard);
+            }
             return;
         }
 
@@ -569,6 +576,13 @@
         $('#timeline').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">해당 경기의 중계는 추후 업데이트 됩니다.</div></section>`;
         $('#records').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">데이터 수신 시 팀/선수 기록이 업데이트 됩니다.</div></section>`;
         $('#lineupContent').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">출전 선수 명단이 확정되면 업데이트 됩니다.</div></section>`;
+    }
+
+    function hasLineup(lineup) {
+        return ['home', 'away'].some(side => {
+            const team = lineup?.[side];
+            return (team?.starters || []).length || (team?.bench || []).length;
+        });
     }
 
     function renderTimeline(timeline, status) {
@@ -619,15 +633,22 @@
         }
         const home = records.team.home || {};
         const away = records.team.away || {};
-        const playerRows = [...(records.players?.away || []), ...(records.players?.home || [])];
+        const awayPlayers = records.players?.away || [];
+        const homePlayers = records.players?.home || [];
+        const playerRows = [
+            { sectionTitle: away.teamName || away.name || 'Away' },
+            ...awayPlayers,
+            { sectionTitle: home.teamName || home.name || 'Home' },
+            ...homePlayers
+        ];
         target.innerHTML = `
             <table class="record-table">
                 <thead><tr><th>팀</th><th>득점</th><th>슈팅</th><th>유효슈팅</th><th>코너킥</th><th>파울</th><th>오프사이드</th><th>경고</th><th>퇴장</th><th>세이브</th></tr></thead>
                 <tbody>${teamRecordRow(away)}${teamRecordRow(home)}</tbody>
             </table>
             <table class="record-table" style="margin-top:14px">
-                <thead><tr><th>선수</th><th>포지션</th><th>출전시간</th><th>득점</th><th>도움</th><th>슈팅</th><th>유효슈팅</th><th>파울</th><th>오프사이드</th><th>경고</th><th>퇴장</th><th>세이브</th></tr></thead>
-                <tbody>${playerRows.length ? playerRows.map(playerRecordRow).join('') : '<tr><td colspan="12">선수 기록이 없습니다.</td></tr>'}</tbody>
+                <thead><tr><th>선수</th><th>포지션</th><th>출전시간</th><th>득점</th><th>슈팅</th><th>유효슈팅</th><th>파울</th><th>오프사이드</th><th>경고</th><th>퇴장</th><th>세이브</th></tr></thead>
+                <tbody>${playerRows.length ? playerRows.map(playerRecordRow).join('') : '<tr><td colspan="11">선수 기록이 없습니다.</td></tr>'}</tbody>
             </table>
         `;
     }
@@ -648,12 +669,14 @@
     }
 
     function playerRecordRow(row) {
+        if (row.sectionTitle) {
+            return `<tr><td colspan="11" class="record-team-title">${escapeHtml(row.sectionTitle)}</td></tr>`;
+        }
         return `<tr>
             <td>${escapeHtml(row.playerName || row.name || '-')}</td>
             <td>${escapeHtml(row.position || '-')}</td>
-            <td>${escapeHtml(row.minutesPlayed ?? row.playTime ?? '-')}</td>
+            <td>${escapeHtml(row.minutes ?? row.minutesPlayed ?? row.playTime ?? '-')}</td>
             <td>${escapeHtml(row.goals ?? 0)}</td>
-            <td>${escapeHtml(row.assists ?? 0)}</td>
             <td>${escapeHtml(row.shots ?? 0)}</td>
             <td>${escapeHtml(row.shotsOnTarget ?? 0)}</td>
             <td>${escapeHtml(row.fouls ?? 0)}</td>
@@ -701,59 +724,120 @@
         `;
     }
 
+    function renderLineupTeam(team) {
+        if (!team) return '<div class="empty-state">라인업 정보가 없습니다.</div>';
+        const starters = team.starters || [];
+        const bench = team.bench || [];
+        const group = (label, rows, benchGroup = false) => {
+            if (!rows.length) return '';
+            return `<div class="lineup-group-label${benchGroup ? ' bench' : ''}">${label}</div>` + rows.map(player => `
+                <div class="lineup-item"><b>${label}</b><span>${escapeHtml(player.playerName || player.name || '-')}</span><em>${escapeHtml(player.position || '-')}</em></div>
+            `).join('');
+        };
+        return `
+            <div class="lineup-team">
+                <h3>${escapeHtml(team.teamName)} · ${escapeHtml(team.formation || '-')}</h3>
+                <div class="lineup-list">
+                    ${group('선발', starters)}
+                    ${group('후보', bench, true)}
+                    ${!starters.length && !bench.length ? '<div class="empty-state">라인업 정보가 없습니다.</div>' : ''}
+                </div>
+            </div>
+        `;
+    }
+
     const FORMATION_SLOTS = {
         '4-4-2': ['GK','LB','CB','CB','RB','LM','CM','CM','RM','ST','ST'],
         '4-3-3': ['GK','LB','CB','CB','RB','CM','CM','CM','LW','ST','RW'],
         '4-2-3-1': ['GK','LB','CB','CB','RB','DM','DM','AM','LW','RW','ST']
     };
 
+    const FORMATION_COORDS = {
+        '4-4-2': [
+            ['GK',12,50], ['LB',34,14], ['CB',34,38], ['CB',34,62], ['RB',34,86],
+            ['LM',58,14], ['CM',58,38], ['CM',58,62], ['RM',58,86], ['ST',82,36], ['ST',82,64]
+        ],
+        '4-3-3': [
+            ['GK',12,50], ['LB',34,14], ['CB',34,38], ['CB',34,62], ['RB',34,86],
+            ['CM',58,26], ['CM',58,50], ['CM',58,74], ['LW',82,20], ['ST',82,50], ['RW',82,80]
+        ],
+        '4-2-3-1': [
+            ['GK',12,50], ['LB',31,14], ['CB',31,38], ['CB',31,62], ['RB',31,86],
+            ['DM',50,36], ['DM',50,64], ['AM',67,50], ['LW',76,22], ['RW',76,78], ['ST',88,50]
+        ]
+    };
+
     function renderPitchLineup(id, team) {
         const target = document.getElementById(id);
         if (!target) return;
         const starters = [...(team?.starters || [])].filter(player => player);
-        const slots = FORMATION_SLOTS[team?.formation] || inferFormationSlots(starters);
+        const side = id.toLowerCase().includes('away') ? 'away' : 'home';
+        const formation = FORMATION_COORDS[team?.formation] ? team.formation : inferFormationName(starters);
+        const layout = FORMATION_COORDS[formation] || FORMATION_COORDS['4-4-2'];
         const used = new Set();
-        const slotPlayers = slots.map((position, index) => {
+        target.innerHTML = layout.map(([position, baseX, y], index) => {
             const order = index + 1;
             let player = starters.find(row => Number(row.orderNum) === order && !used.has(playerKey(row)));
+            if (!player) {
+                player = starters.find(row => sameSlotPosition(row.position, position) && !used.has(playerKey(row)));
+            }
             if (!player) {
                 player = starters.find(row => sameLinePosition(row.position, position) && !used.has(playerKey(row)));
             }
             if (player) used.add(playerKey(player));
-            return { order, position, player };
-        });
-        const grouped = {
-            attack: slotPlayers.filter(slot => lineOf(slot.position) === 'attack'),
-            mid: slotPlayers.filter(slot => lineOf(slot.position) === 'mid'),
-            defense: slotPlayers.filter(slot => lineOf(slot.position) === 'defense'),
-            gk: slotPlayers.filter(slot => lineOf(slot.position) === 'gk')
-        };
-        target.innerHTML = ['attack','mid','defense','gk'].map(line => `
-            <div class="player-row">
-                ${grouped[line].map(slot => slot.player
-                    ? `<span class="kit">${escapeHtml(shortName(slot.player.playerName || slot.player.name))}<small>${escapeHtml(slot.position)}</small></span>`
-                    : `<span class="kit empty">${escapeHtml(slot.position)}</span>`
-                ).join('')}
-            </div>
-        `).join('');
+            const x = side === 'away' ? baseX : 100 - baseX;
+            return player
+                ? `<span class="kit" style="left:${x}%;top:${y}%">${escapeHtml(shortName(player.playerName || player.name))}<small>${escapeHtml(player.position || position)}</small></span>`
+                : `<span class="kit empty" style="left:${x}%;top:${y}%"><small>${escapeHtml(position)}</small></span>`;
+        }).join('');
     }
 
-    function inferFormationSlots(players) {
-        const positions = players.map(player => String(player.position || '').toUpperCase());
+    function inferFormationName(players) {
+        const bySlot = new Map(players
+            .filter(player => Number(player.orderNum) >= 1 && Number(player.orderNum) <= 11)
+            .map(player => [Number(player.orderNum), normalizePosition(player.position)]));
+        for (const [formation, slots] of Object.entries(FORMATION_SLOTS)) {
+            if (slots.every((slot, index) => !bySlot.has(index + 1) || sameSlotPosition(bySlot.get(index + 1), slot))) {
+                return formation;
+            }
+        }
+
+        const positions = players.map(player => normalizePosition(player.position));
         const defenders = positions.filter(pos => ['LB','CB','RB','LWB','RWB','DF'].includes(pos)).length;
         const mids = positions.filter(pos => ['AM','CM','DM','LM','RM','MF'].includes(pos)).length;
         const attackers = positions.filter(pos => ['ST','FW','LW','RW'].includes(pos)).length;
-        if (defenders === 4 && mids === 3 && attackers === 3) return FORMATION_SLOTS['4-3-3'];
-        if (defenders === 4 && mids === 5 && attackers === 1) return FORMATION_SLOTS['4-2-3-1'];
-        return FORMATION_SLOTS['4-4-2'];
+        if (defenders === 4 && positions.filter(pos => pos === 'DM').length >= 2 && positions.includes('AM') && positions.includes('ST')) return '4-2-3-1';
+        if (defenders === 4 && mids === 3 && attackers === 3) return '4-3-3';
+        if (defenders === 4 && mids === 5 && attackers === 1) return '4-2-3-1';
+        return '4-4-2';
+    }
+
+    function inferFormationSlots(players) {
+        return FORMATION_SLOTS[inferFormationName(players)] || FORMATION_SLOTS['4-4-2'];
+    }
+
+    function normalizePosition(position) {
+        const value = String(position || '').toUpperCase();
+        const aliases = { FWD:'ST', CF:'ST', ATT:'ST', MID:'CM', DEF:'CB', LWF:'LW', RWF:'RW' };
+        return aliases[value] || value;
     }
 
     function lineOf(position) {
-        const value = String(position || '').toUpperCase();
+        const value = normalizePosition(position);
         if (['ST','FW','LW','RW'].includes(value)) return 'attack';
         if (['AM','CM','DM','LM','RM','MF'].includes(value)) return 'mid';
         if (['LB','CB','RB','LWB','RWB','DF'].includes(value)) return 'defense';
         return 'gk';
+    }
+
+    function sameSlotPosition(a, b) {
+        const left = normalizePosition(a);
+        const right = normalizePosition(b);
+        if (left === right) return true;
+        if (['LW','LM'].includes(left) && ['LW','LM'].includes(right)) return true;
+        if (['RW','RM'].includes(left) && ['RW','RM'].includes(right)) return true;
+        if (['ST','FW'].includes(left) && ['ST','FW'].includes(right)) return true;
+        return false;
     }
 
     function sameLinePosition(a, b) {
@@ -972,6 +1056,16 @@
                     return;
                 }
                 prependComment(payload);
+            });
+            if (liveSubscription) liveSubscription.unsubscribe();
+            liveSubscription = commentStompClient.subscribe(`/topic/games/${matchId}/soccer-live`, message => {
+                try {
+                    liveData = JSON.parse(message.body);
+                    renderPage(liveData);
+                    updateAutoRefreshStatus(true);
+                } catch (error) {
+                    console.warn('축구 중계 실시간 메시지 처리 실패', error);
+                }
             });
         });
     }
