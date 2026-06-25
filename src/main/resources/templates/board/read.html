@@ -231,7 +231,10 @@
                 <p class="section-title">작성자 정보</p>
                 <div class="flex items-center gap-3 mb-3">
                     <!-- 작성자 프로필 이미지 -->
-                    <img th:if="${!dto.isNotice and dto.profileImage != null and dto.profileImage != ''}"
+                    <img th:if="${!dto.isNotice and dto.profileImage != null and dto.profileImage != '' and #strings.startsWith(dto.profileImage, 'http')}"
+                         th:src="${dto.profileImage}"
+                         style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="프로필">
+                    <img th:if="${!dto.isNotice and dto.profileImage != null and dto.profileImage != '' and !#strings.startsWith(dto.profileImage, 'http')}"
                          th:src="@{/files/view(fileName='profile/' + ${dto.profileImage})}"
                          style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="프로필">
                     <div th:unless="${!dto.isNotice and dto.profileImage != null and dto.profileImage != ''}"
