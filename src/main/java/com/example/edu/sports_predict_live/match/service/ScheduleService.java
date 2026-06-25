@@ -1,6 +1,11 @@
 package com.example.edu.sports_predict_live.match.service;
 
+
+import com.example.edu.sports_predict_live.livematch.baseball.dto.BaseballLiveDTO;
+import com.example.edu.sports_predict_live.livematch.event.repository.MatchEventRepository;
+import com.example.edu.sports_predict_live.livematch.baseball.service.BaseballLiveStateService;
 import com.example.edu.sports_predict_live.match.dto.response.MatchResponseDTO;
+import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +25,8 @@ import java.util.Map;
 public class ScheduleService {
 
     private final MatchRepository matchRepository;
+    private final BaseballLiveStateService baseballLiveStateService;
+    private final MatchEventRepository matchEventRepository;
 
     // lolesports API 설정
     private static final String LOL_API_KEY      = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z";
@@ -38,8 +45,65 @@ public class ScheduleService {
 
         return matchRepository.findBySportCodeAndDate(sport, date)
                 .stream()
-                .map(MatchResponseDTO::new)
+                .map(match -> toScheduleResponse(sport, match))
                 .toList();
+    }
+
+    public List<MatchResponseDTO> getScheduleAll(String sport) {
+        return matchRepository.findBySportCodeOrderByScheduledAtDesc(sport)
+                .stream()
+                .map(match -> toScheduleResponse(sport, match))
+                .toList();
+    }
+
+    private MatchResponseDTO toScheduleResponse(String sport, Match match) {
+        String status = normalizeStatus(match.getStatus());
+
+        if ("baseball".equalsIgnoreCase(sport)) {
+            if (matchEventRepository.countByMatchId(match.getMatchId()) == 0) {
+                return new MatchResponseDTO(match, match.getHomeScore(), match.getAwayScore(), status);
+            }
+
+            try {
+                BaseballLiveDTO live = baseballLiveStateService.getBaseballLive(match.getMatchId());
+                BaseballLiveDTO.Scoreboard scoreboard = live.scoreboard();
+
+                int homeScore = scoreboard != null ? scoreboard.homeScore() : match.getHomeScore();
+                int awayScore = scoreboard != null ? scoreboard.awayScore() : match.getAwayScore();
+
+                if (shouldRenderAsLive(status)) {
+                    status = "in_progress";
+                }
+
+                return new MatchResponseDTO(match, homeScore, awayScore, status, live.currentPeriod());
+            } catch (RuntimeException ignored) {
+                return new MatchResponseDTO(match, match.getHomeScore(), match.getAwayScore(), status);
+            }
+        }
+
+        return new MatchResponseDTO(
+                match,
+                match.getHomeScore(),
+                match.getAwayScore(),
+                status
+        );
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "scheduled";
+        }
+        if ("live".equals(status)) {
+            return "in_progress";
+        }
+        return status;
+    }
+
+    private boolean shouldRenderAsLive(String status) {
+        if ("finished".equals(status) || "cancelled".equals(status)) {
+            return false;
+        }
+        return true;
     }
 
     @SuppressWarnings("unchecked")

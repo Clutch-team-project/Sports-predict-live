@@ -44,3 +44,10 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Local reference documents
+docs/
+
+# Local crawler scripts
+tools/
+/crawlers/

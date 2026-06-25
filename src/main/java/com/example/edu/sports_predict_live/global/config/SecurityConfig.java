@@ -93,6 +93,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
+                        .requestMatchers("/admin/control").permitAll()
+                        .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
+                        .requestMatchers("/games/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/games/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/board/register", "/board/modify").permitAll()
                         .requestMatchers(
@@ -114,6 +121,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             String uri = request.getRequestURI();
 
+                            // API(Ajax/Fetch) 요청인 경우 -> 순수 401 상태 코드만 반환
                             if (uri.startsWith("/api/")) {
                                 // API 요청 → 401 상태 코드만 반환
                                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +56,18 @@ public interface PlayerSeasonStatBaseballRepository extends JpaRepository<Player
     """)
     Optional<PlayerSeasonStatBaseball> findPitcherByNameAndSeason(
             @Param("name") String name,
+            @Param("season") String season
+    );
+
+    @Query("""
+        SELECT b FROM PlayerSeasonStatBaseball b
+        JOIN FETCH b.playerSeasonStat pss
+        JOIN FETCH pss.player p
+        WHERE p.playerId IN :playerIds
+          AND pss.season = :season
+    """)
+    List<PlayerSeasonStatBaseball> findByPlayerIdsAndSeason(
+            @Param("playerIds") Collection<Long> playerIds,
             @Param("season") String season
     );
 }

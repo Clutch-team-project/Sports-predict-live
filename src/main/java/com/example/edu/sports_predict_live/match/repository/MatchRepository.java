@@ -8,10 +8,35 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface MatchRepository extends JpaRepository<Match, Long> {
 
-    // 종목 코드 + 날짜로 경기 조회 (시간 오름차순)
+    @Query("""
+        SELECT m FROM Match m
+        JOIN FETCH m.homeTeam ht
+        JOIN FETCH m.awayTeam at
+        JOIN FETCH m.sport s
+        WHERE m.matchId = :matchId
+    """)
+    Optional<Match> findByIdWithTeams(@Param("matchId") Long matchId);
+
+    @Query("""
+        SELECT m FROM Match m
+        JOIN FETCH m.homeTeam ht
+        JOIN FETCH m.awayTeam at
+        JOIN FETCH m.sport s
+        WHERE (:sportId IS NULL OR s.sportId = :sportId)
+          AND (:date IS NULL OR FUNCTION('DATE', m.scheduledAt) = :date)
+          AND (:status IS NULL OR m.status = :status)
+        ORDER BY m.scheduledAt ASC
+    """)
+    List<Match> findGames(
+            @Param("sportId") Long sportId,
+            @Param("date") LocalDate date,
+            @Param("status") String status
+    );
+
     @Query("""
         SELECT m FROM Match m
         JOIN FETCH m.homeTeam ht
@@ -26,7 +51,16 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("date") LocalDate date
     );
 
-    // 종목 코드 + 월로 경기 조회 (달력용)
+    @Query("""
+        SELECT m FROM Match m
+        JOIN FETCH m.homeTeam ht
+        JOIN FETCH m.awayTeam at
+        JOIN FETCH m.sport s
+        WHERE s.code = :sportCode
+        ORDER BY m.scheduledAt DESC
+    """)
+    List<Match> findBySportCodeOrderByScheduledAtDesc(@Param("sportCode") String sportCode);
+
     @Query("""
         SELECT m FROM Match m
         JOIN FETCH m.homeTeam ht
@@ -43,7 +77,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("month") int month
     );
 
-    // 팀 최근 종료 경기 조회 (팀 상세 페이지용, 최신순)
     @Query("""
         SELECT m FROM Match m
         JOIN FETCH m.homeTeam ht
@@ -54,7 +87,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     """)
     List<Match> findRecentFinishedByTeamId(@Param("teamId") Long teamId, Pageable pageable);
 
-    // 팀 예정 경기 조회 (팀 상세 페이지용, 가까운 순)
     @Query("""
         SELECT m FROM Match m
         JOIN FETCH m.homeTeam ht
