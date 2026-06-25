@@ -42,11 +42,6 @@ public class FileController {
             }
         }
 
-//        if (!resource.exists()) {
-//            log.warn("요청한 파일이 로컬 디스크에 존재하지 않습니다: {}", fullPath);
-//            return ResponseEntity.notFound().build();
-//        }
-
         HttpHeaders headers = new HttpHeaders();
         try {
             String contentType = Files.probeContentType(resource.getFile().toPath());
