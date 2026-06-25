@@ -165,9 +165,11 @@ public class BaseballAdminLineupService {
     }
 
     private BaseballAdminLineupDTO.LineupEntry entryFromPlayer(Match match, Player player, MatchLineup lineup) {
-        boolean included = lineup != null;
-        boolean starter = lineup != null && lineup.isStarter();
-        String position = lineup != null ? lineup.getPosition() : normalizePlayerPosition(player.getPosition());
+        boolean scheduledStartingPitcher = lineup == null && isScheduledStartingPitcher(match, player);
+        boolean included = lineup != null || scheduledStartingPitcher;
+        boolean starter = (lineup != null && lineup.isStarter()) || scheduledStartingPitcher;
+        String basePosition = normalizePlayerPosition(player.getPosition());
+        String position = lineup != null ? lineup.getPosition() : scheduledStartingPitcher ? defaultPitcherPosition(basePosition) : basePosition;
         return new BaseballAdminLineupDTO.LineupEntry(
                 lineup != null ? lineup.getMatchLineupId() : null,
                 match.getMatchId(),
@@ -175,7 +177,7 @@ public class BaseballAdminLineupService {
                 player.getTeam().getName(),
                 player.getPlayerId(),
                 player.getName(),
-                normalizePlayerPosition(player.getPosition()),
+                basePosition,
                 player.getJerseyNumber(),
                 starter,
                 lineup != null ? lineup.getOrderNum() : null,
@@ -261,8 +263,13 @@ public class BaseballAdminLineupService {
 
     private String normalizePlayerPosition(String raw) {
         String value = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
-        if (value.equals("SP") || value.equals("RP") || value.equals("RHP") || value.equals("LHP")
-                || value.contains("투수") || value.contains("우완") || value.contains("좌완")) {
+        if (value.equals("RHP") || value.contains("우완")) {
+            return "RHP";
+        }
+        if (value.equals("LHP") || value.contains("좌완")) {
+            return "LHP";
+        }
+        if (value.equals("SP") || value.equals("RP") || value.equals("P") || value.contains("투수")) {
             return "P";
         }
         if (value.contains("포수")) return "C";
@@ -281,7 +288,33 @@ public class BaseballAdminLineupService {
     }
 
     private boolean isPitcher(String position) {
-        return "P".equals(normalizePlayerPosition(position));
+        String normalized = normalizePlayerPosition(position);
+        return "P".equals(normalized) || "RHP".equals(normalized) || "LHP".equals(normalized);
+    }
+
+    private boolean isScheduledStartingPitcher(Match match, Player player) {
+        if (player == null || player.getTeam() == null) {
+            return false;
+        }
+        Long teamId = player.getTeam().getTeamId();
+        String scheduledName = null;
+        if (Objects.equals(teamId, match.getHomeTeam().getTeamId())) {
+            scheduledName = match.getStartingPitcherHome();
+        } else if (Objects.equals(teamId, match.getAwayTeam().getTeamId())) {
+            scheduledName = match.getStartingPitcherAway();
+        }
+        return samePlayerName(scheduledName, player.getName()) && isPitcher(player.getPosition());
+    }
+
+    private boolean samePlayerName(String left, String right) {
+        if (left == null || right == null) {
+            return false;
+        }
+        return left.replaceAll("\s+", "").equalsIgnoreCase(right.replaceAll("\s+", ""));
+    }
+
+    private String defaultPitcherPosition(String basePosition) {
+        return isPitcher(basePosition) ? basePosition : "P";
     }
 
     private record TeamLineupStatus(int pitcherStarterCount, int fieldStarterCount, String message) {

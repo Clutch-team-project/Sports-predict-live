@@ -67,7 +67,7 @@ public class BaseballAdminCommandService {
             case HOMERUN -> homerun(match, state, command, writer);
             case WALK -> forceBatterToFirst(match, state, command, writer, "walk", "\uBCFC\uB137", "\uD0C0\uC790 \uC8FC\uC790 1\uB8E8\uB85C \uCD9C\uB8E8");
             case INTENTIONAL_WALK -> forceBatterToFirst(match, state, command, writer, "intentional_walk", "\uACE0\uC7584\uAD6C", "\uD0C0\uC790 \uC8FC\uC790 1\uB8E8\uB85C \uCD9C\uB8E8");
-            case HIT_BY_PITCH -> forceBatterToFirst(match, state, command, writer, "hit_by_pitch", "\uC0AC\uAD6C", "\uD0C0\uC790 \uC8FC\uC790 1\uB8E8\uB85C \uCD9C\uB8E8");
+            case HIT_BY_PITCH -> forceBatterToFirst(match, state, command, writer, "hit_by_pitch", "몸에 맞는 공", "몸에 맞는 공으로 타자 주자 1루로 출루");
             case GROUNDOUT -> terminalBatterEvent(match, state, command, writer, "groundout", 1);
             case FLYOUT -> terminalBatterEvent(match, state, command, writer, "flyout", 1);
             case LINEOUT -> terminalBatterEvent(match, state, command, writer, "lineout", 1);
@@ -200,9 +200,32 @@ public class BaseballAdminCommandService {
         String period = currentPeriodOrFirst(state);
         Long batterId = requireCurrentBatter(state, command);
         ensureAtBatStarted(match, state, writer, period, batterId);
+        // 타자주자가 도착할 베이스가 차 있어도 타격 이벤트를 먼저 저장한다.
+        // 기존 주자는 이후 RUNNER_ADVANCE/SCORE/OUT 이벤트로 처리하고,
+        // BaseballLiveStateService가 타자주자를 pending 상태로 보관했다가 베이스가 비면 배치한다.
         writer.add(period, battingTeamId(match, period), batterId, eventType, command.description());
         if (outDelta > 0) {
             autoEndInningIfNeeded(match, state, writer, outDelta);
+        }
+    }
+
+    private void ensureBatterTargetBaseAvailable(BaseballLiveDTO state, String eventType) {
+        BaseballLiveDTO.BaseState bases = state.baseState();
+        if (bases == null) {
+            return;
+        }
+
+        String occupiedBase = null;
+        if ("single".equals(eventType) && bases.first() != null) {
+            occupiedBase = "1루";
+        } else if ("double".equals(eventType) && bases.second() != null) {
+            occupiedBase = "2루";
+        } else if ("triple".equals(eventType) && bases.third() != null) {
+            occupiedBase = "3루";
+        }
+
+        if (occupiedBase != null) {
+            throw new IllegalStateException("타자 주자가 도착할 " + occupiedBase + "에 기존 주자가 있습니다. 기존 주자 이동/득점/아웃을 먼저 처리한 뒤 타격 결과를 저장하세요.");
         }
     }
 
@@ -211,9 +234,10 @@ public class BaseballAdminCommandService {
         String period = currentPeriodOrFirst(state);
         Long batterId = requireCurrentBatter(state, command);
         ensureAtBatStarted(match, state, writer, period, batterId);
-        addForcedRunnerAdvances(match, state, writer, period);
         String description = command.description() == null || command.description().isBlank() ? defaultDescription : command.description();
+        // 사구/볼넷 자체 이벤트를 먼저 저장하고, 그 아래에 강제 진루 이벤트를 붙인다.
         writer.add(period, battingTeamId(match, period), batterId, eventType, description == null ? defaultLabel : description);
+        addForcedRunnerAdvances(match, state, writer, period);
     }
 
     private void addForcedRunnerAdvances(Match match, BaseballLiveDTO state, EventWriter writer, String period) {
@@ -226,9 +250,9 @@ public class BaseballAdminCommandService {
             writer.add(period, teamId, bases.third().playerId(), "score", "3\uB8E8 \uC8FC\uC790 \uB4DD\uC810");
         }
         if (bases.second() != null) {
-            writer.add(period, teamId, bases.second().playerId(), "runner_advance", "2\uB8E8 \uC8FC\uC790 3\uB8E8\uAE4C\uC9C0 \uC9C4\uB8E8");
+            writer.add(period, teamId, bases.second().playerId(), "runner_advance_3b", "2루 주자 3루까지 진루");
         }
-        writer.add(period, teamId, bases.first().playerId(), "runner_advance", "1\uB8E8 \uC8FC\uC790 2\uB8E8\uAE4C\uC9C0 \uC9C4\uB8E8");
+        writer.add(period, teamId, bases.first().playerId(), "runner_advance_2b", "1루 주자 2루까지 진루");
     }
 
     private void sacrificeFly(Match match, BaseballLiveDTO state, BaseballAdminCommandDTO command, EventWriter writer) {
@@ -264,10 +288,60 @@ public class BaseballAdminCommandService {
         if (!runnerExists(state, runnerId)) {
             throw new IllegalArgumentException("현재 루상에 없는 주자입니다: " + runnerId);
         }
-        writer.add(period, battingTeamId(match, period), runnerId, eventType, command.description());
+        String normalizedEventType = normalizeRunnerAdvanceEventType(eventType, command.base());
+        String description = command.description();
+        if (description == null || description.isBlank()) {
+            description = defaultRunnerDescription(state, runnerId, normalizedEventType, command.base());
+        }
+        writer.add(period, battingTeamId(match, period), runnerId, normalizedEventType, description);
         if (outDelta > 0) {
             autoEndInningIfNeeded(match, state, writer, outDelta);
         }
+    }
+
+
+    private String normalizeRunnerAdvanceEventType(String eventType, String targetBase) {
+        if (!"runner_advance".equals(eventType)) {
+            return eventType;
+        }
+        String base = targetBase == null ? "" : targetBase.trim().toLowerCase();
+        return switch (base) {
+            case "second", "2", "2b", "2루" -> "runner_advance_2b";
+            case "third", "3", "3b", "3루" -> "runner_advance_3b";
+            case "home", "4", "score", "홈" -> "score";
+            default -> "runner_advance";
+        };
+    }
+
+    private String defaultRunnerDescription(BaseballLiveDTO state, Long runnerId, String eventType, String targetBase) {
+        String from = currentRunnerBaseText(state, runnerId);
+        if ("runner_advance_2b".equals(eventType)) {
+            return from + " 주자 2루까지 진루";
+        }
+        if ("runner_advance_3b".equals(eventType)) {
+            return from + " 주자 3루까지 진루";
+        }
+        if ("score".equals(eventType)) {
+            return from + " 주자 득점";
+        }
+        return from + " 주자 진루";
+    }
+
+    private String currentRunnerBaseText(BaseballLiveDTO state, Long runnerId) {
+        BaseballLiveDTO.BaseState bases = state.baseState();
+        if (bases == null || runnerId == null) {
+            return "주자";
+        }
+        if (bases.first() != null && Objects.equals(bases.first().playerId(), runnerId)) {
+            return "1루";
+        }
+        if (bases.second() != null && Objects.equals(bases.second().playerId(), runnerId)) {
+            return "2루";
+        }
+        if (bases.third() != null && Objects.equals(bases.third().playerId(), runnerId)) {
+            return "3루";
+        }
+        return "주자";
     }
 
     private void pitcherChange(Match match, BaseballLiveDTO state, BaseballAdminCommandDTO command, EventWriter writer) {

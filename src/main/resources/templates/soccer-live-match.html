@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI.MATCH - 축구 경기 중계</title>
+    <style>
+        :root {
+            --page-bg:#cbd5e1;
+            --card:#fff;
+            --soft:#f8fafc;
+            --line:#d5deea;
+            --line-soft:#e2e8f0;
+            --text:#13223a;
+            --muted:#64748b;
+            --blue:#2563eb;
+            --green:#059669;
+            --red:#dc2626;
+            --yellow:#eab308;
+            --orange:#ff9b45;
+            --shadow:0 8px 22px rgba(15,23,42,.12);
+            --radius:16px;
+        }
+        * { box-sizing:border-box; }
+        body {
+            margin:0;
+            background-color:var(--page-bg);
+            background-image:
+                linear-gradient(rgba(148,163,184,.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148,163,184,.1) 1px, transparent 1px);
+            background-size:24px 24px;
+            color:var(--text);
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+            line-height:1.35;
+        }
+        button,input { font:inherit; }
+        button { cursor:pointer; }
+        .hidden,.tab-view.hidden { display:none !important; }
+        .page { width:min(1180px,calc(100% - 48px)); margin:0 auto; padding:14px 0 44px; }
+        .layout { margin-top:18px; display:grid; grid-template-columns:minmax(0,820px) 320px; justify-content:center; gap:14px; align-items:start; }
+        .main-stack,.side-stack { display:grid; gap:14px; min-width:0; }
+        .side-stack { position:sticky; top:16px; }
+        .scoreboard,.panel,.side-panel,.tabs { border:1px solid var(--line); background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+        .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 15px; border-bottom:1px solid var(--line-soft); background:var(--soft); }
+        #timelineView .panel-head { display:none; }
+        .panel-title { color:var(--text); font-size:15px; font-weight:950; }
+        .panel-sub { margin-top:3px; color:var(--muted); font-size:12px; font-weight:800; }
+        .empty-state {
+            min-height:96px;
+            display:grid;
+            place-items:center;
+            padding:18px;
+            border:1px dashed #cbd5e1;
+            border-radius:14px;
+            background:var(--soft);
+            color:var(--muted);
+            font-size:13px;
+            font-weight:850;
+            text-align:center;
+            white-space:pre-line;
+        }
+        .scheduled-tab-panel {
+            min-height:270px;
+            display:grid;
+            place-items:center;
+            padding:28px;
+            border-radius:0 0 14px 14px;
+            background:#fff;
+        }
+        .scheduled-tab-message {
+            color:#6f7785;
+            font-size:18px;
+            font-weight:750;
+            line-height:1.45;
+            text-align:center;
+            white-space:pre-line;
+        }
+        .scoreboard { background:linear-gradient(180deg,#fff 0%,#f8fafc 100%); }
+        .score-head { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px; padding:20px 24px 16px; border-bottom:1px solid var(--line-soft); background:var(--soft); }
+        .scoreboard.status-scheduled .score-head { background:radial-gradient(circle at 18% 0%, rgba(37,99,235,.12), transparent 34%),radial-gradient(circle at 78% 100%, rgba(5,150,105,.10), transparent 30%),var(--soft); }
+        .team { display:flex; align-items:center; gap:14px; min-width:0; }
+        .team.away { justify-content:flex-end; text-align:right; }
+        .team-logo { width:64px; height:64px; display:grid; place-items:center; flex:0 0 auto; border-radius:18px; border:1px solid #bbf7d0; background:#ecfdf5; color:#047857; font-size:28px; font-weight:950; }
+        .team-logo.away { border-color:#bfdbfe; background:#eaf2ff; color:#1d4ed8; }
+        .team-logo img { max-width:48px; max-height:48px; object-fit:contain; }
+        .team-name { color:var(--text); font-size:16px; font-weight:950; }
+        .team-meta { margin-top:2px; color:var(--muted); font-size:12px; font-weight:800; }
+        .score-core { min-width:180px; text-align:center; }
+        .status-pill { display:inline-flex; align-items:center; gap:6px; margin-bottom:8px; padding:5px 11px; border:1px solid #bbf7d0; border-radius:999px; background:#ecfdf5; color:#047857; font-size:12px; font-weight:950; }
+        .status-dot { width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 0 5px rgba(16,185,129,.14); }
+        .scoreboard.status-scheduled .status-pill { border-color:#bfdbfe; background:#eff6ff; color:#1d4ed8; }
+        .scoreboard.status-scheduled .status-dot { background:#3b82f6; box-shadow:0 0 0 5px rgba(59,130,246,.14); }
+        .scoreboard.status-finished .status-pill { border-color:#cbd5e1; background:#f8fafc; color:#475569; }
+        .scoreboard.status-finished .status-dot { background:#64748b; box-shadow:0 0 0 5px rgba(100,116,139,.14); }
+        .score-number { color:var(--text); font-size:40px; font-weight:950; letter-spacing:3px; }
+        .score-number.scheduled-time {
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+            color:var(--text);
+            font-size:21px;
+            line-height:1.15;
+            font-weight:950;
+            letter-spacing:-.02em;
+            white-space:nowrap;
+        }
+        .score-number.scheduled-time .score-date,
+        .score-number.scheduled-time .score-time {
+            color:inherit;
+            font-size:inherit;
+            line-height:inherit;
+            font-weight:inherit;
+        }
+        .score-caption { margin-top:5px; color:var(--muted); font-size:14px; font-weight:800; white-space:pre-line; }
+        .tabs { display:flex; gap:6px; padding:8px; }
+        .tab { flex:1; height:42px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:950; }
+        .tab.active { background:var(--blue); color:#fff; }
+        .relay-toolbar { min-height:54px; display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line-soft); background:#fff; }
+        .refresh-label { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-size:12px; font-weight:900; }
+        .refresh-icon { font-size:15px; line-height:1; }
+        .auto-refresh-toggle { display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 11px; border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--muted); font-size:12px; font-weight:900; }
+        .auto-refresh-toggle input { width:16px; height:16px; margin:0; accent-color:var(--blue); }
+        .auto-refresh-toggle em { min-width:10px; height:10px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.12); }
+        .auto-refresh-toggle em.off { background:#94a3b8; box-shadow:0 0 0 4px rgba(148,163,184,.14); }
+        .timeline { padding:14px; display:grid; gap:10px; }
+        .timeline-section { border:1px solid var(--line-soft); border-radius:14px; overflow:hidden; background:#fff; }
+        .timeline-section summary { list-style:none; padding:12px 14px; display:flex; justify-content:space-between; gap:10px; background:#f8fafc; font-weight:950; cursor:pointer; }
+        .timeline-section summary::-webkit-details-marker { display:none; }
+        .event-list { display:grid; gap:0; }
+        .event-row { display:grid; grid-template-columns:58px 42px minmax(0,1fr) auto; gap:10px; align-items:center; padding:11px 14px; border-top:1px solid var(--line-soft); }
+        .event-minute { color:var(--blue); font-weight:950; }
+        .event-icon { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:#eef2ff; color:#2563eb; font-size:11px; font-weight:950; }
+        .event-main b { display:block; font-size:13px; }
+        .event-main span { color:var(--muted); font-size:12px; font-weight:750; }
+        .event-score { color:var(--text); font-size:13px; font-weight:950; }
+        .table-wrap { overflow-x:auto; padding:14px; }
+        .record-table { width:100%; border-collapse:collapse; }
+        .record-table th,.record-table td { padding:10px 9px; border-bottom:1px solid var(--line-soft); text-align:center; font-size:12px; white-space:nowrap; }
+        .record-table th:first-child,.record-table td:first-child { text-align:left; font-weight:950; }
+        .record-table th { color:var(--muted); background:#f8fafc; }
+        .pitch-card { padding:14px; background:#fff; box-shadow:none; border:0; border-radius:0; }
+        .pitch { position:relative; min-height:330px; border-radius:18px; overflow:hidden; background:linear-gradient(90deg,rgba(255,255,255,.18) 49.7%,rgba(255,255,255,.55) 50%,rgba(255,255,255,.18) 50.3%),linear-gradient(180deg,#15803d,#16a34a); box-shadow:inset 0 0 0 2px rgba(255,255,255,.38), inset 0 0 0 14px rgba(255,255,255,.08); }
+        .pitch::before { content:""; position:absolute; left:50%; top:50%; width:106px; height:106px; transform:translate(-50%,-50%); border:3px solid rgba(255,255,255,.55); border-radius:50%; }
+        .pitch::after { content:""; position:absolute; inset:28px; border:3px solid rgba(255,255,255,.55); border-radius:12px; }
+        .pitch-score { position:absolute; left:50%; top:20px; transform:translateX(-50%); min-width:260px; padding:12px 16px; border-radius:14px; background:rgba(15,23,42,.82); color:#fff; text-align:center; box-shadow:0 12px 24px rgba(0,0,0,.2); z-index:3; }
+        .pitch-score b { font-size:30px; letter-spacing:2px; }
+        .pitch-score span { display:block; color:#cbd5e1; font-size:12px; font-weight:850; margin-top:2px; }
+        .lineup-grid { position:absolute; inset:90px 32px 26px; display:grid; grid-template-columns:1fr 1fr; gap:26px; z-index:2; }
+        .formation { display:grid; grid-template-rows:repeat(4,1fr); gap:8px; align-items:center; }
+        .formation.away { direction:rtl; }
+        .player-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; direction:ltr; }
+        .kit { min-width:44px; max-width:76px; min-height:34px; display:grid; place-items:center; padding:5px 7px; border-radius:999px; background:rgba(255,255,255,.92); color:#0f172a; font-size:11px; font-weight:950; box-shadow:0 4px 12px rgba(0,0,0,.16); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .lineup-columns { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:14px; }
+        .lineup-team { border:1px solid var(--line-soft); border-radius:14px; overflow:hidden; }
+        .lineup-team h3 { margin:0; padding:12px 14px; background:#f8fafc; font-size:14px; }
+        .lineup-list { display:grid; }
+        .lineup-item { display:grid; grid-template-columns:42px minmax(0,1fr) 58px; gap:8px; padding:10px 12px; border-top:1px solid var(--line-soft); font-size:13px; align-items:center; }
+        .lineup-item b { color:var(--muted); }
+        .lineup-item span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:850; }
+        .lineup-item em { color:var(--blue); font-style:normal; font-weight:950; text-align:right; }
+        .prediction { background:#fff; padding:15px; }
+        .vote-title { display:flex; justify-content:space-between; gap:12px; color:var(--text); font-size:15px; font-weight:950; }
+        .vote-title small { color:var(--muted); font-size:11px; white-space:nowrap; }
+        .vote-match { margin-top:14px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; }
+        .vote-match.prediction-three {
+            grid-template-columns:1fr 1fr 1fr;
+            gap:0;
+            border:1px solid var(--line);
+            border-radius:12px;
+            overflow:hidden;
+            background:#fff;
+        }
+        .vote-match.prediction-three .vote-team {
+            min-height:74px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            border:0;
+            border-radius:0;
+            border-right:1px solid var(--line);
+        }
+        .vote-match.prediction-three .vote-team:last-child { border-right:0; }
+        .vote-team { padding:12px; border:1px solid var(--line); border-radius:12px; background:#fff; text-align:center; cursor:pointer; }
+        .vote-team.disabled { cursor:default; opacity:.78; }
+        .vote-team strong { display:block; margin-bottom:3px; color:var(--text); font-size:17px; }
+        .vote-team span { color:var(--muted); font-size:12px; }
+        .vs { color:var(--muted); font-weight:950; }
+        .bar-wrap { margin-top:14px; height:12px; display:flex; overflow:hidden; border:1px solid var(--line); border-radius:999px; background:#e6edf6; }
+        .bar-blue { width:50%; background:#5c8dff; }
+        .bar-draw { width:0%; background:#94a3b8; }
+        .bar-orange { flex:1; background:var(--orange); }
+        .closed-note { margin-top:10px; padding:9px 10px; border:1px solid var(--line); border-radius:12px; background:#fff; color:var(--muted); font-size:12px; font-weight:800; }
+        .chat { height:680px; display:flex; flex-direction:column; background:#fff; }
+        .chat-head { min-height:58px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 14px 0 18px; border-bottom:1px solid var(--line-soft); background:#fff; }
+        .chat-count { display:inline-flex; align-items:baseline; gap:4px; color:var(--text); font-size:18px; line-height:1; font-weight:900; letter-spacing:-.04em; }
+        .chat-count span { color:var(--text); font-size:18px; font-weight:950; }
+        .chat-toggle { width:38px; height:38px; display:grid; place-items:center; flex:0 0 38px; border:0; border-radius:10px; background:transparent; color:var(--text); font-size:20px; line-height:1; font-weight:950; cursor:pointer; }
+        .chat-toggle:hover { background:#f1f5f9; }
+        .chat.collapsed { height:auto; }
+        .chat.collapsed .chat-body { display:none; }
+        .chat-collapsed-preview { display:none; }
+        .chat.collapsed .chat-collapsed-preview { min-height:220px; display:grid; place-items:center; align-content:center; gap:8px; padding:36px 18px 40px; border-top:1px solid var(--line-soft); background:#fff; text-align:center; }
+        .chat-collapsed-preview strong { color:#4b5563; font-size:15px; line-height:1.25; font-weight:850; letter-spacing:-.02em; }
+        .chat-collapsed-preview p { margin:0; color:#8a94a6; font-size:12px; line-height:1.35; font-weight:700; }
+        .chat-preview-illust { position:relative; width:86px; height:58px; margin-bottom:6px; }
+        .chat-preview-illust .bubble { position:absolute; display:inline-flex; align-items:center; justify-content:center; }
+        .chat-preview-illust .bubble-main { left:8px; bottom:6px; width:62px; height:38px; border:1.5px solid #d5dde8; border-radius:999px; background:#fff; color:#c4ccd8; font-size:20px; line-height:1; font-weight:950; z-index:2; }
+        .chat-preview-illust .bubble-main::after { content:""; position:absolute; left:12px; bottom:-7px; width:12px; height:12px; border-left:1.5px solid #d5dde8; border-bottom:1.5px solid #d5dde8; background:#fff; transform:rotate(-18deg); }
+        .chat-preview-illust .bubble-back { right:5px; top:2px; width:56px; height:40px; border-radius:999px; background:#e5e7eb; z-index:1; }
+        .chat-body { flex:1; min-height:0; display:flex; flex-direction:column; }
+        .chat-team-picker { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px 12px 0; background:#fff; }
+        .chat-team-cell { min-width:0; min-height:48px; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0; border-radius:14px; background:#fff; }
+        .chat-team-action { display:inline-flex; align-items:center; justify-content:center; gap:8px; width:fit-content; max-width:calc(100% - 18px); padding:7px 10px; border-radius:999px; color:var(--text); font-size:15px; font-weight:900; line-height:1; cursor:pointer; }
+        .chat-team-action:hover,.chat-team-action.selected { background:#f8fafc; }
+        .chat-team-action input { width:24px; height:24px; margin:0; flex:0 0 auto; accent-color:#334155; cursor:pointer; }
+        .chat-team-action img,.chat-team-fallback { width:26px; height:26px; flex:0 0 auto; border-radius:999px; object-fit:contain; }
+        .chat-team-fallback { display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); background:#fff; color:var(--blue); font-size:12px; font-weight:950; }
+        .chat-team-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .chat-form { display:flex; gap:8px; padding:12px 16px 0; background:#fff; }
+        .chat-form input { flex:1; min-width:0; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; background:var(--soft); color:var(--text); outline:none; }
+        .chat-form button { min-width:64px; padding:0 14px; border:0; border-radius:10px; background:var(--blue); color:#fff; font-weight:950; }
+        .chat-culture-note { margin:10px 16px 0; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; color:#16a34a; font-size:12px; font-weight:900; }
+        .chat-list { flex:1; display:grid; align-content:start; gap:8px; padding:12px; overflow-y:auto; scrollbar-width:none; }
+        .chat-list::-webkit-scrollbar { width:0; height:0; }
+        .chat-empty { min-height:260px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--muted); text-align:center; font-size:14px; font-weight:800; line-height:1.45; }
+        .chat-empty-icon { width:42px; height:34px; display:inline-flex; align-items:center; justify-content:center; border:2px solid #cbd5e1; border-radius:18px; color:#94a3b8; font-size:18px; font-weight:950; }
+        .chat-msg { max-width:82%; padding:13px 14px; border:0; border-radius:12px; background:var(--soft); }
+        .chat-msg.mine { justify-self:end; background:#dbeafe; }
+        .chat-user { display:flex; justify-content:space-between; gap:8px; margin-bottom:5px; color:var(--blue); font-size:12px; font-weight:950; }
+        .chat-user-main { display:inline-flex; align-items:center; gap:5px; min-width:0; }
+        .chat-support-emblem { width:16px; height:16px; border-radius:999px; object-fit:contain; flex:0 0 auto; }
+        .chat-user span:last-child { color:var(--muted); white-space:nowrap; }
+        .chat-report,.chat-delete { border:0; background:transparent; color:var(--muted); font-size:12px; font-weight:800; cursor:pointer; }
+        .chat-text { color:#475569; font-size:13px; line-height:1.32; }
+        @media (max-width:980px) { .layout { grid-template-columns:1fr; } .side-stack { position:static; } }
+        @media (max-width:720px) { .page { width:min(100% - 24px,1180px); } .score-head,.lineup-columns { grid-template-columns:1fr; } .team.away { justify-content:flex-start; text-align:left; } .lineup-grid { display:none; } .pitch { min-height:210px; } }
+    </style>
+</head>
+<body class="front-broadcast-light">
+<main class="page">
+    <section class="layout">
+        <div class="main-stack">
+            <section class="scoreboard" id="scoreboard" aria-label="축구 경기 스코어보드">
+                <div class="score-head">
+                    <div class="team away">
+                        <div>
+                            <div class="team-name" id="awayName">-</div>
+                            <div class="team-meta" id="awayMeta">원정</div>
+                        </div>
+                        <div class="team-logo away" id="awayLogo">A</div>
+                    </div>
+                    <div class="score-core">
+                        <div class="status-pill"><span class="status-dot"></span><span id="statusText">경기전</span></div>
+                        <div class="score-number"><span id="awayScore">-</span> : <span id="homeScore">-</span></div>
+                        <div class="score-caption" id="scoreCaption">경기 정보 확인 중</div>
+                    </div>
+                    <div class="team">
+                        <div class="team-logo" id="homeLogo">H</div>
+                        <div>
+                            <div class="team-name" id="homeName">-</div>
+                            <div class="team-meta" id="homeMeta">홈</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <nav class="tabs" role="tablist">
+                <button class="tab active" type="button" data-tab="timelineView">중계</button>
+                <button class="tab" type="button" data-tab="recordsView">기록</button>
+                <button class="tab" type="button" data-tab="lineupView">라인업</button>
+            </nav>
+
+            <section class="panel tab-view" id="timelineView">
+                <div class="relay-toolbar">
+                    <label class="auto-refresh-toggle">
+                        <input type="checkbox" id="autoRefreshToggle" checked>
+                        자동 업데이트
+                        <em id="autoRefreshStatus" aria-hidden="true"></em>
+                    </label>
+                    <button class="refresh-label" type="button" id="refreshButton"><span class="refresh-icon">↻</span>새로고침</button>
+                </div>
+                <div class="panel-head"><div><div class="panel-title">문자 중계</div><div class="panel-sub">match_event 기준 실시간 경기 흐름</div></div></div>
+                <div class="timeline" id="timeline"></div>
+            </section>
+
+            <section class="panel tab-view hidden" id="recordsView">
+                <div class="panel-head"><div><div class="panel-title">기록</div><div class="panel-sub">팀/선수 경기 기록</div></div></div>
+                <div class="table-wrap" id="records"></div>
+            </section>
+
+            <section class="panel tab-view hidden" id="lineupView">
+                <div class="panel-head"><div><div class="panel-title">라인업</div><div class="panel-sub">match_lineup 기준 선발/후보 명단</div></div></div>
+                <div id="lineupContent">
+                    <section class="pitch-card">
+                        <div class="pitch">
+                            <div class="pitch-score"><b><span id="pitchAwayScore">0</span> : <span id="pitchHomeScore">0</span></b><span id="pitchClock">0' · 경기전</span></div>
+                            <div class="lineup-grid">
+                                <div class="formation away" id="awayPitchLineup"></div>
+                                <div class="formation" id="homePitchLineup"></div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="lineup-columns" id="lineup"></div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="side-stack">
+            <section class="side-panel prediction">
+                <div class="vote-title">경기 전 승부 예측 결과 <small id="predictionStatus">-</small></div>
+                <div class="vote-match prediction-three">
+                    <div class="vote-team" data-prediction-choice="HOME_WIN"><strong id="predHomeName">홈</strong><span id="predHomeMeta">-</span></div>
+                    <div class="vote-team" data-prediction-choice="DRAW"><strong>무승부</strong><span id="predDrawMeta">-</span></div>
+                    <div class="vote-team" data-prediction-choice="AWAY_WIN"><strong id="predAwayName">원정</strong><span id="predAwayMeta">-</span></div>
+                </div>
+                <div class="bar-wrap"><div class="bar-blue" id="predictionHomeBar"></div><div class="bar-draw" id="predictionDrawBar"></div><div class="bar-orange" id="predictionAwayBar"></div></div>
+                <div class="closed-note" id="predictionNote">예측 데이터가 없습니다.</div>
+            </section>
+
+            <section class="side-panel chat">
+                <div class="chat-head">
+                    <div class="chat-count">응원톡 <span id="chatCount">0</span>개</div>
+                    <button type="button" class="chat-toggle" id="chatToggle" aria-label="응원톡 접기" aria-expanded="true">⌃</button>
+                </div>
+                <div class="chat-body">
+                    <div class="chat-team-picker" id="chatTeamPicker"></div>
+                    <form class="chat-form" id="chatForm">
+                        <input id="chatInput" placeholder="댓글을 입력하세요" maxlength="300">
+                        <button type="submit">전송</button>
+                    </form>
+                    <div class="chat-culture-note">서로를 존중하는 응원 문화를 함께 만들어 주세요.</div>
+                    <div class="chat-list" id="chatList">
+                        <div class="chat-empty"><div class="chat-empty-icon">...</div><div>등록된 메시지가 없습니다.<br>첫번째 메시지를 남겨주세요.</div></div>
+                    </div>
+                </div>
+                <div class="chat-collapsed-preview" aria-hidden="true">
+                    <div class="chat-preview-illust"><span class="bubble bubble-main">...</span><span class="bubble bubble-back"></span></div>
+                    <strong>응원톡이 접혀있어요</strong><p>톡을 열어 응원 메시지를 남겨 보세요!</p>
+                </div>
+            </section>
+        </aside>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    const $ = selector => document.querySelector(selector);
+    const $$ = selector => Array.from(document.querySelectorAll(selector));
+    const AUTO_REFRESH_MS = 15000;
+
+    let liveData = null;
+    let selectedSupportTeamId = null;
+    let loadedCommentIds = new Set();
+    let commentStompClient = null;
+    let commentSubscription = null;
+    let autoRefreshTimer = null;
+    let liveLoading = false;
+
+    const KLEAGUE_EMBLEMS = {
+        '강원':'/images/teams/KLeague/GANGWONFC.svg','강원FC':'/images/teams/KLeague/GANGWONFC.svg',
+        '전북':'/images/teams/KLeague/JEONBUK.svg','전북현대':'/images/teams/KLeague/JEONBUK.svg',
+        '포항':'/images/teams/KLeague/STEELERS.svg','포항스틸러스':'/images/teams/KLeague/STEELERS.svg',
+        '울산':'/images/teams/KLeague/ULSANHD.svg','울산HD':'/images/teams/KLeague/ULSANHD.svg',
+        '서울':'/images/teams/KLeague/FCSEOUL.svg','FC서울':'/images/teams/KLeague/FCSEOUL.svg',
+        '안양':'/images/teams/KLeague/FCANYANG.svg','FC안양':'/images/teams/KLeague/FCANYANG.svg',
+        '대구':'/images/teams/KLeague/DHFC.svg','대구FC':'/images/teams/KLeague/DHFC.svg',
+        '부천':'/images/teams/KLeague/BUCHEON.svg','부천FC':'/images/teams/KLeague/BUCHEON.svg',
+        '인천':'/images/teams/KLeague/IUFC.svg','인천Utd':'/images/teams/KLeague/IUFC.svg','인천유나이티드':'/images/teams/KLeague/IUFC.svg',
+        '광주':'/images/teams/KLeague/GWANGJU.svg','광주FC':'/images/teams/KLeague/GWANGJU.svg',
+        '김천':'/images/teams/KLeague/GIMCHEON.svg','김천상무':'/images/teams/KLeague/GIMCHEON.svg',
+        '제주':'/images/teams/KLeague/JEJU.svg','제주유나이티드':'/images/teams/KLeague/JEJU.svg'
+    };
+
+    const EVENT_LABELS = {
+        match_start: '경기 시작', first_half_end: '전반 종료', second_half_start: '후반 시작', match_end: '경기 종료',
+        goal: '골', own_goal: '자책골', penalty_goal: 'PK 골', penalty_miss: 'PK 실축',
+        assist: '도움', shot: '슈팅', shot_on_target: '유효슈팅', corner_kick: '코너킥', foul: '파울',
+        yellow_card: '경고', red_card: '퇴장', offside: '오프사이드', save: '세이브', substitution: '교체'
+    };
+
+    const EVENT_ICONS = {
+        match_start: '▶', first_half_end: 'Ⅱ', second_half_start: '▶', match_end: '■',
+        goal: 'GOAL', own_goal: 'OG', penalty_goal: 'PK', penalty_miss: 'PK',
+        assist: 'A', shot: 'S', shot_on_target: 'SOT', corner_kick: 'CK', foul: 'F',
+        yellow_card: 'YC', red_card: 'RC', offside: 'OFF', save: 'SV', substitution: '교체'
+    };
+
+    function getMatchIdFromPath() {
+        const match = location.pathname.match(/\/games\/(\d+)\/soccer\/live/);
+        if (match) return match[1];
+        const params = new URLSearchParams(location.search);
+        return params.get('matchId') || params.get('gameId') || params.get('id');
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value ?? '-';
+    }
+
+    function normalizeTeamName(name) {
+        return String(name || '').replace(/\s+/g, '');
+    }
+
+    function emblemFor(teamName, emblemUrl) {
+        if (emblemUrl) return emblemUrl;
+        return KLEAGUE_EMBLEMS[normalizeTeamName(teamName)] || null;
+    }
+
+    function teamLogo(el, teamName, emblemUrl) {
+        if (!el) return;
+        const resolvedEmblem = emblemFor(teamName, emblemUrl);
+        if (resolvedEmblem) {
+            el.innerHTML = `<img src="${escapeHtml(resolvedEmblem)}" alt="${escapeHtml(teamName || '팀 로고')}">`;
+            return;
+        }
+        el.textContent = String(teamName || '-').slice(0, 1).toUpperCase();
+    }
+
+    function sameId(left, right) {
+        return String(left ?? '') === String(right ?? '');
+    }
+
+    function numberOrZero(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : 0;
+    }
+
+    function formatMatchDate(value) {
+        if (!value) return '-';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value).slice(0, 10).replaceAll('-', '.');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${month}.${day}`;
+    }
+
+    function formatMatchTime(value) {
+        if (!value) return '-';
+        const text = String(value);
+        if (/^\d{2}:\d{2}/.test(text)) return text.slice(0, 5);
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return text;
+        return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function normalizeStatus(status) {
+        const value = String(status || '').toLowerCase();
+        if (['live', 'in_progress', 'progress', 'playing', '진행중'].includes(value)) return 'live';
+        if (['finished', 'ended', 'final', '경기종료', '종료'].includes(value)) return 'finished';
+        if (['cancelled', 'canceled', '취소'].includes(value)) return 'cancelled';
+        if (['paused', 'suspended', '일시정지'].includes(value)) return 'paused';
+        return 'scheduled';
+    }
+
+    function statusLabel(status) {
+        const normalized = normalizeStatus(status);
+        if (normalized === 'live') return 'LIVE';
+        if (normalized === 'finished') return '경기종료';
+        if (normalized === 'cancelled') return '취소';
+        if (normalized === 'paused') return '일시정지';
+        return '경기전';
+    }
+
+    function phaseLabel(scoreboard) {
+        const phase = scoreboard?.phase || '';
+        if (phase === 'First Half') return '전반';
+        if (phase === 'Second Half') return '후반';
+        if (phase === 'Half Time') return '하프타임';
+        return phase || '경기전';
+    }
+
+    async function fetchJson(url, options = {}) {
+        const fetcher = window.authFetch || fetch;
+        const response = await fetcher(url, options);
+        if (!response.ok) throw new Error(await response.text() || String(response.status));
+        return response.json();
+    }
+
+    async function loadSoccerLive(options = {}) {
+        if (liveLoading) return;
+        liveLoading = true;
+
+        const silent = options.silent === true;
+        const matchId = getMatchIdFromPath();
+        if (!matchId) {
+            renderLoadError('matchId를 찾을 수 없습니다.');
+            liveLoading = false;
+            return;
+        }
+
+        try {
+            liveData = await fetchJson(`/api/games/${encodeURIComponent(matchId)}/soccer-live`);
+            renderPage(liveData);
+            updateAutoRefreshStatus(true);
+            await loadMatchComments();
+        } catch (error) {
+            console.warn('축구 중계 API 호출 실패', error);
+            updateAutoRefreshStatus(false);
+            if (!silent) renderLoadError(error.message || '축구 중계 API 호출에 실패했습니다.');
+        } finally {
+            liveLoading = false;
+        }
+    }
+
+    function renderLoadError(message) {
+        $('#timeline').innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+    }
+
+    function renderPage(data) {
+        const scoreboard = data?.scoreboard || {};
+        const status = normalizeStatus(data?.status || scoreboard.status);
+        renderScoreboard(scoreboard, status);
+        renderPrediction(data?.prediction, scoreboard, status);
+        renderChatTeams(data);
+
+        if (status === 'scheduled') {
+            renderScheduledViews();
+            return;
+        }
+
+        renderTimeline(data?.timeline, status);
+        renderRecords(data?.records, status);
+        renderLineup(data?.lineup, status, scoreboard);
+    }
+
+    function renderScoreboard(scoreboard, status) {
+        const board = $('#scoreboard');
+        if (board) {
+            board.classList.remove('status-scheduled', 'status-live', 'status-finished', 'status-cancelled', 'status-paused');
+            board.classList.add(`status-${status}`);
+        }
+
+        setText('awayName', scoreboard.awayTeamName || scoreboard.awayName || '-');
+        setText('homeName', scoreboard.homeTeamName || scoreboard.homeName || '-');
+        setText('awayMeta', `원정 · ${scoreboard.awayFormation || '-'}`);
+        setText('homeMeta', `홈 · ${scoreboard.homeFormation || '-'}`);
+        setText('statusText', statusLabel(status));
+        teamLogo($('#awayLogo'), scoreboard.awayTeamName || scoreboard.awayName, scoreboard.awayTeamEmblem || scoreboard.awayEmblemUrl);
+        teamLogo($('#homeLogo'), scoreboard.homeTeamName || scoreboard.homeName, scoreboard.homeTeamEmblem || scoreboard.homeEmblemUrl);
+
+        const scoreNumber = document.querySelector('.score-number');
+        if (scoreNumber) {
+            scoreNumber.classList.toggle('scheduled-time', status === 'scheduled');
+            if (status === 'scheduled') {
+                scoreNumber.innerHTML = `<span class="score-date">${escapeHtml(formatMatchDate(scoreboard.matchDate || scoreboard.scheduledAt))}</span><span class="score-time">${escapeHtml(formatMatchTime(scoreboard.matchTime || scoreboard.scheduledAt))}</span>`;
+            } else {
+                scoreNumber.innerHTML = `<span id="awayScore">${escapeHtml(scoreboard.awayScore ?? 0)}</span> : <span id="homeScore">${escapeHtml(scoreboard.homeScore ?? 0)}</span>`;
+            }
+        }
+
+        if (status === 'scheduled') {
+            setText('scoreCaption', scoreboard.stadium || scoreboard.venue || '장소 미정');
+        } else {
+            const minute = scoreboard.currentMinute || '0';
+            setText('scoreCaption', `${minute}' · ${phaseLabel(scoreboard)}\n${scoreboard.stadium || scoreboard.venue || '장소 미정'}`);
+        }
+    }
+
+    function renderScheduledViews() {
+        $('#timeline').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">해당 경기의 중계는 추후 업데이트 됩니다.</div></section>`;
+        $('#records').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">데이터 수신 시 팀/선수 기록이 업데이트 됩니다.</div></section>`;
+        $('#lineupContent').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">출전 선수 명단이 확정되면 업데이트 됩니다.</div></section>`;
+    }
+
+    function renderTimeline(timeline, status) {
+        const target = $('#timeline');
+        if (!target) return;
+        const sections = timeline?.sections || [];
+        if (!sections.length) {
+            target.innerHTML = `<div class="empty-state">해당 경기의 중계는 추후 업데이트 됩니다.</div>`;
+            return;
+        }
+        target.innerHTML = sections.map(section => `
+            <details class="timeline-section" ${section.open ? 'open' : ''}>
+                <summary><span>${escapeHtml(section.title || '-')}</span><span>${escapeHtml(section.scoreText || '')}</span></summary>
+                <div class="event-list">
+                    ${(section.events || []).length ? section.events.map(renderTimelineEvent).join('') : '<div class="empty-state">해당 구간의 중계는 추후 업데이트 됩니다.</div>'}
+                </div>
+            </details>
+        `).join('');
+    }
+
+    function renderTimelineEvent(event) {
+        const type = String(event.eventType || event.type || '').toLowerCase();
+        const label = event.label || EVENT_LABELS[type] || type || '이벤트';
+        const icon = event.icon || EVENT_ICONS[type] || '·';
+        const minute = event.minute || event.eventMinute || event.time || '-';
+        const playerOrTeam = event.playerName || event.teamName || '-';
+        const awayScore = event.awayScore ?? '';
+        const homeScore = event.homeScore ?? '';
+        return `
+            <div class="event-row">
+                <div class="event-minute">${escapeHtml(minute)}'</div>
+                <div class="event-icon">${escapeHtml(icon)}</div>
+                <div class="event-main">
+                    <b>${escapeHtml(label)} · ${escapeHtml(playerOrTeam)}</b>
+                    <span>${escapeHtml(event.description || event.teamName || '')}</span>
+                </div>
+                <div class="event-score">${escapeHtml(awayScore)}${awayScore !== '' || homeScore !== '' ? ' : ' : ''}${escapeHtml(homeScore)}</div>
+            </div>
+        `;
+    }
+
+    function renderRecords(records) {
+        const target = $('#records');
+        if (!target) return;
+        if (!records?.team) {
+            target.innerHTML = '<div class="empty-state">기록 데이터가 없습니다.</div>';
+            return;
+        }
+        const home = records.team.home || {};
+        const away = records.team.away || {};
+        const playerRows = [...(records.players?.away || []), ...(records.players?.home || [])];
+        target.innerHTML = `
+            <table class="record-table">
+                <thead><tr><th>팀</th><th>득점</th><th>슈팅</th><th>유효슈팅</th><th>코너킥</th><th>파울</th><th>오프사이드</th><th>경고</th><th>퇴장</th><th>세이브</th></tr></thead>
+                <tbody>${teamRecordRow(away)}${teamRecordRow(home)}</tbody>
+            </table>
+            <table class="record-table" style="margin-top:14px">
+                <thead><tr><th>선수</th><th>포지션</th><th>출전시간</th><th>득점</th><th>도움</th><th>슈팅</th><th>유효슈팅</th><th>파울</th><th>오프사이드</th><th>경고</th><th>퇴장</th><th>세이브</th></tr></thead>
+                <tbody>${playerRows.length ? playerRows.map(playerRecordRow).join('') : '<tr><td colspan="12">선수 기록이 없습니다.</td></tr>'}</tbody>
+            </table>
+        `;
+    }
+
+    function teamRecordRow(row) {
+        return `<tr>
+            <td>${escapeHtml(row.teamName || row.name || '-')}</td>
+            <td>${escapeHtml(row.goals ?? row.score ?? 0)}</td>
+            <td>${escapeHtml(row.shots ?? 0)}</td>
+            <td>${escapeHtml(row.shotsOnTarget ?? 0)}</td>
+            <td>${escapeHtml(row.cornerKicks ?? row.corners ?? 0)}</td>
+            <td>${escapeHtml(row.fouls ?? 0)}</td>
+            <td>${escapeHtml(row.offsides ?? 0)}</td>
+            <td>${escapeHtml(row.yellowCards ?? 0)}</td>
+            <td>${escapeHtml(row.redCards ?? 0)}</td>
+            <td>${escapeHtml(row.saves ?? 0)}</td>
+        </tr>`;
+    }
+
+    function playerRecordRow(row) {
+        return `<tr>
+            <td>${escapeHtml(row.playerName || row.name || '-')}</td>
+            <td>${escapeHtml(row.position || '-')}</td>
+            <td>${escapeHtml(row.minutesPlayed ?? row.playTime ?? '-')}</td>
+            <td>${escapeHtml(row.goals ?? 0)}</td>
+            <td>${escapeHtml(row.assists ?? 0)}</td>
+            <td>${escapeHtml(row.shots ?? 0)}</td>
+            <td>${escapeHtml(row.shotsOnTarget ?? 0)}</td>
+            <td>${escapeHtml(row.fouls ?? 0)}</td>
+            <td>${escapeHtml(row.offsides ?? 0)}</td>
+            <td>${escapeHtml(row.yellowCards ?? 0)}</td>
+            <td>${escapeHtml(row.redCards ?? 0)}</td>
+            <td>${escapeHtml(row.saves ?? 0)}</td>
+        </tr>`;
+    }
+
+    function renderLineup(lineup, status, scoreboard) {
+        const content = $('#lineupContent');
+        if (!content) return;
+        content.innerHTML = `
+            <section class="pitch-card">
+                <div class="pitch">
+                    <div class="pitch-score"><b><span id="pitchAwayScore">${escapeHtml(scoreboard?.awayScore ?? 0)}</span> : <span id="pitchHomeScore">${escapeHtml(scoreboard?.homeScore ?? 0)}</span></b><span id="pitchClock">${escapeHtml(scoreboard?.currentMinute || '0')}' · ${escapeHtml(phaseLabel(scoreboard))}</span></div>
+                    <div class="lineup-grid"><div class="formation away" id="awayPitchLineup"></div><div class="formation" id="homePitchLineup"></div></div>
+                </div>
+            </section>
+            <div class="lineup-columns" id="lineup"></div>
+        `;
+        const list = $('#lineup');
+        if (!lineup) {
+            list.innerHTML = '<div class="empty-state" style="grid-column:1/-1">라인업 정보가 없습니다.</div>';
+            return;
+        }
+        list.innerHTML = [lineup.away, lineup.home].map(renderLineupTeam).join('');
+        renderPitchLineup('awayPitchLineup', lineup.away?.starters || []);
+        renderPitchLineup('homePitchLineup', lineup.home?.starters || []);
+    }
+
+    function renderLineupTeam(team) {
+        if (!team) return '<div class="empty-state">라인업 정보가 없습니다.</div>';
+        const rows = [...(team.starters || []), ...(team.bench || [])];
+        return `
+            <div class="lineup-team">
+                <h3>${escapeHtml(team.teamName)} · ${escapeHtml(team.formation || '-')}</h3>
+                <div class="lineup-list">
+                    ${rows.length ? rows.map(player => `
+                        <div class="lineup-item"><b>${player.starter ? '선발' : '후보'}</b><span>${escapeHtml(player.playerName || player.name || '-')}</span><em>${escapeHtml(player.position || '-')}</em></div>
+                    `).join('') : '<div class="empty-state">라인업 정보가 없습니다.</div>'}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPitchLineup(id, players) {
+        const target = document.getElementById(id);
+        if (!target) return;
+        const rows = [
+            players.filter(player => ['ST','FW','LW','RW'].includes(String(player.position || '').toUpperCase())),
+            players.filter(player => ['AM','CM','DM','LM','RM','MF'].includes(String(player.position || '').toUpperCase())),
+            players.filter(player => ['LB','CB','RB','LWB','RWB','DF'].includes(String(player.position || '').toUpperCase())),
+            players.filter(player => String(player.position || '').toUpperCase() === 'GK')
+        ];
+        target.innerHTML = rows.map(row => `<div class="player-row">${row.map(player => `<span class="kit">${escapeHtml(shortName(player.playerName || player.name))}</span>`).join('')}</div>`).join('');
+    }
+
+    function shortName(name) {
+        const value = String(name || '-').trim();
+        return value.length > 4 ? value.slice(0, 4) : value;
+    }
+
+    function renderPrediction(prediction, scoreboard, status) {
+        if (!prediction || !scoreboard) {
+            setText('predictionStatus', '-');
+            setText('predHomeName', scoreboard?.homeTeamName || '홈');
+            setText('predAwayName', scoreboard?.awayTeamName || '원정');
+            setText('predHomeMeta', '-');
+            setText('predAwayMeta', '-');
+            setText('predDrawMeta', '-');
+            setText('predictionNote', '예측 데이터가 없습니다.');
+            $('#predictionHomeBar').style.width = '0%';
+            $('#predictionDrawBar').style.width = '0%';
+            $('#predictionAwayBar').style.flex = '1';
+            return;
+        }
+        const home = Math.max(0, Math.min(100, Number(prediction.homePercent || 0)));
+        const away = Math.max(0, Math.min(100, Number(prediction.awayPercent || 0)));
+        const draw = Math.max(0, Math.min(100, Number(prediction.drawPercent || 0)));
+        const totalVoteCount = Number(prediction.totalVoteCount || 0);
+        const closed = prediction.closed || normalizeStatus(status) !== 'scheduled';
+        setText('predictionStatus', closed ? '투표 마감' : '투표 진행');
+        setText('predHomeName', prediction.homeTeamName || scoreboard.homeTeamName || '홈');
+        setText('predAwayName', prediction.awayTeamName || scoreboard.awayTeamName || '원정');
+        setText('predHomeMeta', `${home}% · ${prediction.homeVoteCount || 0}표`);
+        setText('predAwayMeta', `${away}% · ${prediction.awayVoteCount || 0}표`);
+        setText('predDrawMeta', `${draw}% · ${prediction.drawVoteCount || 0}표`);
+        setText('predictionNote', closed ? `투표 마감 · ${totalVoteCount}명 참여` : `${totalVoteCount}명 참여 · 경기 시작 전까지 변경 가능`);
+        $('#predictionHomeBar').style.width = `${home}%`;
+        $('#predictionDrawBar').style.width = `${draw}%`;
+        $('#predictionAwayBar').style.flex = Math.max(0, away);
+        $$('[data-prediction-choice]').forEach(button => button.classList.toggle('disabled', closed));
+    }
+
+    async function submitPrediction(predictedResult) {
+        if (!liveData?.prediction || liveData.prediction.closed || normalizeStatus(liveData.status) !== 'scheduled') return;
+        const matchId = getMatchIdFromPath();
+        if (!matchId) return;
+        if (!localStorage.getItem('accessToken')) {
+            location.href = '/login';
+            return;
+        }
+        const response = await (window.authFetch || fetch)('/api/predictions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matchId: Number(matchId), sportCode: 'soccer', predictedResult })
+        });
+        if (!response.ok) {
+            alert('승부예측 등록에 실패했습니다.');
+            return;
+        }
+        await loadSoccerLive({ silent: true });
+    }
+
+    function renderChatTeams(data) {
+        const picker = $('#chatTeamPicker');
+        const scoreboard = data?.scoreboard || {};
+        if (!picker) return;
+        const teams = [
+            { teamId: scoreboard.homeTeamId, name: scoreboard.homeTeamName, emblemUrl: scoreboard.homeTeamEmblem },
+            { teamId: scoreboard.awayTeamId, name: scoreboard.awayTeamName, emblemUrl: scoreboard.awayTeamEmblem }
+        ].filter(team => team.teamId || team.name);
+        if (!selectedSupportTeamId && teams[0]?.teamId) selectedSupportTeamId = teams[0].teamId;
+        picker.innerHTML = teams.map(team => {
+            const checked = sameId(team.teamId, selectedSupportTeamId);
+            const emblem = emblemFor(team.name, team.emblemUrl)
+                ? `<img src="${escapeHtml(emblemFor(team.name, team.emblemUrl))}" alt="${escapeHtml(team.name)}">`
+                : `<span class="chat-team-fallback">${escapeHtml(String(team.name || '-').slice(0, 1))}</span>`;
+            return `<div class="chat-team-cell"><label class="chat-team-action ${checked ? 'selected' : ''}"><input type="radio" name="supportTeam" value="${escapeHtml(team.teamId || '')}" ${checked ? 'checked' : ''}>${emblem}<span class="chat-team-name">${escapeHtml(team.name || '-')}</span></label></div>`;
+        }).join('');
+    }
+
+    async function loadMatchComments() {
+        const matchId = getMatchIdFromPath();
+        if (!matchId) return;
+        try {
+            const comments = await fetchJson(`/api/games/${encodeURIComponent(matchId)}/comments`);
+            renderComments(comments);
+        } catch (error) {
+            console.warn('댓글 조회 실패', error);
+        }
+    }
+
+    function renderComments(comments) {
+        const list = $('#chatList');
+        const count = $('#chatCount');
+        if (!list || !count) return;
+        const rows = Array.isArray(comments) ? comments : [];
+        loadedCommentIds = new Set(rows.map(comment => String(comment.commentId)).filter(Boolean));
+        count.textContent = rows.length;
+        if (!rows.length) {
+            list.innerHTML = `<div class="chat-empty"><div class="chat-empty-icon">...</div><div>등록된 메시지가 없습니다.<br>첫번째 메시지를 남겨주세요.</div></div>`;
+            return;
+        }
+        list.innerHTML = rows.map(renderCommentItem).join('');
+    }
+
+    function renderCommentItem(comment) {
+        const emblem = comment.supportTeamEmblemUrl ? `<img class="chat-support-emblem" src="${escapeHtml(comment.supportTeamEmblemUrl)}" alt="${escapeHtml(comment.supportTeamName || '응원팀')}">` : '';
+        const isMine = sameId(comment.userId, localStorage.getItem('userId'));
+        const action = isMine
+            ? `<button type="button" class="chat-delete" data-delete-comment-id="${escapeHtml(comment.commentId || '')}">삭제</button>`
+            : `<button type="button" class="chat-report" data-report-comment-id="${escapeHtml(comment.commentId || '')}">신고</button>`;
+        return `<div class="chat-msg ${isMine ? 'mine' : ''}" data-comment-id="${escapeHtml(comment.commentId || '')}"><div class="chat-user"><span class="chat-user-main">${emblem}<b>${escapeHtml(comment.nickname || comment.userName || '-')}</b></span><span>${escapeHtml(formatCommentTime(comment.createdAt || comment.writtenAt))} ${action}</span></div><div class="chat-text">${escapeHtml(comment.content || comment.text || '')}</div></div>`;
+    }
+
+    function formatCommentTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        const diff = Date.now() - date.getTime();
+        const minute = 60000, hour = minute * 60, day = hour * 24, month = day * 30;
+        if (diff < minute) return '방금 전';
+        if (diff < hour) return `${Math.floor(diff / minute)}분 전`;
+        if (diff < day) return `${Math.floor(diff / hour)}시간 전`;
+        if (diff < month) return `${Math.floor(diff / day)}일 전`;
+        return `${Math.floor(diff / month)}개월 전`;
+    }
+
+    async function submitComment() {
+        const input = $('#chatInput');
+        const matchId = getMatchIdFromPath();
+        const content = input?.value?.trim();
+        if (!input || !matchId || !content) return;
+        if (!localStorage.getItem('accessToken')) {
+            alert('로그인 후 이용해 주시기 바랍니다.');
+            location.href = '/login';
+            return;
+        }
+        const response = await (window.authFetch || fetch)(`/api/games/${encodeURIComponent(matchId)}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, supportTeamId: selectedSupportTeamId ? Number(selectedSupportTeamId) : null })
+        });
+        if (!response.ok) {
+            alert('댓글 등록에 실패했습니다.');
+            return;
+        }
+        input.value = '';
+        await loadMatchComments();
+    }
+
+    async function reportMatchComment(commentId) {
+        if (!commentId) return;
+        if (!localStorage.getItem('accessToken')) {
+            alert('로그인 후 이용해 주시기 바랍니다.');
+            location.href = '/login';
+            return;
+        }
+        if (!confirm('이 댓글을 신고하시겠습니까?')) return;
+        const matchId = getMatchIdFromPath();
+        const response = await (window.authFetch || fetch)(`/api/games/${encodeURIComponent(matchId)}/comments/${encodeURIComponent(commentId)}/reports`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'USER_REPORT' })
+        });
+        alert(response.ok ? '신고가 접수되었습니다.' : '신고 처리에 실패했습니다.');
+    }
+
+    async function deleteMatchComment(commentId) {
+        if (!commentId) return;
+        if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
+        const matchId = getMatchIdFromPath();
+        const response = await (window.authFetch || fetch)(`/api/games/${encodeURIComponent(matchId)}/comments/${encodeURIComponent(commentId)}`, { method: 'DELETE' });
+        if (!response.ok) alert('댓글 삭제에 실패했습니다.');
+        await loadMatchComments();
+    }
+
+    function prependComment(comment) {
+        if (!comment || !comment.commentId || loadedCommentIds.has(String(comment.commentId))) return;
+        const list = $('#chatList');
+        const count = $('#chatCount');
+        if (!list || !count) return;
+        loadedCommentIds.add(String(comment.commentId));
+        if (list.querySelector('.chat-empty')) list.innerHTML = '';
+        list.insertAdjacentHTML('afterbegin', renderCommentItem(comment));
+        count.textContent = String(Number(count.textContent || 0) + 1);
+    }
+
+    function removeComment(commentId) {
+        const target = document.querySelector(`[data-comment-id="${CSS.escape(String(commentId))}"]`);
+        if (target) target.remove();
+        loadedCommentIds.delete(String(commentId));
+        const count = $('#chatCount');
+        if (count) count.textContent = String(Math.max(0, Number(count.textContent || 0) - 1));
+        const list = $('#chatList');
+        if (list && !list.querySelector('.chat-msg')) {
+            list.innerHTML = `<div class="chat-empty"><div class="chat-empty-icon">...</div><div>등록된 메시지가 없습니다.<br>첫번째 메시지를 남겨주세요.</div></div>`;
+        }
+    }
+
+    function connectCommentSocket() {
+        const matchId = getMatchIdFromPath();
+        if (!matchId || typeof SockJS === 'undefined' || typeof Stomp === 'undefined') return;
+        if (commentStompClient?.connected) return;
+        const socket = new SockJS('/ws');
+        commentStompClient = Stomp.over(socket);
+        commentStompClient.debug = () => {};
+        commentStompClient.connect({}, () => {
+            if (commentSubscription) commentSubscription.unsubscribe();
+            commentSubscription = commentStompClient.subscribe(`/topic/games/${matchId}/comments`, message => {
+                const payload = JSON.parse(message.body);
+                if (payload.type === 'delete') {
+                    removeComment(payload.commentId);
+                    return;
+                }
+                prependComment(payload);
+            });
+        });
+    }
+
+    function updateAutoRefreshStatus(ok) {
+        const dot = $('#autoRefreshStatus');
+        if (!dot) return;
+        dot.classList.toggle('off', ok === false || !$('#autoRefreshToggle')?.checked);
+    }
+
+    function startAutoRefresh() {
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+        autoRefreshTimer = setInterval(() => {
+            if ($('#autoRefreshToggle')?.checked) loadSoccerLive({ silent: true }).catch(() => {});
+        }, AUTO_REFRESH_MS);
+    }
+
+    document.addEventListener('click', event => {
+        const tab = event.target.closest('.tab[data-tab]');
+        if (tab) {
+            $$('.tab').forEach(item => item.classList.toggle('active', item === tab));
+            $$('.tab-view').forEach(view => view.classList.toggle('hidden', view.id !== tab.dataset.tab));
+            return;
+        }
+        const vote = event.target.closest('[data-prediction-choice]');
+        if (vote) {
+            submitPrediction(vote.dataset.predictionChoice);
+            return;
+        }
+        const supportTeamInput = event.target.closest('input[name="supportTeam"]');
+        if (supportTeamInput) {
+            selectedSupportTeamId = supportTeamInput.value;
+            $$('.chat-team-action').forEach(label => label.classList.toggle('selected', label.contains(supportTeamInput)));
+            return;
+        }
+        const reportButton = event.target.closest('[data-report-comment-id]');
+        if (reportButton) {
+            reportMatchComment(reportButton.dataset.reportCommentId);
+            return;
+        }
+        const deleteButton = event.target.closest('[data-delete-comment-id]');
+        if (deleteButton) {
+            deleteMatchComment(deleteButton.dataset.deleteCommentId);
+        }
+    });
+
+    $('#refreshButton')?.addEventListener('click', () => loadSoccerLive().catch(() => {}));
+    $('#autoRefreshToggle')?.addEventListener('change', () => updateAutoRefreshStatus(true));
+    $('#chatForm')?.addEventListener('submit', event => { event.preventDefault(); submitComment(); });
+    $('#chatToggle')?.addEventListener('click', () => {
+        const chat = document.querySelector('.chat');
+        const toggle = $('#chatToggle');
+        if (!chat || !toggle) return;
+        const collapsed = chat.classList.toggle('collapsed');
+        toggle.textContent = collapsed ? '⌄' : '⌃';
+        toggle.setAttribute('aria-label', collapsed ? '응원톡 펼치기' : '응원톡 접기');
+        toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatInput = $('#chatInput');
+        if (chatInput && !localStorage.getItem('accessToken')) {
+            chatInput.placeholder = '댓글을 작성하려면 로그인 해주세요';
+            chatInput.addEventListener('focus', () => {
+                alert('로그인 후 이용해 주시기 바랍니다.');
+                location.href = '/login';
+            }, { once: true });
+        }
+        loadSoccerLive().catch(error => renderLoadError(error.message || '축구 중계 로딩 실패'));
+        connectCommentSocket();
+        startAutoRefresh();
+        updateAutoRefreshStatus(true);
+    });
+</script>
+<script src="/gnb.js"></script>
+</body>
+</html>

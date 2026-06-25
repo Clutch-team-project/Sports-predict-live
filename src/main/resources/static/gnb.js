@@ -81,7 +81,7 @@
         lolSchedule:       '/lol/schedule',
         // 경기 중계 (다른 팀원 담당)
         baseballLive: '/baseball/live-match',
-        soccerLive:   '/soccer-live-match',
+        soccerLive:   '/soccer/live-match',
         // 팀/선수 상세 (다른 팀원 담당)
         playerProfile: '/player-profile',
         playerStat:    '/player-stats',

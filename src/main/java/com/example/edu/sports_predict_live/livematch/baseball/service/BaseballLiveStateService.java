@@ -440,10 +440,16 @@ public class BaseballLiveStateService {
             case "intentional_walk" -> "\uACE0\uC7584\uAD6C";
             case "hit_by_pitch" -> "\uC0AC\uAD6C";
             case "groundout", "flyout", "lineout", "popout", "double_play", "triple_play", "sac_bunt", "sac_fly" -> "\uC544\uC6C3";
-            case "stolen_base" -> "\uB3C4\uB8E8";
-            case "caught_stealing" -> "\uB3C4\uB8E8 \uC2E4\uD328";
-            case "runner_advance" -> "\uC8FC\uC790 \uC9C4\uB8E8";
-            case "score" -> "\uB4DD\uC810";
+            case "stolen_base" -> "도루 성공";
+            case "caught_stealing" -> "도루 실패";
+            case "runner_advance", "runner_advance_2b", "runner_advance_3b" -> "주자 진루";
+            case "score" -> "득점";
+            case "runner_out" -> "주자 아웃";
+            case "force_out" -> "포스 아웃";
+            case "pickoff_out" -> "견제 아웃";
+            case "wild_pitch" -> "폭투";
+            case "passed_ball" -> "포일";
+            case "balk" -> "보크";
             case "pitcher_change" -> "\uD22C\uC218 \uAD50\uCCB4";
             case "inning_end" -> "\uC774\uB2DD \uC885\uB8CC";
             default -> STRIKEOUT_TYPES.contains(type) ? "\uC0BC\uC9C4" : type;
@@ -480,6 +486,8 @@ public class BaseballLiveStateService {
         private BaseballLiveDTO.BaseRunner first;
         private BaseballLiveDTO.BaseRunner second;
         private BaseballLiveDTO.BaseRunner third;
+        private BaseballLiveDTO.BaseRunner pendingBatterRunner;
+        private int pendingBatterTargetBase;
         private AtBatBuilder currentAtBat;
         private Long lastBatterId;
         private BaseballLiveDTO.PitcherGameStat currentPitcherStat;
@@ -582,47 +590,128 @@ public class BaseballLiveStateService {
         private void applyBases(MatchEvent event, String type, Map<Long, Player> playerById) {
             if ("score".equals(type)) {
                 removeRunner(event.getPlayerId());
+                placePendingBatterIfPossible();
                 return;
             }
             if ("stolen_base".equals(type) || "runner_advance".equals(type)) {
                 advanceExistingRunner(event.getPlayerId(), 1);
+                placePendingBatterIfPossible();
+                return;
+            }
+            if ("runner_advance_2b".equals(type)) {
+                moveExistingRunnerTo(event.getPlayerId(), 2);
+                placePendingBatterIfPossible();
+                return;
+            }
+            if ("runner_advance_3b".equals(type)) {
+                moveExistingRunnerTo(event.getPlayerId(), 3);
+                placePendingBatterIfPossible();
                 return;
             }
             if ("caught_stealing".equals(type) || "pickoff_out".equals(type) || "force_out".equals(type) || "runner_out".equals(type)) {
                 removeRunner(event.getPlayerId());
+                placePendingBatterIfPossible();
                 return;
             }
             if (event.getPlayerId() == null) return;
             BaseballLiveDTO.BaseRunner batter = new BaseballLiveDTO.BaseRunner(event.getPlayerId(), playerName(playerById.get(event.getPlayerId()), event.getPlayerId()));
             switch (type) {
-                case "walk", "intentional_walk", "hit_by_pitch", "single", "field_error", "fielder_choice", "dropped_third_strike_safe" -> first = batter;
-                case "double" -> second = batter;
-                case "triple" -> third = batter;
-                case "homerun" -> removeRunner(event.getPlayerId());
+                case "walk", "intentional_walk", "hit_by_pitch", "single", "field_error", "fielder_choice", "dropped_third_strike_safe" -> placeBatterOrHold(batter, 1);
+                case "double" -> placeBatterOrHold(batter, 2);
+                case "triple" -> placeBatterOrHold(batter, 3);
+                case "homerun" -> {
+                    removeRunner(event.getPlayerId());
+                    clearPendingBatter();
+                }
                 default -> {
                 }
             }
         }
 
+        private void placeBatterOrHold(BaseballLiveDTO.BaseRunner batter, int targetBase) {
+            if (batter == null) return;
+            if (isBaseEmptyOrSameRunner(targetBase, batter.playerId())) {
+                putRunnerOnBase(targetBase, batter);
+                if (pendingBatterRunner != null && Objects.equals(pendingBatterRunner.playerId(), batter.playerId())) {
+                    clearPendingBatter();
+                }
+                return;
+            }
+            pendingBatterRunner = batter;
+            pendingBatterTargetBase = targetBase;
+        }
+
+        private void placePendingBatterIfPossible() {
+            if (pendingBatterRunner == null || pendingBatterTargetBase <= 0) return;
+            if (isBaseEmptyOrSameRunner(pendingBatterTargetBase, pendingBatterRunner.playerId())) {
+                putRunnerOnBase(pendingBatterTargetBase, pendingBatterRunner);
+                clearPendingBatter();
+            }
+        }
+
+        private void clearPendingBatter() {
+            pendingBatterRunner = null;
+            pendingBatterTargetBase = 0;
+        }
+
+        private boolean isBaseEmptyOrSameRunner(int base, Long playerId) {
+            BaseballLiveDTO.BaseRunner current = runnerOnBase(base);
+            return current == null || Objects.equals(current.playerId(), playerId);
+        }
+
+        private BaseballLiveDTO.BaseRunner runnerOnBase(int base) {
+            return switch (base) {
+                case 1 -> first;
+                case 2 -> second;
+                case 3 -> third;
+                default -> null;
+            };
+        }
+
+        private void putRunnerOnBase(int base, BaseballLiveDTO.BaseRunner runner) {
+            if (base == 1) first = runner;
+            if (base == 2) second = runner;
+            if (base == 3) third = runner;
+        }
+
         private void advanceExistingRunner(Long playerId, int bases) {
             if (playerId == null) return;
+            BaseballLiveDTO.BaseRunner runner = removeAndReturnRunner(playerId);
+            int fromBase = removedRunnerBase;
+            if (runner == null) return;
+            int targetBase = fromBase + Math.max(1, bases);
+            if (targetBase == 2) {
+                second = runner;
+            } else if (targetBase == 3) {
+                third = runner;
+            }
+        }
+
+        private int removedRunnerBase = 0;
+
+        private BaseballLiveDTO.BaseRunner removeAndReturnRunner(Long playerId) {
+            removedRunnerBase = 0;
             BaseballLiveDTO.BaseRunner runner = null;
-            int fromBase = 0;
             if (first != null && Objects.equals(first.playerId(), playerId)) {
                 runner = first;
                 first = null;
-                fromBase = 1;
+                removedRunnerBase = 1;
             } else if (second != null && Objects.equals(second.playerId(), playerId)) {
                 runner = second;
                 second = null;
-                fromBase = 2;
+                removedRunnerBase = 2;
             } else if (third != null && Objects.equals(third.playerId(), playerId)) {
                 runner = third;
                 third = null;
-                fromBase = 3;
+                removedRunnerBase = 3;
             }
+            return runner;
+        }
+
+        private void moveExistingRunnerTo(Long playerId, int targetBase) {
+            if (playerId == null) return;
+            BaseballLiveDTO.BaseRunner runner = removeAndReturnRunner(playerId);
             if (runner == null) return;
-            int targetBase = fromBase + Math.max(1, bases);
             if (targetBase == 2) {
                 second = runner;
             } else if (targetBase == 3) {
@@ -641,6 +730,7 @@ public class BaseballLiveStateService {
             first = null;
             second = null;
             third = null;
+            clearPendingBatter();
         }
 
         private BaseballLiveDTO.BaseState baseState() {
