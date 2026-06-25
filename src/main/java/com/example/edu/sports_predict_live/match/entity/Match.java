@@ -82,4 +82,13 @@ public class Match {
     private void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void updateStatus(String status) {
+        this.status = status;
+    }
+
+    public void updateScore(int homeScore, int awayScore) {
+        this.homeScore = homeScore;
+        this.awayScore = awayScore;
+    }
 }

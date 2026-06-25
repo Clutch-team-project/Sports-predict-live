@@ -80,8 +80,8 @@
         soccerSchedule:    '/soccer/schedule',
         lolSchedule:       '/lol/schedule',
         // 경기 중계 (다른 팀원 담당)
-        baseballLive: '/baseball-live-match',
-        soccerLive:   '/soccer-live-match',
+        baseballLive: '/baseball/live-match',
+        soccerLive:   '/soccer/live-match',
         // 팀/선수 상세 (다른 팀원 담당)
         playerProfile: '/player-profile',
         playerStat:    '/player-stats',
@@ -192,6 +192,25 @@
         var isBaseball = location.pathname.indexOf('/baseball') === 0;
         var isLol      = location.pathname.indexOf('/lol') === 0;
 
+
+        function flDecodeJwtPayload(token) {
+            try {
+                var payload = token.split('.')[1];
+                if (!payload) return {};
+                var base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+                var json = decodeURIComponent(atob(base64).split('').map(function (ch) {
+                    return '%' + ('00' + ch.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(json);
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function flIsAdminUser() {
+            var role = localStorage.getItem('role') || localStorage.getItem('userRole') || flDecodeJwtPayload(localStorage.getItem('accessToken') || '').role;
+            return role === 'ADMIN' || role === 'ROLE_ADMIN';
+        }
         var shell = document.createElement('div');
         shell.id = 'flTopbar';
         shell.className = 'fl-shell';
@@ -215,6 +234,7 @@
                             ? loginId.substring(0, 3) + '*'.repeat(loginId.length - 3)
                             : loginId);
                     return '<span class="fl-greeting">' + display + '님</span>' +
+                        (flIsAdminUser() ? '<span id="fl-admin" class="fl-mypage" data-fl-go="/admin/control">관리자</span>' : '') +
                         '<span id="fl-nickname" class="fl-mypage" data-fl-go="' + files.userInfo + '">마이페이지</span>' +
                         '<span id="fl-logout" style="cursor:pointer;color:#ef4444;">로그아웃</span>';
                 })()

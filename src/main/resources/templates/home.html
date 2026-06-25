@@ -577,6 +577,29 @@ public BoardResponseDto(Board board) {
     // ===== 오늘의 경기 동적 로드 + 관심 팀 경기 상단 표시 =====
     const BASE_URL = window.location.origin;
 
+    // 홈 화면 오늘의 경기 카드 클릭 시 경기 상세/중계 화면으로 이동
+    function goMatchDetail(matchId, sport, status) {
+        if (!matchId) return;
+
+        if (sport === 'baseball') {
+            location.href = `/baseball/live-match?matchId=${encodeURIComponent(matchId)}`;
+            return;
+        }
+
+        // 축구/LOL 중계 화면이 완성되면 각 종목 live-match URL로 교체
+        if (sport === 'soccer') {
+            location.href = '/soccer/schedule';
+            return;
+        }
+
+        if (sport === 'lol') {
+            location.href = '/lol/schedule';
+            return;
+        }
+
+        location.href = '/schedule';
+    }
+
     // 스포츠 이모지 매핑
     const SPORT_EMOJI = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
 
@@ -584,7 +607,9 @@ public BoardResponseDto(Board board) {
     function matchCard(match, isFavorite) {
         const LEAGUE_LABEL = { baseball: 'KBO', soccer: 'K리그', lol: 'LCK' };
         const emoji = SPORT_EMOJI[match.sport] || '';
-        const isLive     = match.status === 'in_progress';
+
+        // 진행중 상태는 in_progress와 live를 모두 허용
+        const isLive = match.status === 'in_progress' || match.status === 'live';
         const isFinished = match.status === 'finished';
         const isCancelled = match.status === 'cancelled';
 
@@ -634,7 +659,7 @@ public BoardResponseDto(Board board) {
                     return `<div class="text-[0.625rem] text-blue-500 font-bold mt-0.5">승 ${match.winningPitcher}</div>`;
                 if (!teamWon && match.losingPitcher)
                     return `<div class="text-[0.625rem] text-red-400 font-bold mt-0.5">패 ${match.losingPitcher}</div>`;
-            } else if (match.status === 'scheduled' || match.status === 'in_progress') {
+            } else if (match.status === 'scheduled' || match.status === 'in_progress' || match.status === 'live') {
                 const name = isAway ? match.startingPitcherAway : match.startingPitcherHome;
                 if (name) return `<div class="text-[0.625rem] text-gray-500 mt-0.5">선 ${name}</div>`;
             }
@@ -646,7 +671,8 @@ public BoardResponseDto(Board board) {
             : '';
 
         return `
-        <div class="relative border ${borderClass} rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
+        <div onclick="goMatchDetail(${match.matchId}, '${match.sport}', '${match.status}')"
+            class="relative border ${borderClass} rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all">
             ${favoriteBar}
             <div class="flex items-center px-4 py-3 gap-2">
                 <!-- 종목·시간 -->
@@ -696,7 +722,7 @@ public BoardResponseDto(Board board) {
 
     // 상태 정렬 우선순위
     function statusOrder(status) {
-        if (status === 'in_progress') return 0;
+        if (status === 'in_progress' || status === 'live') return 0;
         if (status === 'scheduled') return 1;
         if (status === 'finished') return 2;
         return 3;

@@ -6,6 +6,7 @@ import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import com.example.edu.sports_predict_live.prediction.dto.request.PredictionRequestDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.PredictionResponseDTO;
+import com.example.edu.sports_predict_live.prediction.dto.response.PredictionSummaryDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.PredictionStatsDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.RankingResponseDTO;
 import com.example.edu.sports_predict_live.prediction.entity.Prediction;
@@ -19,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Optional;
 
 @Service
@@ -92,6 +92,31 @@ public class PredictionService {
     }
 
     @Transactional(readOnly = true)
+    public PredictionSummaryDTO getMatchSummary(Long matchId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MATCH_NOT_FOUND));
+
+        long homeCount = predictionRepository.countByMatch_MatchIdAndPredictedResult(matchId, "HOME_WIN");
+        long awayCount = predictionRepository.countByMatch_MatchIdAndPredictedResult(matchId, "AWAY_WIN");
+        long drawCount = predictionRepository.countByMatch_MatchIdAndPredictedResult(matchId, "DRAW");
+        long totalCount = predictionRepository.countByMatch_MatchId(matchId);
+
+        return new PredictionSummaryDTO(
+                matchId,
+                match.getHomeTeam().getName(),
+                match.getAwayTeam().getName(),
+                homeCount,
+                awayCount,
+                drawCount,
+                totalCount,
+                percent(homeCount, totalCount),
+                percent(awayCount, totalCount),
+                percent(drawCount, totalCount),
+                !"scheduled".equals(match.getStatus()) || match.getScheduledAt().isBefore(LocalDateTime.now())
+        );
+    }
+
+    @Transactional(readOnly = true)
     public Optional<PredictionResponseDTO> getMyLolPrediction(Long userId, String lolMatchId) {
         return predictionRepository.findByUser_UserIdAndLolMatchId(userId, lolMatchId)
                 .map(PredictionResponseDTO::new);
@@ -159,6 +184,11 @@ public class PredictionService {
         if (homeScore > awayScore) return "HOME_WIN";
         if (homeScore < awayScore) return "AWAY_WIN";
         return "DRAW"; // 야구/축구 무승부
+    }
+
+    private int percent(long count, long total) {
+        if (total <= 0) return 0;
+        return (int) Math.round((count * 100.0) / total);
     }
 
     private void validateResult(String sportCode, String result) {

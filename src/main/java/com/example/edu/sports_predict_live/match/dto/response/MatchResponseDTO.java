@@ -21,6 +21,7 @@ public class MatchResponseDTO {
     private final String scheduledAt; // "HH:mm"
     private final String venue;
     private final String date;           // "YYYY-MM-DD"
+    private final String currentPeriod;  // baseball live period for schedule card
     private final String winningPitcher;      // 승리 투수 (야구, finished)
     private final String losingPitcher;       // 패배 투수 (야구, finished)
     private final String currentPitcher;      // 현재 투수 (야구, in_progress)
@@ -44,6 +45,51 @@ public class MatchResponseDTO {
         this.scheduledAt     = match.getScheduledAt().format(TIME_FMT);
         this.venue           = match.getVenue();
         this.date            = match.getScheduledAt().format(DATE_FMT);
+        this.currentPeriod   = null;
+        this.winningPitcher      = match.getWinningPitcher();
+        this.losingPitcher       = match.getLosingPitcher();
+        this.currentPitcher      = match.getCurrentPitcher();
+        this.startingPitcherAway = match.getStartingPitcherAway();
+        this.startingPitcherHome = match.getStartingPitcherHome();
+    }
+
+    public MatchResponseDTO(Match match, int homeScore, int awayScore, String status) {
+        this.matchId         = match.getMatchId();
+        this.homeTeamId      = match.getHomeTeam().getTeamId();
+        this.awayTeamId      = match.getAwayTeam().getTeamId();
+        this.homeTeamName    = match.getHomeTeam().getName();
+        this.awayTeamName    = match.getAwayTeam().getName();
+        this.homeTeamEmblem  = match.getHomeTeam().getEmblemUrl();
+        this.awayTeamEmblem  = match.getAwayTeam().getEmblemUrl();
+        this.homeScore       = homeScore;
+        this.awayScore       = awayScore;
+        this.status          = status;
+        this.scheduledAt     = match.getScheduledAt().format(TIME_FMT);
+        this.venue           = match.getVenue();
+        this.date            = match.getScheduledAt().format(DATE_FMT);
+        this.currentPeriod   = null;
+        this.winningPitcher      = match.getWinningPitcher();
+        this.losingPitcher       = match.getLosingPitcher();
+        this.currentPitcher      = match.getCurrentPitcher();
+        this.startingPitcherAway = match.getStartingPitcherAway();
+        this.startingPitcherHome = match.getStartingPitcherHome();
+    }
+
+    public MatchResponseDTO(Match match, int homeScore, int awayScore, String status, String currentPeriod) {
+        this.matchId         = match.getMatchId();
+        this.homeTeamId      = match.getHomeTeam().getTeamId();
+        this.awayTeamId      = match.getAwayTeam().getTeamId();
+        this.homeTeamName    = match.getHomeTeam().getName();
+        this.awayTeamName    = match.getAwayTeam().getName();
+        this.homeTeamEmblem  = match.getHomeTeam().getEmblemUrl();
+        this.awayTeamEmblem  = match.getAwayTeam().getEmblemUrl();
+        this.homeScore       = homeScore;
+        this.awayScore       = awayScore;
+        this.status          = status;
+        this.scheduledAt     = match.getScheduledAt().format(TIME_FMT);
+        this.venue           = match.getVenue();
+        this.date            = match.getScheduledAt().format(DATE_FMT);
+        this.currentPeriod   = currentPeriod;
         this.winningPitcher      = match.getWinningPitcher();
         this.losingPitcher       = match.getLosingPitcher();
         this.currentPitcher      = match.getCurrentPitcher();
