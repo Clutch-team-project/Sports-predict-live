@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Log4j2
 @RequiredArgsConstructor
 @Transactional
-public class BoardServiceImpl implements BoardService{
+public class BoardServiceImpl implements BoardService {
     private final ModelMapper modelMapper;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
@@ -46,7 +46,7 @@ public class BoardServiceImpl implements BoardService{
 
     // 게시글 작성
     public Long register(BoardDTO boardDTO, String currentUserRole) {
-        if("공지".equals(boardDTO.getCategory()) && !currentUserRole.equals("ROLE_ADMIN")) {
+        if ("공지".equals(boardDTO.getCategory()) && !currentUserRole.equals("ROLE_ADMIN")) {
             throw new AccessDeniedException("공지사항은 관리자만 작성할 수 있습니다.");
         }
 
@@ -73,14 +73,14 @@ public class BoardServiceImpl implements BoardService{
 
     // 게시글 상세 확인(조회수 증가)
     @Override
-    public BoardDTO readOne(Long boardId){
+    public BoardDTO readOne(Long boardId) {
         Optional<Board> result = boardRepository.findByIdWithImages(boardId);
         Board board = result.orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. id=" + boardId));
         board.changeViewCount(board.getViewCount() + 1);
         BoardDTO boardDTO = entityToDTO(board);
 
         Optional<User> userOptional = userRepository.findById(board.getUserId());
-        if(userOptional.isPresent()) {
+        if (userOptional.isPresent()) {
             User user = userOptional.get();
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
@@ -97,7 +97,7 @@ public class BoardServiceImpl implements BoardService{
         BoardDTO boardDTO = entityToDTO(board);
 
         Optional<User> userOptional = userRepository.findById(board.getUserId());
-        if(userOptional.isPresent()) {
+        if (userOptional.isPresent()) {
             User user = userOptional.get();
             boardDTO.setLoginId(user.getLoginId());
             boardDTO.setNickname(user.getNickname());
@@ -117,10 +117,10 @@ public class BoardServiceImpl implements BoardService{
 
         board.clearImage();
 
-        if(boardDTO.getFileNames() != null) {
-            for(String fileName : boardDTO.getFileNames()) {
+        if (boardDTO.getFileNames() != null) {
+            for (String fileName : boardDTO.getFileNames()) {
                 String[] arr = fileName.split("_", 2);
-                if(arr.length == 2) {
+                if (arr.length == 2) {
                     board.addImage(arr[0], arr[1]);
                 } else {
                     board.addImage(java.util.UUID.randomUUID().toString(), fileName);
@@ -136,14 +136,14 @@ public class BoardServiceImpl implements BoardService{
     @Override
     public void remove(Long boardId, Long currentUserId, String currentUserRole) {
         Board board = boardRepository.findById(boardId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
-        if(board.getDeletedAt() != null) {
+        if (board.getDeletedAt() != null) {
             throw new IllegalStateException("이미 삭제된 게시글입니다.");
         }
 
         boolean isOwner = board.getUserId().equals(currentUserId);
         boolean isAdmin = "ROLE_ADMIN".equals(currentUserRole);
 
-        if(!isOwner && !isAdmin) {
+        if (!isOwner && !isAdmin) {
             throw new AccessDeniedException("삭제 권한이 없습니다.");
         }
 
@@ -161,7 +161,7 @@ public class BoardServiceImpl implements BoardService{
         String boardType = pageRequestDTO.getBoardType();
 
         Pageable pageable = pageRequestDTO.getPageable("boardId");
-        
+
         Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, category, sort, pageable, boardType);
         List<BoardListAllDTO> dtoList = new ArrayList<>(result.getContent());
 
@@ -195,7 +195,7 @@ public class BoardServiceImpl implements BoardService{
             throw new IllegalStateException("삭제된 게시글에는 좋아요를 누를 수 없습니다.");
         }
         Optional<BoardLike> boardLikeOp = boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId);
-        if(boardLikeOp.isPresent()) {
+        if (boardLikeOp.isPresent()) {
             boardLikeRepository.delete(boardLikeOp.get());
             board.changeLikeCount(board.getLikeCount() - 1);
         } else {
@@ -209,14 +209,16 @@ public class BoardServiceImpl implements BoardService{
         boardRepository.save(board);
         boardRepository.flush();
     }
+
     // 게시글 좋아요 여부 확인
     @Override
     public boolean checkIsLiked(Long boardId, Long userId) {
-        if(userId == null){
+        if (userId == null) {
             return false;
         }
         return boardLikeRepository.findByBoard_BoardIdAndUserId(boardId, userId).isPresent();
     }
+
     // 게시글 신고
     @Override
     @Transactional
@@ -229,7 +231,7 @@ public class BoardServiceImpl implements BoardService{
         if (board.getUserId().equals(userId)) {
             throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
         }
-        if(board.isNotice()) {
+        if (board.isNotice()) {
             throw new IllegalStateException("공지글은 신고할 수 없스니다.");
         }
 
@@ -248,7 +250,7 @@ public class BoardServiceImpl implements BoardService{
     // 게시글 신고 여부 확인
     @Override
     public boolean checkIsReported(Long boardId, Long userId) {
-        if(userId == null) return false;
+        if (userId == null) return false;
         Board board = Board.builder()
                 .boardId(boardId)
                 .build();
@@ -296,7 +298,7 @@ public class BoardServiceImpl implements BoardService{
                     return dto;
                 })
                 .collect(Collectors.toList());
-        }
+    }
 
     // 업로드된 이미지 파일 저장 및 게시글에 등록
     private void saveUploadedFiles(Board board, List<org.springframework.web.multipart.MultipartFile> files) {
@@ -304,7 +306,7 @@ public class BoardServiceImpl implements BoardService{
             return;
         }
 
-//        String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
+        // String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
         String absolutePath = java.nio.file.Paths.get(uploadPath, "board").toAbsolutePath().toString();
 
         java.io.File uploadDir = new java.io.File(absolutePath);
