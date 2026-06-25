@@ -304,7 +304,9 @@ public class BoardServiceImpl implements BoardService{
             return;
         }
 
-        String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
+//        String absolutePath = java.nio.file.Paths.get(uploadPath).toAbsolutePath().toString();
+        String absolutePath = java.nio.file.Paths.get(uploadPath, "board").toAbsolutePath().toString();
+
         java.io.File uploadDir = new java.io.File(absolutePath);
         if (!uploadDir.exists()) {
             uploadDir.mkdirs();

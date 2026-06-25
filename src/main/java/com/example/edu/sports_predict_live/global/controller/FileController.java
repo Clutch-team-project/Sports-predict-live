@@ -30,10 +30,22 @@ public class FileController {
 
         Resource resource = new FileSystemResource(fullPath);
 
-        if (!resource.exists()) {
-            log.warn("요청한 파일이 로컬 디스크에 존재하지 않습니다: {}", fullPath);
-            return ResponseEntity.notFound().build();
+        if(!resource.exists()) {
+            String boardFullPath = basePath + "board" + File.separator + fileName;
+            Resource boardResource = new FileSystemResource(boardFullPath);
+
+            if(boardResource.exists()) {
+                resource = boardResource;
+            } else  {
+                log.warn("요청한 파일이 로컬 디스크에 존재하지 않습니다: {}", fullPath);
+                return ResponseEntity.notFound().build();
+            }
         }
+
+//        if (!resource.exists()) {
+//            log.warn("요청한 파일이 로컬 디스크에 존재하지 않습니다: {}", fullPath);
+//            return ResponseEntity.notFound().build();
+//        }
 
         HttpHeaders headers = new HttpHeaders();
         try {
