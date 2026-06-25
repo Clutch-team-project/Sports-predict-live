@@ -9,8 +9,6 @@ public enum SoccerAdminAction {
     OWN_GOAL,
     PENALTY_GOAL,
     PENALTY_MISS,
-    ASSIST,
-    PASS,
     SHOT,
     SHOT_ON_TARGET,
     CORNER_KICK,

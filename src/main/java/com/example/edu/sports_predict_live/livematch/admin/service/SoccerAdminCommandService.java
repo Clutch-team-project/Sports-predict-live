@@ -43,29 +43,27 @@ public class SoccerAdminCommandService {
             case START_MATCH -> {
                 match.updateStatus("live");
                 if (matchEventRepository.countByMatchId(matchId) == 0) {
-                    writer.add("first_half", null, null, "match_start", 0, text(command, "Kickoff"));
+                    writer.add("first_half", null, null, "match_start", 0, text(command, "경기가 시작되었습니다."));
                 }
             }
-            case END_FIRST_HALF -> writer.add("first_half", null, null, "first_half_end", minute(command, 45), text(command, "Half time"));
-            case START_SECOND_HALF -> writer.add("second_half", null, null, "second_half_start", minute(command, 46), text(command, "Second half starts"));
+            case END_FIRST_HALF -> writer.add("first_half", null, null, "first_half_end", minute(command, 45), text(command, "전반전이 종료되었습니다."));
+            case START_SECOND_HALF -> writer.add("second_half", null, null, "second_half_start", minute(command, 46), text(command, "후반전이 시작되었습니다."));
             case END_MATCH -> {
-                writer.add("second_half", null, null, "match_end", minute(command, 90), text(command, "Full time"));
+                writer.add("second_half", null, null, "match_end", minute(command, 90), text(command, "경기가 종료되었습니다."));
                 match.updateStatus("finished");
             }
-            case GOAL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "goal", command.normalizedMinute(), text(command, "Goal"));
-            case OWN_GOAL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "own_goal", command.normalizedMinute(), text(command, "Own goal"));
-            case PENALTY_GOAL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "penalty_goal", command.normalizedMinute(), text(command, "Penalty goal"));
-            case PENALTY_MISS -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "penalty_miss", command.normalizedMinute(), text(command, "Penalty missed"));
-            case ASSIST -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "assist", command.normalizedMinute(), text(command, "Assist"));
-            case PASS -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "pass", command.normalizedMinute(), text(command, "Pass"));
-            case SHOT -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "shot", command.normalizedMinute(), text(command, "Shot"));
-            case SHOT_ON_TARGET -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "shot_on_target", command.normalizedMinute(), text(command, "Shot on target"));
-            case CORNER_KICK -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "corner_kick", command.normalizedMinute(), text(command, "Corner kick"));
-            case FOUL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "foul", command.normalizedMinute(), text(command, "Foul"));
-            case YELLOW_CARD -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "yellow_card", command.normalizedMinute(), text(command, "Yellow card"));
-            case RED_CARD -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "red_card", command.normalizedMinute(), text(command, "Red card"));
-            case OFFSIDE -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "offside", command.normalizedMinute(), text(command, "Offside"));
-            case SAVE -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "save", command.normalizedMinute(), text(command, "Save"));
+            case GOAL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "goal", command.normalizedMinute(), text(command, "득점이 기록되었습니다."));
+            case OWN_GOAL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "own_goal", command.normalizedMinute(), text(command, "자책골이 기록되었습니다."));
+            case PENALTY_GOAL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "penalty_goal", command.normalizedMinute(), text(command, "페널티킥 득점이 기록되었습니다."));
+            case PENALTY_MISS -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "penalty_miss", command.normalizedMinute(), text(command, "페널티킥이 무산되었습니다."));
+            case SHOT -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "shot", command.normalizedMinute(), text(command, "슈팅을 시도했습니다."));
+            case SHOT_ON_TARGET -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "shot_on_target", command.normalizedMinute(), text(command, "유효슈팅이 기록되었습니다."));
+            case CORNER_KICK -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "corner_kick", command.normalizedMinute(), text(command, "코너킥을 얻었습니다."));
+            case FOUL -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "foul", command.normalizedMinute(), text(command, "파울이 선언되었습니다."));
+            case YELLOW_CARD -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "yellow_card", command.normalizedMinute(), text(command, "경고가 주어졌습니다."));
+            case RED_CARD -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "red_card", command.normalizedMinute(), text(command, "퇴장이 선언되었습니다."));
+            case OFFSIDE -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "offside", command.normalizedMinute(), text(command, "오프사이드가 선언되었습니다."));
+            case SAVE -> writer.add(command.normalizedPeriod(), command.teamId(), command.playerId(), "save", command.normalizedMinute(), text(command, "골키퍼 선방이 기록되었습니다."));
             case SUBSTITUTION -> writer.add(command.normalizedPeriod(), command.teamId(), command.inPlayerId(), "substitution", command.normalizedMinute(), substitutionText(command));
             default -> throw new IllegalArgumentException("unsupported action: " + command.action());
         }
@@ -109,12 +107,15 @@ public class SoccerAdminCommandService {
     }
 
     private String substitutionText(SoccerAdminCommandDTO command) {
-        if (command.description() != null && !command.description().isBlank()) return command.description().trim();
-        return "Substitution in=" + command.inPlayerId() + ", out=" + command.outPlayerId();
+        if (command.description() != null && !command.description().isBlank()) {
+            return command.description().trim();
+        }
+        return "선수 교체: in=" + command.inPlayerId() + ", out=" + command.outPlayerId();
     }
 
     private int minute(SoccerAdminCommandDTO command, int fallback) {
-        return command.minute() == null ? fallback : Math.max(0, command.minute());
+        int normalized = command.normalizedMinute();
+        return normalized == 0 ? fallback : normalized;
     }
 
     private void syncMatchScore(Match match, SoccerLiveDTO updated) {

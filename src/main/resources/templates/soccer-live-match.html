@@ -150,7 +150,9 @@
         .formation { display:grid; grid-template-rows:repeat(4,1fr); gap:8px; align-items:center; }
         .formation.away { direction:rtl; }
         .player-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; direction:ltr; }
-        .kit { min-width:44px; max-width:76px; min-height:34px; display:grid; place-items:center; padding:5px 7px; border-radius:999px; background:rgba(255,255,255,.92); color:#0f172a; font-size:11px; font-weight:950; box-shadow:0 4px 12px rgba(0,0,0,.16); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .kit { min-width:58px; max-width:92px; min-height:38px; display:grid; place-items:center; padding:5px 7px; border-radius:999px; background:rgba(255,255,255,.92); color:#0f172a; font-size:11px; font-weight:950; box-shadow:0 4px 12px rgba(0,0,0,.16); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .kit.empty { opacity:.32; background:rgba(255,255,255,.45); }
+        .kit small { display:block; color:#64748b; font-size:9px; line-height:1; margin-top:2px; }
         .lineup-columns { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:14px; }
         .lineup-team { border:1px solid var(--line-soft); border-radius:14px; overflow:hidden; }
         .lineup-team h3 { margin:0; padding:12px 14px; background:#f8fafc; font-size:14px; }
@@ -680,8 +682,8 @@
             return;
         }
         list.innerHTML = [lineup.away, lineup.home].map(renderLineupTeam).join('');
-        renderPitchLineup('awayPitchLineup', lineup.away?.starters || []);
-        renderPitchLineup('homePitchLineup', lineup.home?.starters || []);
+        renderPitchLineup('awayPitchLineup', lineup.away);
+        renderPitchLineup('homePitchLineup', lineup.home);
     }
 
     function renderLineupTeam(team) {
@@ -699,16 +701,67 @@
         `;
     }
 
-    function renderPitchLineup(id, players) {
+    const FORMATION_SLOTS = {
+        '4-4-2': ['GK','LB','CB','CB','RB','LM','CM','CM','RM','ST','ST'],
+        '4-3-3': ['GK','LB','CB','CB','RB','CM','CM','CM','LW','ST','RW'],
+        '4-2-3-1': ['GK','LB','CB','CB','RB','DM','DM','AM','LW','RW','ST']
+    };
+
+    function renderPitchLineup(id, team) {
         const target = document.getElementById(id);
         if (!target) return;
-        const rows = [
-            players.filter(player => ['ST','FW','LW','RW'].includes(String(player.position || '').toUpperCase())),
-            players.filter(player => ['AM','CM','DM','LM','RM','MF'].includes(String(player.position || '').toUpperCase())),
-            players.filter(player => ['LB','CB','RB','LWB','RWB','DF'].includes(String(player.position || '').toUpperCase())),
-            players.filter(player => String(player.position || '').toUpperCase() === 'GK')
-        ];
-        target.innerHTML = rows.map(row => `<div class="player-row">${row.map(player => `<span class="kit">${escapeHtml(shortName(player.playerName || player.name))}</span>`).join('')}</div>`).join('');
+        const starters = [...(team?.starters || [])].filter(player => player);
+        const slots = FORMATION_SLOTS[team?.formation] || inferFormationSlots(starters);
+        const used = new Set();
+        const slotPlayers = slots.map((position, index) => {
+            const order = index + 1;
+            let player = starters.find(row => Number(row.orderNum) === order && !used.has(playerKey(row)));
+            if (!player) {
+                player = starters.find(row => sameLinePosition(row.position, position) && !used.has(playerKey(row)));
+            }
+            if (player) used.add(playerKey(player));
+            return { order, position, player };
+        });
+        const grouped = {
+            attack: slotPlayers.filter(slot => lineOf(slot.position) === 'attack'),
+            mid: slotPlayers.filter(slot => lineOf(slot.position) === 'mid'),
+            defense: slotPlayers.filter(slot => lineOf(slot.position) === 'defense'),
+            gk: slotPlayers.filter(slot => lineOf(slot.position) === 'gk')
+        };
+        target.innerHTML = ['attack','mid','defense','gk'].map(line => `
+            <div class="player-row">
+                ${grouped[line].map(slot => slot.player
+                    ? `<span class="kit">${escapeHtml(shortName(slot.player.playerName || slot.player.name))}<small>${escapeHtml(slot.position)}</small></span>`
+                    : `<span class="kit empty">${escapeHtml(slot.position)}</span>`
+                ).join('')}
+            </div>
+        `).join('');
+    }
+
+    function inferFormationSlots(players) {
+        const positions = players.map(player => String(player.position || '').toUpperCase());
+        const defenders = positions.filter(pos => ['LB','CB','RB','LWB','RWB','DF'].includes(pos)).length;
+        const mids = positions.filter(pos => ['AM','CM','DM','LM','RM','MF'].includes(pos)).length;
+        const attackers = positions.filter(pos => ['ST','FW','LW','RW'].includes(pos)).length;
+        if (defenders === 4 && mids === 3 && attackers === 3) return FORMATION_SLOTS['4-3-3'];
+        if (defenders === 4 && mids === 5 && attackers === 1) return FORMATION_SLOTS['4-2-3-1'];
+        return FORMATION_SLOTS['4-4-2'];
+    }
+
+    function lineOf(position) {
+        const value = String(position || '').toUpperCase();
+        if (['ST','FW','LW','RW'].includes(value)) return 'attack';
+        if (['AM','CM','DM','LM','RM','MF'].includes(value)) return 'mid';
+        if (['LB','CB','RB','LWB','RWB','DF'].includes(value)) return 'defense';
+        return 'gk';
+    }
+
+    function sameLinePosition(a, b) {
+        return lineOf(a) === lineOf(b);
+    }
+
+    function playerKey(player) {
+        return player?.playerId ?? `${player?.playerName || player?.name || ''}:${player?.orderNum || ''}:${player?.position || ''}`;
     }
 
     function shortName(name) {

@@ -816,7 +816,69 @@
                             </div>
                         </div>
                         <div id="panel-soccer" class="control-panel">
-                            <div class="admin-empty-block">축구 경기 제어 패널을 준비하는 중입니다.</div>
+                            <div class="soccer-board">
+                                <div class="soccer-scoreboard" aria-label="축구 현재 중계 상황">
+                                    <div class="team-score"><div class="team-name"><b>광주</b><span>원정 · 수비 전환</span></div><strong>0</strong></div>
+                                    <div class="match-clock">87'<span>후반 +3</span></div>
+                                    <div class="team-score home"><strong>4</strong><div class="team-name"><b>인천</b><span>홈 · 공격</span></div></div>
+                                </div>
+                                <div class="control-cluster">
+                                    <div class="cluster-head"><div><div class="cluster-title">경기 시간 · 구간</div><div class="cluster-note">전후반, 추가시간, 종료 처리처럼 경기 흐름을 먼저 확정합니다.</div></div><button class="btn" data-event-template="후반 추가시간 +3분이 적용되었습니다.">추가시간 적용</button></div>
+                                    <div class="soccer-phase-grid">
+                                        <div class="metric-card"><b>구간</b><strong>후반</strong><span class="timeline-desc">87분 진행</span></div>
+                                        <div class="metric-card"><b>추가시간</b><strong>+3</strong><span class="timeline-desc">대기 중</span></div>
+                                        <div class="metric-card"><b>상태</b><strong>진행중</strong><span class="timeline-desc">중계 반영</span></div>
+                                        <div class="metric-card"><b>최근 반영</b><strong>20:47</strong><span class="timeline-desc">유효슈팅</span></div>
+                                    </div>
+                                    <div class="quick-grid">
+                                        <button class="btn" data-event-template="후반 88분으로 경기 시간이 갱신되었습니다.">시간 +1분</button>
+                                        <button class="btn" data-event-template="전반전이 시작되었습니다.">전반 시작</button>
+                                        <button class="btn" data-event-template="후반전이 시작되었습니다.">후반 시작</button>
+                                        <button class="btn red" data-status="종료">경기 종료</button>
+                                    </div>
+                                </div>
+                                <div class="control-cluster">
+                                    <div class="cluster-head"><div><div class="cluster-title">공격 전개 · 슈팅</div><div class="cluster-note">공격 위치와 슈팅 결과를 함께 기록합니다.</div></div><button class="btn score-plus" data-side="home" data-event-template="제르소 추가골, 인천이 점수 차를 벌립니다.">골 +1</button></div>
+                                    <div class="soccer-pitch" aria-label="축구장 공격 구역">
+                                        <div class="pitch-zone">광주 진영<br>수비 빌드업</div>
+                                        <div class="pitch-zone">중원<br>압박 경합</div>
+                                        <div class="pitch-zone active">인천 공격<br>왼쪽 측면</div>
+                                    </div>
+                                    <div class="quick-grid">
+                                        <button class="btn" data-event-template="인천 제르소 슈팅 시도">슈팅</button>
+                                        <button class="btn" data-event-template="제르소의 슈팅이 골키퍼 선방에 막혔습니다.">유효슈팅</button>
+                                        <button class="btn" data-event-template="제르소 오프사이드 판정">오프사이드</button>
+                                        <button class="btn" data-event-template="인천 공격 전개가 수비 블록에 막혔습니다.">공격 차단</button>
+                                    </div>
+                                </div>
+                                <div class="control-cluster">
+                                    <div class="cluster-head"><div><div class="cluster-title">세트피스 · 판정</div><div class="cluster-note">코너킥, 프리킥, 페널티킥, VAR 등 중계 자막 빈도가 높은 상황</div></div></div>
+                                    <div class="quick-grid">
+                                        <button class="btn" data-event-template="인천 오른쪽 코너킥 획득">코너킥</button>
+                                        <button class="btn" data-event-template="광주 문전 프리킥 허용">프리킥</button>
+                                        <button class="btn" data-event-template="인천 페널티킥 획득">페널티킥</button>
+                                        <button class="btn yellow" data-event-template="VAR 판독 진행 중">VAR</button>
+                                        <button class="btn" data-event-template="VAR 판독 결과 원심 유지">원심 유지</button>
+                                        <button class="btn" data-event-template="VAR 판독 후 득점 취소">득점 취소</button>
+                                        <button class="btn" data-event-template="광주 자책골로 인천 추가 득점">자책골</button>
+                                        <button class="btn" data-event-template="인천 골킥으로 재개">골킥</button>
+                                    </div>
+                                </div>
+                                <div class="control-cluster">
+                                    <div class="cluster-head"><div><div class="cluster-title">징계 · 교체</div><div class="cluster-note">카드, 부상, 선수 교체를 중계 화면 이벤트로 정리합니다.</div></div></div>
+                                    <div class="lineup-strip">
+                                        <div class="lineup-card"><b>주요 선수</b><strong>제르소</strong><span class="timeline-desc">슈팅 4 · 유효 3</span></div>
+                                        <div class="lineup-card"><b>교체 대기</b><strong>무고사</strong><span class="timeline-desc">후반 막판 투입 가능</span></div>
+                                        <div class="lineup-card"><b>주의 선수</b><strong>문민서</strong><span class="timeline-desc">경고 1장</span></div>
+                                    </div>
+                                    <div class="quick-grid">
+                                        <button class="btn" data-event-template="광주 문민서 경고">경고</button>
+                                        <button class="btn red" data-event-template="광주 수비수 퇴장">퇴장</button>
+                                        <button class="btn" data-event-template="인천 선수 교체, 무고사 투입">선수 교체</button>
+                                        <button class="btn" data-event-template="부상으로 잠시 경기가 중단되었습니다.">부상 중단</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div id="panel-lol" class="control-panel">
                             <div class="state-boxes"><div class="state-box"><b>세트</b><strong>1세트</strong></div><div class="state-box"><b>시간</b><strong>18:24</strong></div><div class="state-box"><b>블루 킬</b><strong>7</strong></div><div class="state-box"><b>레드 킬</b><strong>5</strong></div><div class="state-box"><b>골드 차이</b><strong>+1.2K</strong></div><div class="state-box"><b>드래곤</b><strong>2 : 1</strong></div><div class="state-box"><b>바론</b><strong>0 : 0</strong></div><div class="state-box"><b>타워</b><strong>4 : 3</strong></div></div>
@@ -931,7 +993,6 @@
                         <label class="field">종목
                             <select id="lineupSportSelect">
                                 <option value="baseball" selected>야구</option>
-                                <option value="soccer">축구</option>
                             </select>
                         </label>
                         <label class="field">경기
@@ -964,13 +1025,10 @@
 </script>
 <script>
     (function () {
-        const ADMIN_API = {
-            baseball: '/api/admin/baseball',
-            soccer: '/api/admin/soccer'
-        };
+        const API = '/api/admin/baseball';
         const text = {
             scheduleTitle: '\uacbd\uae30 \uc77c\uc815 \uad00\ub9ac',
-            scheduleDesc: 'match 테이블에 등록된 경기 목록을 종목별로 불러옵니다. 라인업 미등록 경기는 라인업 관리로 이동합니다.',
+            scheduleDesc: '등록된 경기를 날짜별로 표시합니다. 라인업 미등록 경기는 라인업 관리로 이동합니다.',
             refresh: '\uc0c8\ub85c\uace0\uce68',
             all: '\uc804\uccb4',
             scheduled: '\uc608\uc815',
@@ -991,7 +1049,7 @@
             controlTitle: '\uacbd\uae30 \uc9c4\ud589 \uc81c\uc5b4',
             controlDesc: '선택한 경기의 상태와 중계 이벤트를 관리합니다.'
         };
-        const state = { games: [], matchId: null, sport: 'baseball', soccerLive: null };
+        const state = { games: [], matchId: null };
         const PITCH_OR_RESULT_ACTIONS = new Set([
             'BALL', 'CALLED_STRIKE', 'SWINGING_STRIKE', 'FOUL', 'BUNT_FOUL',
             'SINGLE', 'DOUBLE', 'TRIPLE', 'HOMERUN', 'WALK', 'INTENTIONAL_WALK', 'HIT_BY_PITCH',
@@ -1064,21 +1122,6 @@
             if (code === 'soccer') return '축구';
             if (code === 'lol') return 'LoL';
             return '야구';
-        }
-
-        function apiForSport(sport = state.sport) {
-            return ADMIN_API[sport] || ADMIN_API.baseball;
-        }
-
-        function setSport(sport) {
-            const next = ADMIN_API[sport] ? sport : 'baseball';
-            state.sport = next;
-            const controlSport = document.getElementById('controlSport');
-            if (controlSport) controlSport.value = next;
-            const lineupSport = document.getElementById('lineupSportSelect');
-            if (lineupSport) lineupSport.value = next;
-            switchControlPanel();
-            updateManualEventForm();
         }
 
         function normalizeAdminGame(game) {
@@ -1432,8 +1475,6 @@
             controlSport.parentElement.appendChild(select);
             select.addEventListener('change', () => {
                 state.matchId = select.value ? Number(select.value) : null;
-                const option = select.options[select.selectedIndex];
-                if (option?.dataset?.sport) setSport(option.dataset.sport);
                 renderSchedule();
                 if (!state.matchId) return;
                 const game = findGame(state.matchId);
@@ -1527,16 +1568,8 @@
             const select = document.getElementById('adminBaseballMatchSelect');
 
             try {
-                const rows = [];
-                for (const sport of Object.keys(ADMIN_API)) {
-                    try {
-                        const rawGames = await fetchJson(`${ADMIN_API[sport]}/games`);
-                        rows.push(...(Array.isArray(rawGames) ? rawGames.map(game => ({ ...game, sportCode: game.sportCode || sport })) : []));
-                    } catch (error) {
-                        console.warn(`${sport} games load failed`, error);
-                    }
-                }
-                state.games = rows.map(normalizeAdminGame);
+                const rawGames = await fetchJson(`${API}/games`);
+                state.games = (Array.isArray(rawGames) ? rawGames : []).map(normalizeAdminGame);
                 await attachLineupStatuses();
 
                 const orderedGames = [...state.games].sort(compareAdminGames);
@@ -1544,13 +1577,12 @@
 
                 if (!state.matchId && first) {
                     state.matchId = Number(first.matchId);
-                    setSport(first.sportCode);
                 }
 
                 if (select) {
                     select.innerHTML = orderedGames.map(game => `
-        <option value="${game.matchId}" data-sport="${game.sportCode}">
-          ${sportLabel(game.sportCode)} · ${gameLabel(game)}
+        <option value="${game.matchId}">
+          ${gameLabel(game)}
         </option>
       `).join('') || `<option value="">${text.empty}</option>`;
 
@@ -1593,27 +1625,25 @@
         }
 
         async function attachLineupStatuses() {
-            for (const sport of Object.keys(ADMIN_API)) {
-                const games = state.games.filter(game => game.sportCode === sport && game.matchId);
-                if (!games.length) continue;
-                const query = games.map(game => `matchIds=${encodeURIComponent(game.matchId)}`).join('&');
-                try {
-                    const statuses = await fetchJson(`${ADMIN_API[sport]}/games/lineup-status?${query}`);
-                    const byId = new Map((statuses || []).map(row => [Number(row.matchId), row]));
-                    games.forEach(game => {
-                        const status = byId.get(Number(game.matchId));
-                        game.lineupStatus = status || null;
-                        game.lineupReady = Boolean(status?.ready);
-                        game.lineupMessage = status?.message || '선발 라인업 등록 필요';
-                    });
-                } catch (error) {
-                    console.error(error);
-                    games.forEach(game => {
-                        game.lineupStatus = null;
-                        game.lineupReady = false;
-                        game.lineupMessage = '라인업 상태 확인 실패';
-                    });
-                }
+            const ids = state.games.map(game => game.matchId).filter(Boolean);
+            if (!ids.length) return;
+            const query = ids.map(id => `matchIds=${encodeURIComponent(id)}`).join('&');
+            try {
+                const statuses = await fetchJson(`${API}/games/lineup-status?${query}`);
+                const byId = new Map((statuses || []).map(row => [Number(row.matchId), row]));
+                state.games.forEach(game => {
+                    const status = byId.get(Number(game.matchId));
+                    game.lineupStatus = status || null;
+                    game.lineupReady = Boolean(status?.ready);
+                    game.lineupMessage = status?.message || '선발 라인업 등록 필요';
+                });
+            } catch (error) {
+                console.error(error);
+                state.games.forEach(game => {
+                    game.lineupStatus = null;
+                    game.lineupReady = false;
+                    game.lineupMessage = '라인업 상태 확인 실패';
+                });
             }
         }
 
@@ -1744,12 +1774,11 @@
 
         async function selectGame(matchId, moveControl) {
             state.matchId = matchId;
-            const game = findGame(matchId);
-            if (game) setSport(game.sportCode);
             const select = document.getElementById('adminBaseballMatchSelect');
             if (select) select.value = String(matchId);
             renderSchedule();
 
+            const game = findGame(matchId);
             if (moveControl && game && game.lineupReady === false) {
                 await openLineupEditor(matchId);
                 return;
@@ -1760,12 +1789,8 @@
         }
 
         async function loadState(matchId) {
-            if (state.sport === 'soccer') {
-                await loadSoccerState(matchId);
-                return;
-            }
             try {
-                const live = await fetchJson(`${apiForSport('baseball')}/games/${matchId}/state`);
+                const live = await fetchJson(`${API}/games/${matchId}/state`);
                 window.__lastBaseballLive = live;
                 const board = live.scoreboard || {};
                 const count = live.count || {};
@@ -2032,7 +2057,7 @@
         }
 
         async function postBaseballCommand(body) {
-            const res = await requestWithAuth(`${apiForSport('baseball')}/games/${state.matchId}/command`, {
+            const res = await requestWithAuth(`${API}/games/${state.matchId}/command`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -2085,7 +2110,7 @@
 
         async function moveRunnerToBase(from, to) {
             if (!state.matchId) {
-                window.alert('먼저 경기를 선택하세요.');
+                window.alert('\uba3c\uc800 \uacbd\uae30\ub97c \uc120\ud0dd\ud558\uc138\uc694.');
                 return;
             }
             const runnerId = runnerIdFromBase(from);
@@ -2093,32 +2118,36 @@
                 window.alert(`${baseKorean(from)}에 주자가 없습니다.`);
                 return;
             }
+            let live = window.__lastBaseballLive;
+            let current = baseNo(from);
             const target = baseNo(to);
-            let live;
+            while (current < Math.min(target, 3)) {
+                live = await postBaseballCommand({
+                    action: 'RUNNER_ADVANCE',
+                    playerId: null,
+                    runnerId,
+                    teamId: null,
+                    base: null,
+                    description: `${baseKoreanByNo(current)} 주자 ${baseKoreanByNo(current + 1)}까지 진루`,
+                    pitchSpeed: null,
+                    pitchType: null
+                });
+                window.__lastBaseballLive = live;
+                current += 1;
+            }
             if (target === 4) {
                 live = await postBaseballCommand({
                     action: 'SCORE',
                     playerId: null,
                     runnerId,
                     teamId: null,
-                    base: 'home',
-                    description: `${baseKorean(from)} 주자 득점`,
+                    base: null,
+                    description: `${baseKoreanByNo(current)} 주자 득점`,
                     pitchSpeed: null,
                     pitchType: null
                 });
-            } else {
-                live = await postBaseballCommand({
-                    action: 'RUNNER_ADVANCE',
-                    playerId: null,
-                    runnerId,
-                    teamId: null,
-                    base: to,
-                    description: `${baseKorean(from)} 주자 ${baseKorean(to)}까지 진루`,
-                    pitchSpeed: null,
-                    pitchType: null
-                });
+                window.__lastBaseballLive = live;
             }
-            window.__lastBaseballLive = live;
             applyLoadedState(live);
         }
 
@@ -2203,89 +2232,7 @@
         }
 
         function selectedAction() {
-            if (state.sport === 'soccer') {
-                return actionFromSoccerEventType(document.getElementById('eventType')?.value || '');
-            }
             return actionFromEventType(document.getElementById('eventType')?.value || '');
-        }
-
-        function actionFromSoccerEventType(type) {
-            const map = {
-                match_start: 'START_MATCH',
-                first_half_end: 'END_FIRST_HALF',
-                second_half_start: 'START_SECOND_HALF',
-                match_end: 'END_MATCH',
-                goal: 'GOAL',
-                own_goal: 'OWN_GOAL',
-                penalty_goal: 'PENALTY_GOAL',
-                penalty_miss: 'PENALTY_MISS',
-                shot: 'SHOT',
-                shot_on_target: 'SHOT_ON_TARGET',
-                corner_kick: 'CORNER_KICK',
-                foul: 'FOUL',
-                offside: 'OFFSIDE',
-                save: 'SAVE',
-                yellow_card: 'YELLOW_CARD',
-                red_card: 'RED_CARD',
-                substitution: 'SUBSTITUTION'
-            };
-            return map[type] || null;
-        }
-
-        function updateManualEventForm() {
-            const typeSelect = document.getElementById('eventType');
-            const textArea = document.getElementById('eventText');
-            const teamLabel = document.getElementById('eventTeamLabel');
-            if (!typeSelect) return;
-            if (state.sport === 'soccer') {
-                typeSelect.innerHTML = [
-                    ['match_start', '경기 시작'],
-                    ['first_half_end', '전반 종료'],
-                    ['second_half_start', '후반 시작'],
-                    ['match_end', '경기 종료'],
-                    ['goal', '골'],
-                    ['own_goal', '자책골'],
-                    ['penalty_goal', 'PK 골'],
-                    ['penalty_miss', 'PK 실축'],
-                    ['shot', '슈팅'],
-                    ['shot_on_target', '유효슈팅'],
-                    ['corner_kick', '코너킥'],
-                    ['foul', '파울'],
-                    ['offside', '오프사이드'],
-                    ['save', '세이브'],
-                    ['yellow_card', '경고'],
-                    ['red_card', '퇴장'],
-                    ['substitution', '선수 교체']
-                ].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
-                if (textArea) textArea.placeholder = '예: 제르소가 페널티 박스 안에서 슈팅을 시도합니다.';
-                if (teamLabel?.firstChild) teamLabel.firstChild.textContent = '팀';
-                fillManualSoccerTeams();
-                return;
-            }
-            typeSelect.innerHTML = [
-                ['at_bat_start', '타석 시작'], ['ball', '볼'], ['called_strike', '루킹 스트라이크'], ['swinging_strike', '헛스윙'],
-                ['foul', '파울'], ['bunt_foul', '번트 파울'], ['single', '1루타'], ['double', '2루타'], ['triple', '3루타'],
-                ['homerun', '홈런'], ['walk', '볼넷'], ['intentional_walk', '고의4구'], ['hit_by_pitch', '사구'],
-                ['groundout', '땅볼아웃'], ['flyout', '플라이아웃'], ['lineout', '직선타'], ['popout', '팝아웃'],
-                ['sac_bunt', '희생번트'], ['sac_fly', '희생플라이'], ['double_play', '병살타'], ['runner_advance', '주자 진루'],
-                ['score', '득점'], ['stolen_base', '도루 성공'], ['caught_stealing', '도루 실패'], ['pickoff_out', '견제 아웃'],
-                ['force_out', '포스 아웃'], ['runner_out', '주자 아웃'], ['wild_pitch', '폭투'], ['passed_ball', '포일'],
-                ['balk', '보크'], ['pitcher_change', '투수 교체'], ['pinch_hitter', '대타'], ['pinch_runner', '대주자'],
-                ['defensive_substitution', '수비 교체'], ['inning_end', '이닝 종료'], ['game_end', '경기 종료']
-            ].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
-            if (textArea) textArea.placeholder = '예: 우전 안타 · 146km/h 커터';
-            if (teamLabel?.firstChild) teamLabel.firstChild.textContent = '공격팀';
-        }
-
-        function fillManualSoccerTeams() {
-            const select = document.getElementById('eventTeamSelect');
-            const live = state.soccerLive;
-            if (!select || !live) return;
-            const board = live.scoreboard || {};
-            select.innerHTML = [
-                { id: board.awayTeamId, name: board.awayTeamName || '원정' },
-                { id: board.homeTeamId, name: board.homeTeamName || '홈' }
-            ].filter(team => team.id).map(team => `<option value="${team.id}">${team.name}</option>`).join('');
         }
 
         function sendRunnerBaseAction(from, action, description) {
@@ -2355,254 +2302,22 @@
                 window.alert(`${baseKorean(pending.target)}가 아직 비어 있지 않습니다. 기존 주자를 먼저 처리하세요.`);
                 return;
             }
+            const live = await postBaseballCommand({
+                action: pending.action,
+                playerId: pending.batterId,
+                runnerId: null,
+                teamId: null,
+                base: null,
+                description: pending.description,
+                pitchSpeed: pitchSpeed(),
+                pitchType: pitchType()
+            });
             clearPendingBatterAdvance();
-            if (state.matchId) {
-                await loadState(state.matchId);
-            }
-        }
-
-        function switchControlPanel() {
-            const sport = document.getElementById('controlSport')?.value || state.sport || 'baseball';
-            document.querySelectorAll('.control-panel').forEach(panel => panel.classList.remove('active'));
-            document.getElementById(`panel-${sport}`)?.classList.add('active');
-            setText('selectedSportLabel', sportLabel(sport));
-        }
-
-        function installSoccerPanel() {
-            const panel = document.getElementById('panel-soccer');
-            if (!panel) return;
-            panel.innerHTML = `
-                <div class="soccer-board">
-                    <div class="soccer-scoreboard" aria-label="축구 현재 중계 상황">
-                        <div class="team-score"><div class="team-name"><b id="soccerAwayTeam">-</b><span>원정</span></div><strong id="soccerAwayScore">0</strong></div>
-                        <div class="match-clock"><span id="soccerPhaseLabel">경기전</span><strong id="soccerMinuteLabel">0'</strong></div>
-                        <div class="team-score home"><strong id="soccerHomeScore">0</strong><div class="team-name"><b id="soccerHomeTeam">-</b><span>홈</span></div></div>
-                    </div>
-                    <div class="state-boxes">
-                        <div class="state-box"><b>현재 구간</b><strong id="soccerCurrentPhase">경기전</strong></div>
-                        <div class="state-box"><b>현재 시간</b><strong id="soccerCurrentMinute">0'</strong></div>
-                        <div class="state-box"><b>match_event 수</b><strong id="soccerEventCount">0</strong></div>
-                        <div class="state-box"><b>마지막 갱신</b><strong id="soccerLastUpdated">-</strong></div>
-                    </div>
-                    <div class="control-cluster">
-                        <div class="cluster-head"><div><div class="cluster-title">축구 이벤트 공통 입력</div></div></div>
-                        <div class="soccer-input-grid">
-                            <label class="field">팀<select id="soccerTeamSelect"></select></label>
-                            <label class="field">대상 선수<select id="soccerPlayerSelect"></select></label>
-                            <label class="field">경기 시간<input id="soccerMinuteInput" type="number" min="0" max="130" value="0"></label>
-                            <label class="field">추가시간<input id="soccerAddedMinuteInput" type="number" min="0" max="30" value="0"></label>
-                            <label class="field wide">문구<input id="soccerDescriptionInput" placeholder="예: 제르소가 페널티 박스 안에서 슈팅을 시도합니다."></label>
-                        </div>
-                    </div>
-                    <div class="control-cluster">
-                        <div class="cluster-head"><div><div class="cluster-title">경기 진행</div></div></div>
-                        <div class="quick-grid">
-                            <button class="btn soccer-action" data-soccer-action="START_MATCH">경기 시작</button>
-                            <button class="btn soccer-action" data-soccer-action="END_FIRST_HALF">전반 종료</button>
-                            <button class="btn soccer-action" data-soccer-action="START_SECOND_HALF">후반 시작</button>
-                            <button class="btn red soccer-action" data-soccer-action="END_MATCH">경기 종료</button>
-                            <button class="btn" id="soccerRefreshBtn">현재 상태 다시 반영</button>
-                            <button class="btn red soccer-action" data-soccer-action="UNDO_LAST_EVENT">마지막 이벤트 취소</button>
-                        </div>
-                    </div>
-                    <div class="control-cluster">
-                        <div class="cluster-head"><div><div class="cluster-title">득점 · 슈팅</div></div></div>
-                        <div class="quick-grid">
-                            <button class="btn primary soccer-action" data-soccer-action="GOAL">골</button>
-                            <button class="btn soccer-action" data-soccer-action="OWN_GOAL">자책골</button>
-                            <button class="btn soccer-action" data-soccer-action="PENALTY_GOAL">PK 골</button>
-                            <button class="btn soccer-action" data-soccer-action="PENALTY_MISS">PK 실축</button>
-                            <button class="btn soccer-action" data-soccer-action="SHOT">슈팅</button>
-                            <button class="btn soccer-action" data-soccer-action="SHOT_ON_TARGET">유효슈팅</button>
-                        </div>
-                    </div>
-                    <div class="control-cluster">
-                        <div class="cluster-head"><div><div class="cluster-title">경기 이벤트</div></div></div>
-                        <div class="quick-grid">
-                            <button class="btn soccer-action" data-soccer-action="CORNER_KICK">코너킥</button>
-                            <button class="btn soccer-action" data-soccer-action="FOUL">파울</button>
-                            <button class="btn soccer-action" data-soccer-action="OFFSIDE">오프사이드</button>
-                            <button class="btn soccer-action" data-soccer-action="SAVE">세이브</button>
-                            <button class="btn yellow soccer-action" data-soccer-action="YELLOW_CARD">경고</button>
-                            <button class="btn red soccer-action" data-soccer-action="RED_CARD">퇴장</button>
-                        </div>
-                    </div>
-                    <div class="control-cluster">
-                        <div class="cluster-head"><div><div class="cluster-title">선수 교체</div></div></div>
-                        <div class="soccer-input-grid">
-                            <label class="field">교체 팀<select id="soccerSubTeamSelect"></select></label>
-                            <label class="field">나가는 선수<select id="soccerOutPlayerSelect"></select></label>
-                            <label class="field">들어오는 선수<select id="soccerInPlayerSelect"></select></label>
-                            <label class="field">교체 시간<input id="soccerSubMinuteInput" type="number" min="0" max="130" value="0"></label>
-                            <label class="field wide">교체 문구<input id="soccerSubDescriptionInput" placeholder="예: 무고사가 투입되고 제르소가 벤치로 물러납니다."></label>
-                        </div>
-                        <div class="btn-group"><button class="btn primary" id="soccerSubstitutionBtn">선수 교체 등록</button></div>
-                    </div>
-                </div>
-            `;
-            panel.querySelectorAll('.soccer-action').forEach(button => {
-                button.addEventListener('click', event => stopAndRun(event, () => sendSoccerCommand(button.dataset.soccerAction)), true);
-            });
-            document.getElementById('soccerRefreshBtn')?.addEventListener('click', event => stopAndRun(event, () => state.matchId && loadSoccerState(state.matchId)), true);
-            document.getElementById('soccerTeamSelect')?.addEventListener('change', fillSoccerPlayerSelects);
-            document.getElementById('soccerSubTeamSelect')?.addEventListener('change', fillSoccerPlayerSelects);
-            document.getElementById('soccerSubstitutionBtn')?.addEventListener('click', event => stopAndRun(event, () => sendSoccerSubstitution()), true);
-        }
-
-        async function loadSoccerState(matchId) {
-            try {
-                const live = await fetchJson(`${apiForSport('soccer')}/games/${matchId}/state`);
-                state.soccerLive = live;
-                const board = live.scoreboard || {};
-                setText('selectedMatchName', `${board.awayTeamName || '-'} vs ${board.homeTeamName || '-'}`);
-                setText('selectedSportLabel', '축구');
-                setText('statusLabel', statusLabel(live.status));
-                setText('phaseLabel', board.phase || '-');
-                setText('awayScore', board.awayScore ?? 0);
-                setText('homeScore', board.homeScore ?? 0);
-                setText('eventCount', soccerEventCount(live));
-                setText('lastUpdated', new Date().toLocaleTimeString('ko-KR', { hour12: false }));
-                setText('soccerAwayTeam', board.awayTeamName || '-');
-                setText('soccerHomeTeam', board.homeTeamName || '-');
-                setText('soccerAwayScore', board.awayScore ?? 0);
-                setText('soccerHomeScore', board.homeScore ?? 0);
-                setText('soccerPhaseLabel', soccerPhaseLabel(board.phase));
-                setText('soccerMinuteLabel', board.currentMinute || "0'");
-                setText('soccerCurrentPhase', soccerPhaseLabel(board.phase));
-                setText('soccerCurrentMinute', board.currentMinute || "0'");
-                setText('soccerEventCount', soccerEventCount(live));
-                setText('soccerLastUpdated', new Date().toLocaleTimeString('ko-KR', { hour12: false }));
-                setText('controlPreviewAway', board.awayTeamName || '-');
-                setText('controlPreviewHome', board.homeTeamName || '-');
-                setText('previewAwayScore', board.awayScore ?? 0);
-                setText('previewHomeScore', board.homeScore ?? 0);
-                setText('previewStatus', live.status || '-');
-                setText('previewContext', `${soccerPhaseLabel(board.phase)} · ${board.currentMinute || "0'"}`);
-                setText('previewMatchupLabel', '선수');
-                setText('previewMatchup', '-');
-                setText('previewEvent', '-');
-                setText('previewAreas', '스코어보드, 문자 중계, 기록, 라인업');
-                setText('precheckScore', `${board.awayTeamName || '-'} ${board.awayScore ?? 0} : ${board.homeScore ?? 0} ${board.homeTeamName || '-'}`);
-                setText('precheckStateLabel', '상태');
-                setText('precheckState', soccerPhaseLabel(board.phase));
-                setText('precheckRecord', `${soccerEventCount(live)} events`);
-                fillSoccerTeamSelects(live);
-                updateManualEventForm();
-                renderSchedule();
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        function soccerEventCount(live) {
-            return (live.timeline?.sections || []).reduce((sum, section) => sum + (section.events || []).length, 0);
-        }
-
-        function soccerPhaseLabel(phase) {
-            const value = String(phase || '').toLowerCase();
-            if (value.includes('second') || value.includes('후반')) return '후반';
-            if (value.includes('half_time') || value.includes('하프')) return '하프타임';
-            if (value.includes('end') || value.includes('종료')) return '경기종료';
-            if (value.includes('first') || value.includes('전반')) return '전반';
-            return '경기전';
-        }
-
-        function soccerPlayersByTeam(live, teamId) {
-            const teams = [live.lineup?.away, live.lineup?.home].filter(Boolean);
-            const team = teams.find(row => Number(row.teamId) === Number(teamId)) || teams[0];
-            return [...(team?.starters || []), ...(team?.bench || [])];
-        }
-
-        function fillSoccerTeamSelects(live = state.soccerLive) {
-            if (!live) return;
-            const board = live.scoreboard || {};
-            const teams = [
-                { id: board.awayTeamId || live.lineup?.away?.teamId, name: board.awayTeamName || live.lineup?.away?.teamName || '원정' },
-                { id: board.homeTeamId || live.lineup?.home?.teamId, name: board.homeTeamName || live.lineup?.home?.teamName || '홈' }
-            ].filter(team => team.id);
-            const html = teams.map(team => `<option value="${team.id}">${team.name}</option>`).join('');
-            ['soccerTeamSelect', 'soccerSubTeamSelect'].forEach(id => {
-                const select = document.getElementById(id);
-                if (select && select.options.length !== teams.length) select.innerHTML = html;
-            });
-            fillSoccerPlayerSelects();
-        }
-
-        function fillSoccerPlayerSelects() {
-            const live = state.soccerLive;
-            if (!live) return;
-            const teamId = document.getElementById('soccerTeamSelect')?.value;
-            const subTeamId = document.getElementById('soccerSubTeamSelect')?.value || teamId;
-            const playerOptions = soccerPlayersByTeam(live, teamId).map(player => `<option value="${player.playerId}">${player.playerName || '-'}</option>`).join('');
-            const subOptions = soccerPlayersByTeam(live, subTeamId).map(player => `<option value="${player.playerId}">${player.playerName || '-'}</option>`).join('');
-            const playerSelect = document.getElementById('soccerPlayerSelect');
-            if (playerSelect) playerSelect.innerHTML = playerOptions || '<option value="">선수 없음</option>';
-            const outSelect = document.getElementById('soccerOutPlayerSelect');
-            const inSelect = document.getElementById('soccerInPlayerSelect');
-            if (outSelect) outSelect.innerHTML = subOptions || '<option value="">선수 없음</option>';
-            if (inSelect) inSelect.innerHTML = subOptions || '<option value="">선수 없음</option>';
-        }
-
-        async function sendSoccerCommand(action, extra = {}) {
-            if (!state.matchId) {
-                window.alert('먼저 경기를 선택하세요.');
-                return;
-            }
-            const minute = Number(extra.minute ?? document.getElementById('soccerMinuteInput')?.value ?? 0);
-            const added = Number(document.getElementById('soccerAddedMinuteInput')?.value || 0);
-            const body = {
-                action,
-                teamId: extra.teamId ?? numberOrNull(document.getElementById('soccerTeamSelect')?.value),
-                playerId: extra.playerId ?? numberOrNull(document.getElementById('soccerPlayerSelect')?.value),
-                inPlayerId: extra.inPlayerId ?? null,
-                outPlayerId: extra.outPlayerId ?? null,
-                minute: Number.isFinite(minute) ? minute + (Number.isFinite(added) ? 0 : 0) : 0,
-                period: soccerPeriodFromMinute(minute),
-                description: extra.description ?? document.getElementById('soccerDescriptionInput')?.value?.trim() ?? null
-            };
-            const live = await postSoccerCommand(body);
-            state.soccerLive = live;
-            await loadSoccerState(live.matchId || state.matchId);
-        }
-
-        async function sendSoccerSubstitution() {
-            const minute = Number(document.getElementById('soccerSubMinuteInput')?.value || document.getElementById('soccerMinuteInput')?.value || 0);
-            await sendSoccerCommand('SUBSTITUTION', {
-                teamId: numberOrNull(document.getElementById('soccerSubTeamSelect')?.value),
-                playerId: numberOrNull(document.getElementById('soccerInPlayerSelect')?.value),
-                inPlayerId: numberOrNull(document.getElementById('soccerInPlayerSelect')?.value),
-                outPlayerId: numberOrNull(document.getElementById('soccerOutPlayerSelect')?.value),
-                minute,
-                description: document.getElementById('soccerSubDescriptionInput')?.value?.trim() || null
-            });
-        }
-
-        async function postSoccerCommand(body) {
-            const res = await requestWithAuth(`${apiForSport('soccer')}/games/${state.matchId}/command`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) {
-                const message = await res.text();
-                window.alert(message || 'command failed');
-                throw new Error(message || 'command failed');
-            }
-            return res.json();
-        }
-
-        function soccerPeriodFromMinute(minute) {
-            return Number(minute || 0) > 45 ? 'second_half' : 'first_half';
-        }
-
-        function numberOrNull(value) {
-            const number = Number(value);
-            return Number.isFinite(number) && number > 0 ? number : null;
+            applyLoadedState(live);
         }
 
         function bindCommandButtons() {
             document.getElementById('controlSport')?.addEventListener('change', () => {
-                setSport(document.getElementById('controlSport')?.value || 'baseball');
                 setTimeout(() => {
                     if (state.matchId) loadState(state.matchId);
                 }, 0);
@@ -2656,13 +2371,6 @@
                     window.alert('\uc9c0\uc6d0\ud558\uc9c0 \uc54a\ub294 \uc774\ubca4\ud2b8 \uc720\ud615\uc785\ub2c8\ub2e4.');
                     return;
                 }
-                if (state.sport === 'soccer') {
-                    sendSoccerCommand(action, {
-                        teamId: numberOrNull(document.getElementById('eventTeamSelect')?.value),
-                        description: document.getElementById('eventText')?.value?.trim() || null
-                    });
-                    return;
-                }
                 sendBaseballCommand(action);
             }), true);
             document.querySelectorAll('[data-event-template]').forEach(button => {
@@ -2676,14 +2384,8 @@
                     const textArea = document.getElementById('eventText');
                     const description = button.dataset.eventTemplate || button.textContent.trim();
                     if (textArea) textArea.value = description;
-                    const shouldShowPendingNotice = Boolean(hitTargetBase(action) && baseOccupied(hitTargetBase(action)) && currentBatterId());
-                    sendBaseballCommand(action, { description })
-                        .then(() => {
-                            if (shouldShowPendingNotice) {
-                                startPendingBatterAdvance(action, description);
-                            }
-                        })
-                        .catch(console.error);
+                    if (startPendingBatterAdvance(action, description)) return;
+                    sendBaseballCommand(action, { description });
                 }), true);
             });
             document.querySelectorAll('.runner-advance').forEach(button => {
@@ -2746,12 +2448,6 @@
 
         const FIELD_POSITIONS = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'];
         const FIELD_POSITION_LABELS = { C: '포수', '1B': '1루수', '2B': '2루수', '3B': '3루수', SS: '유격수', LF: '좌익수', CF: '중견수', RF: '우익수', DH: '지명타자', P: '투수', RHP: '우완투수', LHP: '좌완투수' };
-        const SOCCER_POSITIONS = ['GK', 'LB', 'CB', 'RB', 'DM', 'CM', 'AM', 'LM', 'RM', 'LW', 'RW', 'ST', 'FW', 'DF', 'MF'];
-        const SOCCER_FORMATIONS = {
-            '4-4-2': ['GK', 'LB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST', 'ST'],
-            '4-3-3': ['GK', 'LB', 'CB', 'CB', 'RB', 'CM', 'CM', 'CM', 'LW', 'ST', 'RW'],
-            '4-2-3-1': ['GK', 'LB', 'CB', 'CB', 'RB', 'DM', 'DM', 'LW', 'AM', 'RW', 'ST']
-        };
         let lineupEditor = null;
         let pendingBatterAdvance = null;
 
@@ -2761,16 +2457,8 @@
                 if (matchId) loadLineupEditor(matchId);
             });
             document.getElementById('lineupSaveBtn')?.addEventListener('click', saveLineupEditor);
-            document.getElementById('lineupSportSelect')?.addEventListener('change', event => {
-                setSport(event.target.value || 'baseball');
-                renderLineupMatchOptions();
-                const first = state.games.find(game => game.sportCode === state.sport);
-                if (first) loadLineupEditor(first.matchId);
-            });
             document.getElementById('lineupMatchSelect')?.addEventListener('change', event => {
                 const matchId = Number(event.target.value || 0);
-                const option = event.target.options[event.target.selectedIndex];
-                if (option?.dataset?.sport) setSport(option.dataset.sport);
                 if (matchId) loadLineupEditor(matchId);
             });
             document.getElementById('lineupTeamGrid')?.addEventListener('change', handleLineupChange);
@@ -2779,16 +2467,13 @@
         function renderLineupMatchOptions() {
             const select = document.getElementById('lineupMatchSelect');
             if (!select) return;
-            const sport = document.getElementById('lineupSportSelect')?.value || state.sport || 'baseball';
-            const orderedGames = state.games.filter(game => game.sportCode === sport).sort(compareAdminGames);
-            select.innerHTML = orderedGames.map(game => `<option value="${game.matchId}" data-sport="${game.sportCode}">${gameLabel(game)} · ${game.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
+            const orderedGames = [...state.games].sort(compareAdminGames);
+            select.innerHTML = orderedGames.map(game => `<option value="${game.matchId}">${gameLabel(game)} · ${game.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
             if (state.matchId) select.value = String(state.matchId);
         }
 
         async function openLineupEditor(matchId) {
             state.matchId = Number(matchId);
-            const game = findGame(matchId);
-            if (game) setSport(game.sportCode);
             const controlSelect = document.getElementById('adminBaseballMatchSelect');
             if (controlSelect) controlSelect.value = String(matchId);
             renderLineupMatchOptions();
@@ -2802,10 +2487,7 @@
             if (summary) summary.textContent = '라인업 데이터를 불러오는 중입니다.';
             if (grid) grid.innerHTML = '';
             try {
-                const game = findGame(matchId);
-                if (game) setSport(game.sportCode);
-                lineupEditor = await fetchJson(`${apiForSport()}/games/${matchId}/lineup-editor`);
-                lineupEditor.sportCode = state.sport;
+                lineupEditor = await fetchJson(`${API}/games/${matchId}/lineup-editor`);
                 renderLineupMatchOptions();
                 renderLineupEditor();
             } catch (error) {
@@ -2818,11 +2500,7 @@
             const summary = document.getElementById('lineupSummary');
             const status = lineupEditor.lineupStatus || {};
             if (summary) {
-                const sport = lineupEditor.sportCode || state.sport;
-                summary.innerHTML = sport === 'soccer' ? `
-                  <span><span class="lineup-status-dot ${status.ready ? 'ready' : ''}"></span><strong>축구 match ${lineupEditor.matchId}</strong> · ${lineupEditor.awayTeam?.name || '-'} vs ${lineupEditor.homeTeam?.name || '-'}</span>
-                  <span>홈 ${status.homeStarterCount || 0}/11 · 원정 ${status.awayStarterCount || 0}/11</span>
-                ` : `
+                summary.innerHTML = `
                   <span><span class="lineup-status-dot ${status.ready ? 'ready' : ''}"></span><strong>match ${lineupEditor.matchId}</strong> · ${lineupEditor.awayTeam?.name || '-'} vs ${lineupEditor.homeTeam?.name || '-'}</span>
                   <span>홈 ${status.homeStarterCount || 0}/9 + 투수 ${status.homePitcherCount || 0}/1 · 원정 ${status.awayStarterCount || 0}/9 + 투수 ${status.awayPitcherCount || 0}/1</span>
                 `;
@@ -2836,9 +2514,6 @@
         }
 
         function renderTeamLineup(team, entries, side) {
-            if ((lineupEditor?.sportCode || state.sport) === 'soccer') {
-                return renderSoccerTeamLineup(team, entries, side);
-            }
             const starters = entries.filter(entry => entry.included && entry.starter);
             const pitcher = starters.find(entry => isPitcherPosition(entry.position || entry.playerPosition));
             const batting = starters
@@ -2867,32 +2542,6 @@
             `;
         }
 
-        function renderSoccerTeamLineup(team, entries, side) {
-            const starters = entries.filter(entry => entry.included && entry.starter).sort((a, b) => Number(a.orderNum || 99) - Number(b.orderNum || 99));
-            const formation = team?.formation || lineupEditor?.[`${side}Formation`] || '4-4-2';
-            const slots = SOCCER_FORMATIONS[formation] || SOCCER_FORMATIONS['4-4-2'];
-            const ready = starters.length === 11;
-            return `
-              <article class="lineup-team-panel" data-side="${side}" data-team-id="${team?.teamId || ''}">
-                <div class="lineup-team-head">
-                  <div><h3>${team?.name || '-'}</h3><div class="panel-sub">${side === 'home' ? '홈팀' : '원정팀'} · ${ready ? '선발 11명 완료' : '선발 11명 필요'}</div></div>
-                  <span class="badge ${ready ? 'live' : 'warn'}">${ready ? '완료' : '등록 필요'}</span>
-                </div>
-                <div class="lineup-team-body">
-                  <label class="field">포메이션<select class="soccer-formation-select" data-side="${side}">${Object.keys(SOCCER_FORMATIONS).map(value => `<option value="${value}"${formation === value ? ' selected' : ''}>${value}</option>`).join('')}</select></label>
-                  <div class="lineup-starter-summary">
-                    ${slots.map((position, index) => {
-                        const order = index + 1;
-                        const row = starters.find(item => Number(item.orderNum) === order);
-                        return `<div class="lineup-slot"><b>${order}. ${position}</b><span>${row?.playerName || '미지정'}</span></div>`;
-                    }).join('')}
-                  </div>
-                  ${renderLineupTable('선수 목록', 'soccer', entries)}
-                </div>
-              </article>
-            `;
-        }
-
         function renderLineupTable(title, kind, entries) {
             return `
               <div>
@@ -2909,23 +2558,6 @@
 
         function renderLineupRow(entry) {
             const role = !entry.included ? 'excluded' : entry.starter ? 'starter' : 'candidate';
-            if ((lineupEditor?.sportCode || state.sport) === 'soccer') {
-                const orderOptions = [''].concat(Array.from({ length: 11 }, (_, i) => String(i + 1)))
-                    .map(value => `<option value="${value}"${String(entry.orderNum || '') === value ? ' selected' : ''}>${value || '-'}</option>`)
-                    .join('');
-                const positionOptions = SOCCER_POSITIONS
-                    .map(value => `<option value="${value}"${String(entry.position || entry.playerPosition || '').toUpperCase() === value ? ' selected' : ''}>${value}</option>`)
-                    .join('');
-                return `
-              <tr data-player-id="${entry.playerId}" data-team-id="${entry.teamId}">
-                <td><strong>${entry.playerName || '-'}</strong><div class="lineup-player-meta">#${entry.jerseyNumber ?? '-'} · 기본 ${entry.playerPosition || '-'}</div></td>
-                <td><span class="badge">축구</span></td>
-                <td><select class="lineup-role"><option value="excluded"${role === 'excluded' ? ' selected' : ''}>제외</option><option value="candidate"${role === 'candidate' ? ' selected' : ''}>후보</option><option value="starter"${role === 'starter' ? ' selected' : ''}>선발</option></select></td>
-                <td><select class="lineup-order">${orderOptions}</select></td>
-                <td><select class="lineup-position">${positionOptions}</select></td>
-              </tr>
-            `;
-            }
             const pitcher = isPitcherPosition(entry.position || entry.playerPosition);
             const orderOptions = [''].concat(Array.from({ length: 9 }, (_, i) => String(i + 1)))
                 .map(value => `<option value="${value}"${String(entry.orderNum || '') === value ? ' selected' : ''}>${value || '-'}</option>`)
@@ -2956,7 +2588,7 @@
             entry.included = role !== 'excluded';
             entry.starter = role === 'starter';
             entry.position = position;
-            entry.orderNum = entry.starter && ((lineupEditor?.sportCode || state.sport) === 'soccer' || !isPitcherPosition(position)) && orderValue ? Number(orderValue) : null;
+            entry.orderNum = entry.starter && !isPitcherPosition(position) && orderValue ? Number(orderValue) : null;
             renderLineupEditor();
         }
 
@@ -2976,12 +2608,11 @@
                     playerId: entry.playerId,
                     included: Boolean(entry.included),
                     starter: Boolean(entry.included && entry.starter),
-                    orderNum: entry.included && entry.starter && ((lineupEditor?.sportCode || state.sport) === 'soccer' || !isPitcherPosition(entry.position)) ? entry.orderNum : null,
+                    orderNum: entry.included && entry.starter && !isPitcherPosition(entry.position) ? entry.orderNum : null,
                     position: entry.position || entry.playerPosition
                 }));
             try {
-                lineupEditor = await putJson(`${apiForSport(lineupEditor.sportCode || state.sport)}/games/${lineupEditor.matchId}/lineup`, { entries });
-                lineupEditor.sportCode = state.sport;
+                lineupEditor = await putJson(`${API}/games/${lineupEditor.matchId}/lineup`, { entries });
                 await attachLineupStatuses();
                 renderSchedule();
                 renderLineupMatchOptions();
@@ -3068,16 +2699,632 @@
         document.addEventListener('DOMContentLoaded', () => {
             installStyles();
             installScheduleTab();
-            installSoccerPanel();
             installLineupTab();
             installNavigation();
             fillAdminProfile();
             ensureControlSelect();
-            updateManualEventForm();
             bindCommandButtons();
-            loadGames();
         });
     })();
 </script>
+
+<!-- soccer-admin-enhancement: 현재 야구 안정본 위에 축구 관리자 UI만 추가하는 보조 스크립트 -->
+<style id="soccerAdminEnhancementStyle">
+    #control.soccer-control-mode > .panel > .panel-head,
+    #control.soccer-control-mode > .panel .panel-body > .btn-group { display:none; }
+    #control.soccer-control-mode .control-layout { grid-template-columns:1fr; }
+    #control.soccer-control-mode .side-stack { display:none; }
+    #control.soccer-control-mode #panel-soccer { display:grid; }
+    .soccer-admin-board { display:grid; gap:12px; }
+    .soccer-admin-card { border:1px solid rgba(92,141,255,.24); background:#0d1626; border-radius:16px; padding:14px; display:grid; gap:12px; }
+    .soccer-admin-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .soccer-admin-row.two { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .soccer-admin-row.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .soccer-admin-score { display:grid; grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr); gap:14px; align-items:center; border:1px solid #36517a; background:linear-gradient(180deg,#10243b,#0c1322); border-radius:14px; padding:14px; }
+    .soccer-admin-score .team-block { display:grid; gap:5px; min-width:0; }
+    .soccer-admin-score .team-block.right { text-align:right; }
+    .soccer-admin-score .team-block b { font-size:18px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .soccer-admin-score .team-block span { color:#9fb0cc; font-size:12px; font-weight:900; }
+    .soccer-admin-score .score-mid { border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); border-radius:12px; min-height:64px; display:grid; place-items:center; text-align:center; color:#fff; font-size:22px; font-weight:1000; }
+    .soccer-admin-score .score-mid small { display:block; color:#9fb0cc; font-size:11px; margin-top:3px; }
+    .soccer-admin-preview { border:1px solid rgba(92,141,255,.26); background:#0d1626; border-radius:16px; padding:14px; display:grid; gap:10px; }
+    .soccer-admin-preview .preview-line { display:flex; justify-content:space-between; gap:10px; color:#dbe7ff; font-weight:950; }
+    .soccer-action-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+    .soccer-action-grid .btn { min-height:42px; white-space:normal; }
+    .soccer-lineup-root { display:grid; gap:14px; }
+    .lineup-team-grid.soccer-mode { display:block; }
+    .soccer-lineup-matchbar { border:1px solid rgba(92,141,255,.26); background:rgba(92,141,255,.08); border-radius:14px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px; color:#dbe7ff; font-weight:950; }
+    .soccer-lineup-teams { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .soccer-team-editor { border:1px solid var(--line); background:#0d1626; border-radius:16px; overflow:hidden; min-width:0; }
+    .soccer-team-editor-head { padding:13px 14px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; gap:10px; align-items:center; background:rgba(255,255,255,.035); }
+    .soccer-team-editor-head h3 { margin:0; color:#fff; font-size:16px; font-weight:1000; }
+    .soccer-team-editor-body { padding:12px; display:grid; gap:12px; }
+    .soccer-field-dual { position:relative; min-height:640px; width:100%; border:1px solid rgba(56,216,120,.38); border-radius:16px; background:linear-gradient(90deg,rgba(11,117,60,.95),rgba(9,153,82,.95) 50%,rgba(11,117,60,.95)); overflow:hidden; }
+    .soccer-field-dual::before { content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,.45) 50%, transparent calc(50% + 1px)); pointer-events:none; }
+    .soccer-field-dual::after { content:""; position:absolute; left:50%; top:50%; width:96px; height:96px; margin-left:-48px; margin-top:-48px; border:1px solid rgba(255,255,255,.28); border-radius:50%; pointer-events:none; }
+    .soccer-slot { position:absolute; width:118px; min-height:48px; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.22); background:rgba(7,11,20,.72); border-radius:12px; padding:7px; display:grid; gap:3px; cursor:pointer; }
+    .soccer-slot.drag-over { border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
+    .soccer-slot b { color:#cfe0ff; font-size:11px; font-weight:1000; }
+    .soccer-slot span { color:#fff; font-size:12px; font-weight:950; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .soccer-slot button { justify-self:end; border:0; background:rgba(255,91,102,.18); color:#ffb8bd; border-radius:999px; font-size:11px; cursor:pointer; padding:2px 6px; }
+    .soccer-slot.empty span { color:#aab8cf; }
+    .soccer-roster { display:grid; gap:8px; max-height:370px; overflow:auto; padding-right:3px; }
+    .soccer-player-chip { border:1px solid rgba(255,255,255,.10); background:#0b1220; border-radius:12px; padding:9px 10px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; cursor:grab; }
+    .soccer-player-chip.removed { opacity:.35; text-decoration:line-through; }
+    .soccer-player-chip.assigned { border-color:rgba(56,216,120,.45); background:rgba(56,216,120,.08); }
+    .soccer-player-chip b { color:#fff; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .soccer-player-chip span { color:#8ea0bd; font-size:11px; font-weight:850; }
+    .soccer-player-chip button { border:1px solid rgba(255,91,102,.42); background:rgba(255,91,102,.16); color:#ffb8bd; border-radius:9px; min-width:30px; min-height:28px; cursor:pointer; font-weight:1000; }
+    .soccer-bench-summary { border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.035); border-radius:12px; padding:10px; color:#cbd8ee; font-size:12px; font-weight:900; }
+    @media (max-width:1100px){ .soccer-lineup-teams{grid-template-columns:1fr;} .soccer-admin-row,.soccer-admin-row.two,.soccer-admin-row.three,.soccer-action-grid{grid-template-columns:1fr 1fr;} }
+    @media (max-width:760px){ .soccer-admin-score,.soccer-admin-row,.soccer-action-grid{grid-template-columns:1fr;} .soccer-field-dual{min-height:720px;} .soccer-slot{width:96px;} }
+</style>
+<script id="soccerAdminEnhancementScript">
+(function () {
+    const SOCCER_API = '/api/admin/soccer';
+    const BASEBALL_API = '/api/admin/baseball';
+    const SOCCER_FORMATIONS = {
+        '4-4-2': ['GK','LB','CB','CB','RB','LM','CM','CM','RM','ST','ST'],
+        '4-3-3': ['GK','LB','CB','CB','RB','CM','CM','CM','LW','ST','RW'],
+        '4-2-3-1': ['GK','LB','CB','CB','RB','DM','DM','AM','LW','RW','ST']
+    };
+    const POS_LABEL = {GK:'GK',LB:'LB',CB:'CB',RB:'RB',DM:'DM',CM:'CM',AM:'AM',LM:'LM',RM:'RM',LW:'LW',RW:'RW',ST:'ST',FW:'FW',DF:'DF',MF:'MF'};
+    const soccerState = { games: [], selectedMatchId: null, editor: null, lineups: {}, dragging: null, currentLive: null };
+
+    function $(selector, root = document) { return root.querySelector(selector); }
+    function $all(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
+    function notifySafe(text) { if (typeof window.notify === 'function') window.notify(text); else alert(text); }
+
+    function token() {
+        return localStorage.getItem('accessToken') || localStorage.getItem('token') || sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') || '';
+    }
+    function headers(extra = {}) {
+        const h = { Accept: 'application/json', ...extra };
+        const t = token();
+        if (t) h.Authorization = `Bearer ${t}`;
+        return h;
+    }
+    async function json(url, options = {}) {
+        const res = await fetch(url, { credentials: 'same-origin', ...options, headers: headers(options.headers || {}) });
+        if (!res.ok) throw new Error(await res.text() || String(res.status));
+        return res.json();
+    }
+    async function putJson(url, body) {
+        return json(url, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    }
+    async function postJson(url, body) {
+        return json(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    }
+    function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value == null ? '-' : value; }
+    function view(id) {
+        $all('.view').forEach(v => v.classList.toggle('active', v.id === id));
+        $all('.nav-btn[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+        if (id === 'lineup') { setText('pageTitle','경기 라인업 관리'); setText('pageDesc','경기별 선발 라인업과 후보 선수를 등록합니다.'); }
+        if (id === 'control') { setText('pageTitle','경기 진행 제어'); setText('pageDesc','선택한 경기의 상태와 이벤트를 중계 화면에 반영합니다.'); }
+        if (id === 'matchEdit') { setText('pageTitle','경기 일정 관리'); setText('pageDesc','등록된 경기를 날짜별로 모두 표시합니다. 오늘 경기는 항상 상단에 먼저 표시됩니다.'); }
+    }
+    function normGame(game, sport) {
+        const dateRaw = game.date || game.matchDate || game.match_date || game.scheduledAt || game.scheduled_at || '';
+        const timeRaw = game.matchTime || game.match_time || game.time || game.scheduledAt || game.scheduled_at || '';
+        const dateMatch = String(dateRaw).match(/(\d{4})[-.]?(\d{2})[-.]?(\d{2})/);
+        const timeMatch = String(timeRaw).match(/(\d{1,2}):(\d{2})/);
+        return {
+            ...game,
+            matchId: game.matchId ?? game.match_id,
+            sportCode: sport,
+            date: dateMatch ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}` : '',
+            time: timeMatch ? `${String(timeMatch[1]).padStart(2,'0')}:${timeMatch[2]}` : '',
+            homeTeamId: game.homeTeamId ?? game.home_team_id,
+            awayTeamId: game.awayTeamId ?? game.away_team_id,
+            homeTeamName: game.homeTeamName ?? game.home_team_name ?? game.homeTeam?.name ?? '-',
+            awayTeamName: game.awayTeamName ?? game.away_team_name ?? game.awayTeam?.name ?? '-',
+            homeScore: Number(game.homeScore ?? game.home_score ?? 0),
+            awayScore: Number(game.awayScore ?? game.away_score ?? 0),
+            venue: game.venue ?? game.stadium ?? '',
+            status: game.status ?? 'scheduled'
+        };
+    }
+    function statusKey(status) { return status === 'in_progress' ? 'live' : (status || 'scheduled'); }
+    function statusLabel(status) {
+        const key = statusKey(status);
+        if (key === 'live') return '진행중';
+        if (key === 'finished') return '종료';
+        if (key === 'cancelled') return '취소';
+        return '예정';
+    }
+    function badgeClass(status) {
+        const key = statusKey(status);
+        if (key === 'live') return 'live';
+        if (key === 'finished') return 'end';
+        if (key === 'cancelled') return 'warn';
+        return 'ready';
+    }
+    async function fetchLineupStatus(sport, games) {
+        const ids = games.map(g => g.matchId).filter(Boolean);
+        if (!ids.length) return;
+        try {
+            const rows = await json(`/api/admin/${sport}/games/lineup-status?${ids.map(id => `matchIds=${encodeURIComponent(id)}`).join('&')}`);
+            const byId = new Map((rows || []).map(r => [Number(r.matchId), r]));
+            games.forEach(g => { const row = byId.get(Number(g.matchId)); g.lineupReady = Boolean(row?.ready); g.lineupStatus = row; });
+        } catch (e) {
+            games.forEach(g => { g.lineupReady = false; g.lineupStatus = null; });
+        }
+    }
+    async function loadCombinedGames() {
+        const list = [];
+        try { list.push(...(await json(`${BASEBALL_API}/games`)).map(g => normGame(g,'baseball'))); } catch (e) { console.warn(e); }
+        try { list.push(...(await json(`${SOCCER_API}/games`)).map(g => normGame(g,'soccer'))); } catch (e) { console.warn(e); }
+        await fetchLineupStatus('baseball', list.filter(g => g.sportCode === 'baseball'));
+        await fetchLineupStatus('soccer', list.filter(g => g.sportCode === 'soccer'));
+        soccerState.games = list.sort(compareGame);
+        renderCombinedSchedule();
+        renderControlSelect();
+        renderLineupMatchSelect();
+    }
+    function todayKey() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function gameTimeValue(g) { return `${g.date || '9999-99-99'} ${g.time || '99:99'} ${String(g.matchId || '').padStart(6,'0')}`; }
+    function compareGame(a,b) {
+        const order = { live:0, scheduled:1, finished:2, cancelled:3 };
+        const diff = (order[statusKey(a.status)] ?? 9) - (order[statusKey(b.status)] ?? 9);
+        return diff || gameTimeValue(a).localeCompare(gameTimeValue(b));
+    }
+    function formatDateTitle(date) {
+        if (!date) return '날짜 미등록';
+        const parsed = new Date(`${date}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) return date;
+        return `${date} ${['일','월','화','수','목','금','토'][parsed.getDay()]}요일`;
+    }
+    function scheduleBlock(title, sub, rows, direction = 'asc') {
+        if (!rows.length) return '';
+        const grouped = rows.reduce((acc, g) => {
+            const key = g.date || '날짜 미등록';
+            (acc[key] ||= []).push(g);
+            return acc;
+        }, {});
+        const keys = Object.keys(grouped).sort((a,b) => direction === 'desc' ? b.localeCompare(a) : a.localeCompare(b));
+        return `<section class="admin-schedule-block">
+            <div class="admin-schedule-block-head"><div><div class="admin-schedule-block-title">${title}</div><div class="admin-schedule-block-sub">${sub}</div></div><span class="admin-date-chip">${rows.length}경기</span></div>
+            ${keys.map(date => `<div class="admin-schedule-date-group">
+                <div class="admin-schedule-date-head"><div><div class="admin-schedule-date-title">${formatDateTitle(date)}</div><div class="admin-schedule-date-sub">예정 ${grouped[date].filter(g=>statusKey(g.status)==='scheduled').length} · 진행 ${grouped[date].filter(g=>statusKey(g.status)==='live').length} · 종료 ${grouped[date].filter(g=>statusKey(g.status)==='finished').length}</div></div><span class="admin-date-chip">${grouped[date].length}경기</span></div>
+                <div class="admin-schedule-list">${grouped[date].sort(compareGame).map(card).join('')}</div>
+            </div>`).join('')}
+        </section>`;
+    }
+    function renderCombinedSchedule() {
+        const list = $('#adminScheduleList');
+        const summary = $('#adminScheduleSummary');
+        if (!list) return;
+        const sportFilter = $('#adminScheduleSportFilter')?.value || '';
+        const statusFilter = $('#adminScheduleStatusFilter')?.value || '';
+        const keyword = ($('#adminScheduleKeyword')?.value || '').trim().toLowerCase();
+        const rows = soccerState.games.filter(g => {
+            const hay = [g.matchId,g.date,g.time,g.homeTeamName,g.awayTeamName,g.venue,g.sportCode,statusLabel(g.status)].join(' ').toLowerCase();
+            return (!sportFilter || g.sportCode === sportFilter) && (!statusFilter || statusKey(g.status) === statusFilter) && (!keyword || hay.includes(keyword));
+        });
+        if (summary) summary.innerHTML = `<span><strong>${sportFilter ? sportName(sportFilter) : '전체 종목'}</strong> · 표시 ${rows.length}경기 / 전체 ${soccerState.games.length}경기</span>`;
+        const today = todayKey();
+        const todayRows = rows.filter(g => g.date === today);
+        const futureRows = rows.filter(g => g.date && g.date !== '날짜 미등록' && g.date > today);
+        const pastRows = rows.filter(g => g.date && g.date !== '날짜 미등록' && g.date < today);
+        const noDateRows = rows.filter(g => !g.date || g.date === '날짜 미등록');
+        list.innerHTML = rows.length ? [
+            scheduleBlock('오늘 경기', '오늘 등록된 경기를 먼저 표시합니다.', todayRows),
+            scheduleBlock('이후 경기', '오늘 이후 경기를 날짜별로 표시합니다.', futureRows),
+            scheduleBlock('지난 경기', '이미 지난 경기도 날짜별로 확인할 수 있습니다.', pastRows, 'desc'),
+            scheduleBlock('날짜 미등록 경기', '날짜가 비어 있거나 파싱되지 않은 경기입니다.', noDateRows)
+        ].filter(Boolean).join('') : '<div class="admin-empty-block">등록된 경기가 없습니다.</div>';
+        $all('[data-match-card]', list).forEach(node => node.addEventListener('click', () => {
+            const game = soccerState.games.find(g => String(g.matchId) === node.dataset.matchCard && g.sportCode === node.dataset.sport);
+            if (!game) return;
+            if (game.lineupReady === false) openLineup(game);
+            else openControl(game);
+        }));
+    }
+    function sportName(sport){ return sport === 'soccer' ? '축구' : sport === 'baseball' ? '야구' : 'LoL'; }
+    function card(g) {
+        const needs = statusKey(g.status) === 'scheduled' && g.lineupReady === false;
+        const center = needs ? '<div class="admin-lineup-needed">선발 라인업<br>등록 필요</div>' : `<div class="admin-match-score">${g.awayScore} : ${g.homeScore}</div>`;
+        return `<article class="admin-match-card" data-match-card="${g.matchId}" data-sport="${g.sportCode}">
+            <div class="admin-match-top"><span>${sportName(g.sportCode)} · match ${g.matchId}</span><span>${g.date} ${g.time}</span></div>
+            <div class="admin-match-teams"><div class="admin-match-team"><b>${g.awayTeamName}</b><span>원정</span></div>${center}<div class="admin-match-team" style="text-align:right"><b>${g.homeTeamName}</b><span>홈</span></div></div>
+            <div class="admin-match-foot"><span class="badge ${badgeClass(g.status)}">${statusLabel(g.status)}</span><span>${g.venue || '경기장 미등록'} · ${g.lineupReady ? '<span class="admin-lineup-ok">라인업 완료</span>' : '<span style="color:#ffe59a;font-weight:950">라인업 필요</span>'}</span></div>
+        </article>`;
+    }
+    function renderControlSelect() {
+        const select = $('#adminBaseballMatchSelect');
+        if (!select) return;
+        const sport = $('#controlSport')?.value || 'baseball';
+        const rows = soccerState.games.filter(g => g.sportCode === sport);
+        select.innerHTML = rows.map(g => `<option value="${g.matchId}" data-sport="${g.sportCode}">match ${g.matchId} | ${g.date} ${g.time} | ${g.awayTeamName} vs ${g.homeTeamName} | ${g.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
+    }
+    function showControlPanel(sport) {
+        $('#control')?.classList.toggle('soccer-control-mode', sport === 'soccer');
+        $('#panel-baseball')?.classList.toggle('active', sport === 'baseball');
+        $('#panel-soccer')?.classList.toggle('active', sport === 'soccer');
+        $('#panel-lol')?.classList.toggle('active', sport === 'lol');
+    }
+    async function openControl(game) {
+        soccerState.selectedMatchId = game.matchId;
+        const sportSelect = $('#controlSport');
+        if (sportSelect) sportSelect.value = game.sportCode;
+        renderControlSelect();
+        const matchSelect = $('#adminBaseballMatchSelect');
+        if (matchSelect) matchSelect.value = String(game.matchId);
+        view('control');
+        showControlPanel(game.sportCode);
+        if (game.sportCode === 'soccer') {
+            await loadSoccerState(game.matchId);
+            return;
+        }
+        if (matchSelect) matchSelect.dispatchEvent(new Event('change', { bubbles:true }));
+    }
+    async function openLineup(game) {
+        soccerState.selectedMatchId = game.matchId;
+        view('lineup');
+        ensureLineupSportOptions();
+        $('#lineupTeamGrid')?.classList.toggle('soccer-mode', game.sportCode === 'soccer');
+        const sportSelect = $('#lineupSportSelect');
+        if (sportSelect) sportSelect.value = game.sportCode;
+        renderLineupMatchSelect();
+        const matchSelect = $('#lineupMatchSelect');
+        if (matchSelect) matchSelect.value = String(game.matchId);
+        if (game.sportCode === 'soccer') {
+            await loadSoccerLineup(game.matchId);
+            return;
+        }
+        if (matchSelect) matchSelect.dispatchEvent(new Event('change', { bubbles:true }));
+    }
+    function ensureLineupSportOptions(){
+        const select = $('#lineupSportSelect');
+        if (!select) return;
+        if (!$('option[value="soccer"]', select)) select.insertAdjacentHTML('beforeend','<option value="soccer">축구</option>');
+    }
+    function renderLineupMatchSelect(){
+        const sport = $('#lineupSportSelect')?.value || 'baseball';
+        const select = $('#lineupMatchSelect');
+        if (!select) return;
+        const rows = soccerState.games.filter(g => g.sportCode === sport);
+        select.innerHTML = rows.map(g => `<option value="${g.matchId}" data-sport="${g.sportCode}">match ${g.matchId} | ${g.date} ${g.time} | ${g.awayTeamName} vs ${g.homeTeamName} | ${g.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
+    }
+
+    async function loadSoccerLineup(matchId) {
+        const grid = $('#lineupTeamGrid');
+        const summary = $('#lineupSummary');
+        if (summary) summary.textContent = '축구 라인업 데이터를 불러오는 중입니다.';
+        if (grid) grid.innerHTML = '';
+        const editor = await json(`${SOCCER_API}/games/${matchId}/lineup-editor`);
+        soccerState.editor = editor;
+        initSoccerLineupState(editor);
+        renderSoccerLineupEditor();
+    }
+    function initSoccerLineupState(editor) {
+        soccerState.lineups = {};
+        ['home','away'].forEach(side => {
+            const team = editor[`${side}Team`];
+            const entries = editor[`${side}Lineup`] || [];
+            const formation = inferFormation(entries);
+            soccerState.lineups[side] = { team, formation, players: entries.map(e => ({...e, removed: !e.included, slot: e.starter ? Number(e.orderNum) : null, position: e.position || e.playerPosition || 'MF'})) };
+        });
+    }
+    function inferFormation(entries) {
+        const starters = (entries || []).filter(e => e.included && e.starter);
+        const pos = starters.map(e => String(e.position || '').toUpperCase());
+        const d = pos.filter(p => ['LB','CB','RB','DF'].includes(p)).length;
+        const f = pos.filter(p => ['LW','RW','ST','FW'].includes(p)).length;
+        const m = pos.filter(p => ['DM','CM','AM','LM','RM','MF'].includes(p)).length;
+        if (d === 4 && m === 3 && f === 3) return '4-3-3';
+        if (d === 4 && m === 5 && f === 1) return '4-2-3-1';
+        return '4-4-2';
+    }
+    function renderSoccerLineupEditor() {
+        const editor = soccerState.editor;
+        const grid = $('#lineupTeamGrid');
+        const summary = $('#lineupSummary');
+        if (!editor || !grid) return;
+        grid.classList.add('soccer-mode');
+        const home = soccerState.lineups.home;
+        const away = soccerState.lineups.away;
+        const homeCount = starterCount(home); const awayCount = starterCount(away);
+        if (summary) summary.innerHTML = `<span><strong>축구 match ${editor.matchId}</strong> · ${away.team?.name || '-'} vs ${home.team?.name || '-'}</span><span>홈 ${homeCount}/11 · 원정 ${awayCount}/11</span>`;
+        grid.innerHTML = `<div class="soccer-lineup-root">
+            <div class="soccer-lineup-matchbar"><span>드래그로 선수를 포지션 슬롯에 배치하세요. 슬롯에 들어간 선수는 선발, 남은 선수는 후보입니다.</span><span class="badge ${homeCount===11 && awayCount===11 ? 'live':'warn'}">홈 ${homeCount}/11 · 원정 ${awayCount}/11</span></div>
+            <div class="soccer-field-dual" id="soccerFieldDual">${renderFieldSlots('away')}${renderFieldSlots('home')}</div>
+            <div class="soccer-lineup-teams">${renderTeamRoster('away')}${renderTeamRoster('home')}</div>
+        </div>`;
+        bindSoccerLineupDnD();
+    }
+    function starterCount(teamState){ return teamState.players.filter(p => p.slot && !p.removed).length; }
+    function slotsFor(side) {
+        const formation = soccerState.lineups[side].formation;
+        const positions = SOCCER_FORMATIONS[formation] || SOCCER_FORMATIONS['4-4-2'];
+        return positions.map((pos, i) => ({ order:i+1, pos, ...slotCoord(side, formation, i+1, pos) }));
+    }
+    function slotCoord(side, formation, order, pos) {
+        const left = side === 'away';
+        const xBase = left ? 7 : 93;
+        const dir = left ? 1 : -1;
+        const cols = {
+            GK: xBase,
+            DF: xBase + dir * 9,
+            DM: xBase + dir * 18,
+            MF: xBase + dir * 26,
+            AM: xBase + dir * 34,
+            FW: xBase + dir * 42
+        };
+        const layout = formation === '4-3-3'
+            ? {1:['GK',50],2:['DF',18],3:['DF',39],4:['DF',61],5:['DF',82],6:['MF',28],7:['MF',50],8:['MF',72],9:['FW',22],10:['FW',50],11:['FW',78]}
+            : formation === '4-2-3-1'
+                ? {1:['GK',50],2:['DF',18],3:['DF',39],4:['DF',61],5:['DF',82],6:['DM',38],7:['DM',62],8:['AM',50],9:['AM',25],10:['AM',75],11:['FW',50]}
+                : {1:['GK',50],2:['DF',18],3:['DF',39],4:['DF',61],5:['DF',82],6:['MF',18],7:['MF',39],8:['MF',61],9:['MF',82],10:['FW',38],11:['FW',62]};
+        const [line, y] = layout[order];
+        return { x: cols[line], y };
+    }
+    function renderFieldSlots(side) {
+        const team = soccerState.lineups[side];
+        return slotsFor(side).map(slot => {
+            const player = team.players.find(p => Number(p.slot) === slot.order && !p.removed);
+            return `<div class="soccer-slot ${player ? '' : 'empty'}" data-side="${side}" data-slot="${slot.order}" data-pos="${slot.pos}" style="left:${slot.x}%;top:${slot.y}%">
+                <b>${slot.order}. ${slot.pos}</b><span>${player ? player.playerName : '선수 배치'}</span>${player ? '<button type="button" data-clear-slot="1">×</button>' : ''}
+            </div>`;
+        }).join('');
+    }
+    function renderTeamRoster(side) {
+        const team = soccerState.lineups[side];
+        const assigned = starterCount(team);
+        const bench = team.players.filter(p => !p.removed && !p.slot).length;
+        return `<article class="soccer-team-editor" data-side="${side}">
+            <div class="soccer-team-editor-head"><h3>${team.team?.name || '-'}</h3><span class="badge ${assigned===11 ? 'live':'warn'}">선발 ${assigned}/11 · 후보 ${bench}</span></div>
+            <div class="soccer-team-editor-body">
+                <label class="field">포메이션<select data-formation-side="${side}">${Object.keys(SOCCER_FORMATIONS).map(f => `<option value="${f}" ${f===team.formation?'selected':''}>${f}</option>`).join('')}</select></label>
+                <div class="soccer-bench-summary">선수 이름을 드래그해서 위 경기장 포지션 슬롯에 놓으세요. - 버튼을 누르면 저장 대상에서 제외됩니다.</div>
+                <div class="soccer-roster">${team.players.map(p => `<div class="soccer-player-chip ${p.removed?'removed':''} ${p.slot?'assigned':''}" draggable="true" data-side="${side}" data-player-id="${p.playerId}"><div><b>${p.playerName}</b></div><button type="button" title="후보 제외/복구" data-remove-player="${p.playerId}">${p.removed ? '+' : '-'}</button></div>`).join('')}</div>
+            </div>
+        </article>`;
+    }
+    function bindSoccerLineupDnD() {
+        $all('[data-formation-side]').forEach(select => select.addEventListener('change', () => { soccerState.lineups[select.dataset.formationSide].formation = select.value; clearInvalidSlots(select.dataset.formationSide); renderSoccerLineupEditor(); }));
+        $all('.soccer-player-chip').forEach(chip => chip.addEventListener('dragstart', e => { soccerState.dragging = { side: chip.dataset.side, playerId: Number(chip.dataset.playerId) }; e.dataTransfer.effectAllowed = 'move'; }));
+        $all('.soccer-slot').forEach(slot => {
+            slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
+            slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+            slot.addEventListener('drop', e => { e.preventDefault(); slot.classList.remove('drag-over'); assignPlayerToSlot(slot.dataset.side, Number(slot.dataset.slot), slot.dataset.pos); });
+        });
+        $all('[data-clear-slot]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); const slot = btn.closest('.soccer-slot'); clearSlot(slot.dataset.side, Number(slot.dataset.slot)); }));
+        $all('[data-remove-player]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); toggleRemovePlayer(btn.closest('.soccer-player-chip').dataset.side, Number(btn.dataset.removePlayer)); }));
+    }
+    function assignPlayerToSlot(side, slot, pos) {
+        const drag = soccerState.dragging;
+        if (!drag || drag.side !== side) return;
+        const team = soccerState.lineups[side];
+        team.players.forEach(p => { if (Number(p.slot) === slot) p.slot = null; });
+        const player = team.players.find(p => Number(p.playerId) === Number(drag.playerId));
+        if (!player) return;
+        player.removed = false; player.slot = slot; player.position = pos;
+        soccerState.dragging = null; renderSoccerLineupEditor();
+    }
+    function clearSlot(side, slot) { const p = soccerState.lineups[side].players.find(x => Number(x.slot) === slot); if (p) p.slot = null; renderSoccerLineupEditor(); }
+    function toggleRemovePlayer(side, playerId) { const p = soccerState.lineups[side].players.find(x => Number(x.playerId) === playerId); if (!p) return; p.removed = !p.removed; if (p.removed) p.slot = null; renderSoccerLineupEditor(); }
+    function clearInvalidSlots(side){ const valid = new Set(slotsFor(side).map(s => s.order)); soccerState.lineups[side].players.forEach(p => { if (p.slot && !valid.has(Number(p.slot))) p.slot = null; }); }
+    async function saveSoccerLineup() {
+        if (!soccerState.editor) return;
+        const entries = [];
+        ['home','away'].forEach(side => {
+            const team = soccerState.lineups[side];
+            team.players.forEach(p => entries.push({ teamId:p.teamId, playerId:p.playerId, included:!p.removed, starter:!p.removed && Boolean(p.slot), orderNum:(!p.removed && p.slot) ? Number(p.slot) : null, position:p.position || p.playerPosition || 'MF' }));
+        });
+        await putJson(`${SOCCER_API}/games/${soccerState.editor.matchId}/lineup`, { entries });
+        notifySafe('축구 라인업이 저장되었습니다.');
+        await loadCombinedGames();
+        await loadSoccerLineup(soccerState.editor.matchId);
+    }
+
+    async function loadSoccerState(matchId) {
+        const live = await json(`${SOCCER_API}/games/${matchId}/state`);
+        soccerState.currentLive = live;
+        showControlPanel('soccer');
+        renderSoccerControl(live);
+    }
+    function soccerEventCount(live) {
+        return (live.timeline?.sections || []).reduce((sum, section) => sum + (section.events || []).length, 0);
+    }
+    function soccerMinuteText() {
+        const minute = Number($('#soccerMinute')?.value || 0);
+        const added = Number($('#soccerAddedMinute')?.value || 0);
+        return added > 0 ? `${minute}+${added}'` : `${minute}'`;
+    }
+    let soccerClockTimer = null;
+    function startSoccerClock(startMinute) {
+        clearInterval(soccerClockTimer);
+        const input = $('#soccerMinute');
+        if (input) input.value = String(startMinute);
+        soccerClockTimer = setInterval(() => {
+            const node = $('#soccerMinute');
+            if (!node) return;
+            const next = Math.min(130, Number(node.value || 0) + 1);
+            node.value = String(next);
+            updateSoccerPreview();
+        }, 60000);
+        updateSoccerPreview();
+    }
+    function stopSoccerClock() {
+        clearInterval(soccerClockTimer);
+        soccerClockTimer = null;
+        updateSoccerPreview();
+    }
+    function updateSoccerPreview() {
+        setText('soccerPreviewMinute', soccerMinuteText());
+        const action = $('#soccerPreviewAction')?.textContent || '대기';
+        const desc = ($('#soccerDescription')?.value || '').trim();
+        setText('soccerPreviewText', desc || action);
+    }
+    function renderSoccerControl(live) {
+        const panel = $('#panel-soccer');
+        if (!panel) return;
+        const s = live.scoreboard || {};
+        const matchTitle = `${s.awayTeamName || '-'} vs ${s.homeTeamName || '-'}`;
+        setText('selectedMatchName', matchTitle);
+        setText('selectedSportLabel', '축구');
+        setText('statusLabel', statusLabel(live.status));
+        setText('phaseLabel', `${s.phase || '경기전'} · ${s.currentMinute || "0'"}`);
+        setText('awayScore', s.awayScore ?? 0);
+        setText('homeScore', s.homeScore ?? 0);
+        setText('lastUpdated', new Date().toLocaleTimeString('ko-KR', { hour12:false }));
+        setText('eventCount', live.eventCount ?? soccerEventCount(live));
+        panel.innerHTML = `<div class="soccer-admin-board">
+            <div class="soccer-admin-score"><div class="team-block"><b>${s.awayTeamName || '-'}</b><span>원정</span></div><div class="score-mid">${s.awayScore ?? 0} : ${s.homeScore ?? 0}<small>${s.phase || '경기전'} · ${s.currentMinute || '0'}'</small></div><div class="team-block right"><b>${s.homeTeamName || '-'}</b><span>홈</span></div></div>
+            <div class="soccer-admin-card"><div class="cluster-title">이벤트 공통 입력</div><div class="soccer-admin-row"><label class="field">팀<select id="soccerEventTeam"></select></label><label class="field">선수<select id="soccerEventPlayer"></select></label><label class="field">분<input id="soccerMinute" type="number" min="0" max="130" value="${parseInt(s.currentMinute,10) || 0}"></label><label class="field">추가시간<input id="soccerAddedMinute" type="number" min="0" max="30" value="0"></label><label class="field full">문구<textarea id="soccerDescription" placeholder="예: 제르소가 페널티 박스 안에서 슈팅을 시도합니다."></textarea></label></div></div>
+            <div class="soccer-admin-card"><div class="cluster-title">경기 진행</div><div class="soccer-action-grid"><button class="btn green" data-soccer-action="START_MATCH" data-clock-start="1">경기 시작</button><button class="btn yellow" data-soccer-action="END_FIRST_HALF" data-clock-stop="1">전반 종료</button><button class="btn green" data-soccer-action="START_SECOND_HALF" data-clock-start="46">후반 시작</button><button class="btn red" data-soccer-action="END_MATCH" data-clock-stop="1">경기 종료</button><button class="btn" data-soccer-refresh="1">현재 상태 다시 반영</button><button class="btn red" data-soccer-action="UNDO_LAST_EVENT">마지막 이벤트 취소</button></div></div>
+            <div class="soccer-admin-card"><div class="cluster-title">득점 · 슈팅</div><div class="soccer-action-grid"><button class="btn primary" data-soccer-action="GOAL">골</button><button class="btn" data-soccer-action="OWN_GOAL">자책골</button><button class="btn primary" data-soccer-action="PENALTY_GOAL">PK 골</button><button class="btn yellow" data-soccer-action="PENALTY_MISS">PK 실축</button><button class="btn" data-soccer-action="SHOT">슈팅</button><button class="btn" data-soccer-action="SHOT_ON_TARGET">유효슈팅</button></div></div>
+            <div class="soccer-admin-card"><div class="cluster-title">경기 이벤트</div><div class="soccer-action-grid"><button class="btn" data-soccer-action="CORNER_KICK">코너킥</button><button class="btn" data-soccer-action="FOUL">파울</button><button class="btn" data-soccer-action="OFFSIDE">오프사이드</button><button class="btn" data-soccer-action="SAVE">세이브</button><button class="btn yellow" data-soccer-action="YELLOW_CARD">경고</button><button class="btn red" data-soccer-action="RED_CARD">퇴장</button></div></div>
+            <div class="soccer-admin-card"><div class="cluster-title">선수 교체</div><div class="soccer-admin-row three"><label class="field">교체 팀<select id="soccerSubTeam"></select></label><label class="field">나가는 선수<select id="soccerOutPlayer"></select></label><label class="field">들어오는 선수<select id="soccerInPlayer"></select></label></div><button class="btn primary" data-soccer-sub="1">선수 교체 등록</button></div>
+            <div class="soccer-admin-preview"><div class="cluster-title">사용자 화면 미리보기</div><div class="preview-line"><span>${matchTitle}</span><strong>${s.awayScore ?? 0} : ${s.homeScore ?? 0}</strong></div><div class="preview-line"><span>반영 분</span><strong id="soccerPreviewMinute">${s.currentMinute || "0'"}</strong></div><div class="preview-line"><span>송출 문구</span><strong id="soccerPreviewText">대기</strong></div><span id="soccerPreviewAction" style="display:none">대기</span></div>
+        </div>`;
+        fillSoccerSelects(live);
+        bindSoccerControl(live.matchId);
+        updateSoccerPreview();
+    }
+    function lineupPlayers(live, teamId, starterOnly=false) {
+        const all = [...(live.lineup?.home?.starters || []), ...(live.lineup?.home?.bench || []), ...(live.lineup?.away?.starters || []), ...(live.lineup?.away?.bench || [])];
+        return all.filter(p => !starterOnly || p.starter).filter(p => {
+            const home = live.lineup?.home?.teamId; const away = live.lineup?.away?.teamId;
+            if (teamId === home) return [...(live.lineup?.home?.starters || []), ...(live.lineup?.home?.bench || [])].some(x => x.playerId === p.playerId);
+            if (teamId === away) return [...(live.lineup?.away?.starters || []), ...(live.lineup?.away?.bench || [])].some(x => x.playerId === p.playerId);
+            return true;
+        });
+    }
+    function fillSoccerSelects(live) {
+        const teams = [{id:live.scoreboard?.awayTeamId,name:live.scoreboard?.awayTeamName},{id:live.scoreboard?.homeTeamId,name:live.scoreboard?.homeTeamName}].filter(t=>t.id);
+        ['soccerEventTeam','soccerSubTeam'].forEach(id => { const el = $('#'+id); if(el) el.innerHTML = teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''); });
+        const refreshPlayers = () => {
+            const teamId = Number($('#soccerEventTeam')?.value || teams[0]?.id || 0);
+            const players = lineupPlayers(live, teamId);
+            const p = $('#soccerEventPlayer'); if (p) p.innerHTML = players.map(x=>`<option value="${x.playerId}">${x.playerName}</option>`).join('');
+        };
+        $('#soccerEventTeam')?.addEventListener('change', refreshPlayers); refreshPlayers();
+        const refreshSubPlayers = () => {
+            const teamId = Number($('#soccerSubTeam')?.value || teams[0]?.id || 0);
+            const players = lineupPlayers(live, teamId);
+            const out = $('#soccerOutPlayer'); const inn = $('#soccerInPlayer');
+            if(out) out.innerHTML = players.filter(x=>x.starter).map(x=>`<option value="${x.playerId}">${x.playerName}</option>`).join('');
+            if(inn) inn.innerHTML = players.filter(x=>!x.starter).map(x=>`<option value="${x.playerId}">${x.playerName}</option>`).join('');
+        };
+        $('#soccerSubTeam')?.addEventListener('change', refreshSubPlayers); refreshSubPlayers();
+    }
+    function soccerCommandPayload(action) {
+        const minute = Number($('#soccerMinute')?.value || 0) + Number($('#soccerAddedMinute')?.value || 0);
+        const period = action === 'START_SECOND_HALF' || minute > 45 ? 'second_half' : 'first_half';
+        return { action, teamId:Number($('#soccerEventTeam')?.value || 0) || null, playerId:Number($('#soccerEventPlayer')?.value || 0) || null, minute, period, description:($('#soccerDescription')?.value || '').trim() || defaultSoccerDescription(action) };
+    }
+    function defaultSoccerDescription(action) {
+        const player = $('#soccerEventPlayer')?.selectedOptions?.[0]?.textContent || '선수';
+        const team = $('#soccerEventTeam')?.selectedOptions?.[0]?.textContent || '팀';
+        const map = { GOAL:`${player}가 침착하게 마무리하며 골망을 흔듭니다.`, OWN_GOAL:`${team} 자책골이 기록됩니다.`, PENALTY_GOAL:`${player}가 페널티킥을 성공시킵니다.`, PENALTY_MISS:`${player}의 페널티킥이 무산됩니다.`, SHOT:`${player}가 슈팅을 시도합니다.`, SHOT_ON_TARGET:`${player}의 슈팅이 골문 안쪽으로 향합니다.`, CORNER_KICK:`${team}이 코너킥 기회를 얻습니다.`, FOUL:`${player}의 파울이 선언됩니다.`, OFFSIDE:`${player}의 오프사이드가 선언됩니다.`, SAVE:`${player}가 결정적인 슈팅을 막아냅니다.`, YELLOW_CARD:`${player}에게 경고가 주어집니다.`, RED_CARD:`${player}에게 퇴장이 선언됩니다.`, START_MATCH:'경기가 시작되었습니다.', END_FIRST_HALF:'전반전이 종료되었습니다.', START_SECOND_HALF:'후반전이 시작되었습니다.', END_MATCH:'경기가 종료되었습니다.' };
+        return map[action] || action;
+    }
+    function bindSoccerControl(matchId) {
+        ['soccerMinute','soccerAddedMinute','soccerDescription'].forEach(id => $('#'+id)?.addEventListener('input', updateSoccerPreview));
+        $all('[data-soccer-action]').forEach(btn => btn.addEventListener('click', async () => {
+            setText('soccerPreviewAction', btn.textContent.trim());
+            if (btn.dataset.clockStart) startSoccerClock(Number(btn.dataset.clockStart));
+            if (btn.dataset.clockStop) stopSoccerClock();
+            await postJson(`${SOCCER_API}/games/${matchId}/command`, soccerCommandPayload(btn.dataset.soccerAction));
+            await loadSoccerState(matchId);
+        }));
+        $('[data-soccer-refresh]')?.addEventListener('click', () => loadSoccerState(matchId));
+        $('[data-soccer-sub]')?.addEventListener('click', async () => {
+            const teamId = Number($('#soccerSubTeam')?.value || 0);
+            const inId = Number($('#soccerInPlayer')?.value || 0);
+            const outId = Number($('#soccerOutPlayer')?.value || 0);
+            const minute = Number($('#soccerMinute')?.value || 0) + Number($('#soccerAddedMinute')?.value || 0);
+            const desc = ($('#soccerDescription')?.value || '').trim() || `${$('#soccerInPlayer')?.selectedOptions?.[0]?.textContent || '선수'}가 투입되고 ${$('#soccerOutPlayer')?.selectedOptions?.[0]?.textContent || '선수'}가 벤치로 물러납니다.`;
+            await postJson(`${SOCCER_API}/games/${matchId}/command`, { action:'SUBSTITUTION', teamId, playerId:inId, inPlayerId:inId, outPlayerId:outId, minute, period: minute > 45 ? 'second_half' : 'first_half', description:desc });
+            await loadSoccerState(matchId);
+        });
+    }
+
+    function resetElementListeners(id) {
+        const el = document.getElementById(id);
+        if (!el || !el.parentNode) return null;
+        const clone = el.cloneNode(true);
+        el.parentNode.replaceChild(clone, el);
+        return clone;
+    }
+
+    function initSoccerEnhancement() {
+        ensureLineupSportOptions();
+        const reloadBtn = resetElementListeners('adminScheduleReloadBtn');
+        const scheduleSport = resetElementListeners('adminScheduleSportFilter');
+        const scheduleStatus = resetElementListeners('adminScheduleStatusFilter');
+        const scheduleKeyword = resetElementListeners('adminScheduleKeyword');
+        const controlSportSelect = $('#controlSport');
+        const controlMatchSelect = $('#adminBaseballMatchSelect');
+        reloadBtn?.addEventListener('click', loadCombinedGames);
+        scheduleSport?.addEventListener('change', renderCombinedSchedule);
+        scheduleStatus?.addEventListener('change', renderCombinedSchedule);
+        scheduleKeyword?.addEventListener('input', renderCombinedSchedule);
+        controlSportSelect?.addEventListener('change', async (e) => {
+            const sport = controlSportSelect.value || 'baseball';
+            if (sport !== 'soccer') return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            renderControlSelect();
+            showControlPanel(sport);
+            const id = Number($('#adminBaseballMatchSelect')?.value || 0);
+            if (sport === 'soccer' && id) await loadSoccerState(id);
+        }, true);
+        controlMatchSelect?.addEventListener('change', async (e) => {
+            const sport = $('#controlSport')?.value || $('#adminBaseballMatchSelect')?.selectedOptions?.[0]?.dataset?.sport || 'baseball';
+            if (sport !== 'soccer') return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            showControlPanel(sport);
+            if (sport === 'soccer') {
+                const id = Number($('#adminBaseballMatchSelect')?.value || 0);
+                if (id) await loadSoccerState(id);
+            }
+        }, true);
+        const lineupSportSelect = $('#lineupSportSelect');
+        const lineupMatchSelect = $('#lineupMatchSelect');
+        const lineupSaveBtn = $('#lineupSaveBtn');
+        const lineupReloadBtn = $('#lineupReloadBtn');
+        ensureLineupSportOptions();
+        lineupReloadBtn?.addEventListener('click', async (e) => {
+            const isSoccer = $('#lineupSportSelect')?.value === 'soccer';
+            const id = Number($('#lineupMatchSelect')?.value || 0);
+            if (!isSoccer) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (isSoccer && id) await loadSoccerLineup(id);
+        }, true);
+        lineupSportSelect?.addEventListener('change', async (e) => {
+            const isSoccer = $('#lineupSportSelect')?.value === 'soccer';
+            $('#lineupTeamGrid')?.classList.toggle('soccer-mode', isSoccer);
+            if (!isSoccer) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            renderLineupMatchSelect();
+            if (isSoccer) {
+                const id = Number($('#lineupMatchSelect')?.value || 0);
+                if (id) await loadSoccerLineup(id);
+            }
+        }, true);
+        lineupMatchSelect?.addEventListener('change', async (e) => {
+            const isSoccer = $('#lineupSportSelect')?.value === 'soccer';
+            $('#lineupTeamGrid')?.classList.toggle('soccer-mode', isSoccer);
+            if (!isSoccer) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (isSoccer) await loadSoccerLineup(Number($('#lineupMatchSelect').value));
+        }, true);
+        lineupSaveBtn?.addEventListener('click', e => { if ($('#lineupSportSelect')?.value === 'soccer') { e.preventDefault(); e.stopImmediatePropagation(); saveSoccerLineup(); } }, true);
+        loadCombinedGames();
+    }
+    document.addEventListener('DOMContentLoaded', initSoccerEnhancement);
+})();
+</script>
+
 </body>
 </html>
