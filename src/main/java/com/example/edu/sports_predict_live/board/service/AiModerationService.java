@@ -35,6 +35,9 @@ public class AiModerationService {
     private final ObjectMapper objectMapper;
 
     public boolean isBadContent(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return false;
+        }
         String prompt = "너는 스포츠 커뮤니티의 클린봇이야. 다음 텍스트를 분석해서 심한 욕설, 타 팀 비하, 혐오 표현, 분란 조장이 포함되어 있다면 오직 'true'를, 정상적인 글이라면 오직 'false'만 대답해. 부연 설명은 절대 하지마.\n\n분석할 텍스트: " + text;
         int maxRetries = 3;
 
@@ -110,14 +113,18 @@ public class AiModerationService {
 
     @Async
     @Transactional
-    public void checkAndReplyAsync(BoardReply boardReply) {
+    public void checkAndReplyAsync(Long replyId, String textToAnalyze) {
+        log.info("백그라운드에서 [{}]번 댓글 ai 필터링", replyId);
         try {
-            boolean isBad = isBadContent(boardReply.getReplyText());
+            boolean isBad = isBadContent(textToAnalyze);
 
             if(isBad) {
-                log.warn("부적절한 댓글 감지. 블라인드 처리합니다. ID: {}", boardReply.getReplyId());
-                boardReply.changeBlind(true);
-                boardReplyRepository.save(boardReply);
+                log.warn("부적절한 댓글 감지. 블라인드 처리합니다. ID: {}", replyId);
+                BoardReply boardReply = boardReplyRepository.findById(replyId).orElse(null);
+                if(boardReply != null) {
+                    boardReply.changeBlind(true);
+                    boardReplyRepository.save(boardReply);
+                }
             }
         } catch (Exception e) {
             log.error("댓글 ai 검사중 에러 발생", e);

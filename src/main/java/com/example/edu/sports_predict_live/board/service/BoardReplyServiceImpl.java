@@ -60,7 +60,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 .build();
 
         BoardReply saveReply = boardReplyRepository.saveAndFlush(reply);
-        aiModerationService.checkAndReplyAsync(saveReply);
+        aiModerationService.checkAndReplyAsync(saveReply.getReplyId(), saveReply.getReplyText());
 
         return saveReply.getReplyId();
     }
