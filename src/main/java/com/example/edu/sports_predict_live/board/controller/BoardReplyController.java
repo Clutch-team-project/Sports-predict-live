@@ -40,7 +40,13 @@ public class BoardReplyController {
 
     // 댓글 등록
     @PostMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Long>> register(@RequestBody BoardReplyDTO replyDTO) {
+    public ResponseEntity<Map<String, Long>> register(@RequestBody BoardReplyDTO replyDTO, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long currentUserId = Long.parseLong(authentication.getName());
+        replyDTO.setUserId(currentUserId);
+        
         Long replyId = boardReplyService.register(replyDTO);
         return ResponseEntity.ok(Map.of("replyId", replyId));
     }

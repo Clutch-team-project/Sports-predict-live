@@ -62,7 +62,7 @@ public class SecurityConfig {
             "/prediction-history", "/user-info", "/favorite-teams",
             "/baseball/**", "/soccer/**", "/lol/**",
             "/board", "/board/list/**", "/board/read/**",
-            "/replies/**", "/templates/**",
+            "/replies/list/**", "/templates/**",
             "/team-detail", "/player-detail", "/news", "/sitemap",
             "/files/**",
     };
@@ -101,7 +101,7 @@ public class SecurityConfig {
                                 "/signup-success", "/login-success", "/find-id",
                                 "/find-password", "/change-password", "/prediction-history",
                                 "/user-info", "/favorite-teams",
-                                "/board", "/board/list/**", "/board/read/**", "/replies/**", "/templates/**" // ← 추가
+                                "/board", "/board/list/**", "/board/read/**", "/replies/list/**", "/templates/**" // ← 추가
                         ).permitAll()
                         .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/board/register", "/board/modify").permitAll()
