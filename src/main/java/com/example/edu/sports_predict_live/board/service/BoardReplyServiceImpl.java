@@ -79,8 +79,19 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     // 댓글 조회
     @Override
     public BoardReplyDTO read(Long replyId) {
-        BoardReply reply = boardReplyRepository.findById(replyId).orElseThrow();
-        return modelMapper.map(reply, BoardReplyDTO.class);
+        BoardReply reply = boardReplyRepository.findById(replyId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+        return BoardReplyDTO.builder()
+                .replyId(reply.getReplyId())
+                .boardId(reply.getBoard().getBoardId())
+                .replyText(reply.getReplyText())
+                .userId(reply.getUserId())
+                .nickname(reply.getNickname())
+                .createdAt(reply.getCreatedAt())
+                .likeCount(reply.getLikeCount())
+                .isBlinded(reply.isBlinded())
+                .parentId(reply.getParent() != null ? reply.getParent().getReplyId() : null)
+                .build();
     }
 
     // 댓글 수정
