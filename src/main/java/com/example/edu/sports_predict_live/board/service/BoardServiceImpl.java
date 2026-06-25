@@ -232,7 +232,7 @@ public class BoardServiceImpl implements BoardService {
             throw new IllegalStateException("본인의 게시글은 신고할 수 없습니다.");
         }
         if (board.isNotice()) {
-            throw new IllegalStateException("공지글은 신고할 수 없스니다.");
+            throw new IllegalStateException("공지글은 신고할 수 없습니다.");
         }
 
         Optional<BoardReport> existingReport = boardReportRepository.findByBoard_BoardIdAndUserId(boardId, userId);
