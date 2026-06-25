@@ -33,6 +33,14 @@ public class BoardReply {
     @Column(nullable = false)
     private String nickname;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private BoardReply parent;
+
+    public void setParent(BoardReply parent) {
+        this.parent = parent;
+    }
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

@@ -24,4 +24,7 @@ public class BoardReplyDTO {
     private boolean isLiked;
     private boolean isReported;
     private boolean isBlinded;
+    private Long parentId;
+    @Builder.Default
+    private java.util.List<BoardReplyDTO> children = new java.util.ArrayList<>();
 }

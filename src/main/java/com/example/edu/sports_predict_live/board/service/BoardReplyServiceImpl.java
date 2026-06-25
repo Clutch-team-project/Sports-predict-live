@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BoardReplyServiceImpl implements BoardReplyService {
     private final BoardReplyRepository boardReplyRepository;
     private final BoardRepository boardRepository;
@@ -59,6 +60,16 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 .isBlinded(false)
                 .build();
 
+        // 부모 댓글 연동 (대댓글 처리)
+        if (boardReplyDTO.getParentId() != null) {
+            BoardReply parent = boardReplyRepository.findById(boardReplyDTO.getParentId())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부모 댓글입니다."));
+            if (parent.getParent() != null) {
+                throw new IllegalArgumentException("대대댓글은 작성할 수 없습니다.");
+            }
+            reply.setParent(parent);
+        }
+
         BoardReply saveReply = boardReplyRepository.saveAndFlush(reply);
         aiModerationService.checkAndReplyAsync(saveReply.getReplyId(), saveReply.getReplyText());
 
@@ -74,6 +85,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
 
     // 댓글 수정
     @Override
+    @Transactional
     public void modifyReply(BoardReplyDTO boardReplyDTO, Long currentUserId) {
         BoardReply reply = boardReplyRepository.findById(boardReplyDTO.getReplyId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
         if (reply.getDeletedAt() != null) {
@@ -88,6 +100,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
 
     // 댓글 삭제
     @Override
+    @Transactional
     public void removeReply(Long replyId, Long currentUserId, String currentUserRole) {
         BoardReply reply = boardReplyRepository.findById(replyId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
@@ -118,35 +131,71 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 sortOrder
         );
 
-        Page<BoardReply> result = boardReplyRepository.findByBoard_BoardIdAndDeletedAtIsNull(boardId, pageable);
-        List<BoardReply> replies = result.getContent();
+        // 최상위 댓글만 페이징 조회
+        Page<BoardReply> result = boardReplyRepository.findByBoard_BoardIdAndParentIsNullAndDeletedAtIsNull(boardId, pageable);
+        List<BoardReply> parentReplies = result.getContent();
 
-        List<Long> replyIds = replies.stream().map(BoardReply::getReplyId).collect(Collectors.toList());
+        List<Long> parentReplyIds = parentReplies.stream().map(BoardReply::getReplyId).collect(Collectors.toList());
+
+        // 대댓글(자식) 일괄 조회
+        List<BoardReply> childrenReplies = new java.util.ArrayList<>();
+        if (!parentReplyIds.isEmpty()) {
+            childrenReplies = boardReplyRepository.findByParent_ReplyIdInAndDeletedAtIsNull(parentReplyIds);
+        }
+
+        // 전체 댓글 ID 모음 (좋아요, 신고 확인용)
+        List<Long> allReplyIds = new java.util.ArrayList<>(parentReplyIds);
+        childrenReplies.forEach(child -> allReplyIds.add(child.getReplyId()));
 
         java.util.Set<Long> likedReplyIds = new java.util.HashSet<>();
         java.util.Set<Long> reportedReplyIds = new java.util.HashSet<>();
 
-        if (currentUserId != null && !replyIds.isEmpty()) {
-            List<BoardReplyLike> likes = boardReplyLikeRepository.findByBoardReply_ReplyIdInAndUserId(replyIds, currentUserId);
+        if (currentUserId != null && !allReplyIds.isEmpty()) {
+            List<BoardReplyLike> likes = boardReplyLikeRepository.findByBoardReply_ReplyIdInAndUserId(allReplyIds, currentUserId);
             likes.forEach(like -> likedReplyIds.add(like.getBoardReply().getReplyId()));
 
-            List<BoardReplyReport> reports = boardReplyReportRepository.findByBoardReply_ReplyIdInAndUserId(replyIds, currentUserId);
+            List<BoardReplyReport> reports = boardReplyReportRepository.findByBoardReply_ReplyIdInAndUserId(allReplyIds, currentUserId);
             reports.forEach(report -> reportedReplyIds.add(report.getBoardReply().getReplyId()));
         }
 
-        List<BoardReplyDTO> dtoList = replies.stream()
-                .map(reply -> BoardReplyDTO.builder()
-                        .replyId(reply.getReplyId())
-                        .boardId(boardId)
-                        .replyText(reply.getReplyText())
-                        .userId(reply.getUserId())
-                        .nickname(reply.getNickname())
-                        .createdAt(reply.getCreatedAt())
-                        .likeCount(reply.getLikeCount())
-                        .isBlinded(reply.isBlinded())
-                        .isLiked(likedReplyIds.contains(reply.getReplyId()))
-                        .isReported(reportedReplyIds.contains(reply.getReplyId()))
-                        .build())
+        // 대댓글 DTO 조립 및 부모 ID 매핑
+        java.util.Map<Long, List<BoardReplyDTO>> childDtoMap = new java.util.HashMap<>();
+        for (BoardReply child : childrenReplies) {
+            BoardReplyDTO childDto = BoardReplyDTO.builder()
+                    .replyId(child.getReplyId())
+                    .boardId(boardId)
+                    .replyText(child.getReplyText())
+                    .userId(child.getUserId())
+                    .nickname(child.getNickname())
+                    .createdAt(child.getCreatedAt())
+                    .likeCount(child.getLikeCount())
+                    .isBlinded(child.isBlinded())
+                    .isLiked(likedReplyIds.contains(child.getReplyId()))
+                    .isReported(reportedReplyIds.contains(child.getReplyId()))
+                    .parentId(child.getParent().getReplyId())
+                    .build();
+
+            childDtoMap.computeIfAbsent(child.getParent().getReplyId(), k -> new java.util.ArrayList<>()).add(childDto);
+        }
+
+        // 부모 DTO 조립 및 대댓글 리스트 결합
+        List<BoardReplyDTO> dtoList = parentReplies.stream()
+                .map(reply -> {
+                    List<BoardReplyDTO> children = childDtoMap.getOrDefault(reply.getReplyId(), new java.util.ArrayList<>());
+                    return BoardReplyDTO.builder()
+                            .replyId(reply.getReplyId())
+                            .boardId(boardId)
+                            .replyText(reply.getReplyText())
+                            .userId(reply.getUserId())
+                            .nickname(reply.getNickname())
+                            .createdAt(reply.getCreatedAt())
+                            .likeCount(reply.getLikeCount())
+                            .isBlinded(reply.isBlinded())
+                            .isLiked(likedReplyIds.contains(reply.getReplyId()))
+                            .isReported(reportedReplyIds.contains(reply.getReplyId()))
+                            .children(children)
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         return PageResponseDTO.<BoardReplyDTO>withAll()

@@ -431,6 +431,10 @@ function printReplies(page = 1) {
                         const likeColor = reply.liked ? 'text-blue-600 font-bold' : 'text-slate-500';
                         btnStr += `<button onclick="likeReply(${reply.replyId})" class="text-xs ${likeColor} hover:underline mr-2">♥ ${reply.likeCount || 0}</button>`;
 
+                        if (loggedInUserId) {
+                            btnStr += `<button onclick="showReReplyForm(${reply.replyId})" class="text-xs text-blue-500 font-semibold hover:underline mr-2">답글</button>`;
+                        }
+
                         if (loggedInUserId && loggedInUserId != reply.userId && loggedInUserRole !== 'ROLE_ADMIN') {
                             const reportColor = reply.reported ? 'text-red-600 font-bold' : 'text-slate-500';
                             btnStr += `<button onclick="reportReply(${reply.replyId})" class="text-xs ${reportColor} hover:underline mr-2">신고</button>`;
@@ -461,8 +465,71 @@ function printReplies(page = 1) {
                                 <div>${btnStr}</div>
                             </div>
                             <div class="text-sm">${replyContentStr}</div>
+                            
+                            <!-- 대댓글 등록 폼 -->
+                            <div id="rereply-form-${reply.replyId}" class="mt-3 pl-8 pb-2" style="display:none;">
+                                <div class="flex gap-2">
+                                    <input id="rereply-input-${reply.replyId}" class="input-field flex-1" type="text" style="font-size:12px; padding: 6px 12px;" placeholder="답글을 입력하세요">
+                                    <button onclick="registerReReply(${reply.replyId})" class="btn-primary" style="padding:6px 12px; white-space:nowrap; background:#2563eb; color:white; border-radius:6px; font-weight:700; font-size:12px;">답글 등록</button>
+                                </div>
+                            </div>
                         </li>
                     `;
+
+                    // 대댓글 렌더링
+                    if (reply.children && reply.children.length > 0) {
+                        reply.children.forEach(child => {
+                            let childBtnStr = '';
+
+                            let childContentStr = '';
+                            if (child.blinded) {
+                                childContentStr = `
+                                    <p class="blind-text text-slate-400 italic">AI 세이프봇이 가린 부적절한 댓글입니다.</p>
+                                    <p class="real-text text-slate-600 break-all leading-relaxed" style="display:none;">${child.replyText}</p>
+                                `;
+                            } else {
+                                childContentStr = `<p class="real-text text-slate-600 break-all leading-relaxed">${child.replyText}</p>`;
+                            }
+
+                            if (!child.blinded) {
+                                const childLikeColor = child.liked ? 'text-blue-600 font-bold' : 'text-slate-500';
+                                childBtnStr += `<button onclick="likeReply(${child.replyId})" class="text-xs ${childLikeColor} hover:underline mr-2">♥ ${child.likeCount || 0}</button>`;
+
+                                if (loggedInUserId && loggedInUserId != child.userId && loggedInUserRole !== 'ROLE_ADMIN') {
+                                    const childReportColor = child.reported ? 'text-red-600 font-bold' : 'text-slate-500';
+                                    childBtnStr += `<button onclick="reportReply(${child.replyId})" class="text-xs ${childReportColor} hover:underline mr-2">신고</button>`;
+                                }
+                            }
+
+                            if (loggedInUserId == child.userId) {
+                                const childSafeText = child.replyText.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                                childBtnStr += `<button onclick="modifyReplyPrompt(${child.replyId}, '${childSafeText}')" class="text-xs text-blue-500 font-semibold hover:underline mr-2">수정</button>`;
+                            }
+
+                            if (loggedInUserId == child.userId || loggedInUserRole === 'ROLE_ADMIN') {
+                                childBtnStr += `<button onclick="removeReply(${child.replyId})" class="text-xs text-red-500 font-semibold hover:underline mr-2">삭제</button>`;
+                            }
+
+                            if (loggedInUserRole === 'ROLE_ADMIN') {
+                                const childBlindBtnText = child.blinded ? '블라인드 해제' : '블라인드';
+                                childBtnStr += `<button onclick="toggleReplyBlind(${child.replyId})" class="text-xs text-amber-600 font-semibold hover:underline">${childBlindBtnText}</button>`;
+                            }
+
+                            listStr += `
+                                <li class="reply-item py-3 pl-8 border-b border-slate-100 bg-slate-50/50" data-blinded="${child.blinded}">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <div>
+                                            <span class="text-slate-400 mr-1">ㄴ</span>
+                                            <span class="font-bold text-sm text-slate-800">${child.nickname || '익명'}</span>
+                                            <span class="text-xs text-slate-400 ml-2">${child.createdAt}</span>
+                                        </div>
+                                        <div>${childBtnStr}</div>
+                                    </div>
+                                    <div class="text-sm pl-4">${childContentStr}</div>
+                                </li>
+                            `;
+                        });
+                    }
                 });
             } else {
                 listStr = '<div class="text-center py-10 text-slate-400 text-sm">등록된 댓글이 없습니다. 첫 댓글을 남겨보세요!</div>';
@@ -704,4 +771,47 @@ function applyReplySafebot() {
             }
         }
     });
+}
+
+function showReReplyForm(replyId) {
+    const form = document.getElementById(`rereply-form-${replyId}`);
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        const input = document.getElementById(`rereply-input-${replyId}`);
+        if (input && form.style.display === 'block') {
+            input.focus();
+        }
+    }
+}
+
+function registerReReply(parentId) {
+    const token = localStorage.getItem('accessToken');
+    const loggedInUserId = document.getElementById('loggedInUserId')?.value;
+    const boardIdEl = document.getElementById('currentBoardId');
+    if (!boardIdEl) return;
+    const boardId = boardIdEl.value;
+
+    if (!token || !loggedInUserId) {
+        if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
+        return;
+    }
+
+    const input = document.getElementById(`rereply-input-${parentId}`);
+    if (!input) return;
+    const text = input.value.trim();
+    if (text === '') { alert('답글 내용을 입력해 주세요.'); input.focus(); return; }
+
+    window.authFetch('/replies/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boardId: boardId, replyText: text, userId: loggedInUserId, parentId: parentId })
+    }).then(async res => {
+        if(res.ok) {
+            input.value = '';
+            printReplies(currentReplyPage);
+        } else {
+            const msg = await res.text();
+            alert(msg || '답글 등록에 실패했습니다.');
+        }
+    }).catch(err => console.error('답글 등록 에러:', err));
 }
