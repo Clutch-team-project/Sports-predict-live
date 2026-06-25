@@ -658,8 +658,9 @@
 
     const schedAiCache = {};
 
-    function aiPredictionUrl(sport, matchId) {
-        if (sport === 'lol') return `${BASE_URL}/api/ai-prediction/lol/${matchId}`;
+    function aiPredictionUrl(sport, matchId, awayName, homeName) {
+        const season = new Date().getFullYear().toString();
+        if (sport === 'lol') return `${BASE_URL}/api/ai-prediction/lol?matchId=${encodeURIComponent(matchId)}&homeTeam=${encodeURIComponent(homeName)}&awayTeam=${encodeURIComponent(awayName)}&season=${season}`;
         if (sport === 'soccer') return `${BASE_URL}/api/ai-prediction/soccer/${matchId}`;
         return `${BASE_URL}/api/ai-prediction/${matchId}`;
     }
@@ -689,7 +690,7 @@
         if (btn) btn.textContent = '⏳ 분석 중...';
 
         try {
-            const res = await fetch(aiPredictionUrl(sport, matchId));
+            const res = await fetch(aiPredictionUrl(sport, matchId, awayName, homeName));
             if (!res.ok) throw new Error();
 
             const data = await res.json();
@@ -711,7 +712,7 @@
             let data = schedAiCache[predId];
 
             if (!data) {
-                const res = await fetch(aiPredictionUrl(m.sport, m.matchId));
+                const res = await fetch(aiPredictionUrl(m.sport, m.matchId, m.awayTeamName, m.homeTeamName));
                 if (!res.ok) return;
 
                 data = await res.json();

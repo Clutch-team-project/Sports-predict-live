@@ -319,7 +319,7 @@
             let data = aiPredCache[m.matchId];
 
             if (!data) {
-                const res = await fetch(`${BASE_URL}/api/ai-prediction/${m.matchId}`);
+                const res = await fetch(`${BASE_URL}/api/ai-prediction/soccer/${m.matchId}`);
                 if (!res.ok) return;
                 data = await res.json();
                 aiPredCache[m.matchId] = data;

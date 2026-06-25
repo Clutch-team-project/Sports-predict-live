@@ -281,7 +281,8 @@
         try {
             let data = aiPredCache[m.matchId];
             if (!data) {
-                const res = await fetch(`${BASE_URL}/api/ai-prediction/lol/${m.matchId}`);
+                const season = new Date().getFullYear().toString();
+                const res = await fetch(`${BASE_URL}/api/ai-prediction/lol?matchId=${encodeURIComponent(m.matchId)}&homeTeam=${encodeURIComponent(m.homeTeamName)}&awayTeam=${encodeURIComponent(m.awayTeamName)}&season=${season}`);
                 if (!res.ok) return;
                 data = await res.json();
                 aiPredCache[m.matchId] = data;
