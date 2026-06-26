@@ -390,12 +390,29 @@
     }
 
     // 팀 + 검색어 + 정렬을 모두 반영해 다시 렌더
-    // 전체 선택 시 규정타석/이닝 충족 선수만, 특정 팀 선택 시 그 팀 전 선수
+    // 전체 선택 시: qualified=true 우선, 없으면 실제 기록이 있는 선수만 (안타>0 / ERA존재)
+    // 특정 팀 선택 시: 해당 팀 전 선수 (규정 미달 포함)
+    function globalHitters() {
+        // 안타가 1개 이상인 선수만 전체 뷰에 표시 (qualified 여부 무관)
+        const withHits = hitterData.filter(p => (p.hits ?? 0) > 0);
+        if (withHits.length === 0) return hitterData; // 데이터 없을 때 fallback
+        const qualified = withHits.filter(p => p.qualified);
+        return qualified.length > 0 ? qualified : withHits;
+    }
+
+    function globalPitchers() {
+        // ERA가 존재하는(이닝 소화한) 투수만 전체 뷰에 표시 (qualified 여부 무관)
+        const withEra = pitcherData.filter(p => p.era !== null && p.era !== undefined);
+        if (withEra.length === 0) return pitcherData; // 데이터 없을 때 fallback
+        const qualified = withEra.filter(p => p.qualified);
+        return qualified.length > 0 ? qualified : withEra;
+    }
+
     function applyHitterFilters() {
         const kw = (document.getElementById('hitter-search').value || '').trim().toLowerCase();
         let base = teamFilter.hitter
             ? hitterData.filter(p => p.teamName === teamFilter.hitter)
-            : hitterData.filter(p => p.qualified);
+            : globalHitters();
         if (kw) base = base.filter(p => p.playerName.toLowerCase().includes(kw) || p.teamName.toLowerCase().includes(kw));
         renderHitters(applySort(base, sortState['hitter']));
     }
@@ -404,7 +421,7 @@
         const kw = (document.getElementById('pitcher-search').value || '').trim().toLowerCase();
         let base = teamFilter.pitcher
             ? pitcherData.filter(p => p.teamName === teamFilter.pitcher)
-            : pitcherData.filter(p => p.qualified);
+            : globalPitchers();
         if (kw) base = base.filter(p => p.playerName.toLowerCase().includes(kw) || p.teamName.toLowerCase().includes(kw));
         renderPitchers(applySort(base, sortState['pitcher']));
     }

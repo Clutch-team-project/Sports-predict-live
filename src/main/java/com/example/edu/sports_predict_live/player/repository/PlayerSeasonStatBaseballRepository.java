@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface PlayerSeasonStatBaseballRepository extends JpaRepository<PlayerSeasonStatBaseball, Long> {
 
-    // 타자 기록 조회 (battingAvg 기준 내림차순) — 규정타석 미달 선수 포함(전체/팀 필터는 프론트에서 처리)
+    // 타자 기록 조회 (battingAvg 기준 내림차순) — 투수 포지션 제외
     @Query("""
         SELECT b FROM PlayerSeasonStatBaseball b
         JOIN FETCH b.playerSeasonStat pss
@@ -20,6 +20,10 @@ public interface PlayerSeasonStatBaseballRepository extends JpaRepository<Player
         WHERE t.sport.code = :sportCode
           AND pss.season = :season
           AND b.battingAvg IS NOT NULL
+          AND NOT (UPPER(p.position) IN ('RHP','LHP','SP','RP','P')
+                   OR p.position LIKE '%투수%'
+                   OR p.position LIKE '%우완%'
+                   OR p.position LIKE '%좌완%')
         ORDER BY b.battingAvg DESC
     """)
     List<PlayerSeasonStatBaseball> findHittersBySportAndSeason(
@@ -27,7 +31,7 @@ public interface PlayerSeasonStatBaseballRepository extends JpaRepository<Player
             @Param("season") String season
     );
 
-    // 투수 기록 조회 (era 기준 오름차순)
+    // 투수 기록 조회 (era 기준 오름차순) — 투수 포지션 기준, era NULL(이닝 미달)도 팀 필터 용도로 포함
     @Query("""
         SELECT b FROM PlayerSeasonStatBaseball b
         JOIN FETCH b.playerSeasonStat pss
@@ -35,8 +39,11 @@ public interface PlayerSeasonStatBaseballRepository extends JpaRepository<Player
         JOIN FETCH p.team t
         WHERE t.sport.code = :sportCode
           AND pss.season = :season
-          AND b.era IS NOT NULL
-        ORDER BY b.era ASC
+          AND (UPPER(p.position) IN ('RHP','LHP','SP','RP','P')
+               OR p.position LIKE '%투수%'
+               OR p.position LIKE '%우완%'
+               OR p.position LIKE '%좌완%')
+        ORDER BY CASE WHEN b.era IS NULL THEN 1 ELSE 0 END ASC, b.era ASC
     """)
     List<PlayerSeasonStatBaseball> findPitchersBySportAndSeason(
             @Param("sportCode") String sportCode,
