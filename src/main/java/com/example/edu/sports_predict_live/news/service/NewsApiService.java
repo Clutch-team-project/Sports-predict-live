@@ -5,6 +5,7 @@ import com.example.edu.sports_predict_live.news.repository.NewsRepository;
 import com.example.edu.sports_predict_live.news.repository.NewsScrapRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -262,5 +263,25 @@ public class NewsApiService {
 
             default -> false;
         };
+    }
+
+    public JsonNode searchDefaultSportsNews(String sort, Long userId, int page) {
+        ObjectNode result = objectMapper.createObjectNode();
+        ArrayNode mergedItems = objectMapper.createArrayNode();
+
+        List<String> keywords = List.of("축구", "야구", "LOL");
+
+        for (String keyword : keywords) {
+            JsonNode response = searchSportsNews(keyword, sort, userId, page, null);
+
+            if (response != null && response.has("items")) {
+                for (JsonNode item : response.get("items")) {
+                    mergedItems.add(item);
+                }
+            }
+        }
+
+        result.set("items", mergedItems);
+        return result;
     }
 }
