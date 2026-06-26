@@ -69,7 +69,7 @@ public class SecurityConfig {
 
     // 공개 정적 리소스
     private static final String[] PUBLIC_STATIC = {
-            "/gnb.js", "/script.js", "/favicon.ico",
+            "/gnb.js", "/board.js", "/notification.js", "/script.js", "/favicon.ico",
             "/*.js", "/*.css", "/*.png",
             "/images/**",
     };
@@ -77,7 +77,7 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
-                .requestMatchers("/images/**", "/favicon.ico", "/*.js", "/*.css", "/*.png", "/*.svg");
+                .requestMatchers("/images/**", "/favicon.ico", "/gnb.js", "/board.js", "/notification.js", "/script.js", "/*.js", "/*.css", "/*.png", "/*.svg");
     }
 
     @Bean
@@ -110,7 +110,7 @@ public class SecurityConfig {
                                 "/user-info", "/favorite-teams",
                                 "/board", "/board/list/**", "/board/read/**", "/replies/list/**", "/templates/**" // ← 추가
                         ).permitAll()
-                        .requestMatchers("/script.js", "/gnb.js", "/favicon.ico", "/*.js", "/*.css", "/*.png", "/images/**").permitAll()
+                        .requestMatchers("/script.js", "/gnb.js", "/board.js", "/notification.js", "/favicon.ico", "/*.js", "/*.css", "/*.png", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/board/register", "/board/modify").permitAll()
                         .requestMatchers(PUBLIC_API).permitAll()
                         .requestMatchers(PUBLIC_PAGES).permitAll()
