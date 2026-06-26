@@ -423,22 +423,24 @@
         });
     }
 
-    function initSort(tableId, getData, renderFn, defaultKey) {
-        sortState[tableId] = { key: defaultKey, dir: 'desc' };
+    function initSort(tableId, getData, renderFn, defaultKey, defaultDir = 'desc') {
+        sortState[tableId] = { key: defaultKey, dir: defaultDir };
         document.querySelectorAll(`th[data-table="${tableId}"]`).forEach(th => {
             if (th.dataset.key === defaultKey) {
                 th.classList.add('sort-active');
-                th.querySelector('.sort-icon').textContent = '↓';
+                th.querySelector('.sort-icon').textContent = defaultDir === 'asc' ? '↑' : '↓';
             }
             th.addEventListener('click', () => {
                 const key = th.dataset.key;
-                sortState[tableId] = { key, dir: 'desc' };
+                const prev = sortState[tableId];
+                const dir = prev.key === key && prev.dir === 'desc' ? 'asc' : 'desc';
+                sortState[tableId] = { key, dir };
                 document.querySelectorAll(`th[data-table="${tableId}"]`).forEach(h => {
                     h.classList.remove('sort-active');
                     h.querySelector('.sort-icon').textContent = '↕';
                 });
                 th.classList.add('sort-active');
-                th.querySelector('.sort-icon').textContent = '↓';
+                th.querySelector('.sort-icon').textContent = dir === 'asc' ? '↑' : '↓';
                 renderFn(applySort(getData(), sortState[tableId]));
             });
         });
@@ -543,22 +545,35 @@
         }
     }
 
+    function calcRanks(data, key) {
+        const ranks = [];
+        data.forEach((p, i) => {
+            if (i === 0) ranks.push(1);
+            else ranks.push(p[key] === data[i - 1][key] ? ranks[i - 1] : i + 1);
+        });
+        return ranks;
+    }
+
     function renderHitters(data) {
         const tbody = document.getElementById('hitter-tbody');
         if (!data.length) {
             tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
             return;
         }
+        const hi    = sortState['hitter']?.key ?? 'battingAvg';
+        const ranks = calcRanks(data, hi);
+        const cell  = (key, display) =>
+            `<td class="p-4 text-center ${hi === key ? 'text-blue-600 font-bold' : ''}">${display}</td>`;
         tbody.innerHTML = data.map((p, i) => `
             <tr class="table-row cursor-pointer" onclick="goPlayerDetail(${p.playerId})">
-                <td class="p-4 pl-6 font-black text-blue-600">${i + 1}</td>
+                <td class="p-4 pl-6 font-black text-blue-600">${ranks[i]}</td>
                 <td class="p-4 font-black"><span class="detail-link">${p.playerName}</span></td>
                 <td class="p-4 text-slate-500">${p.teamName}</td>
-                <td class="p-4 text-center text-blue-600 font-bold">${p.battingAvg?.toFixed(3) ?? '-'}</td>
-                <td class="p-4 text-center">${p.gamesPlayed}</td>
-                <td class="p-4 text-center">${p.hits ?? '-'}</td>
-                <td class="p-4 text-center">${p.homeRuns ?? '-'}</td>
-                <td class="p-4 text-center">${p.rbi ?? '-'}</td>
+                ${cell('battingAvg',  p.battingAvg?.toFixed(3) ?? '-')}
+                ${cell('gamesPlayed', p.gamesPlayed)}
+                ${cell('hits',        p.hits ?? '-')}
+                ${cell('homeRuns',    p.homeRuns ?? '-')}
+                ${cell('rbi',         p.rbi ?? '-')}
             </tr>`).join('');
     }
 
@@ -581,18 +596,22 @@
             tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>';
             return;
         }
+        const hi    = sortState['pitcher']?.key ?? 'era';
+        const ranks = calcRanks(data, hi);
+        const cell  = (key, display) =>
+            `<td class="p-4 text-center ${hi === key ? 'text-blue-600 font-bold' : ''}">${display}</td>`;
         tbody.innerHTML = data.map((p, i) => `
             <tr class="table-row cursor-pointer" onclick="goPlayerDetail(${p.playerId})">
-                <td class="p-4 pl-6 font-black text-blue-600">${i + 1}</td>
+                <td class="p-4 pl-6 font-black text-blue-600">${ranks[i]}</td>
                 <td class="p-4 font-black"><span class="detail-link">${p.playerName}</span></td>
                 <td class="p-4 text-slate-500">${p.teamName}</td>
-                <td class="p-4 text-center text-blue-600 font-bold">${p.era?.toFixed(2) ?? '-'}</td>
-                <td class="p-4 text-center">${p.gamesPlayed}</td>
-                <td class="p-4 text-center">${p.wins ?? '-'}</td>
-                <td class="p-4 text-center">${p.losses ?? '-'}</td>
-                <td class="p-4 text-center">${p.strikeouts ?? '-'}</td>
-                <td class="p-4 text-center">${p.saves ?? '-'}</td>
-                <td class="p-4 text-center">${p.holds ?? '-'}</td>
+                ${cell('era',         p.era?.toFixed(2) ?? '-')}
+                ${cell('gamesPlayed', p.gamesPlayed)}
+                ${cell('wins',        p.wins ?? '-')}
+                ${cell('losses',      p.losses ?? '-')}
+                ${cell('strikeouts',  p.strikeouts ?? '-')}
+                ${cell('saves',       p.saves ?? '-')}
+                ${cell('holds',       p.holds ?? '-')}
             </tr>`).join('');
     }
 
@@ -603,7 +622,7 @@
     // ── 초기화 ───────────────────────────────────────────────────────────────
     initSort('team',    () => standingData, renderTeam,        'diff');
     initSort('hitter',  () => hitterData,   applyHitterFilters,  'battingAvg');
-    initSort('pitcher', () => pitcherData,  applyPitcherFilters, 'era');
+    initSort('pitcher', () => pitcherData,  applyPitcherFilters, 'era', 'asc');
     loadFavoriteIds().then(() => loadStanding());
 </script>
 </body>

@@ -344,50 +344,65 @@ def save_schedule(conn, team_map: dict, data: list[dict]):
 
 #  3. 선수 기록 (Selenium)
 
-# 순회할 record type 목록 — 각 타입의 상위 30명을 수집해 전체 커버리지를 높임
-# 17개 컬럼은 타입과 무관하게 동일(골·도움·경고 등)하며 정렬 기준만 바뀜
 RECORD_TYPES = ["GOAL", "ASSIST", "GAMECNT", "WARN", "CLEAN"]
+
+# 공식 사이트 테이블 컬럼 인덱스 (0-based)
+# 순위 | 선수명 | 구단 | 득점 | 도움 | 슈팅 | 유효슈팅 | 파울받음 | 파울함 | 오프사이드 | 경고 | 퇴장 | 무실점 | 출장
+COL_NAME         = 1
+COL_TEAM         = 2
+COL_GOALS        = 3
+COL_ASSISTS      = 4
+COL_YELLOW_CARDS = 11
+COL_RED_CARDS    = 12
+COL_CLEAN_SHEETS = 13
+COL_GAMES_PLAYED = 14
+COL_MIN_COUNT    = 15
 
 
 def _parse_row(row) -> dict | None:
     """tbody tr 한 행을 파싱해 선수 dict 반환. 파싱 불가 시 None."""
     cols = row.find_elements(By.TAG_NAME, "td")
-    if len(cols) < 15:
+    if len(cols) < COL_MIN_COUNT:
         return None
 
-    name      = cols[1].text.strip()
-    team_name = cols[2].text.strip().split("\n")[-1].strip()
+    name      = cols[COL_NAME].text.strip()
+    team_name = cols[COL_TEAM].text.strip().split("\n")[-1].strip()
     if not name or not team_name:
         return None
 
-    onclick = cols[1].get_attribute("onclick") or ""
-    pid_match = re.search(r"playerId=(\d+)", onclick)
+    # playerId는 선수명 td의 onclick 또는 자식 a 태그에서 추출
+    onclick = cols[COL_NAME].get_attribute("onclick") or ""
+    try:
+        a_tag = cols[COL_NAME].find_element(By.TAG_NAME, "a")
+        onclick = onclick or a_tag.get_attribute("onclick") or ""
+    except Exception:
+        pass
+    pid_match = re.search(r"playerId[=,]\s*['\"]?(\d+)", onclick)
     external_id = pid_match.group(1) if pid_match else name
 
-    def safe_int(text):
+    def safe_int(idx):
         try:
-            return int(text.strip() or 0)
-        except ValueError:
+            return int(cols[idx].text.strip() or 0)
+        except (ValueError, IndexError):
             return 0
 
     return {
         "name":         name,
         "team_name":    team_name,
         "external_id":  external_id,
-        "games_played": safe_int(cols[14].text),
-        "goals":        safe_int(cols[3].text),
-        "assists":      safe_int(cols[4].text),
-        "yellow_cards": safe_int(cols[11].text),
-        "red_cards":    safe_int(cols[12].text),
-        "clean_sheets": safe_int(cols[13].text),
+        "goals":        safe_int(COL_GOALS),
+        "assists":      safe_int(COL_ASSISTS),
+        "yellow_cards": safe_int(COL_YELLOW_CARDS),
+        "red_cards":    safe_int(COL_RED_CARDS),
+        "clean_sheets": safe_int(COL_CLEAN_SHEETS),
+        "games_played": safe_int(COL_GAMES_PLAYED),
     }
 
 
 def crawl_players() -> list[dict]:
     """
-    RECORD_TYPES 각각의 상위 30명을 수집한 뒤 external_id 기준으로 병합.
-    동일 선수가 여러 타입에서 나오면 각 stat의 최댓값을 사용 (정렬 기준이 달라도
-    모든 타입에서 전체 스탯이 표시되므로 값은 동일하나, 최댓값으로 안전하게 처리).
+    RECORD_TYPES 각각의 상위 30명(첫 페이지)을 수집한 뒤 external_id 기준으로 병합.
+    프론트엔드가 카테고리별 상위 30명만 표시하므로 첫 페이지 수집으로 충분.
     """
     url = f"https://www.kleague.com/record/player.do?leagueId={LEAGUE_ID}&year={SEASON}"
 
@@ -401,7 +416,8 @@ def crawl_players() -> list[dict]:
         service=Service(ChromeDriverManager().install()), options=options
     )
 
-    # external_id → 병합된 선수 dict
+    from selenium.webdriver.support.ui import Select as SeleniumSelect
+
     merged: dict[str, dict] = {}
 
     try:
@@ -410,8 +426,6 @@ def crawl_players() -> list[dict]:
             EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
         )
         time.sleep(1)
-
-        from selenium.webdriver.support.ui import Select as SeleniumSelect
 
         for rec_type in RECORD_TYPES:
             try:
@@ -432,7 +446,6 @@ def crawl_players() -> list[dict]:
                     if eid not in merged:
                         merged[eid] = p
                     else:
-                        # 같은 선수 — 각 수치의 최댓값으로 갱신
                         m = merged[eid]
                         for k in ("games_played", "goals", "assists", "yellow_cards", "red_cards", "clean_sheets"):
                             m[k] = max(m[k], p[k])
@@ -440,13 +453,13 @@ def crawl_players() -> list[dict]:
                 except Exception as e:
                     print(f"  [WARN] 선수 파싱 오류 ({rec_type}): {e}")
 
-            print(f"  {rec_type}: {count}명 수집")
+            print(f"  [{rec_type}]: {count}명 수집 (누적 고유: {len(merged)}명)")
 
     finally:
         driver.quit()
 
     result = list(merged.values())
-    print(f"  중복 제거 후 총 {len(result)}명")
+    print(f"  중복 제거 후 최종 {len(result)}명")
     return result
 
 
