@@ -130,6 +130,9 @@ public class BoardServiceImpl implements BoardService {
 
         saveUploadedFiles(board, boardDTO.getFiles());
         boardRepository.save(board);
+
+        String textToAnalyze = boardDTO.getTitle() + " " + boardDTO.getContent();
+        aiModerationService.checkAndBlindAsync(board.getBoardId(), textToAnalyze);
     }
 
     // 게시글 삭제
