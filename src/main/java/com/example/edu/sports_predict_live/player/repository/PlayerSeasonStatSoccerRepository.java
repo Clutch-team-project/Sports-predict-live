@@ -17,7 +17,7 @@ public interface PlayerSeasonStatSoccerRepository extends JpaRepository<PlayerSe
         JOIN FETCH p.team t
         WHERE t.sport.code = 'soccer'
           AND pss.season = :season
-        ORDER BY s.goals DESC, s.assists DESC
+        ORDER BY s.goals DESC, pss.gamesPlayed ASC, s.assists DESC
     """)
     List<PlayerSeasonStatSoccer> findBySeasonOrderByGoalsDesc(@Param("season") String season);
 
