@@ -85,28 +85,22 @@ public class NewsController {
     }
 
     @GetMapping("/search-filter")
-    public JsonNode searchFilteredNews(
+    public JsonNode searchFilter(
             @RequestParam(required = false) String sport,
             @RequestParam(required = false) String team,
-            @RequestParam(required = false, defaultValue = "latest") String sort,
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false, defaultValue = "1") int page
+            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) Long userId
     ) {
-        String keyword = "";
-
-        if (sport != null && !sport.isBlank()) {
-            keyword += sport;
+        // 종목 선택이 없을 때: 스포츠 전체가 아니라 축구 + 야구 + LOL만 합쳐서 검색
+        if (sport == null || sport.isBlank()) {
+            return newsApiService.searchDefaultSportsNews(sort, userId, page);
         }
+
+        String keyword = sport;
 
         if (team != null && !team.isBlank()) {
-            if (!keyword.isBlank()) {
-                keyword += " ";
-            }
-            keyword += team;
-        }
-
-        if (keyword.isBlank()) {
-            keyword = "스포츠";
+            keyword += " " + team;
         }
 
         return newsApiService.searchSportsNews(keyword, sort, userId, page, team);
