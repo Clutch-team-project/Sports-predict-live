@@ -469,7 +469,7 @@ function printReplies(page = 1) {
                             <!-- 대댓글 등록 폼 -->
                             <div id="rereply-form-${reply.replyId}" class="mt-3 pl-8 pb-2" style="display:none;">
                                 <div class="flex gap-2">
-                                    <input id="rereply-input-${reply.replyId}" class="input-field flex-1" type="text" style="font-size:12px; padding: 6px 12px;" placeholder="답글을 입력하세요">
+                                    <input id="rereply-input-${reply.replyId}" class="input-field flex-1" type="text" style="font-size:12px; padding: 6px 12px;" placeholder="답글을 입력하세요" onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); registerReReply(${reply.replyId}); }">
                                     <button onclick="registerReReply(${reply.replyId})" class="btn-primary" style="padding:6px 12px; white-space:nowrap; background:#2563eb; color:white; border-radius:6px; font-weight:700; font-size:12px;">답글 등록</button>
                                 </div>
                             </div>
@@ -728,6 +728,14 @@ document.addEventListener("DOMContentLoaded", function() {
                         alert(msg || '댓글 등록에 실패했습니다.');
                     }
                 }).catch(err => console.error('댓글 등록 에러:', err));
+            });
+
+            // 엔터 키 입력 시 댓글 등록 트리거 (Shift + Enter는 줄바꿈)
+            replyInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    btnRegisterReply.click();
+                }
             });
         }
 
