@@ -821,5 +821,5 @@ function registerReReply(parentId) {
             const msg = await res.text();
             alert(msg || '답글 등록에 실패했습니다.');
         }
-    }).catch(err => console.error('답글 등록 에러:', err));
+    }).catch(err => console.error('답글 등록 에러:', err));;
 }
