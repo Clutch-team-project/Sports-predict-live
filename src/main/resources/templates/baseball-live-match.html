@@ -17,7 +17,7 @@
             --line-soft: #e2e8f0;
             --text: #13223a;
             --muted: #64748b;
-            --blue: #2563eb;
+            --blue: #6c69ec;
             --red: #ef4444;
             --orange: #ff9b45;
             --shadow: 0 8px 22px rgba(15, 23, 42, .12);
@@ -1054,28 +1054,47 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 2px;
+            padding: 0 2px 2px;
             color: var(--text);
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 950;
-        }
-
-        .period-title span {
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 850;
         }
 
         .period-chip {
             display: inline-flex;
             align-items: center;
-            min-height: 28px;
-            padding: 0 12px;
+            min-height: 34px;
+            padding: 0 16px;
             border: 1px solid #bfdbfe;
             border-radius: 999px;
             background: #eff6ff;
-            color: var(--blue);
+            font-size: 15px;
+            font-weight: 950;
+            letter-spacing: -0.02em;
+        }
+
+        .period-note {
+            color: var(--muted);
             font-size: 13px;
+            font-weight: 850;
+        }
+
+        .period-title-left {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .period-title .period-offense {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border: 1px solid #fed7aa;
+            border-radius: 999px;
+            background: #fff7ed;
+            color: #ea580c;
+            font-size: 12px;
             font-weight: 950;
         }
 
@@ -2600,6 +2619,39 @@
         return { inning, half, order: inning * 2 + (half === '말' ? 1 : 0), label: `${inning}회${half}` };
     }
 
+    function offenseTeamNameByPeriod(data, period) {
+        const parsed = parsePeriod(period);
+
+        if (parsed.half === '초') {
+            return data.awayTeam?.name || '원정팀';
+        }
+
+        if (parsed.half === '말') {
+            return data.homeTeam?.name || '홈팀';
+        }
+
+        return '';
+    }
+
+    function renderPeriodLabel(data, period) {
+        const offenseTeamName = offenseTeamNameByPeriod(data, period);
+
+        if (!offenseTeamName) {
+            return period;
+        }
+
+        return `${period} ${offenseTeamName} 공격`;
+    }
+
+    function renderPeriodTitle(data, period, rightText = '') {
+        return `
+        <div class="period-title">
+            <span class="period-chip">${escapeHtml(renderPeriodLabel(data, period))}</span>
+            ${rightText ? `<span class="period-note">${escapeHtml(rightText)}</span>` : ''}
+        </div>
+    `;
+    }
+
     function sortEvents(events) {
         return [...(events || [])].sort((a, b) => {
             const aPeriod = parsePeriod(eventPeriodOf(a));
@@ -3313,7 +3365,7 @@
         const topPeriod = `${inning}회초`;
         const bottomPeriod = `${inning}회말`;
 
-// 모든 이닝에서 회말을 위, 회초를 아래로 표시
+        // 회말을 위, 회초를 아래로 표시
         const periods = [bottomPeriod, topPeriod];
 
         const cards = (data.timeline || []).filter(card => periods.includes(card.period));
@@ -3327,22 +3379,28 @@
             return;
         }
 
-        const displayPeriods = periods
-            .filter(period => cards.some(card => card.period === period));
+        const displayPeriods = periods.filter(period =>
+            cards.some(card => card.period === period)
+        );
 
         body.innerHTML = displayPeriods.map(period => {
             const periodCards = cards.filter(card => card.period === period);
+
             if (periodCards.length === 0) {
-                return `<section class="period-block">
-                    <div class="period-title"><span class="period-chip">${escapeHtml(period)}</span><span>타석 기록 없음</span></div>
-                </section>`;
+                return `
+                <section class="period-block">
+                    ${renderPeriodTitle(data, period, '타석 기록 없음')}
+                </section>
+            `;
             }
 
-            return `<section class="period-block">
-                <div class="period-title"><span class="period-chip">${escapeHtml(period)}</span></div>
+            return `
+            <section class="period-block">
+                ${renderPeriodTitle(data, period)}
                 ${period === data.currentPeriod ? renderCurrentPitcherStateCard(data) : ''}
                 ${renderPeriodAtBatCards(periodCards)}
-            </section>`;
+            </section>
+        `;
         }).join('');
     }
 
