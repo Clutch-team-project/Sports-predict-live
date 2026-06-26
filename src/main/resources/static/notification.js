@@ -1,7 +1,7 @@
 (function () {
     if (!('Notification' in window)) return;
 
-    const BASE_URL         = 'http://localhost:8080';
+    const BASE_URL         = '';
     const SPORT_EMOJI      = { baseball: '⚾', soccer: '⚽', lol: '🎮' };
     const ALERT_BEFORE_MIN = 10; // 경기 시작 몇 분 전 알림
 

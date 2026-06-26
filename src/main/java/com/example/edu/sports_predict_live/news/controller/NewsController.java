@@ -80,30 +80,21 @@ public class NewsController {
     public JsonNode apiTest(
             @RequestParam String keyword
     ) {
-
-        return newsApiService.searchSportsNews(keyword, "latest", null, 1, null);
+        return newsApiService.searchSportsNews(keyword, 1, null);
     }
 
     @GetMapping("/search-filter")
     public JsonNode searchFilter(
             @RequestParam(required = false) String sport,
             @RequestParam(required = false) String team,
-            @RequestParam(defaultValue = "latest") String sort,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(required = false) Long userId
+            @RequestParam(defaultValue = "1") int page
     ) {
-        // 종목 선택이 없을 때: 스포츠 전체가 아니라 축구 + 야구 + LOL만 합쳐서 검색
         if (sport == null || sport.isBlank()) {
-            return newsApiService.searchDefaultSportsNews(sort, userId, page);
+            return newsApiService.searchDefaultSportsNews(page);
         }
 
-        String keyword = sport;
-
-        if (team != null && !team.isBlank()) {
-            keyword += " " + team;
-        }
-
-        return newsApiService.searchSportsNews(keyword, sort, userId, page, team);
+        String keyword = (team != null && !team.isBlank()) ? sport + " " + team : sport;
+        return newsApiService.searchSportsNews(keyword, page, team);
     }
 
         @GetMapping("/news")

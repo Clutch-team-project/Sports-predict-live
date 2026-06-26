@@ -8,6 +8,7 @@ import com.example.edu.sports_predict_live.match.dto.response.MatchResponseDTO;
 import com.example.edu.sports_predict_live.match.entity.Match;
 import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,15 +30,21 @@ public class ScheduleService {
     private final BaseballLiveStateService baseballLiveStateService;
     private final MatchEventRepository matchEventRepository;
 
-    // lolesports API 설정
-    private static final String LOL_API_KEY      = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z";
-    private static final String LOL_API_BASE     = "https://esports-api.lolesports.com/persisted/gw";
-    private static final String LCK_LEAGUE_ID    = "98767991310872058";
+    private static final String LOL_API_BASE  = "https://esports-api.lolesports.com/persisted/gw";
+    private static final String LCK_LEAGUE_ID = "98767991310872058";
 
-    private final WebClient webClient = WebClient.builder()
-            .baseUrl(LOL_API_BASE)
-            .defaultHeader("x-api-key", LOL_API_KEY)
-            .build();
+    @Value("${lol.api-key}")
+    private String lolApiKey;
+
+    private WebClient webClient;
+
+    @jakarta.annotation.PostConstruct
+    private void initWebClient() {
+        this.webClient = WebClient.builder()
+                .baseUrl(LOL_API_BASE)
+                .defaultHeader("x-api-key", lolApiKey)
+                .build();
+    }
 
     public List<MatchResponseDTO> getSchedule(String sport, String dateStr) {
         LocalDate date = (dateStr != null)
@@ -167,7 +175,7 @@ public class ScheduleService {
                 default -> "scheduled";
             };
 
-            Map<String, Object> matchMap = new java.util.HashMap<>();
+            Map<String, Object> matchMap = new HashMap<>();
             matchMap.put("matchId",       match.get("id"));
             matchMap.put("homeTeamName",  team2.get("name"));
             matchMap.put("awayTeamName",  team1.get("name"));

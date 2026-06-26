@@ -4,6 +4,7 @@ import com.example.edu.sports_predict_live.news.entity.NewsEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface NewsRepository
         extends JpaRepository<NewsEntity, Long> {
@@ -17,9 +18,6 @@ public interface NewsRepository
     // 카테고리별 뉴스 조회
     List<NewsEntity> findByCategoryOrderByPublishedAtDesc(String category);
 
-    // URL 중복 체크
-    boolean existsByNewsUrl(String newsUrl);
-
     // 종목 + 팀 조회
     List<NewsEntity> findBySportIdAndCategoryOrderByPublishedAtDesc(
             Long sportId,
@@ -31,6 +29,6 @@ public interface NewsRepository
             String team
     );
 
-    NewsEntity findTopByNewsUrl(String newsUrl);
+    Optional<NewsEntity> findByNewsUrl(String newsUrl);
 
 }
