@@ -688,7 +688,6 @@
         <header class="topbar">
             <div>
                 <h1 id="pageTitle">경기 일정 관리</h1>
-                <p id="pageDesc">등록된 경기를 날짜별로 모두 표시합니다. 오늘 경기는 항상 상단에 먼저 표시됩니다.</p>
             </div>
             <div class="top-actions"></div>
         </header>
@@ -1022,7 +1021,7 @@
                     <div class="operator-note">
                         선발 라인업이 완성되지 않은 경기는 경기 진행 제어로 이동하지 않습니다. 야구 기준으로 각 팀은 선발투수 1명과 1~9번 타자 9명이 필요합니다. 후보로 남긴 선수만 중계 화면 후보/교체 대상에 표시됩니다.
                     </div>
-                    <div class="lineup-summary" id="lineupSummary">경기를 선택하면 라인업 상태가 표시됩니다.</div>
+
                     <div class="lineup-team-grid" id="lineupTeamGrid"></div>
                 </div>
             </section>
@@ -1235,15 +1234,12 @@
 
             if (target === 'matchEdit') {
                 setText('pageTitle', text.scheduleTitle);
-                setText('pageDesc', text.scheduleDesc);
             }
             if (target === 'control') {
                 setText('pageTitle', text.controlTitle);
-                setText('pageDesc', text.controlDesc);
             }
             if (target === 'lineup') {
                 setText('pageTitle', '경기 라인업 관리');
-                setText('pageDesc', '경기별 선발 라인업과 후보 선수를 등록합니다.');
             }
 
             if (pushHistory && location.hash !== `#${target}`) {
@@ -1451,7 +1447,6 @@
         <div class="panel-head">
           <div>
             <div class="panel-title">${text.scheduleTitle}</div>
-            <div class="panel-sub">등록된 경기를 날짜별로 모두 표시합니다. 오늘 경기는 항상 상단에 먼저 표시됩니다.</div>
           </div>
           <button class="btn" id="adminScheduleReloadBtn">${text.refresh}</button>
         </div>
@@ -2116,12 +2111,29 @@
             return bases[base]?.playerId || null;
         }
 
+        function runnerFromBase(base) {
+            const bases = window.__lastBaseballLive?.baseState || {};
+            return bases[base] || null;
+        }
+
+        function runnerDisplayName(runner) {
+            return runner?.name || runner?.playerName || '\uC8FC\uC790';
+        }
+
         function firstRunnerId() {
             return runnerIdFromBase('third') || runnerIdFromBase('second') || runnerIdFromBase('first');
         }
 
         function baseNo(base) {
             return { first: 1, second: 2, third: 3, home: 4 }[base] || 0;
+        }
+
+        function baseKoreanLabel(base) {
+            return { first: '1\uB8E8', second: '2\uB8E8', third: '3\uB8E8', home: '\uD648' }[base] || base;
+        }
+
+        function nextBase(base) {
+            return { first: 'second', second: 'third', third: 'home' }[base] || base;
         }
 
         function baseKorean(base) {
@@ -2138,6 +2150,9 @@
                 window.alert(`${baseKorean(from)}에 주자가 없습니다.`);
                 return;
             }
+            const originalRunner = runnerFromBase(from);
+            const originalBase = from;
+            const originalName = runnerDisplayName(originalRunner);
             let live = window.__lastBaseballLive;
             let current = baseNo(from);
             const target = baseNo(to);
@@ -2167,6 +2182,9 @@
                     pitchType: null
                 });
                 window.__lastBaseballLive = live;
+                clearRunnerMove(runnerId);
+            } else if (target > baseNo(originalBase)) {
+                rememberRunnerMove(runnerId, originalBase, to, originalName);
             }
             if (pendingBatterAdvance && runnerIdFromBase(pendingBatterAdvance.target) === pendingBatterAdvance.batterId) {
                 clearPendingBatterAdvance();
@@ -2176,6 +2194,88 @@
 
         function baseKoreanByNo(base) {
             return { 1: '1루', 2: '2루', 3: '3루', 4: '홈' }[base] || `${base}루`;
+        }
+
+        function rememberRunnerMove(runnerId, from, to, name) {
+            if (!runnerId) return;
+            runnerMoveMemory[String(runnerId)] = { from, to, name };
+        }
+
+        function baseKorean(base) {
+            return { first: '1루', second: '2루', third: '3루', home: '홈' }[base] || base;
+        }
+
+        function baseKoreanByNo(base) {
+            return { 1: '1루', 2: '2루', 3: '3루', 4: '홈' }[base] || `${base}루`;
+        }
+
+        function clearRunnerMove(runnerId) {
+            if (!runnerId) return;
+            delete runnerMoveMemory[String(runnerId)];
+        }
+
+        function runnerOutDescription(from, runnerId, action) {
+            const runner = runnerFromBase(from);
+            const move = runnerMoveMemory[String(runnerId)] || {};
+            const startBase = move.from || from;
+            const outBase = action === 'CAUGHT_STEALING' ? nextBase(from) : (move.to || from);
+            const name = move.name || runnerDisplayName(runner);
+            return `${baseKoreanLabel(startBase)}\uC8FC\uC790 ${name} ${baseKoreanLabel(outBase)}\uC5D0\uC11C \uC544\uC6C3`;
+        }
+
+        function baseKorean(base) {
+            return { first: '1루', second: '2루', third: '3루', home: '홈' }[base] || base;
+        }
+
+        function baseKoreanByNo(base) {
+            return { 1: '1루', 2: '2루', 3: '3루', 4: '홈' }[base] || `${base}루`;
+        }
+
+        function occupiedBaseLabels() {
+            const bases = window.__lastBaseballLive?.baseState || {};
+            return ['first', 'second', 'third']
+                .filter(base => bases[base])
+                .map(baseKorean);
+        }
+
+        async function moveRunnerToBase(from, to) {
+            if (!state.matchId) {
+                window.alert('먼저 경기를 선택하세요.');
+                return;
+            }
+            const runnerId = runnerIdFromBase(from);
+            if (!runnerId) {
+                window.alert(`${baseKorean(from)}에 주자가 없습니다.`);
+                return;
+            }
+
+            const originalRunner = runnerFromBase(from);
+            const originalName = runnerDisplayName(originalRunner);
+            const fromNo = baseNo(from);
+            const targetNo = baseNo(to);
+            const description = targetNo === 4
+                ? `${baseKorean(from)} 주자 득점`
+                : `${baseKorean(from)} 주자 ${baseKorean(to)}까지 진루`;
+
+            const live = await postBaseballCommand({
+                action: targetNo === 4 ? 'SCORE' : 'RUNNER_ADVANCE',
+                playerId: null,
+                runnerId,
+                teamId: null,
+                base: targetNo === 4 ? 'home' : to,
+                description,
+                pitchSpeed: null,
+                pitchType: null
+            });
+            window.__lastBaseballLive = live;
+
+            if (targetNo === 4) {
+                clearRunnerMove(runnerId);
+            } else if (targetNo > fromNo) {
+                rememberRunnerMove(runnerId, from, to, originalName);
+            }
+
+            applyLoadedState(live);
         }
 
         function commandDescription() {
@@ -2291,10 +2391,15 @@
             return Boolean(window.__lastBaseballLive?.baseState?.[base]);
         }
 
+        function hasAnyRunner() {
+            const bases = window.__lastBaseballLive?.baseState || {};
+            return Boolean(bases.first || bases.second || bases.third);
+        }
+
         function startPendingBatterAdvance(action, description) {
             const target = hitTargetBase(action);
             const batterId = currentBatterId();
-            if (!target || !baseOccupied(target) || !batterId) return false;
+            if (!target || !hasAnyRunner() || !batterId) return false;
             pendingBatterAdvance = { action, description, target, batterId };
             const notice = document.getElementById('pendingBatterNotice');
             const button = document.getElementById('pendingBatterCompleteBtn');
@@ -2329,18 +2434,26 @@
                 window.alert(`${baseKorean(pending.target)}가 아직 비어 있지 않습니다. 기존 주자를 먼저 처리하세요.`);
                 return;
             }
-            const live = await postBaseballCommand({
-                action: pending.action,
-                playerId: pending.batterId,
-                runnerId: null,
-                teamId: null,
-                base: null,
-                description: pending.description,
-                pitchSpeed: pitchSpeed(),
-                pitchType: pitchType()
-            });
             clearPendingBatterAdvance();
-            applyLoadedState(live);
+            loadState(state.matchId);
+        }
+
+        function startPendingBatterAdvance(action, description) {
+            const target = hitTargetBase(action);
+            const batterId = currentBatterId();
+            const labels = occupiedBaseLabels();
+            if (!target || labels.length === 0 || !batterId) return false;
+            pendingBatterAdvance = { action, description, target, batterId };
+            const notice = document.getElementById('pendingBatterNotice');
+            const button = document.getElementById('pendingBatterCompleteBtn');
+            const message = `${labels.join(', ')}에 기존 주자가 있습니다. 기존 주자 이동/득점/아웃을 먼저 처리한 뒤 [주자 처리 완료]를 누르세요.`;
+            if (notice) {
+                notice.style.display = '';
+                notice.textContent = message;
+            }
+            if (button) button.style.display = '';
+            window.alert(message);
+            return true;
         }
 
         function bindCommandButtons() {
@@ -2377,8 +2490,20 @@
             document.getElementById('buntFoulBtn')?.addEventListener('click', event => stopAndRun(event, () => sendBaseballCommand('BUNT_FOUL', { description: pitchDescription() })), true);
             document.getElementById('swingingStrikeBtn')?.addEventListener('click', event => stopAndRun(event, () => sendBaseballCommand('SWINGING_STRIKE', { description: pitchDescription() })), true);
             document.getElementById('inningEndBtn')?.addEventListener('click', event => stopAndRun(event, () => sendBaseballCommand('END_INNING', { playerId: null, description: '\uc774\ub2dd \uc885\ub8cc' })), true);
-            document.getElementById('startAtBatBtn')?.addEventListener('click', event => stopAndRun(event, () => sendBaseballCommand('START_AT_BAT', { description: null })), true);
-            document.getElementById('nextBatterBtn')?.addEventListener('click', event => stopAndRun(event, () => sendBaseballCommand('START_AT_BAT', { description: null })), true);
+            document.getElementById('startAtBatBtn')?.addEventListener('click', event => stopAndRun(event, () => {
+                if (pendingBatterAdvance) {
+                    window.alert('기존 주자 처리를 먼저 완료하세요.');
+                    return;
+                }
+                sendBaseballCommand('START_AT_BAT', { description: null });
+            }), true);
+            document.getElementById('nextBatterBtn')?.addEventListener('click', event => stopAndRun(event, () => {
+                if (pendingBatterAdvance) {
+                    window.alert('기존 주자 처리를 먼저 완료하세요.');
+                    return;
+                }
+                sendBaseballCommand('START_AT_BAT', { description: null });
+            }), true);
             document.getElementById('undoEventBtn')?.addEventListener('click', event => stopAndRun(event, () => {
                 sendBaseballCommand('UNDO_LAST_EVENT', { playerId: null, description: null });
             }), true);
@@ -2411,7 +2536,10 @@
                     const textArea = document.getElementById('eventText');
                     const description = button.dataset.eventTemplate || button.textContent.trim();
                     if (textArea) textArea.value = description;
-                    if (startPendingBatterAdvance(action, description)) return;
+                    if (startPendingBatterAdvance(action, description)) {
+                        sendBaseballCommand(action, { description });
+                        return;
+                    }
                     sendBaseballCommand(action, { description });
                 }), true);
             });
@@ -2428,6 +2556,40 @@
             document.querySelectorAll('.runner-steal-base').forEach(button => {
                 button.addEventListener('click', event => stopAndRun(event, () => {
                     sendRunnerBaseAction(button.dataset.from, 'STOLEN_BASE', `${baseKorean(button.dataset.from)} 주자 도루 성공`);
+                }), true);
+            });
+            document.querySelectorAll('.runner-caught-base').forEach(button => {
+                button.addEventListener('click', event => stopAndRun(event, () => {
+                    const from = button.dataset.from;
+                    const runnerId = runnerIdFromBase(from);
+                    if (!runnerId) {
+                        window.alert(`${baseKorean(from)} 二쇱옄媛 ?놁뒿?덈떎.`);
+                        return;
+                    }
+                    sendBaseballCommand('CAUGHT_STEALING', {
+                        playerId: null,
+                        runnerId,
+                        description: runnerOutDescription(from, runnerId, 'CAUGHT_STEALING'),
+                        pitchSpeed: null,
+                        pitchType: null
+                    }).then(() => clearRunnerMove(runnerId));
+                }), true);
+            });
+            document.querySelectorAll('.runner-out-base').forEach(button => {
+                button.addEventListener('click', event => stopAndRun(event, () => {
+                    const from = button.dataset.from;
+                    const runnerId = runnerIdFromBase(from);
+                    if (!runnerId) {
+                        window.alert(`${baseKorean(from)} 二쇱옄媛 ?놁뒿?덈떎.`);
+                        return;
+                    }
+                    sendBaseballCommand('RUNNER_OUT', {
+                        playerId: null,
+                        runnerId,
+                        description: runnerOutDescription(from, runnerId, 'RUNNER_OUT'),
+                        pitchSpeed: null,
+                        pitchType: null
+                    }).then(() => clearRunnerMove(runnerId));
                 }), true);
             });
             document.querySelectorAll('.runner-caught-base').forEach(button => {
@@ -2477,6 +2639,7 @@
         const FIELD_POSITION_LABELS = { C: '포수', '1B': '1루수', '2B': '2루수', '3B': '3루수', SS: '유격수', LF: '좌익수', CF: '중견수', RF: '우익수', DH: '지명타자', P: '투수', RHP: '우완투수', LHP: '좌완투수' };
         let lineupEditor = null;
         let pendingBatterAdvance = null;
+        let runnerMoveMemory = {};
 
         function installLineupTab() {
             document.getElementById('lineupReloadBtn')?.addEventListener('click', () => {
@@ -2826,9 +2989,9 @@
     function view(id) {
         $all('.view').forEach(v => v.classList.toggle('active', v.id === id));
         $all('.nav-btn[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === id));
-        if (id === 'lineup') { setText('pageTitle','경기 라인업 관리'); setText('pageDesc','경기별 선발 라인업과 후보 선수를 등록합니다.'); }
-        if (id === 'control') { setText('pageTitle','경기 진행 제어'); setText('pageDesc','선택한 경기의 상태와 이벤트를 중계 화면에 반영합니다.'); }
-        if (id === 'matchEdit') { setText('pageTitle','경기 일정 관리'); setText('pageDesc','등록된 경기를 날짜별로 모두 표시합니다. 오늘 경기는 항상 상단에 먼저 표시됩니다.'); }
+        if (id === 'lineup') { setText('pageTitle','경기 라인업 관리');  }
+        if (id === 'control') { setText('pageTitle','경기 진행 제어');  }
+        if (id === 'matchEdit') { setText('pageTitle','경기 일정 관리');  }
     }
     function normGame(game, sport) {
         const dateRaw = game.date || game.matchDate || game.match_date || game.scheduledAt || game.scheduled_at || '';

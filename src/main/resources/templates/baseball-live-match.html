@@ -17,7 +17,7 @@
             --line-soft: #e2e8f0;
             --text: #13223a;
             --muted: #64748b;
-            --blue: #2563eb;
+            --blue: #6c69ec;
             --red: #ef4444;
             --orange: #ff9b45;
             --shadow: 0 8px 22px rgba(15, 23, 42, .12);
@@ -361,6 +361,66 @@
         .tab.active {
             background: var(--blue);
             color: #ffffff;
+        }
+
+        .other-games-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.84);
+        }
+
+        .other-game-card {
+            display: block;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #ffffff;
+            color: var(--text);
+            font-weight: 850;
+            text-decoration: none;
+            transition: border-color .15s ease, transform .15s ease;
+        }
+
+        .other-game-card:hover {
+            border-color: #93c5fd;
+            transform: translateY(-1px);
+        }
+
+        .other-game-status {
+            margin-bottom: 5px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .other-game-status.live {
+            color: var(--blue);
+        }
+
+        .other-game-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            line-height: 1.45;
+        }
+
+        .other-game-team {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+        }
+
+        .other-game-emblem {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            flex: 0 0 auto;
         }
 
         /* =========================================================
@@ -854,19 +914,25 @@
             color: var(--text);
         }
 
+        .br-runner.batter-runner {
+            left: 42%;
+            bottom: 9.5%;
+            transform: translateX(-50%);
+        }
+
         .br-pos-lf { left: 18.5%; top: 60%; }
         .br-pos-cf { left: 50%; top: 58%; }
         .br-pos-rf { left: 81.5%; top: 60%; }
-        .br-pos-3b { left: 28%; top: 72%; }
+        .br-pos-3b { left: 25%; top: 72%; }
         .br-pos-ss { left: 38%; top: 68%; }
         .br-pos-2b { left: 62%; top: 68%; }
-        .br-pos-1b { left: 72%; top: 72%; }
+        .br-pos-1b { left: 75%; top: 72%; }
         .br-pos-p { left: 50%; top: 73.5%; }
-        .br-pos-c { left: 50%; top: 91.5%; }
+        .br-pos-c { left: 50%; top: 94%; }
 
-        .br-runner-1 { left: 74%; top: 79%; }
+        .br-runner-1 { left: 75%; top: 79%; }
         .br-runner-2 { left: 50%; top: 65%; }
-        .br-runner-3 { left: 26%; top: 79%; }
+        .br-runner-3 { left: 25%; top: 79%; }
 
         .br-ondeck {
             position: absolute;
@@ -988,28 +1054,47 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 2px;
+            padding: 0 2px 2px;
             color: var(--text);
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 950;
-        }
-
-        .period-title span {
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 850;
         }
 
         .period-chip {
             display: inline-flex;
             align-items: center;
-            min-height: 28px;
-            padding: 0 12px;
+            min-height: 34px;
+            padding: 0 16px;
             border: 1px solid #bfdbfe;
             border-radius: 999px;
             background: #eff6ff;
-            color: var(--blue);
+            font-size: 15px;
+            font-weight: 950;
+            letter-spacing: -0.02em;
+        }
+
+        .period-note {
+            color: var(--muted);
             font-size: 13px;
+            font-weight: 850;
+        }
+
+        .period-title-left {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .period-title .period-offense {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border: 1px solid #fed7aa;
+            border-radius: 999px;
+            background: #fff7ed;
+            color: #ea580c;
+            font-size: 12px;
             font-weight: 950;
         }
 
@@ -1202,6 +1287,16 @@
             color: var(--text);
         }
 
+        .pitch-event-row.score-event {
+            border-color: #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .pitch-event-row.score-event b {
+            color: #1d4ed8;
+        }
+
         .pitcher-state-card {
             display: grid;
             grid-template-columns: 46px 1fr;
@@ -1239,6 +1334,33 @@
             color: var(--muted);
             font-size: 12px;
             font-weight: 850;
+        }
+
+        .pitcher-change-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0;
+            padding: 11px 14px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #f8fafc;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .pitcher-change-card .change-mark {
+            color: var(--green);
+            font-weight: 950;
+        }
+
+        .pitcher-change-card .out {
+            color: #ef4444;
+        }
+
+        .pitcher-change-card .in {
+            color: #16a34a;
         }
 
         
@@ -2116,6 +2238,8 @@
                 </div>
             </section>
 
+            <section class="other-games-strip" id="otherGamesStrip" aria-label="같은 날짜 다른 경기" hidden></section>
+
             <!-- ================= Main Tabs ================= -->
             <div class="tabs" role="tablist">
                 <button class="tab active" type="button" data-tab="relay">중계</button>
@@ -2495,6 +2619,39 @@
         return { inning, half, order: inning * 2 + (half === '말' ? 1 : 0), label: `${inning}회${half}` };
     }
 
+    function offenseTeamNameByPeriod(data, period) {
+        const parsed = parsePeriod(period);
+
+        if (parsed.half === '초') {
+            return data.awayTeam?.name || '원정팀';
+        }
+
+        if (parsed.half === '말') {
+            return data.homeTeam?.name || '홈팀';
+        }
+
+        return '';
+    }
+
+    function renderPeriodLabel(data, period) {
+        const offenseTeamName = offenseTeamNameByPeriod(data, period);
+
+        if (!offenseTeamName) {
+            return period;
+        }
+
+        return `${period} ${offenseTeamName} 공격`;
+    }
+
+    function renderPeriodTitle(data, period, rightText = '') {
+        return `
+        <div class="period-title">
+            <span class="period-chip">${escapeHtml(renderPeriodLabel(data, period))}</span>
+            ${rightText ? `<span class="period-note">${escapeHtml(rightText)}</span>` : ''}
+        </div>
+    `;
+    }
+
     function sortEvents(events) {
         return [...(events || [])].sort((a, b) => {
             const aPeriod = parsePeriod(eventPeriodOf(a));
@@ -2527,7 +2684,7 @@
             foul_tip: '파울팁',
             bunt_foul: '번트 파울',
             called_strikeout: '삼진',
-            swinging_strikeout: '삼진',
+            swinging_strikeout: '헛스윙 삼진',
             foul_tip_strikeout: '파울팁 삼진',
             bunt_foul_strikeout: '번트 파울 삼진',
             pitch_clock_strikeout: '피치클락 삼진',
@@ -2704,6 +2861,7 @@
         const awayTeam = data.awayTeam || {};
         const scoreboard = data.scoreboard || {};
 
+
         return {
             ...data,
             homeTeam: {
@@ -2731,6 +2889,7 @@
             count: data.count || { balls: 0, strikes: 0, outs: 0 },
             baseState: data.baseState || {},
             currentPitcher: data.currentPitcher || null,
+            currentBatter: data.currentBatter || null,
             fielders: data.fielders || [],
             onDeck: data.onDeck || [],
             timeline: data.timeline || [],
@@ -2795,6 +2954,7 @@
     function renderPage(data) {
         window.__liveData = data;
         renderScoreboard(data);
+        renderOtherGames(data);
         renderPrediction(data);
         renderChatTeams(data);
         if (Array.isArray(data.comments) && data.comments.length > 0) {
@@ -2884,6 +3044,66 @@
             return;
         }
         target.textContent = team?.logoText || '-';
+    }
+
+    async function renderOtherGames(data) {
+        const target = $('#otherGamesStrip');
+        if (!target) return;
+        const dateKey = scheduleDateKey(data);
+        if (!dateKey) {
+            target.hidden = true;
+            target.innerHTML = '';
+            return;
+        }
+
+        try {
+            const games = await fetchJsonOrNull(`/api/schedule/baseball?date=${encodeURIComponent(dateKey)}`);
+            const matchId = String(getMatchIdFromPath() || data.matchId || '');
+            const others = (Array.isArray(games) ? games : [])
+                .filter(game => String(game.matchId) !== matchId)
+                .slice(0, 4);
+            if (!others.length) {
+                target.hidden = true;
+                target.innerHTML = '';
+                return;
+            }
+            target.innerHTML = others.map(renderOtherGameCard).join('');
+            target.hidden = false;
+        } catch (error) {
+            target.hidden = true;
+            target.innerHTML = '';
+        }
+    }
+
+    function scheduleDateKey(data) {
+        const source = data?.scheduledAt || data?.date || data?.scoreboard?.scheduledAt;
+        if (!source) return '';
+        const text = String(source);
+        const compact = text.match(/^(\d{4})-?(\d{2})-?(\d{2})/);
+        if (compact) return `${compact[1]}${compact[2]}${compact[3]}`;
+        const date = new Date(text);
+        if (Number.isNaN(date.getTime())) return '';
+        return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function renderOtherGameCard(game) {
+        const status = String(game.status || '').toLowerCase();
+        const live = ['live', 'in_progress', 'playing'].includes(status);
+        const finished = ['finished', 'ended', 'final'].includes(status);
+        const statusText = finished ? '경기종료' : live ? `${game.currentPeriod || '진행중'}` : `${game.scheduledAt || '-'} 예정`;
+        const href = `/baseball/live-match?matchId=${encodeURIComponent(game.matchId)}`;
+        return `<a class="other-game-card" href="${href}">
+            <div class="other-game-status ${live ? 'live' : ''}">${escapeHtml(statusText)}</div>
+            <div class="other-game-row">${renderOtherGameTeam(game.awayTeamName, game.awayTeamEmblem)}<b>${escapeHtml(live || finished ? game.awayScore ?? 0 : '')}</b></div>
+            <div class="other-game-row">${renderOtherGameTeam(game.homeTeamName, game.homeTeamEmblem)}<b>${escapeHtml(live || finished ? game.homeScore ?? 0 : '')}</b></div>
+        </a>`;
+    }
+
+    function renderOtherGameTeam(name, emblemUrl) {
+        return `<span class="other-game-team">
+            ${emblemUrl ? `<img class="other-game-emblem" src="${escapeHtml(emblemUrl)}" alt="">` : ''}
+            <span>${escapeHtml(name || '-')}</span>
+        </span>`;
     }
 
     function renderCountDots(selector, activeCount) {
@@ -3012,11 +3232,11 @@
 
     /* =========================================================
        05. Render: Stadium Field
-       프론트는 야구 규칙 계산을 하지 않고 DTO를 표시만 한다.
     ========================================================= */
     function renderField(data) {
         renderFielders(data.fielders || []);
         renderRunners(data.baseState || {});
+        renderCurrentBatter(data.currentBatter, data.baseState || {}, data);
         renderOnDeck(data.onDeck || []);
     }
 
@@ -3056,6 +3276,33 @@
         `).join('');
     }
 
+    function runnerOnBase(baseState, playerId) {
+        if (!playerId || !baseState) return false;
+        return ['first', 'second', 'third'].some(base => String(baseState[base]?.playerId) === String(playerId));
+    }
+
+    function hasActiveAtBat(data, currentBatter) {
+        if (!data || !currentBatter) return false;
+        return (data.timeline || []).some(card =>
+            card.current
+            && String(card.batterId) === String(currentBatter.playerId)
+            && card.period === data.currentPeriod
+        );
+    }
+
+    function renderCurrentBatter(currentBatter, baseState, data) {
+        const layer = $('#runnersLayer');
+        if (!layer || !currentBatter) return;
+        const playerId = currentBatter.playerId ?? currentBatter.id;
+        if (runnerOnBase(baseState, playerId) || !hasActiveAtBat(data, currentBatter)) return;
+
+        layer.insertAdjacentHTML('beforeend', `
+        <div class="br-runner batter-runner">
+            ${escapeHtml(currentBatter.name || currentBatter.playerName || '타자')}
+        </div>
+    `);
+    }
+
     function renderOnDeck(onDeck) {
         const list = $('#onDeckList');
         if (!list) return;
@@ -3064,6 +3311,8 @@
             <li><span>${escapeHtml(player.orderNum ?? index + 1)}.</span>${escapeHtml(player.name || player.playerName || '-')}</li>
         `).join('') || '<li><span>-</span>대기타석 없음</li>';
     }
+
+
 
     /* =========================================================
        06. Render: Timeline
@@ -3116,7 +3365,7 @@
         const topPeriod = `${inning}회초`;
         const bottomPeriod = `${inning}회말`;
 
-// 모든 이닝에서 회말을 위, 회초를 아래로 표시
+        // 회말을 위, 회초를 아래로 표시
         const periods = [bottomPeriod, topPeriod];
 
         const cards = (data.timeline || []).filter(card => periods.includes(card.period));
@@ -3126,28 +3375,60 @@
         setText('timelineOut', `${data.count.outs ?? 0} OUT`);
 
         if (cards.length === 0) {
-            body.innerHTML = `<div class="empty-state">match_event 데이터가 없어 선택한 이닝의 타임라인을 표시할 수 없습니다.</div>`;
+            body.innerHTML = '';
             return;
         }
 
-        const displayPeriods = periods
-            .filter(period => cards.some(card => card.period === period));
+        const displayPeriods = periods.filter(period =>
+            cards.some(card => card.period === period)
+        );
 
         body.innerHTML = displayPeriods.map(period => {
             const periodCards = cards.filter(card => card.period === period);
+
             if (periodCards.length === 0) {
-                return `<section class="period-block">
-                    <div class="period-title"><span class="period-chip">${escapeHtml(period)}</span><span>타석 기록 없음</span></div>
-                    <div class="empty-state">이 구간의 타석 기록이 없습니다.</div>
-                </section>`;
+                return `
+                <section class="period-block">
+                    ${renderPeriodTitle(data, period, '타석 기록 없음')}
+                </section>
+            `;
             }
 
-            return `<section class="period-block">
-                <div class="period-title"><span class="period-chip">${escapeHtml(period)}</span></div>
+            return `
+            <section class="period-block">
+                ${renderPeriodTitle(data, period)}
                 ${period === data.currentPeriod ? renderCurrentPitcherStateCard(data) : ''}
-                ${periodCards.map(card => renderAtBatCardFromDto(card)).join('')}
-            </section>`;
+                ${renderPeriodAtBatCards(periodCards)}
+            </section>
+        `;
         }).join('');
+    }
+
+    function renderPeriodAtBatCards(cards) {
+        return cards.map(card => {
+            const pitcherChanges = (card.pitches || []).filter(row => eventTypeOf(row) === 'pitcher_change');
+            const normalCard = { ...card, pitches: (card.pitches || []).filter(row => eventTypeOf(row) !== 'pitcher_change') };
+            return `${renderAtBatCardFromDto(normalCard)}${pitcherChanges.map(renderPitcherChangeCard).join('')}`;
+        }).join('');
+    }
+
+    function parsePitcherChange(description) {
+        const text = String(description || '').trim();
+        const match = text.match(/^(.+?)에서\s+(.+?)(?:으?로)\s+투수\s*교체$/);
+        if (!match) return { outName: '', inName: '', text };
+        return { outName: match[1].trim(), inName: match[2].trim(), text };
+    }
+
+    function renderPitcherChangeCard(row) {
+        const parsed = parsePitcherChange(row.description || row.label);
+        if (!parsed.outName || !parsed.inName) {
+            return `<div class="pitcher-change-card"><span class="change-mark">↕</span><span>${escapeHtml(parsed.text || '투수 교체')}</span></div>`;
+        }
+        return `<div class="pitcher-change-card">
+            <span class="change-mark">↕</span>
+            <span>투수: ${escapeHtml(parsed.outName)} <b class="out">OUT</b></span>
+            <span>투수: ${escapeHtml(parsed.inName)} <b class="in">IN</b></span>
+        </div>`;
     }
 
     function renderCurrentPitcherStateCard(data) {
@@ -3170,8 +3451,9 @@
 
     function renderAtBatCardFromDto(card) {
         const stat = card.stat || {};
-        const rows = card.pitches || [];
-        const cardClass = card.current ? 'atbat-card current' : 'atbat-card collapsed';
+        const rows = collapseRunnerTransitionRows(card.pitches || []);
+        const displayRows = [...rows].reverse();
+        const cardClass = card.current ? 'atbat-card current' : 'atbat-card';
 
         const batterName = card.batterName || card.name || stat.name || '-';
         const batterInitial = shortName(batterName).slice(0, 1) || '-';
@@ -3190,7 +3472,7 @@
             </div>
             ${card.current
             ? '<span class="atbat-badge">현재 타석</span>'
-            : '<button class="atbat-toggle" type="button" data-atbat-toggle>기록 더보기</button>'}
+            : '<button class="atbat-toggle" type="button" data-atbat-toggle>접기</button>'}
         </div>
 
         <div class="current-stat-row">
@@ -3205,9 +3487,9 @@
 
         <div class="atbat-detail">
             <div class="pitch-list">
-                ${rows.length ? rows.map(row => {
+                ${displayRows.length ? displayRows.map(row => {
             if (!row.actualPitch) {
-                return `<div class="pitch-event-row">
+                return `<div class="pitch-event-row ${eventTypeOf(row) === 'score' ? 'score-event' : ''}">
                             <b>${escapeHtml(row.label)}</b>
                             ${row.description ? ` · ${escapeHtml(row.description)}` : ''}
                         </div>`;
@@ -3221,10 +3503,23 @@
                         </div>
                         <div class="pitch-count">${escapeHtml(row.countText || '')}</div>
                     </div>`;
-        }).join('') : '<div class="empty-state">이번 타석 투구 기록이 없습니다.</div>'}
+        }).join('') : ''}
             </div>
         </div>
     </article>`;
+    }
+
+    function collapseRunnerTransitionRows(rows) {
+        const finalRunnerEvents = new Set(['score', 'runner_out', 'force_out', 'tag_out', 'pickoff_out', 'caught_stealing']);
+        const runnerAdvanceEvents = new Set(['runner_advance', 'runner_advance_2b', 'runner_advance_3b']);
+        const finalPlayers = new Set((rows || [])
+            .filter(row => finalRunnerEvents.has(eventTypeOf(row)) && row.playerId != null)
+            .map(row => String(row.playerId)));
+        return (rows || []).filter(row => {
+            if (!runnerAdvanceEvents.has(eventTypeOf(row))) return true;
+            if (row.playerId == null) return true;
+            return !finalPlayers.has(String(row.playerId));
+        });
     }
 
     /* =========================================================
@@ -3259,12 +3554,18 @@
         ];
         const homeStrikeouts = sumBy(teamGroups[0].batters, 'strikeouts');
         const awayStrikeouts = sumBy(teamGroups[1].batters, 'strikeouts');
+        const homeHomeRuns = sumBy(teamGroups[0].batters, 'homeRuns');
+        const awayHomeRuns = sumBy(teamGroups[1].batters, 'homeRuns');
+        const homeSteals = sumBy(teamGroups[0].batters, 'steals');
+        const awaySteals = sumBy(teamGroups[1].batters, 'steals');
 
         target.innerHTML = `
             ${renderTeamComparison(data.homeTeam, data.awayTeam, [
                 ['득점', teamGroups[0].runs, teamGroups[1].runs],
                 ['안타', teamGroups[0].hits, teamGroups[1].hits],
+                ['홈런', homeHomeRuns, awayHomeRuns],
                 ['볼넷', teamGroups[0].walks, teamGroups[1].walks],
+                ['도루', homeSteals, awaySteals],
                 ['삼진', homeStrikeouts, awayStrikeouts],
                 ['실책', teamGroups[0].errors, teamGroups[1].errors]
             ])}

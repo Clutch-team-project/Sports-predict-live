@@ -121,6 +121,7 @@ public class BaseballLiveStateService {
                 new BaseballLiveDTO.Count(state.balls, Math.min(state.strikes, 2), state.outs),
                 state.baseState(),
                 state.currentPitcherStat,
+                currentBatter(state, playerById),
                 fielders(lineups, playerById, fieldingTeamId),
                 onDeck(lineups, playerById, battingTeamId, state.lastBatterId),
                 atBatCards(state.atBats, state.playerStats, state.currentAtBat),
@@ -206,6 +207,31 @@ public class BaseballLiveStateService {
                 .map(PitcherStatBuilder::toDto)
                 .orElse(null);
         return state;
+    }
+
+    private BaseballLiveDTO.BatterInfo currentBatter(
+            State state,
+            Map<Long, Player> playerById
+    ) {
+        if (state.currentAtBat == null || state.currentAtBat.batterId == null) {
+            return null;
+        }
+
+        Player player = playerById.get(state.currentAtBat.batterId);
+        if (player == null) {
+            return null;
+        }
+
+        Team team = player.getTeam();
+
+        return new BaseballLiveDTO.BatterInfo(
+                player.getPlayerId(),
+                player.getName(),
+                team != null ? team.getTeamId() : null,
+                team != null ? team.getName() : null,
+                state.currentAtBat.orderNum,
+                state.currentAtBat.position
+        );
     }
 
     private Map<Long, Player> loadPlayerMap(List<MatchEvent> events, List<MatchLineup> lineups) {
@@ -430,7 +456,8 @@ public class BaseballLiveStateService {
     private String eventLabel(String type) {
         return switch (type) {
             case "ball", "pitch_clock_ball" -> "\uBCFC";
-            case "called_strike", "swinging_strike", "check_swing_strike" -> "\uC2A4\uD2B8\uB77C\uC774\uD06C";
+            case "called_strike", "check_swing_strike" -> "\uC2A4\uD2B8\uB77C\uC774\uD06C";
+            case "swinging_strike" -> "\uD5DB\uC2A4\uC719";
             case "pitch_clock_strike" -> "\uD53C\uCE58\uD074\uB77D \uC2A4\uD2B8\uB77C\uC774\uD06C";
             case "foul" -> "\uD30C\uC6B8";
             case "foul_tip" -> "\uD30C\uC6B8\uD301";
@@ -452,7 +479,7 @@ public class BaseballLiveStateService {
             case "balk" -> "보크";
             case "pitcher_change" -> "\uD22C\uC218 \uAD50\uCCB4";
             case "inning_end" -> "\uC774\uB2DD \uC885\uB8CC";
-            default -> STRIKEOUT_TYPES.contains(type) ? "\uC0BC\uC9C4" : type;
+            default -> "swinging_strikeout".equals(type) ? "\uD5DB\uC2A4\uC719 \uC0BC\uC9C4" : STRIKEOUT_TYPES.contains(type) ? "\uC0BC\uC9C4" : type;
         };
     }
     private String countText(int balls, int strikes) {
@@ -815,13 +842,108 @@ public class BaseballLiveStateService {
             String count = TERMINAL_TYPES.contains(type) ? "" : countText(balls, strikes);
             currentAtBat.rows.add(new BaseballLiveDTO.PitchRow(
                     pitchNo,
+                    event.getPlayerId(),
                     type,
                     eventLabel(type),
-                    blankToDefault(event.getDescription(), ""),
+                    displayDescription(event, type),
                     count,
                     actualPitch,
                     TERMINAL_TYPES.contains(type)
             ));
+        }
+
+        private String displayDescription(MatchEvent event, String type) {
+            String description = blankToDefault(event.getDescription(), "");
+            Long playerId = event.getPlayerId();
+            if (playerId == null) {
+                return description;
+            }
+
+            String name = playerName(playerById.get(playerId), playerId);
+            return switch (type) {
+                case "runner_advance" -> runnerAdvanceDescription(description, name, "");
+                case "runner_advance_2b" -> runnerAdvanceDescription(description, name, "2\uB8E8");
+                case "runner_advance_3b" -> runnerAdvanceDescription(description, name, "3\uB8E8");
+                case "score" -> scoreDescription(description, name, playerId);
+                case "runner_out", "force_out", "tag_out", "pickoff_out", "caught_stealing" -> outDescription(description, name);
+                default -> batterRunnerDescription(description, name);
+            };
+        }
+
+        private String runnerAdvanceDescription(String description, String name, String fallbackTarget) {
+            String text = description == null ? "" : description.trim();
+            if (text.contains("1\uB8E8 \uC8FC\uC790")) {
+                return text.replaceFirst("1\uB8E8 \uC8FC\uC790", "1\uB8E8 \uC8FC\uC790 " + name);
+            }
+            if (text.contains("2\uB8E8 \uC8FC\uC790")) {
+                return text.replaceFirst("2\uB8E8 \uC8FC\uC790", "2\uB8E8 \uC8FC\uC790 " + name);
+            }
+            if (text.contains("3\uB8E8 \uC8FC\uC790")) {
+                return text.replaceFirst("3\uB8E8 \uC8FC\uC790", "3\uB8E8 \uC8FC\uC790 " + name);
+            }
+            if (!fallbackTarget.isBlank()) {
+                return name + " " + fallbackTarget + "\uAE4C\uC9C0 \uC9C4\uB8E8";
+            }
+            return name + " \uC9C4\uB8E8";
+        }
+
+        private String outDescription(String description, String name) {
+            if (description != null && !description.isBlank()) {
+                return description;
+            }
+            return name + " \uC544\uC6C3";
+        }
+
+        private String batterRunnerDescription(String description, String name) {
+            if (description == null || description.isBlank()) {
+                return description;
+            }
+            if (!description.contains("\uD0C0\uC790\uC8FC\uC790") && !description.contains("\uD0C0\uC790 \uC8FC\uC790")) {
+                return description;
+            }
+            if (description.contains("3\uB8E8")) {
+                return name + " 3\uB8E8\uB85C \uCD9C\uB8E8";
+            }
+            if (description.contains("2\uB8E8")) {
+                return name + " 2\uB8E8\uB85C \uCD9C\uB8E8";
+            }
+            return name + " 1\uB8E8\uB85C \uCD9C\uB8E8";
+        }
+
+        private String scoreDescription(String description, String name, Long playerId) {
+            String base = scoreBaseFromPriorAdvance(playerId);
+            if (description != null) {
+                if (base.isBlank() && description.contains("3\uB8E8")) {
+                    base = "3\uB8E8\uC8FC\uC790 ";
+                } else if (base.isBlank() && description.contains("2\uB8E8")) {
+                    base = "2\uB8E8\uC8FC\uC790 ";
+                } else if (base.isBlank() && description.contains("1\uB8E8")) {
+                    base = "1\uB8E8\uC8FC\uC790 ";
+                }
+            }
+            return base + name + " : \uD648\uC778";
+        }
+
+        private String scoreBaseFromPriorAdvance(Long playerId) {
+            if (playerId == null || currentAtBat == null) {
+                return "";
+            }
+            for (BaseballLiveDTO.PitchRow row : currentAtBat.rows) {
+                if (!Objects.equals(row.playerId(), playerId)) {
+                    continue;
+                }
+                String description = row.description() == null ? "" : row.description();
+                if (description.contains("1\uB8E8")) {
+                    return "1\uB8E8\uC8FC\uC790 ";
+                }
+                if (description.contains("2\uB8E8")) {
+                    return "2\uB8E8\uC8FC\uC790 ";
+                }
+                if (description.contains("3\uB8E8")) {
+                    return "3\uB8E8\uC8FC\uC790 ";
+                }
+            }
+            return "";
         }
 
         private BaseballLiveDTO.Scoreboard scoreboard(Match match) {

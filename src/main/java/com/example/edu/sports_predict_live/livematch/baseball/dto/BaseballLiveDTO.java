@@ -20,6 +20,7 @@ public record BaseballLiveDTO(
         Count count,
         BaseState baseState,
         PitcherGameStat currentPitcher,
+        BatterInfo currentBatter,
         List<Fielder> fielders,
         List<LineupPlayer> onDeck,
         List<AtBatCard> timeline,
@@ -29,6 +30,16 @@ public record BaseballLiveDTO(
         List<MatchLineupDTO> lineup,
         PredictionSummaryDTO prediction
 ) {
+
+        public record BatterInfo(
+            Long playerId,
+            String name,
+            Long teamId,
+            String teamName,
+            Integer orderNum,
+            String position
+    ) {
+    }
 
     public record TeamInfo(Long teamId, String name, String logoText, String emblemUrl) {
     }
@@ -46,17 +57,17 @@ public record BaseballLiveDTO(
     ) {
     }
 
-    public record InningScore(int inning, int home, int away) {
-    }
+        public record InningScore(int inning, int home, int away) {
+        }
 
-    public record Count(int balls, int strikes, int outs) {
-    }
+        public record Count(int balls, int strikes, int outs) {
+        }
 
-    public record BaseState(BaseRunner first, BaseRunner second, BaseRunner third) {
-    }
+        public record BaseState(BaseRunner first, BaseRunner second, BaseRunner third) {
+        }
 
-    public record BaseRunner(Long playerId, String name) {
-    }
+        public record BaseRunner(Long playerId, String name) {
+        }
 
     public record PitcherGameStat(
             Long playerId,
@@ -114,6 +125,7 @@ public record BaseballLiveDTO(
 
     public record PitchRow(
             Integer pitchNo,
+            Long playerId,
             String eventType,
             String label,
             String description,
