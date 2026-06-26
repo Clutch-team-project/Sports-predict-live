@@ -125,6 +125,7 @@ public record BaseballLiveDTO(
 
     public record PitchRow(
             Integer pitchNo,
+            Long playerId,
             String eventType,
             String label,
             String description,
