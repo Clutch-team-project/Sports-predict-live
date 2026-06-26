@@ -288,10 +288,10 @@ public class BaseballAdminCommandService {
         if (!runnerExists(state, runnerId)) {
             throw new IllegalArgumentException("현재 루상에 없는 주자입니다: " + runnerId);
         }
-        String normalizedEventType = normalizeRunnerAdvanceEventType(eventType, command.base());
+        String normalizedEventType = normalizeRunnerAdvanceEventTypeSafe(eventType, command.base());
         String description = command.description();
         if (description == null || description.isBlank()) {
-            description = defaultRunnerDescription(state, runnerId, normalizedEventType, command.base());
+            description = defaultRunnerDescriptionSafe(state, runnerId, normalizedEventType);
         }
         writer.add(period, battingTeamId(match, period), runnerId, normalizedEventType, description);
         if (outDelta > 0) {
@@ -350,6 +350,50 @@ public class BaseballAdminCommandService {
             throw new IllegalArgumentException("투수 교체에는 playerId가 필요합니다.");
         }
         writer.add(period, fieldingTeamId(match, period), command.playerId(), "pitcher_change", command.description());
+    }
+
+    private String normalizeRunnerAdvanceEventTypeSafe(String eventType, String targetBase) {
+        if (!"runner_advance".equals(eventType)) {
+            return eventType;
+        }
+        String base = targetBase == null ? "" : targetBase.trim().toLowerCase();
+        return switch (base) {
+            case "second", "2", "2b", "2루" -> "runner_advance_2b";
+            case "third", "3", "3b", "3루" -> "runner_advance_3b";
+            case "home", "4", "score", "홈" -> "score";
+            default -> "runner_advance";
+        };
+    }
+
+    private String defaultRunnerDescriptionSafe(BaseballLiveDTO state, Long runnerId, String eventType) {
+        String from = currentRunnerBaseTextSafe(state, runnerId);
+        if ("runner_advance_2b".equals(eventType)) {
+            return from + " 주자 2루까지 진루";
+        }
+        if ("runner_advance_3b".equals(eventType)) {
+            return from + " 주자 3루까지 진루";
+        }
+        if ("score".equals(eventType)) {
+            return from + " 주자 득점";
+        }
+        return from + " 주자 진루";
+    }
+
+    private String currentRunnerBaseTextSafe(BaseballLiveDTO state, Long runnerId) {
+        BaseballLiveDTO.BaseState bases = state.baseState();
+        if (bases == null || runnerId == null) {
+            return "주자";
+        }
+        if (bases.first() != null && Objects.equals(bases.first().playerId(), runnerId)) {
+            return "1루";
+        }
+        if (bases.second() != null && Objects.equals(bases.second().playerId(), runnerId)) {
+            return "2루";
+        }
+        if (bases.third() != null && Objects.equals(bases.third().playerId(), runnerId)) {
+            return "3루";
+        }
+        return "주자";
     }
 
     private void substitution(Match match, BaseballLiveDTO state, BaseballAdminCommandDTO command,
