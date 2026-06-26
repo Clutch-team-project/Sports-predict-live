@@ -28,9 +28,7 @@ public class NewsService {
     ) {
 
         // 중복 뉴스 방지
-        boolean exists = newsRepository.existsByNewsUrl(newsUrl);
-
-        if (exists) {
+        if (newsRepository.findByNewsUrl(newsUrl).isPresent()) {
             throw new RuntimeException("이미 저장된 뉴스입니다.");
         }
 
