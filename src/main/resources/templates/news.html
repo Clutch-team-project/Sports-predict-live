@@ -366,6 +366,9 @@
                 <div class="article-meta">
                     <span id="detailDate">입력 날짜</span>
                     <button class="badge-source" id="detailLinkBtn">기사원문</button>
+                    <button class="badge-source" id="shareNewsBtn">링크공유</button>
+                    <button class="badge-source" id="shareXBtn">X</button>
+                    <button class="badge-source" id="shareFacebookBtn">Facebook</button>
                 </div>
 
                 <div id="detailImageBox" class="article-image-box">
@@ -760,6 +763,47 @@
 
         document.getElementById("detailLinkBtn").onclick = function () {
             window.open(link, "_blank");
+        };
+
+        document.getElementById("shareNewsBtn").onclick = async function () {
+            const shareData = {
+                title: title,
+                text: description,
+                url: link
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                } catch (e) {
+                    console.log("공유 취소 또는 실패", e);
+                }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(link);
+                    alert("뉴스 링크가 복사되었습니다.");
+                } catch (e) {
+                    alert("링크 복사에 실패했습니다.");
+                }
+            }
+        };
+
+        document.getElementById("shareXBtn").onclick = function () {
+            const shareUrl =
+                "https://twitter.com/intent/tweet?text="
+                + encodeURIComponent(title)
+                + "&url="
+                + encodeURIComponent(link);
+
+            window.open(shareUrl, "_blank", "width=600,height=500");
+        };
+
+        document.getElementById("shareFacebookBtn").onclick = function () {
+            const shareUrl =
+                "https://www.facebook.com/sharer/sharer.php?u="
+                + encodeURIComponent(link);
+
+            window.open(shareUrl, "_blank", "width=600,height=500");
         };
 
         goPage("page-02");
