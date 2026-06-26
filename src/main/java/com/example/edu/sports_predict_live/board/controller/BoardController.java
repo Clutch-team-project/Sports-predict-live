@@ -126,18 +126,23 @@ public class BoardController {
 
     // 게시글 등록
     @PostMapping("/register")
-    public String registerPOST(BoardDTO boardDTO, Authentication authentication, RedirectAttributes redirectAttributes) {
-        Long currentUserId = getCurrentUserId(authentication);
-        String currentUserRole = getCurrentUserRole(authentication);
-        boardDTO.setUserId(currentUserId);
-        Long boardId = boardService.register(boardDTO, currentUserRole);
+    @ResponseBody
+    public ResponseEntity<?> registerPOST(BoardDTO boardDTO, Authentication authentication) {
+        try {
+            Long currentUserId = getCurrentUserId(authentication);
+            String currentUserRole = getCurrentUserRole(authentication);
+            boardDTO.setUserId(currentUserId);
+            Long boardId = boardService.register(boardDTO, currentUserRole);
 
-        redirectAttributes.addFlashAttribute("result", boardId);
-
-        if(boardDTO.getBoardType() != null && !boardDTO.getBoardType().isEmpty()) {
-            redirectAttributes.addAttribute("boardType", boardDTO.getBoardType());
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("boardId", boardId);
+            response.put("boardType", boardDTO.getBoardType());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 등록 중 서버 내부 오류가 발생했습니다: " + e.getMessage());
         }
-        return "redirect:/board/list";
     }
 
     // 게시글 수정 페이지로 이동

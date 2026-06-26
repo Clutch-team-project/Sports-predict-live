@@ -26,6 +26,7 @@
         }
     }
 
+    // 카테고리 변경
     function chgCategory(catValue) {
         const formCategory = document.getElementById('formCategory');
         const boardActionForm = document.getElementById('boardActionForm');
@@ -35,6 +36,7 @@
         }
     }
 
+    // 정렬 변경
     function chgSort(sortValue) {
         const formSort = document.getElementById('formSort');
         const boardActionForm = document.getElementById('boardActionForm');
@@ -44,6 +46,7 @@
         }
     }
 
+    // 검색창 Placeholder 업데이트
     function updatePlaceholder() {
         const typeSelect = document.getElementById('searchType');
         const keywordInput = document.getElementById('searchKeyword');
@@ -58,6 +61,7 @@
         }
     }
 
+    // 세이프봇 스위치 적용
     function applySafebot(isOn) {
         document.querySelectorAll('.board-item').forEach(item => {
             const isBlinded = item.getAttribute('data-blinded') === 'true';
@@ -77,6 +81,7 @@
         });
     }
 
+    // 게시글 클릭 시 이동 제어
     function clickBoardRow(url, isBlinded, isDeleted) {
         if (isDeleted) return;
 
@@ -171,11 +176,12 @@
                         location.href = '/board/list';
                     }
                 } else {
+                    const resClone = res.clone();
                     try {
                         const errorData = await res.json();
                         alert(errorData.message || '삭제 권한이 없거나 실패했습니다.');
                     } catch(e) {
-                        const errorMessage = await res.text();
+                        const errorMessage = await resClone.text();
                         alert(errorMessage || '삭제 권한이 없거나 실패했습니다.');
                     }
                 }
@@ -429,6 +435,130 @@
         }).catch(err => console.error(err));
     }
 
+    // 댓글 블라인드 토글
+    window.toggleReplyBlind = function(replyId) {
+        if (!confirm("이 댓글의 블라인드 상태를 변경하시겠습니까?")) return;
+        window.authFetch(`/replies/admin/${replyId}/blind`, { method: 'PUT' })
+            .then(res => {
+                if (res.ok) { alert("댓글 블라인드 처리가 정상 반영되었습니다."); printReplies(currentReplyPage); }
+                else alert("권한이 없거나 실패했습니다.");
+            }).catch(err => console.error(err));
+    };
+
+    function likeReply(replyId) {
+        if (!token) {
+            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
+            return;
+        }
+        window.authFetch(`/replies/like`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ replyId: replyId })
+        }).then(async res => {
+            if (res.ok) printReplies(currentReplyPage);
+            else {
+                const msg = await res.text();
+                alert(msg || '오류가 발생했습니다.');
+            }
+        }).catch(err => console.error(err));
+    }
+
+    function reportReply(replyId) {
+        if (!token) {
+            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
+            return;
+        }
+        if(!confirm('이 댓글을 신고하시겠습니까?')) return;
+        window.authFetch(`/replies/report`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ replyId: replyId })
+        }).then(async res => {
+            if (res.ok) { alert("댓글 신고가 접수되었습니다."); printReplies(currentReplyPage); }
+            else {
+                const msg = await res.text();
+                alert(msg || '오류가 발생했습니다.');
+            }
+        }).catch(err => console.error(err));
+    }
+
+    function chgReplySort(sortType) {
+        currentReplySort = sortType;
+        const latestBtn = document.getElementById('replySortLatest');
+        const likeBtn = document.getElementById('replySortLike');
+
+        if (sortType === 'latest') {
+            if(latestBtn) latestBtn.className = "text-xs font-bold text-blue-600 cursor-pointer";
+            if(likeBtn) likeBtn.className = "text-xs font-semibold text-slate-500 cursor-pointer";
+        } else {
+            if(latestBtn) latestBtn.className = "text-xs font-semibold text-slate-500 cursor-pointer";
+            if(likeBtn) likeBtn.className = "text-xs font-bold text-blue-600 cursor-pointer";
+        }
+        printReplies(1);
+    }
+
+    function applyReplySafebot() {
+        const isOn = (window.safebotStatus === 'ON');
+
+        document.querySelectorAll('.reply-item').forEach(item => {
+            const isBlinded = item.getAttribute('data-blinded') === 'true';
+
+            if (isBlinded) {
+                const blindText = item.querySelector('.blind-text');
+                const realText = item.querySelector('.real-text');
+
+                if (isOn) {
+                    if (blindText) blindText.style.display = 'block';
+                    if (realText) realText.style.display = 'none';
+                } else {
+                    if (blindText) blindText.style.display = 'none';
+                    if (realText) realText.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    function showReReplyForm(replyId) {
+        const form = document.getElementById(`rereply-form-${replyId}`);
+        if (form) {
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            const input = document.getElementById(`rereply-input-${replyId}`);
+            if (input && form.style.display === 'block') {
+                input.focus();
+            }
+        }
+    }
+
+    function registerReReply(parentId) {
+        const boardIdEl = document.getElementById('currentBoardId');
+        if (!boardIdEl) return;
+        const boardId = boardIdEl.value;
+
+        if (!token || !loggedInUserId) {
+            if(confirm('로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?')) location.href='/login';
+            return;
+        }
+
+        const input = document.getElementById(`rereply-input-${parentId}`);
+        if (!input) return;
+        const text = input.value.trim();
+        if (text === '') { alert('답글 내용을 입력해 주세요.'); input.focus(); return; }
+
+        window.authFetch('/replies/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ boardId: boardId, replyText: text, userId: loggedInUserId, parentId: parentId })
+        }).then(async res => {
+            if(res.ok) {
+                input.value = '';
+                printReplies(currentReplyPage);
+            } else {
+                const msg = await res.text();
+                alert(msg || '답글 등록에 실패했습니다.');
+            }
+        }).catch(err => console.error('답글 등록 에러:', err));
+    }
+
     // ==========================================
     // 6. DOM 로딩 시 통합 초기화
     // ==========================================
@@ -612,8 +742,13 @@
                             const boardType = document.getElementById('boardType') ? document.getElementById('boardType').value : '';
                             location.href = '/board/read?boardId=' + boardId + (boardType ? '&boardType=' + boardType : '');
                         } else {
-                            const errorMessage = await res.text();
-                            alert(errorMessage || '수정 중 오류가 발생했습니다.');
+                            const errorMsg = await res.text();
+                            const isHtmlOrScript = /<[a-z][\s\S]*>/i.test(errorMsg) || errorMsg.includes('location.href') || errorMsg.includes('window.location');
+                            if (isHtmlOrScript) {
+                                alert('게시글 수정 중 서버 내부 오류가 발생했습니다. (500)');
+                            } else {
+                                alert(errorMsg || '수정 중 오류가 발생했습니다.');
+                            }
                         }
                     })
                     .catch(error => { console.error(error); alert('서버와 통신 중 오류가 발생했습니다.'); });
@@ -683,17 +818,28 @@
                     body: formData
                 })
                     .then(async response => {
-                        if (response.redirected) {
-                            location.href = response.url;
-                        } else if (response.status === 401 || response.status === 403) {
+                        if (response.status === 401 || response.status === 403) {
                             alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
                             location.href = '/login';
                         } else if (response.ok) {
+                            const data = await response.json();
                             alert('게시글이 등록되었습니다.');
-                            location.href = boardType ? '/board/list?boardType=' + boardType : '/board/list';
+                            const boardTypeVal = data.boardType || '';
+                            location.href = boardTypeVal ? '/board/list?boardType=' + boardTypeVal : '/board/list';
                         } else {
-                            const errorMsg = await response.text();
-                            alert(errorMsg || '게시글 등록에 실패했습니다.');
+                            const resClone = response.clone();
+                            try {
+                                const errorData = await response.json();
+                                alert(errorData.message || '게시글 등록에 실패했습니다.');
+                            } catch(e) {
+                                const errorMsg = await resClone.text();
+                                const isHtmlOrScript = /<[a-z][\s\S]*>/i.test(errorMsg) || errorMsg.includes('location.href') || errorMsg.includes('window.location');
+                                if (isHtmlOrScript) {
+                                    alert('게시글 등록 중 서버 내부 오류가 발생했습니다. (500)');
+                                } else {
+                                    alert(errorMsg || '게시글 등록에 실패했습니다.');
+                                }
+                            }
                         }
                     })
                     .catch(error => { console.error(error); alert('서버 통신 오류'); });
@@ -724,7 +870,7 @@
     window.printReplies = printReplies;
     window.removeReply = removeReply;
     window.modifyReplyPrompt = modifyReplyPrompt;
-    window.toggleReplyBlind = toggleReplyBlind;
+    window.modifyReplyPrompt = modifyReplyPrompt;
     window.likeReply = likeReply;
     window.reportReply = reportReply;
     window.chgReplySort = chgReplySort;
@@ -734,4 +880,4 @@
     window.removeModifyFile = removeModifyFile;
     window.removeRegisterFile = removeRegisterFile;
 
-})();이
+})();
