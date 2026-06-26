@@ -4,8 +4,9 @@ import com.example.edu.sports_predict_live.board.dto.BoardReplyDTO;
 import com.example.edu.sports_predict_live.board.dto.PageRequestDTO;
 import com.example.edu.sports_predict_live.board.dto.PageResponseDTO;
 import com.example.edu.sports_predict_live.board.service.BoardReplyService;
+import com.example.edu.sports_predict_live.user.entity.User;
+import com.example.edu.sports_predict_live.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,21 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BoardReplyController {
     private final BoardReplyService boardReplyService;
+    private final UserRepository userRepository;
+
+    // 현재 로그인 한 유저의 ID 가져오기
+    private Long getCurrentUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalArgumentException("로그인 후 이용 가능합니다.");
+        }
+        try {
+            return Long.parseLong(authentication.getName());
+        } catch (NumberFormatException e) {
+            User user = userRepository.findByLoginIdAndDeletedAtIsNull(authentication.getName())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+            return user.getUserId();
+        }
+    }
 
     // 특정 게시글의 댓글 목록 조회
     @GetMapping("/list/{boardId}")
@@ -29,8 +45,9 @@ public class BoardReplyController {
         Long currentUserId = null;
         if (authentication != null && authentication.isAuthenticated()) {
             try {
-                currentUserId = Long.parseLong(authentication.getName());
-            } catch (NumberFormatException e) {
+                currentUserId = getCurrentUserId(authentication);
+            } catch (Exception e) {
+                // 목록 조회 시 비회원 또는 ID 파싱 에러는 null 처리하여 계속 진행
             }
         }
         PageResponseDTO<BoardReplyDTO> responseDTO = boardReplyService.getListOfBoard(boardId, pageRequestDTO, currentUserId);
@@ -41,27 +58,26 @@ public class BoardReplyController {
     // 댓글 등록
     @PostMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Long>> register(@RequestBody BoardReplyDTO replyDTO, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
+        try {
+            Long currentUserId = getCurrentUserId(authentication);
+            replyDTO.setUserId(currentUserId);
+            Long replyId = boardReplyService.register(replyDTO);
+            return ResponseEntity.ok(Map.of("replyId", replyId));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        Long currentUserId = Long.parseLong(authentication.getName());
-        replyDTO.setUserId(currentUserId);
-        
-        Long replyId = boardReplyService.register(replyDTO);
-        return ResponseEntity.ok(Map.of("replyId", replyId));
     }
 
     // 댓글 삭제
     @DeleteMapping("/{replyId}")
     public ResponseEntity<String> remove(@PathVariable("replyId") Long replyId, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
-        }
         try {
-            Long currentUserId = Long.parseLong(authentication.getName());
+            Long currentUserId = getCurrentUserId(authentication);
             String currentUserRole = authentication.getAuthorities().iterator().next().getAuthority();
             boardReplyService.removeReply(replyId, currentUserId, currentUserRole);
             return ResponseEntity.ok("success");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (org.springframework.security.access.AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
@@ -72,14 +88,13 @@ public class BoardReplyController {
     // 댓글 수정
     @PutMapping("/{replyId}")
     public ResponseEntity<String> modify(@PathVariable("replyId") Long replyId, @RequestBody BoardReplyDTO boardReplyDTO, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
-        }
         try {
-            Long currentUserId = Long.parseLong(authentication.getName());
+            Long currentUserId = getCurrentUserId(authentication);
             boardReplyDTO.setReplyId(replyId);
             boardReplyService.modifyReply(boardReplyDTO, currentUserId);
             return ResponseEntity.ok("success");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (org.springframework.security.access.AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
@@ -90,14 +105,13 @@ public class BoardReplyController {
     // 댓글 좋아요 토글
     @PostMapping("/like")
     public ResponseEntity<String> likeReply(@RequestBody Map<String, Long> payload, Authentication authentication) {
-        if(authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용 가능합니다.");
-        }
         try {
-            Long currentUserId = Long.parseLong(authentication.getName());
+            Long currentUserId = getCurrentUserId(authentication);
             Long replyId = payload.get("replyId");
             boardReplyService.toggleLikeReply(replyId, currentUserId);
             return ResponseEntity.ok("success");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
@@ -106,15 +120,15 @@ public class BoardReplyController {
     // 댓글 신고
     @PostMapping("/report")
     public ResponseEntity<String> reportReply(@RequestBody Map<String, Long> payload, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
-        }
         try {
-            Long currentUserId = Long.parseLong(authentication.getName());
+            Long currentUserId = getCurrentUserId(authentication);
             Long replyId = payload.get("replyId");
             boardReplyService.reportReply(replyId, currentUserId);
             return ResponseEntity.ok("신고가 접수되었습니다.");
         } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().contains("로그인")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("오류가 발생했습니다.");
