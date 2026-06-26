@@ -121,6 +121,7 @@ public class BaseballLiveStateService {
                 new BaseballLiveDTO.Count(state.balls, Math.min(state.strikes, 2), state.outs),
                 state.baseState(),
                 state.currentPitcherStat,
+                currentBatter(state, playerById),
                 fielders(lineups, playerById, fieldingTeamId),
                 onDeck(lineups, playerById, battingTeamId, state.lastBatterId),
                 atBatCards(state.atBats, state.playerStats, state.currentAtBat),
@@ -206,6 +207,31 @@ public class BaseballLiveStateService {
                 .map(PitcherStatBuilder::toDto)
                 .orElse(null);
         return state;
+    }
+
+    private BaseballLiveDTO.BatterInfo currentBatter(
+            State state,
+            Map<Long, Player> playerById
+    ) {
+        if (state.currentAtBat == null || state.currentAtBat.batterId == null) {
+            return null;
+        }
+
+        Player player = playerById.get(state.currentAtBat.batterId);
+        if (player == null) {
+            return null;
+        }
+
+        Team team = player.getTeam();
+
+        return new BaseballLiveDTO.BatterInfo(
+                player.getPlayerId(),
+                player.getName(),
+                team != null ? team.getTeamId() : null,
+                team != null ? team.getName() : null,
+                state.currentAtBat.orderNum,
+                state.currentAtBat.position
+        );
     }
 
     private Map<Long, Player> loadPlayerMap(List<MatchEvent> events, List<MatchLineup> lineups) {

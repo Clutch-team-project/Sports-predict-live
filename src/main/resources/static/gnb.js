@@ -39,7 +39,7 @@
                 return res;
             }
 
-            var reissueRes = await fetch('http://localhost:8080/api/auth/reissue', {
+            var reissueRes = await fetch('/api/auth/reissue', {
                 method: 'POST',
                 headers: {'Authorization': 'Bearer ' + refreshToken}
             });
@@ -260,7 +260,7 @@
             logoutEl.addEventListener('click', function () {
                 var token = localStorage.getItem('accessToken');
                 if (token) {
-                    fetch('http://localhost:8080/api/auth/logout', {
+                    fetch('/api/auth/logout', {
                         method: 'POST',
                         headers: {'Authorization': 'Bearer ' + token}
                     }).finally(function () {

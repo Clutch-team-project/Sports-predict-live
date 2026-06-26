@@ -854,19 +854,25 @@
             color: var(--text);
         }
 
+        .br-runner.batter-runner {
+            left: 42%;
+            bottom: 9.5%;
+            transform: translateX(-50%);
+        }
+
         .br-pos-lf { left: 18.5%; top: 60%; }
         .br-pos-cf { left: 50%; top: 58%; }
         .br-pos-rf { left: 81.5%; top: 60%; }
-        .br-pos-3b { left: 28%; top: 72%; }
+        .br-pos-3b { left: 25%; top: 72%; }
         .br-pos-ss { left: 38%; top: 68%; }
         .br-pos-2b { left: 62%; top: 68%; }
-        .br-pos-1b { left: 72%; top: 72%; }
+        .br-pos-1b { left: 75%; top: 72%; }
         .br-pos-p { left: 50%; top: 73.5%; }
-        .br-pos-c { left: 50%; top: 91.5%; }
+        .br-pos-c { left: 50%; top: 94%; }
 
-        .br-runner-1 { left: 74%; top: 79%; }
+        .br-runner-1 { left: 75%; top: 79%; }
         .br-runner-2 { left: 50%; top: 65%; }
-        .br-runner-3 { left: 26%; top: 79%; }
+        .br-runner-3 { left: 25%; top: 79%; }
 
         .br-ondeck {
             position: absolute;
@@ -2704,6 +2710,7 @@
         const awayTeam = data.awayTeam || {};
         const scoreboard = data.scoreboard || {};
 
+
         return {
             ...data,
             homeTeam: {
@@ -2731,6 +2738,7 @@
             count: data.count || { balls: 0, strikes: 0, outs: 0 },
             baseState: data.baseState || {},
             currentPitcher: data.currentPitcher || null,
+            currentBatter: data.currentBatter || null,
             fielders: data.fielders || [],
             onDeck: data.onDeck || [],
             timeline: data.timeline || [],
@@ -3012,11 +3020,11 @@
 
     /* =========================================================
        05. Render: Stadium Field
-       프론트는 야구 규칙 계산을 하지 않고 DTO를 표시만 한다.
     ========================================================= */
     function renderField(data) {
         renderFielders(data.fielders || []);
         renderRunners(data.baseState || {});
+        renderCurrentBatter(data.currentBatter);
         renderOnDeck(data.onDeck || []);
     }
 
@@ -3056,6 +3064,17 @@
         `).join('');
     }
 
+    function renderCurrentBatter(currentBatter) {
+        const layer = $('#runnersLayer');
+        if (!layer || !currentBatter) return;
+
+        layer.insertAdjacentHTML('beforeend', `
+        <div class="br-runner batter-runner">
+            ${escapeHtml(currentBatter.name || currentBatter.playerName || '타자')}
+        </div>
+    `);
+    }
+
     function renderOnDeck(onDeck) {
         const list = $('#onDeckList');
         if (!list) return;
@@ -3064,6 +3083,8 @@
             <li><span>${escapeHtml(player.orderNum ?? index + 1)}.</span>${escapeHtml(player.name || player.playerName || '-')}</li>
         `).join('') || '<li><span>-</span>대기타석 없음</li>';
     }
+
+
 
     /* =========================================================
        06. Render: Timeline
