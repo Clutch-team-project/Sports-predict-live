@@ -43,11 +43,11 @@
 
     <div class="grid grid-cols-12 gap-4">
         <!-- 소속 선수 -->
-        <div class="col-span-12 md:col-span-6 glass-card border border-slate-300 rounded-2xl shadow-md overflow-hidden">
+        <div class="col-span-12 md:col-span-6 glass-card border border-slate-300 rounded-2xl shadow-md overflow-hidden self-start">
             <div class="p-4 border-b border-slate-200 bg-slate-50/70">
                 <span class="font-black text-sm text-slate-700">소속 선수</span>
             </div>
-            <div class="overflow-y-auto" style="max-height: 480px;">
+            <div class="overflow-y-auto" style="max-height: 600px;">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-slate-100 text-slate-500 text-xs sticky top-0">
                     <tr>
@@ -64,7 +64,7 @@
         </div>
 
         <!-- 최근/예정 경기 -->
-        <div class="col-span-12 md:col-span-6 space-y-4">
+        <div id="match-col" class="col-span-12 md:col-span-6 space-y-4">
             <div class="glass-card border border-slate-300 rounded-2xl shadow-md overflow-hidden">
                 <div class="p-4 border-b border-slate-200 bg-slate-50/70">
                     <span class="font-black text-sm text-slate-700">최근 경기</span>

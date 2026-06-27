@@ -802,7 +802,10 @@
         reader.readAsDataURL(file);
     }
 
+    let imageRemoved = false;
+
     function removeImage() {
+        imageRemoved = true;
         document.getElementById('profile-image-input').value = '';
         document.getElementById('profile-preview').src = '';
         document.getElementById('profile-preview').style.display = 'none';
@@ -859,9 +862,11 @@
             return;
         }
         const formData = new FormData();
+        const name = document.getElementById('inp-name').value.trim();
         const nickname = document.getElementById('inp-nickname').value.trim();
         const phone = document.getElementById('inp-phone').value.trim();
         const birthDate = document.getElementById('inp-birth').value.trim();
+        if (name) formData.append('name', name);
         if (nickname) formData.append('nickname', nickname);
         if (phone) formData.append('phone', phone);
         if (birthDate) formData.append('birthDate', birthDate);
@@ -870,6 +875,7 @@
         formData.append('predictionResultAlert', document.getElementById('toggle-predict').classList.contains('on'));
         const imageFile = document.getElementById('profile-image-input').files[0];
         if (imageFile) formData.append('profileImage', imageFile);
+        if (imageRemoved) formData.append('removeProfileImage', 'true');
 
         try {
             const res = await authFetch(BASE_URL + '/api/users/me', {

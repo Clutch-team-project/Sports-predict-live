@@ -20,7 +20,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,6 +41,10 @@ public class UserService {
     @Value("${com.example.upload.path}")
     private String uploadPath;
 
+    public boolean isLoginIdAvailable(String loginId) {
+        return !userRepository.existsByLoginIdAndDeletedAtIsNull(loginId);
+    }
+
     public UserResponseDTO signup(SignupRequestDTO dto) {
         EmailVerify verify = emailVerifyRepository
                 .findTopByEmailAndPurposeOrderByCreatedAtDesc(dto.getEmail(), "signup")
@@ -46,7 +53,7 @@ public class UserService {
         if (!verify.isVerified())
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
 
-        if (userRepository.existsByLoginId(dto.getLoginId()))
+        if (userRepository.existsByLoginIdAndDeletedAtIsNull(dto.getLoginId()))
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         if (userRepository.existsByEmail(dto.getEmail()))
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
@@ -154,7 +161,8 @@ public class UserService {
 
         String savedImagePath = saveProfileImage(dto.getProfileImage(), user.getProfileImage());
 
-        user.updateProfile(dto.getNickname(), dto.getPhone(), dto.getBirthDate(), savedImagePath);
+        boolean removeImage = Boolean.TRUE.equals(dto.getRemoveProfileImage());
+        user.updateProfile(dto.getName(), dto.getNickname(), dto.getPhone(), dto.getBirthDate(), savedImagePath, removeImage);
         user.updateAlertSettings(dto.getMarketingAgreed(), dto.getMatchStartAlert(),
                 dto.getPredictionResultAlert(), dto.getAlertBeforeMinutes());
 
@@ -171,24 +179,24 @@ public class UserService {
             throw new CustomException(ErrorCode.INVALID_FILE_TYPE);
         }
 
-        String profileDir = Paths.get(uploadPath, "profile").toAbsolutePath().toString();
-        File dir = new File(profileDir);
-        if (!dir.exists()) {
-            dir.mkdirs();
+        Path profileDir = Paths.get(uploadPath, "profile").toAbsolutePath();
+        try {
+            Files.createDirectories(profileDir);
+        } catch (IOException e) {
+            throw new RuntimeException("업로드 디렉토리 생성 실패: " + profileDir, e);
         }
 
         // 기존 프로필 이미지 삭제 (소셜 로그인의 외부 URL은 로컬 파일이 없으므로 건너뜀)
         if (existingImagePath != null && !existingImagePath.startsWith("http")) {
-            File oldFile = new File(Paths.get(uploadPath, "profile", existingImagePath).toString());
-            if (oldFile.exists()) {
-                oldFile.delete();
-            }
+            try {
+                Files.deleteIfExists(profileDir.resolve(existingImagePath));
+            } catch (IOException ignored) {}
         }
 
         String originalName = file.getOriginalFilename();
         String saveName = UUID.randomUUID() + "_" + originalName;
-        try {
-            file.transferTo(Paths.get(profileDir, saveName));
+        try (var in = file.getInputStream()) {
+            Files.copy(in, profileDir.resolve(saveName), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException("프로필 이미지 저장 중 오류가 발생했습니다.", e);
         }

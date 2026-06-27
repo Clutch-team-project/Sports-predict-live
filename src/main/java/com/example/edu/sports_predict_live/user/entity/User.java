@@ -108,14 +108,14 @@ public class User {
         if (alertBeforeMinutes != null) this.alertBeforeMinutes = alertBeforeMinutes;
     }
 
-    public void updateProfile(String nickname, String phone,
-                              LocalDate birthDate, String profileImage) {
-        // 수정 폼은 전체 값을 보내므로 비운 값(null/공백)은 삭제로 처리
-        // profileImage는 폼에 없는 항목이라 미전송(null) 시 기존 값 유지
+    public void updateProfile(String name, String nickname, String phone,
+                              LocalDate birthDate, String profileImage, boolean removeProfileImage) {
+        if (name != null && !name.isBlank()) this.name = name;
         this.nickname  = (nickname != null && !nickname.isBlank()) ? nickname : null;
         this.phone     = (phone != null && !phone.isBlank()) ? phone : null;
         this.birthDate = birthDate;
-        if (profileImage != null) this.profileImage = profileImage;
+        if (removeProfileImage) this.profileImage = null;
+        else if (profileImage != null) this.profileImage = profileImage;
     }
 
     public void updateSocialId(String socialId) {

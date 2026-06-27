@@ -10,11 +10,13 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class UserUpdateDTO {
+    private String name;
     private String nickname;
     private String phone;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate birthDate;
     private MultipartFile profileImage;
+    private Boolean removeProfileImage;
     private Boolean marketingAgreed;
     private Boolean matchStartAlert;
     private Boolean predictionResultAlert;

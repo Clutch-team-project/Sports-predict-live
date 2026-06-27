@@ -37,6 +37,12 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "인증 완료"));
     }
 
+    @GetMapping("/check-login-id")
+    public ResponseEntity<Map<String, Boolean>> checkLoginId(@RequestParam String loginId) {
+        boolean available = userService.isLoginIdAvailable(loginId);
+        return ResponseEntity.ok(Map.of("available", available));
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<UserResponseDTO> signup(
             @Valid @RequestBody SignupRequestDTO dto) {

@@ -472,6 +472,7 @@
         <div>
           <label class="field-label">아이디 <span class="required">*</span></label>
           <input id="inp-login-id" class="input-field" type="text" placeholder="영문/숫자 4~20자">
+          <p id="login-id-msg" class="hint-text" style="display:none;"></p>
         </div>
         <div>
           <label class="field-label">이메일 <span class="required">*</span></label>
@@ -487,6 +488,7 @@
         <div>
           <label class="field-label">비밀번호 확인 <span class="required">*</span></label>
           <input id="inp-password-confirm" class="input-field" type="password" placeholder="재입력">
+          <p id="pw-match-msg" class="hint-text" style="display:none;"></p>
         </div>
       </div>
 
@@ -548,6 +550,48 @@
 <script>
 const BASE_URL = window.location.origin;
 let emailVerified = false;
+let loginIdAvailable = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 아이디 중복 확인 (blur)
+  document.getElementById('inp-login-id').addEventListener('blur', async function () {
+    const loginId = this.value.trim();
+    const msg = document.getElementById('login-id-msg');
+    if (!loginId) { msg.style.display = 'none'; loginIdAvailable = false; return; }
+    if (!/^[a-zA-Z0-9]{4,20}$/.test(loginId)) {
+      msg.style.display = 'block'; msg.style.color = '#ef4444';
+      msg.textContent = '아이디는 영문/숫자 4~20자입니다.';
+      loginIdAvailable = false; return;
+    }
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/check-login-id?loginId=${encodeURIComponent(loginId)}`);
+      const data = await res.json();
+      msg.style.display = 'block';
+      if (data.available) {
+        msg.style.color = '#16a34a'; msg.textContent = '사용 가능한 아이디입니다.';
+        loginIdAvailable = true;
+      } else {
+        msg.style.color = '#ef4444'; msg.textContent = '이미 사용 중인 아이디입니다.';
+        loginIdAvailable = false;
+      }
+    } catch (e) {
+      msg.style.display = 'none'; loginIdAvailable = false;
+    }
+  });
+
+  // 비밀번호 확인 일치 여부 (blur)
+  document.getElementById('inp-password-confirm').addEventListener('blur', function () {
+    const pw  = document.getElementById('inp-password').value;
+    const msg = document.getElementById('pw-match-msg');
+    if (!this.value) { msg.style.display = 'none'; return; }
+    msg.style.display = 'block';
+    if (pw === this.value) {
+      msg.style.color = '#16a34a'; msg.textContent = '비밀번호가 일치합니다.';
+    } else {
+      msg.style.color = '#ef4444'; msg.textContent = '비밀번호가 일치하지 않습니다.';
+    }
+  });
+});
 let verifyTimerInterval = null;
 let _panelHideTimer = null; // hideTimer 중복 방지용 별칭
 
@@ -664,6 +708,7 @@ function goToNotification() {
   // 유효성 검사
   if (!loginId)  { showMsg('아이디를 입력해주세요.', true); return; }
   if (!/^[a-zA-Z0-9]{4,20}$/.test(loginId)) { showMsg('아이디는 영문/숫자 4~20자입니다.', true); return; }
+  if (!loginIdAvailable) { showMsg('아이디 중복 확인을 해주세요.', true); return; }
   if (!email)    { showMsg('이메일을 입력해주세요.', true); return; }
   if (!emailVerified) { showMsg('이메일 인증을 완료해주세요.', true); return; }
   if (!password) { showMsg('비밀번호를 입력해주세요.', true); return; }

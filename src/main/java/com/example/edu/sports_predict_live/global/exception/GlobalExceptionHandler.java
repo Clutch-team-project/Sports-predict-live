@@ -1,5 +1,6 @@
 package com.example.edu.sports_predict_live.global.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -9,6 +10,7 @@ import java.util.Map;
 
 // 공통 예외 처리 — {status, message} JSON 응답으로 변환
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
@@ -35,5 +37,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<String> handleIllegalException(RuntimeException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    // 예상치 못한 서버 오류 — 로그에 스택트레이스 출력
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception e) {
+        log.error("Unhandled exception", e);
+        return ResponseEntity.internalServerError()
+                .body(Map.of("status", 500, "message", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
     }
 }
