@@ -42,7 +42,8 @@ public class UserService {
     private String uploadPath;
 
     public boolean isLoginIdAvailable(String loginId) {
-        return !userRepository.existsByLoginIdAndDeletedAtIsNull(loginId);
+        // DB의 login_id UNIQUE 제약은 soft-delete 여부와 무관하므로 전체 행 기준으로 판단
+        return !userRepository.existsByLoginId(loginId);
     }
 
     public UserResponseDTO signup(SignupRequestDTO dto) {
@@ -53,7 +54,7 @@ public class UserService {
         if (!verify.isVerified())
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
 
-        if (userRepository.existsByLoginIdAndDeletedAtIsNull(dto.getLoginId()))
+        if (userRepository.existsByLoginId(dto.getLoginId()))
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         if (userRepository.existsByEmail(dto.getEmail()))
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);

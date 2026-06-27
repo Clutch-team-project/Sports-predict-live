@@ -553,6 +553,13 @@ let emailVerified = false;
 let loginIdAvailable = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 아이디 값이 바뀌면 이전 중복확인 결과 무효화
+  document.getElementById('inp-login-id').addEventListener('input', function () {
+    loginIdAvailable = false;
+    const msg = document.getElementById('login-id-msg');
+    if (msg) msg.style.display = 'none';
+  });
+
   // 아이디 중복 확인 (blur)
   document.getElementById('inp-login-id').addEventListener('blur', async function () {
     const loginId = this.value.trim();

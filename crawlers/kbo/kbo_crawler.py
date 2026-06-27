@@ -958,13 +958,13 @@ def main():
             end_dt   = datetime.strptime(args.end,   "%Y%m%d")
             print(f"\n▶ 경기 일정 크롤링 ({args.start} ~ {args.end})...")
 
-            # 월별 크롤 결과 캐싱 (중복 요청 방지)
+            # 월별 크롤 결과 캐싱 (중복 요청 방지) — 연도+월을 키로 사용해 연도 경계 안전
             months_cache = {}
             cur_dt = start_dt
             while cur_dt <= end_dt:
-                m = cur_dt.strftime("%m")
-                if m not in months_cache:
-                    months_cache[m] = crawl_schedule(month=m)
+                key = (cur_dt.year, cur_dt.month)
+                if key not in months_cache:
+                    months_cache[key] = crawl_schedule(month=cur_dt.strftime("%m"))
                 cur_dt += timedelta(days=1)
 
             # 하루씩 순회해 선발 투수 포함 저장
@@ -972,7 +972,7 @@ def main():
             while cur_dt <= end_dt:
                 date_str  = cur_dt.strftime("%Y%m%d")
                 date_iso  = cur_dt.strftime("%Y-%m-%d")
-                day_data  = [d for d in months_cache[cur_dt.strftime("%m")]
+                day_data  = [d for d in months_cache[(cur_dt.year, cur_dt.month)]
                              if d["scheduled_at"][:10] == date_iso]
                 if day_data:
                     sp_map = crawl_starting_pitchers(date_str)
