@@ -12,6 +12,7 @@ import com.example.edu.sports_predict_live.user.entity.User;
 import com.example.edu.sports_predict_live.user.repository.EmailVerifyRepository;
 import com.example.edu.sports_predict_live.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -189,9 +191,13 @@ public class UserService {
 
         // 기존 프로필 이미지 삭제 (소셜 로그인의 외부 URL은 로컬 파일이 없으므로 건너뜀)
         if (existingImagePath != null && !existingImagePath.startsWith("http")) {
+            Path oldFile = profileDir.resolve(existingImagePath);
             try {
-                Files.deleteIfExists(profileDir.resolve(existingImagePath));
-            } catch (IOException ignored) {}
+                Files.deleteIfExists(oldFile);
+            } catch (IOException e) {
+                // 삭제 실패는 치명적이지 않지만 로그는 남겨 디스크/권한 문제를 추적할 수 있게 한다
+                log.warn("기존 프로필 이미지 삭제 실패: {}", oldFile, e);
+            }
         }
 
         String originalName = file.getOriginalFilename();

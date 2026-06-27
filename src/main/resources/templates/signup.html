@@ -572,8 +572,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     try {
       const res = await fetch(`${BASE_URL}/api/auth/check-login-id?loginId=${encodeURIComponent(loginId)}`);
-      const data = await res.json();
       msg.style.display = 'block';
+      if (res.status === 429) {
+        msg.style.color = '#ef4444';
+        msg.textContent = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+        loginIdAvailable = false;
+        return;
+      }
+      const data = await res.json();
       if (data.available) {
         msg.style.color = '#16a34a'; msg.textContent = '사용 가능한 아이디입니다.';
         loginIdAvailable = true;

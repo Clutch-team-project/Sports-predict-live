@@ -113,7 +113,8 @@ public class User {
         if (name != null && !name.isBlank()) this.name = name;
         this.nickname  = (nickname != null && !nickname.isBlank()) ? nickname : null;
         this.phone     = (phone != null && !phone.isBlank()) ? phone : null;
-        this.birthDate = birthDate;
+        // 폼에서 birthDate를 보낸 경우에만 갱신, 미전송(null)이면 기존 값 보존
+        if (birthDate != null) this.birthDate = birthDate;
         if (removeProfileImage) this.profileImage = null;
         else if (profileImage != null) this.profileImage = profileImage;
     }

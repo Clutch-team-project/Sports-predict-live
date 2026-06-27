@@ -1,11 +1,13 @@
 package com.example.edu.sports_predict_live.user.controller;
 
+import com.example.edu.sports_predict_live.global.ratelimit.SimpleRateLimiter;
 import com.example.edu.sports_predict_live.user.dto.request.*;
 import com.example.edu.sports_predict_live.user.dto.response.ReissueResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.TokenResponseDTO;
 import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
 import com.example.edu.sports_predict_live.user.service.EmailVerifyService;
 import com.example.edu.sports_predict_live.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,11 @@ public class AuthController {
 
     private final UserService userService;
     private final EmailVerifyService emailVerifyService;
+    private final SimpleRateLimiter rateLimiter;
+
+    // 아이디 중복확인: IP당 1분에 30회 허용 (유저 열거 공격 완화)
+    private static final int CHECK_LOGIN_ID_LIMIT = 30;
+    private static final long CHECK_LOGIN_ID_WINDOW_MS = 60_000L;
 
     @PostMapping("/email/send")
     public ResponseEntity<Map<String, String>> sendCode(
@@ -38,9 +45,25 @@ public class AuthController {
     }
 
     @GetMapping("/check-login-id")
-    public ResponseEntity<Map<String, Boolean>> checkLoginId(@RequestParam String loginId) {
+    public ResponseEntity<Map<String, Object>> checkLoginId(
+            @RequestParam String loginId,
+            HttpServletRequest request) {
+        String key = "check-login-id:" + clientIp(request);
+        if (!rateLimiter.tryAcquire(key, CHECK_LOGIN_ID_LIMIT, CHECK_LOGIN_ID_WINDOW_MS)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."));
+        }
         boolean available = userService.isLoginIdAvailable(loginId);
         return ResponseEntity.ok(Map.of("available", available));
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            int comma = xff.indexOf(',');
+            return (comma > 0 ? xff.substring(0, comma) : xff).trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @PostMapping("/signup")
