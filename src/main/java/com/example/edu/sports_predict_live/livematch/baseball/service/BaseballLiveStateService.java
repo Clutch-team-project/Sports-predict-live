@@ -13,8 +13,10 @@ import com.example.edu.sports_predict_live.player.entity.PlayerSeasonStatBasebal
 import com.example.edu.sports_predict_live.player.repository.PlayerRepository;
 import com.example.edu.sports_predict_live.player.repository.PlayerSeasonStatBaseballRepository;
 import com.example.edu.sports_predict_live.prediction.service.PredictionService;
+import com.example.edu.sports_predict_live.team.dto.response.StandingsResponseDTO;
 import com.example.edu.sports_predict_live.team.entity.Team;
 import com.example.edu.sports_predict_live.team.repository.TeamRepository;
+import com.example.edu.sports_predict_live.team.repository.TeamSeasonStatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +90,7 @@ public class BaseballLiveStateService {
     private final PlayerRepository playerRepository;
     private final PlayerSeasonStatBaseballRepository playerSeasonStatBaseballRepository;
     private final TeamRepository teamRepository;
+    private final TeamSeasonStatRepository teamSeasonStatRepository;
     private final PredictionService predictionService;
 
     public BaseballLiveDTO getBaseballLive(Long matchId) {
@@ -102,6 +105,7 @@ public class BaseballLiveStateService {
         List<MatchLineupDTO> lineupDtos = lineups.stream()
                 .map(lineup -> MatchLineupDTO.from(lineup, teamById.get(lineup.getTeamId()), playerById.get(lineup.getPlayerId())))
                 .toList();
+        String targetSeason = match.getSeason() == null || match.getSeason().isBlank() ? "2026" : match.getSeason();
 
         State state = buildState(match, events, lineups, playerById, teamById, seasonStatByPlayerId);
         Long fieldingTeamId = fieldingTeamId(match, state.currentPeriod);
@@ -129,8 +133,19 @@ public class BaseballLiveStateService {
                 state.playerStats.values().stream().map(PlayerStatBuilder::toDto).toList(),
                 state.pitcherStats.values().stream().map(PitcherStatBuilder::toDto).toList(),
                 lineupDtos,
+                teamSeasonStat(match.getHomeTeam().getTeamId(), targetSeason),
+                teamSeasonStat(match.getAwayTeam().getTeamId(), targetSeason),
                 predictionService.getMatchSummary(matchId)
         );
+    }
+
+    private StandingsResponseDTO teamSeasonStat(Long teamId, String season) {
+        if (teamId == null) {
+            return null;
+        }
+        return teamSeasonStatRepository.findByTeam_TeamIdAndSeason(teamId, season)
+                .map(StandingsResponseDTO::new)
+                .orElse(null);
     }
 
     private State buildState(Match match, List<MatchEvent> events, List<MatchLineup> lineups,
