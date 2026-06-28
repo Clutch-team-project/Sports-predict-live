@@ -2633,7 +2633,7 @@
         third: 'br-runner-3'
     };
 
-    const INNINGS = Array.from({ length: 9 }, (_, index) => index + 1);
+    const MIN_INNINGS = 9;
 
     const AUTO_REFRESH_MS = 10000;
 
@@ -2778,6 +2778,21 @@
         const inning = Number(match[1]);
         const half = match[2];
         return { inning, half, order: inning * 2 + (half === '말' ? 1 : 0), label: `${inning}회${half}` };
+    }
+
+    function collectMaxInning(data) {
+        const innings = [MIN_INNINGS, parsePeriod(data?.currentPeriod).inning || 0];
+        const scoreboardInnings = data?.scoreboard?.inningScores;
+        if (Array.isArray(scoreboardInnings)) {
+            scoreboardInnings.forEach(row => innings.push(Number(row?.inning) || 0));
+        }
+        (data?.events || []).forEach(event => innings.push(parsePeriod(eventPeriodOf(event)).inning || 0));
+        (data?.timeline || []).forEach(card => innings.push(parsePeriod(card?.period).inning || 0));
+        return Math.max(...innings);
+    }
+
+    function getDisplayInnings(data) {
+        return Array.from({ length: collectMaxInning(data) }, (_, index) => index + 1);
     }
 
     function offenseTeamNameByPeriod(data, period) {
@@ -3296,13 +3311,14 @@
         const body = $('#inningScoreBody');
         if (!head || !body) return;
 
-        head.innerHTML = `<tr><th>팀</th>${INNINGS.map(i => `<th>${i}</th>`).join('')}<th>R</th><th>H</th><th>E</th><th>B</th></tr>`;
+        const innings = getDisplayInnings(data);
+        head.innerHTML = `<tr><th>팀</th>${innings.map(i => `<th>${i}</th>`).join('')}<th>R</th><th>H</th><th>E</th><th>B</th></tr>`;
 
         const rows = normalizeInningScores(data);
         body.innerHTML = rows.map(row => `
             <tr>
                 <td>${escapeHtml(row.teamName)}</td>
-                ${INNINGS.map((_, index) => `<td>${escapeHtml(row.innings[index] ?? '-')}</td>`).join('')}
+                ${innings.map((_, index) => `<td>${escapeHtml(row.innings[index] ?? '-')}</td>`).join('')}
                 <td class="total">${escapeHtml(row.runs ?? 0)}</td>
                 <td>${escapeHtml(row.hits ?? '-')}</td>
                 <td>${escapeHtml(row.errors ?? '-')}</td>
@@ -3314,6 +3330,8 @@
     function normalizeInningScores(data) {
         const board = data.scoreboard || {};
         const inningScores = Array.isArray(board.inningScores) ? board.inningScores : [];
+        const displayInnings = getDisplayInnings(data);
+        const inningCount = displayInnings.length;
         const current = parsePeriod(data.currentPeriod);
         const inningStarted = (inning, half) => {
             if (!current.inning) return false;
@@ -3324,11 +3342,11 @@
         };
 
         if (inningScores.length > 0) {
-            const awayInnings = Array(9).fill('-');
-            const homeInnings = Array(9).fill('-');
+            const awayInnings = Array(inningCount).fill('-');
+            const homeInnings = Array(inningCount).fill('-');
             inningScores.forEach(row => {
                 const index = Number(row.inning) - 1;
-                if (index < 0 || index > 8) return;
+                if (index < 0 || index >= inningCount) return;
                 awayInnings[index] = inningStarted(Number(row.inning), 'away') ? (row.away ?? 0) : '-';
                 homeInnings[index] = inningStarted(Number(row.inning), 'home') ? (row.home ?? 0) : '-';
             });
@@ -3358,7 +3376,7 @@
             {
                 teamId: data.awayTeam.teamId,
                 teamName: data.awayTeam.name,
-                innings: Array(9).fill('-'),
+                innings: Array(inningCount).fill('-'),
                 runs: 0,
                 hits: 0,
                 errors: 0,
@@ -3367,7 +3385,7 @@
             {
                 teamId: data.homeTeam.teamId,
                 teamName: data.homeTeam.name,
-                innings: Array(9).fill('-'),
+                innings: Array(inningCount).fill('-'),
                 runs: 0,
                 hits: 0,
                 errors: 0,
@@ -3382,7 +3400,7 @@
 
             const type = eventTypeOf(event);
             const period = parsePeriod(eventPeriodOf(event));
-            const inningIndex = period.inning >= 1 && period.inning <= 9 ? period.inning - 1 : null;
+            const inningIndex = period.inning >= 1 && period.inning <= inningCount ? period.inning - 1 : null;
 
             if (type === 'score' && inningIndex != null) {
                 row.innings[inningIndex] = numberOrZero(row.innings[inningIndex]) + 1;
@@ -3522,7 +3540,7 @@
         if (!tabs) return;
 
         const currentInning = parsePeriod(data.currentPeriod).inning || 1;
-        tabs.innerHTML = INNINGS.map(inning => {
+        tabs.innerHTML = getDisplayInnings(data).map(inning => {
             const disabled = inning > currentInning;
             return `<button type="button" class="${inning === currentInning ? 'active' : ''}" data-inning="${inning}" ${disabled ? 'disabled aria-disabled="true"' : ''}>${inning}회</button>`;
         }).join('');
