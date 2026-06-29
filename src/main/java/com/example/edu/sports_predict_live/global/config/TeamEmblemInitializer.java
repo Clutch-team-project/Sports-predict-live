@@ -20,45 +20,45 @@ public class TeamEmblemInitializer implements ApplicationRunner {
     private final TeamRepository teamRepository;
     private final LolApiClient lolApiClient;
 
-    private static final Map<Long, String> KBO_EMBLEMS = new HashMap<>();
-    private static final Map<Long, String> KLEAGUE_EMBLEMS = new HashMap<>();
+    private static final Map<String, String> KBO_EMBLEMS = new HashMap<>();
+    private static final Map<String, String> KLEAGUE_EMBLEMS = new HashMap<>();
 
     static {
-        // KBO
-        KBO_EMBLEMS.put(1L,  "/images/teams/KBO/LG.svg");
-        KBO_EMBLEMS.put(2L,  "/images/teams/KBO/KT.svg");
-        KBO_EMBLEMS.put(3L,  "/images/teams/KBO/SANSUNG.svg");
-        KBO_EMBLEMS.put(4L,  "/images/teams/KBO/KIA.svg");
-        KBO_EMBLEMS.put(5L,  "/images/teams/KBO/HANWHA.svg");
-        KBO_EMBLEMS.put(6L,  "/images/teams/KBO/DOOSAN.svg");
-        KBO_EMBLEMS.put(7L,  "/images/teams/KBO/NC.svg");
-        KBO_EMBLEMS.put(8L,  "/images/teams/KBO/SSG.svg");
-        KBO_EMBLEMS.put(9L,  "/images/teams/KBO/LOTTE.svg");
-        KBO_EMBLEMS.put(10L, "/images/teams/KBO/KIWOOM.svg");
+        // KBO — 팀 이름 기준 (team_id는 시드 순서에 따라 달라질 수 있음)
+        KBO_EMBLEMS.put("LG",   "/images/teams/KBO/LG.svg");
+        KBO_EMBLEMS.put("KT",   "/images/teams/KBO/KT.svg");
+        KBO_EMBLEMS.put("삼성", "/images/teams/KBO/SANSUNG.svg");
+        KBO_EMBLEMS.put("KIA",  "/images/teams/KBO/KIA.svg");
+        KBO_EMBLEMS.put("한화", "/images/teams/KBO/HANWHA.svg");
+        KBO_EMBLEMS.put("두산", "/images/teams/KBO/DOOSAN.svg");
+        KBO_EMBLEMS.put("NC",   "/images/teams/KBO/NC.svg");
+        KBO_EMBLEMS.put("SSG",  "/images/teams/KBO/SSG.svg");
+        KBO_EMBLEMS.put("롯데", "/images/teams/KBO/LOTTE.svg");
+        KBO_EMBLEMS.put("키움", "/images/teams/KBO/KIWOOM.svg");
 
-        // K-League
-        KLEAGUE_EMBLEMS.put(61L, "/images/teams/KLeague/FCSEOUL.svg");
-        KLEAGUE_EMBLEMS.put(62L, "/images/teams/KLeague/ULSANHD.svg");
-        KLEAGUE_EMBLEMS.put(63L, "/images/teams/KLeague/JEONBUK.svg");
-        KLEAGUE_EMBLEMS.put(64L, "/images/teams/KLeague/GANGWONFC.svg");
-        KLEAGUE_EMBLEMS.put(65L, "/images/teams/KLeague/STEELERS.svg");
-        KLEAGUE_EMBLEMS.put(66L, "/images/teams/KLeague/IUFC.svg");
-        KLEAGUE_EMBLEMS.put(67L, "/images/teams/KLeague/FCANYANG.svg");
-        KLEAGUE_EMBLEMS.put(68L, "/images/teams/KLeague/JEJU.svg");
-        KLEAGUE_EMBLEMS.put(69L, "/images/teams/KLeague/BUCHEON.svg");
-        KLEAGUE_EMBLEMS.put(70L, "/images/teams/KLeague/DHFC.svg");
-        KLEAGUE_EMBLEMS.put(71L, "/images/teams/KLeague/GIMCHEON.svg");
-        KLEAGUE_EMBLEMS.put(72L, "/images/teams/KLeague/GWANGJU.svg");
+        // K-League — 팀 이름 기준 (team_id는 시드 순서에 따라 달라질 수 있음)
+        KLEAGUE_EMBLEMS.put("서울", "/images/teams/KLeague/FCSEOUL.svg");
+        KLEAGUE_EMBLEMS.put("울산", "/images/teams/KLeague/ULSANHD.svg");
+        KLEAGUE_EMBLEMS.put("전북", "/images/teams/KLeague/JEONBUK.svg");
+        KLEAGUE_EMBLEMS.put("강원", "/images/teams/KLeague/GANGWONFC.svg");
+        KLEAGUE_EMBLEMS.put("포항", "/images/teams/KLeague/STEELERS.svg");
+        KLEAGUE_EMBLEMS.put("인천", "/images/teams/KLeague/IUFC.svg");
+        KLEAGUE_EMBLEMS.put("안양", "/images/teams/KLeague/FCANYANG.svg");
+        KLEAGUE_EMBLEMS.put("제주", "/images/teams/KLeague/JEJU.svg");
+        KLEAGUE_EMBLEMS.put("부천", "/images/teams/KLeague/BUCHEON.svg");
+        KLEAGUE_EMBLEMS.put("대전", "/images/teams/KLeague/DHFC.svg");
+        KLEAGUE_EMBLEMS.put("김천", "/images/teams/KLeague/GIMCHEON.svg");
+        KLEAGUE_EMBLEMS.put("광주", "/images/teams/KLeague/GWANGJU.svg");
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         // KBO
-        KBO_EMBLEMS.forEach((id, url) -> teamRepository.updateEmblemUrl(id, url));
+        KBO_EMBLEMS.forEach((name, url) -> teamRepository.updateEmblemUrlByName(name, url));
 
         // K-League
-        KLEAGUE_EMBLEMS.forEach((id, url) -> teamRepository.updateEmblemUrl(id, url));
+        KLEAGUE_EMBLEMS.forEach((name, url) -> teamRepository.updateEmblemUrlByName(name, url));
 
         // LCK — LoL Esports API에서 이미지 URL 추출
         try {

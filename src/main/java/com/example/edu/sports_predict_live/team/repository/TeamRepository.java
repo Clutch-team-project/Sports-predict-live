@@ -20,10 +20,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findBySportCode(@Param("sportCode") String sportCode);
 
     @Modifying
-    @Query("UPDATE Team t SET t.emblemUrl = :url WHERE t.teamId = :teamId")
-    void updateEmblemUrl(@Param("teamId") Long teamId, @Param("url") String url);
-
-    @Modifying
     @Query("UPDATE Team t SET t.emblemUrl = :url WHERE t.name = :name")
     void updateEmblemUrlByName(@Param("name") String name, @Param("url") String url);
 }
