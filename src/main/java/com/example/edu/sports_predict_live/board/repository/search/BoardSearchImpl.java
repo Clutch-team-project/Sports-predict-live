@@ -34,7 +34,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         JPQLQuery<Board> query = from(board);
         query.leftJoin(user).on(board.userId.eq(user.userId));
-        query.leftJoin(reply).on(reply.board.eq(board));
+        query.leftJoin(reply).on(reply.board.eq(board).and(reply.deletedAt.isNull()));
 
         // 검색 조건 처리
         if((types != null && types.length > 0) && keyword != null) {
@@ -158,7 +158,7 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         JPQLQuery<Board> baseQuery = from(board)
                 .leftJoin(users).on(board.userId.eq(users.userId))
-                .leftJoin(boardReply).on(boardReply.board.boardId.eq(board.boardId))
+                .leftJoin(boardReply).on(boardReply.board.boardId.eq(board.boardId).and(boardReply.deletedAt.isNull()))
                 .where(board.createdAt.between(start, end))
                 .where(board.deletedAt.isNull())
                 .where(board.isBlinded.isFalse())
