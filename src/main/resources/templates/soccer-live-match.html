@@ -119,6 +119,9 @@
         .same-date-games { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:10px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadow); }
         .same-game-card { min-height:78px; display:grid; gap:5px; align-content:center; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; color:inherit; text-decoration:none; }
         .same-game-card.active { border-color:var(--blue); }
+        .same-game-card.live { position:relative; border-color:#22c55e; box-shadow:0 0 0 1px rgba(34,197,94,.22),0 0 18px rgba(34,197,94,.18); overflow:hidden; }
+        .same-game-card.live::before { content:""; position:absolute; inset:-1px; border-radius:8px; border:1px solid rgba(34,197,94,.55); animation:livePulse 1.6s ease-in-out infinite; pointer-events:none; }
+        .same-game-card.live::after { content:""; position:absolute; left:-40%; top:0; width:40%; height:100%; background:linear-gradient(90deg,transparent,rgba(34,197,94,.12),transparent); animation:liveSweep 2.4s linear infinite; pointer-events:none; }
         .same-game-status { color:#475569; font-size:12px; font-weight:900; }
         .same-game-status.live { color:var(--green); }
         .same-game-status.scheduled { color:var(--blue); }
@@ -127,6 +130,8 @@
         .same-game-name span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .same-game-score { color:var(--text); font-size:15px; font-weight:950; }
         .same-game-team img { width:18px; height:18px; object-fit:contain; }
+        @keyframes livePulse { 0%,100% { opacity:.38; } 50% { opacity:1; } }
+        @keyframes liveSweep { from { transform:translateX(0); } to { transform:translateX(360%); } }
         .relay-toolbar { min-height:54px; display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line-soft); background:#fff; }
         .refresh-label { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-size:12px; font-weight:900; }
         .refresh-icon { font-size:15px; line-height:1; }
@@ -489,10 +494,20 @@
 
     function phaseLabel(scoreboard) {
         const phase = scoreboard?.phase || '';
-        if (phase === 'First Half') return '전반';
-        if (phase === 'Second Half') return '후반';
-        if (phase === 'Half Time') return '하프타임';
+        if (phase === 'First Half' || phase === 'first_half') return '전반';
+        if (phase === 'Second Half' || phase === 'second_half') return '후반';
+        if (phase === 'Half Time' || phase === 'half_time') return '하프타임';
         return phase || '경기전';
+    }
+
+    function liveMinuteLabel(game) {
+        const minute = game?.currentMinute ?? game?.minute ?? game?.matchMinute ?? game?.eventMinute;
+        const phase = game?.phase ?? game?.currentPeriod ?? game?.period;
+        const phaseText = phaseLabel({ phase });
+        if (minute != null && String(minute).trim() !== '') {
+            return `${String(minute).replace("'", '')}' · ${phaseText === '경기전' ? '진행중' : phaseText}`;
+        }
+        return phaseText !== '경기전' ? phaseText : '진행중';
     }
 
     async function fetchJson(url, options = {}) {
@@ -605,12 +620,12 @@
         target.innerHTML = rows.slice(0, 4).map(game => {
             const href = `/games/${encodeURIComponent(game.matchId)}/soccer/live`;
             const status = normalizeStatus(game.status);
-            const statusText = status === 'live' ? '\uACBD\uAE30\uC911' : status === 'finished' ? '\uACBD\uAE30\uC885\uB8CC' : status === 'cancelled' ? '\uCDE8\uC18C' : String(game.matchTime || '-') + ' \uC608\uC815';
+            const statusText = status === 'live' ? liveMinuteLabel(game) : status === 'finished' ? '\uACBD\uAE30\uC885\uB8CC' : status === 'cancelled' ? '\uCDE8\uC18C' : String(game.matchTime || '-') + ' \uC608\uC815';
             const showScore = status !== 'scheduled' && status !== 'cancelled';
             const awayLogo = emblemFor(game.awayTeamName, game.awayTeamEmblem);
             const homeLogo = emblemFor(game.homeTeamName, game.homeTeamEmblem);
             return `
-                <a class="same-game-card ${sameId(game.matchId, currentMatchId) ? 'active' : ''}" href="${escapeHtml(href)}">
+                <a class="same-game-card ${escapeHtml(status)} ${sameId(game.matchId, currentMatchId) ? 'active' : ''}" href="${escapeHtml(href)}">
                     <div class="same-game-status ${escapeHtml(status)}">${escapeHtml(statusText)}</div>
                     <div class="same-game-team"><div class="same-game-name">${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="">` : ''}<span>${escapeHtml(game.awayTeamName || '-')}</span></div>${showScore ? `<b class="same-game-score">${escapeHtml(game.awayScore ?? 0)}</b>` : ''}</div>
                     <div class="same-game-team"><div class="same-game-name">${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="">` : ''}<span>${escapeHtml(game.homeTeamName || '-')}</span></div>${showScore ? `<b class="same-game-score">${escapeHtml(game.homeScore ?? 0)}</b>` : ''}</div>

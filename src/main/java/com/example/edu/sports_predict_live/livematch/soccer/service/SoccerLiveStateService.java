@@ -90,18 +90,27 @@ public class SoccerLiveStateService {
         }
         return matchRepository.findBySportCodeAndDate("soccer", match.getScheduledAt().toLocalDate()).stream()
                 .filter(other -> !Objects.equals(other.getMatchId(), match.getMatchId()))
-                .map(other -> new SoccerLiveDTO.SameDateGame(
-                        other.getMatchId(),
-                        other.getStatus(),
-                        other.getScheduledAt() == null ? "-" : other.getScheduledAt().format(TIME_FORMAT),
-                        other.getHomeTeam().getName(),
-                        other.getAwayTeam().getName(),
-                        other.getHomeTeam().getEmblemUrl(),
-                        other.getAwayTeam().getEmblemUrl(),
-                        other.getHomeScore(),
-                        other.getAwayScore()
-                ))
+                .map(this::sameDateGame)
                 .toList();
+    }
+
+    private SoccerLiveDTO.SameDateGame sameDateGame(Match other) {
+        List<MatchEvent> events = matchEventRepository.findByMatchIdOrderByEventTimeAscMatchEventIdAsc(other.getMatchId());
+        List<MatchLineup> lineups = matchLineupRepository.findByMatchIdOrderByTeamIdAscStarterDescOrderNumAscMatchLineupIdAsc(other.getMatchId());
+        State state = buildState(other, events, lineups, loadPlayerMap(events, lineups));
+        return new SoccerLiveDTO.SameDateGame(
+                other.getMatchId(),
+                other.getStatus(),
+                other.getScheduledAt() == null ? "-" : other.getScheduledAt().format(TIME_FORMAT),
+                other.getHomeTeam().getName(),
+                other.getAwayTeam().getName(),
+                other.getHomeTeam().getEmblemUrl(),
+                other.getAwayTeam().getEmblemUrl(),
+                state.homeScore,
+                state.awayScore,
+                state.currentMinute,
+                state.phase
+        );
     }
 
     private State buildState(Match match, List<MatchEvent> events, List<MatchLineup> lineups, Map<Long, Player> playerById) {

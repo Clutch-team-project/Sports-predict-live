@@ -53,7 +53,9 @@ public record SoccerLiveDTO(
             String homeTeamEmblem,
             String awayTeamEmblem,
             int homeScore,
-            int awayScore
+            int awayScore,
+            String currentMinute,
+            String phase
     ) {
     }
 

@@ -374,6 +374,7 @@
         }
 
         .other-game-card {
+            position: relative;
             display: block;
             padding: 10px 12px;
             border: 1px solid var(--line);
@@ -383,11 +384,39 @@
             font-weight: 850;
             text-decoration: none;
             transition: border-color .15s ease, transform .15s ease;
+            overflow: hidden;
         }
 
         .other-game-card:hover {
             border-color: #93c5fd;
             transform: translateY(-1px);
+        }
+
+        .other-game-card.live {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 1px rgba(34,197,94,.22), 0 0 18px rgba(34,197,94,.18);
+        }
+
+        .other-game-card.live::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: 8px;
+            border: 1px solid rgba(34,197,94,.55);
+            animation: baseballOtherLivePulse 1.6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .other-game-card.live::after {
+            content: "";
+            position: absolute;
+            left: -40%;
+            top: 0;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(34,197,94,.12), transparent);
+            animation: baseballOtherLiveSweep 2.4s linear infinite;
+            pointer-events: none;
         }
 
         .other-game-status {
@@ -397,7 +426,17 @@
         }
 
         .other-game-status.live {
-            color: var(--blue);
+            color: #16a34a;
+        }
+
+        @keyframes baseballOtherLivePulse {
+            0%, 100% { opacity: .38; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes baseballOtherLiveSweep {
+            from { transform: translateX(0); }
+            to { transform: translateX(360%); }
         }
 
         .other-game-row {
@@ -3283,7 +3322,7 @@
         const finished = ['finished', 'ended', 'final'].includes(status);
         const statusText = finished ? '경기종료' : live ? `${game.currentPeriod || '진행중'}` : `${game.scheduledAt || '-'} 예정`;
         const href = `/baseball/live-match?matchId=${encodeURIComponent(game.matchId)}`;
-        return `<a class="other-game-card" href="${href}">
+        return `<a class="other-game-card ${live ? 'live' : ''}" href="${href}">
             <div class="other-game-status ${live ? 'live' : ''}">${escapeHtml(statusText)}</div>
             <div class="other-game-row">${renderOtherGameTeam(game.awayTeamName, game.awayTeamEmblem)}<b>${escapeHtml(live || finished ? game.awayScore ?? 0 : '')}</b></div>
             <div class="other-game-row">${renderOtherGameTeam(game.homeTeamName, game.homeTeamEmblem)}<b>${escapeHtml(live || finished ? game.homeScore ?? 0 : '')}</b></div>
