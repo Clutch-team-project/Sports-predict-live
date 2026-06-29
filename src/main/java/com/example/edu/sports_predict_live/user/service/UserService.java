@@ -12,6 +12,7 @@ import com.example.edu.sports_predict_live.user.entity.User;
 import com.example.edu.sports_predict_live.user.repository.EmailVerifyRepository;
 import com.example.edu.sports_predict_live.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,6 +32,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -37,6 +42,11 @@ public class UserService {
 
     @Value("${com.example.upload.path}")
     private String uploadPath;
+
+    public boolean isLoginIdAvailable(String loginId) {
+        // DB의 login_id UNIQUE 제약은 soft-delete 여부와 무관하므로 전체 행 기준으로 판단
+        return !userRepository.existsByLoginId(loginId);
+    }
 
     public UserResponseDTO signup(SignupRequestDTO dto) {
         EmailVerify verify = emailVerifyRepository
@@ -154,7 +164,8 @@ public class UserService {
 
         String savedImagePath = saveProfileImage(dto.getProfileImage(), user.getProfileImage());
 
-        user.updateProfile(dto.getNickname(), dto.getPhone(), dto.getBirthDate(), savedImagePath);
+        boolean removeImage = Boolean.TRUE.equals(dto.getRemoveProfileImage());
+        user.updateProfile(dto.getName(), dto.getNickname(), dto.getPhone(), dto.getBirthDate(), savedImagePath, removeImage);
         user.updateAlertSettings(dto.getMarketingAgreed(), dto.getMatchStartAlert(),
                 dto.getPredictionResultAlert(), dto.getAlertBeforeMinutes());
 
@@ -171,24 +182,28 @@ public class UserService {
             throw new CustomException(ErrorCode.INVALID_FILE_TYPE);
         }
 
-        String profileDir = Paths.get(uploadPath, "profile").toAbsolutePath().toString();
-        File dir = new File(profileDir);
-        if (!dir.exists()) {
-            dir.mkdirs();
+        Path profileDir = Paths.get(uploadPath, "profile").toAbsolutePath();
+        try {
+            Files.createDirectories(profileDir);
+        } catch (IOException e) {
+            throw new RuntimeException("업로드 디렉토리 생성 실패: " + profileDir, e);
         }
 
         // 기존 프로필 이미지 삭제 (소셜 로그인의 외부 URL은 로컬 파일이 없으므로 건너뜀)
         if (existingImagePath != null && !existingImagePath.startsWith("http")) {
-            File oldFile = new File(Paths.get(uploadPath, "profile", existingImagePath).toString());
-            if (oldFile.exists()) {
-                oldFile.delete();
+            Path oldFile = profileDir.resolve(existingImagePath);
+            try {
+                Files.deleteIfExists(oldFile);
+            } catch (IOException e) {
+                // 삭제 실패는 치명적이지 않지만 로그는 남겨 디스크/권한 문제를 추적할 수 있게 한다
+                log.warn("기존 프로필 이미지 삭제 실패: {}", oldFile, e);
             }
         }
 
         String originalName = file.getOriginalFilename();
         String saveName = UUID.randomUUID() + "_" + originalName;
-        try {
-            file.transferTo(Paths.get(profileDir, saveName));
+        try (var in = file.getInputStream()) {
+            Files.copy(in, profileDir.resolve(saveName), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException("프로필 이미지 저장 중 오류가 발생했습니다.", e);
         }

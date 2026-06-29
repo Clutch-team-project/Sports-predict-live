@@ -954,23 +954,30 @@ def main():
             save_schedule(conn, team_map, data, player_id_to_name, sp_map) if data else print("  경기 없음")
 
         elif args.start and args.end:
-            start_dt  = datetime.strptime(args.start, "%Y%m%d")
-            end_dt    = datetime.strptime(args.end,   "%Y%m%d")
-            start_str = f"{args.start[:4]}-{args.start[4:6]}-{args.start[6:8]}"
-            end_str   = f"{args.end[:4]}-{args.end[4:6]}-{args.end[6:8]}"
+            start_dt = datetime.strptime(args.start, "%Y%m%d")
+            end_dt   = datetime.strptime(args.end,   "%Y%m%d")
             print(f"\n▶ 경기 일정 크롤링 ({args.start} ~ {args.end})...")
 
-            months = set()
+            # 월별 크롤 결과 캐싱 (중복 요청 방지) — 연도+월을 키로 사용해 연도 경계 안전
+            months_cache = {}
             cur_dt = start_dt
             while cur_dt <= end_dt:
-                months.add(cur_dt.strftime("%m"))
+                key = (cur_dt.year, cur_dt.month)
+                if key not in months_cache:
+                    months_cache[key] = crawl_schedule(month=cur_dt.strftime("%m"))
                 cur_dt += timedelta(days=1)
 
-            for m in sorted(months):
-                all_data = crawl_schedule(month=m)
-                filtered = [d for d in all_data if start_str <= d["scheduled_at"][:10] <= end_str]
-                if filtered:
-                    save_schedule(conn, team_map, filtered, player_id_to_name)
+            # 하루씩 순회해 선발 투수 포함 저장
+            cur_dt = start_dt
+            while cur_dt <= end_dt:
+                date_str  = cur_dt.strftime("%Y%m%d")
+                date_iso  = cur_dt.strftime("%Y-%m-%d")
+                day_data  = [d for d in months_cache[(cur_dt.year, cur_dt.month)]
+                             if d["scheduled_at"][:10] == date_iso]
+                if day_data:
+                    sp_map = crawl_starting_pitchers(date_str)
+                    save_schedule(conn, team_map, day_data, player_id_to_name, sp_map)
+                cur_dt += timedelta(days=1)
             print("  전체 처리 완료")
 
         else:

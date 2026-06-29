@@ -7,6 +7,7 @@ import com.example.edu.sports_predict_live.global.oauth2.OAuth2FailureHandler;
 import com.example.edu.sports_predict_live.global.oauth2.OAuth2SuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -35,6 +36,10 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
+
+    // CORS 허용 오리진 — application.properties의 cors.allowed-origins (콤마 구분)
+    @Value("${cors.allowed-origins:http://localhost:8080,http://localhost:3000}")
+    private String[] allowedOrigins;
 
     // 공개 API 경로
     private static final String[] PUBLIC_API = {
@@ -96,6 +101,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/baseball/**", "/soccer/**", "/lol/**").permitAll()
+                        // /admin/control 등 페이지는 permitAll — admin-control.html에서 JS로 role 체크하고,
+                        // 실제 데이터는 /api/admin/** (아래 hasRole(ADMIN))에서 보호됨
                         .requestMatchers("/admin/control").permitAll()
                         .requestMatchers("/api/standings/**", "/api/records/**", "/api/players/**").permitAll()
                         .requestMatchers("/games/**").permitAll()
@@ -156,7 +163,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");  // 개발용 — 배포 시 도메인 지정 필요
+        // 와일드카드 + credentials 조합은 CSRF 우회 위험이 있어 명시적 화이트리스트 사용
+        for (String origin : allowedOrigins) {
+            config.addAllowedOrigin(origin.trim());
+        }
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);

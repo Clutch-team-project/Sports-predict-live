@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-        /* 전역 UI 스케일: 기본 16px -> 18px (폰트·여백·컨테이너 비례 확대) */
-        html { font-size: 18px; }
         body { font-family: 'Noto Sans KR', sans-serif; }
         .light-portal-view {
             background-color: #cbd5e1;
@@ -606,5 +604,6 @@
         }
     }, 60000);
 </script>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
