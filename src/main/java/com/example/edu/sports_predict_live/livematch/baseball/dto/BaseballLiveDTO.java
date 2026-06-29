@@ -2,6 +2,7 @@ package com.example.edu.sports_predict_live.livematch.baseball.dto;
 
 import com.example.edu.sports_predict_live.livematch.lineup.dto.MatchLineupDTO;
 import com.example.edu.sports_predict_live.prediction.dto.response.PredictionSummaryDTO;
+import com.example.edu.sports_predict_live.team.dto.response.StandingsResponseDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,8 @@ public record BaseballLiveDTO(
         List<PlayerGameStat> playerGameStats,
         List<PitcherGameStat> pitcherGameStats,
         List<MatchLineupDTO> lineup,
+        StandingsResponseDTO homeSeasonStat,
+        StandingsResponseDTO awaySeasonStat,
         PredictionSummaryDTO prediction
 ) {
 
