@@ -40,6 +40,8 @@ HEADERS = {
 }
 
 URL_TEAM_RANK    = "https://www.koreabaseball.com/Record/TeamRank/TeamRankDaily.aspx"
+URL_TEAM_HITTER  = "https://www.koreabaseball.com/Record/Team/Hitter/Basic1.aspx"
+URL_TEAM_PITCHER = "https://www.koreabaseball.com/Record/Team/Pitcher/Basic1.aspx"
 URL_HITTER_P1   = "https://www.koreabaseball.com/Record/Player/HitterBasic/Basic1.aspx"
 URL_PITCHER_P1  = "https://www.koreabaseball.com/Record/Player/PitcherBasic/Basic1.aspx"
 URL_SCHEDULE_API = "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList"
@@ -330,6 +332,47 @@ def crawl_team_rank() -> list[dict]:
     return results
 
 
+def crawl_team_runs() -> dict:
+    """팀 타격(R=득점)·팀 투수(R=실점) 페이지를 묶어 팀명 → (득점, 실점) 매핑 반환."""
+    runs_for: dict[str, int] = {}
+    runs_against: dict[str, int] = {}
+
+    def parse_runs(url: str) -> dict[str, int]:
+        soup = get_soup(url)
+        table = soup.find("table")
+        if not table:
+            return {}
+        headers = [th.get_text(strip=True) for th in table.select("thead th")]
+        if "R" not in headers or "팀명" not in headers:
+            return {}
+        out: dict[str, int] = {}
+        for tr in table.select("tbody tr"):
+            cols = [td.get_text(strip=True) for td in tr.find_all("td")]
+            if len(cols) != len(headers):
+                continue
+            row = dict(zip(headers, cols))
+            name = row.get("팀명", "").strip()
+            if not name:
+                continue
+            try:
+                out[name] = int(row.get("R", "0") or 0)
+            except ValueError:
+                out[name] = 0
+        return out
+
+    try:
+        runs_for = parse_runs(URL_TEAM_HITTER)
+    except Exception as e:
+        print(f"  [WARN] 팀 타격(득점) 크롤 실패: {e}")
+    try:
+        runs_against = parse_runs(URL_TEAM_PITCHER)
+    except Exception as e:
+        print(f"  [WARN] 팀 투수(실점) 크롤 실패: {e}")
+
+    teams = set(runs_for) | set(runs_against)
+    return {name: (runs_for.get(name, 0), runs_against.get(name, 0)) for name in teams}
+
+
 def save_team_rank(conn, team_map: dict, data: list[dict]):
     sql_select = """
         SELECT team_season_stat_id FROM team_season_stat
@@ -341,13 +384,17 @@ def save_team_rank(conn, team_map: dict, data: list[dict]):
             (team_id, sport_id, season, wins, draws, losses, win_rate, `rank`, recent_form,
              points_for, points_against, updated_at)
         VALUES (%s, (SELECT sport_id FROM sport WHERE code='baseball'), %s,
-                %s, %s, %s, %s, %s, %s, 0, 0, NOW())
+                %s, %s, %s, %s, %s, %s, %s, %s, NOW())
     """
     sql_update = """
         UPDATE team_season_stat
-        SET wins=%s, draws=%s, losses=%s, win_rate=%s, `rank`=%s, recent_form=%s, updated_at=NOW()
+        SET wins=%s, draws=%s, losses=%s, win_rate=%s, `rank`=%s, recent_form=%s,
+            points_for=%s, points_against=%s, updated_at=NOW()
         WHERE team_season_stat_id = %s
     """
+    runs_map = crawl_team_runs()
+    print(f"  팀 득점/실점 수집: {len(runs_map)}팀")
+
     with conn.cursor() as cur:
         for row in data:
             team_id = team_map.get(row["team_name"])
@@ -356,6 +403,7 @@ def save_team_rank(conn, team_map: dict, data: list[dict]):
                 continue
 
             recent_form = get_recent_form(cur, team_id)
+            points_for, points_against = runs_map.get(row["team_name"], (0, 0))
             cur.execute(sql_select, (team_id, SEASON))
             existing = cur.fetchone()
 
@@ -363,6 +411,7 @@ def save_team_rank(conn, team_map: dict, data: list[dict]):
                 cur.execute(sql_update, (
                     row["wins"], row["draws"], row["losses"],
                     row["win_rate"], row["rank"], recent_form,
+                    points_for, points_against,
                     existing[0],
                 ))
             else:
@@ -370,6 +419,7 @@ def save_team_rank(conn, team_map: dict, data: list[dict]):
                     team_id, SEASON,
                     row["wins"], row["draws"], row["losses"],
                     row["win_rate"], row["rank"], recent_form,
+                    points_for, points_against,
                 ))
     conn.commit()
     print(f"  팀 순위 저장 완료: {len(data)}건")
