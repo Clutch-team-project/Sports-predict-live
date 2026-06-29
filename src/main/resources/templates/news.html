@@ -772,20 +772,44 @@
                 url: link
             };
 
-            if (navigator.share) {
+            // 링크 복사 함수
+            async function copyLinkToClipboard() {
                 try {
-                    await navigator.share(shareData);
-                } catch (e) {
-                    console.log("공유 취소 또는 실패", e);
-                }
-            } else {
-                try {
-                    await navigator.clipboard.writeText(link);
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(shareLink);
+                    } else {
+                        const textarea = document.createElement("textarea");
+                        textarea.value = shareLink;
+                        textarea.style.position = "fixed";
+                        textarea.style.left = "-9999px";
+                        document.body.appendChild(textarea);
+                        textarea.focus();
+                        textarea.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(textarea);
+                    }
+
                     alert("뉴스 링크가 복사되었습니다.");
                 } catch (e) {
+                    console.error("링크 복사 실패:", e);
                     alert("링크 복사에 실패했습니다.");
                 }
             }
+
+            // 공유 API 지원 시 먼저 시도
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                    return;
+                } catch (e) {
+                    console.log("공유창 취소 또는 실패, 링크 복사로 대체:", e);
+                    await copyLinkToClipboard();
+                    return;
+                }
+            }
+
+            // 공유 API 미지원 시 링크 복사
+            await copyLinkToClipboard();
         };
 
         document.getElementById("shareXBtn").onclick = function () {
