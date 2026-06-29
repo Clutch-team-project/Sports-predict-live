@@ -10,7 +10,9 @@ import com.example.edu.sports_predict_live.match.repository.MatchRepository;
 import com.example.edu.sports_predict_live.player.entity.Player;
 import com.example.edu.sports_predict_live.player.repository.PlayerRepository;
 import com.example.edu.sports_predict_live.prediction.service.PredictionService;
+import com.example.edu.sports_predict_live.team.dto.response.StandingsResponseDTO;
 import com.example.edu.sports_predict_live.team.entity.Team;
+import com.example.edu.sports_predict_live.team.repository.TeamSeasonStatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ public class SoccerLiveStateService {
     private final MatchLineupRepository matchLineupRepository;
     private final PlayerRepository playerRepository;
     private final PredictionService predictionService;
+    private final TeamSeasonStatRepository teamSeasonStatRepository;
 
     public SoccerLiveDTO getSoccerLive(Long matchId) {
         Match match = matchRepository.findByIdWithTeams(matchId)
@@ -65,13 +68,44 @@ public class SoccerLiveStateService {
                 timeline(state),
                 records(match, lineups, playerById, state),
                 lineup(match, lineups, playerById),
+                teamSeasonStat(match.getHomeTeam().getTeamId(), match.getSeason()),
+                teamSeasonStat(match.getAwayTeam().getTeamId(), match.getSeason()),
+                sameDateGames(match),
+                state.goalScorers,
                 predictionService.getMatchSummary(matchId),
                 List.of()
         );
     }
 
+    private StandingsResponseDTO teamSeasonStat(Long teamId, String season) {
+        String targetSeason = season == null || season.isBlank() ? "2026" : season;
+        return teamSeasonStatRepository.findByTeam_TeamIdAndSeason(teamId, targetSeason)
+                .map(StandingsResponseDTO::new)
+                .orElse(null);
+    }
+
+    private List<SoccerLiveDTO.SameDateGame> sameDateGames(Match match) {
+        if (match.getScheduledAt() == null) {
+            return List.of();
+        }
+        return matchRepository.findBySportCodeAndDate("soccer", match.getScheduledAt().toLocalDate()).stream()
+                .filter(other -> !Objects.equals(other.getMatchId(), match.getMatchId()))
+                .map(other -> new SoccerLiveDTO.SameDateGame(
+                        other.getMatchId(),
+                        other.getStatus(),
+                        other.getScheduledAt() == null ? "-" : other.getScheduledAt().format(TIME_FORMAT),
+                        other.getHomeTeam().getName(),
+                        other.getAwayTeam().getName(),
+                        other.getHomeTeam().getEmblemUrl(),
+                        other.getAwayTeam().getEmblemUrl(),
+                        other.getHomeScore(),
+                        other.getAwayScore()
+                ))
+                .toList();
+    }
+
     private State buildState(Match match, List<MatchEvent> events, List<MatchLineup> lineups, Map<Long, Player> playerById) {
-        State state = new State(match);
+        State state = new State(match, events.isEmpty());
         for (MatchLineup lineup : lineups) {
             state.player(lineup.getPlayerId(), lineup.getTeamId(), playerById.get(lineup.getPlayerId()), lineup);
         }
@@ -103,15 +137,17 @@ public class SoccerLiveStateService {
             }
 
             switch (type) {
-                case "goal", "penalty_goal" -> {
+                case "goal", "one_goal", "penalty_goal" -> {
                     if (Objects.equals(teamId, match.getHomeTeam().getTeamId())) state.homeScore++;
                     if (Objects.equals(teamId, match.getAwayTeam().getTeamId())) state.awayScore++;
                     if (team != null) team.goals++;
                     if (player != null) player.goals++;
+                    state.goalScorers.add(goalScorer(match, event, playerById, false));
                 }
                 case "own_goal" -> {
                     if (Objects.equals(teamId, match.getHomeTeam().getTeamId())) state.awayScore++;
                     if (Objects.equals(teamId, match.getAwayTeam().getTeamId())) state.homeScore++;
+                    state.goalScorers.add(goalScorer(match, event, playerById, true));
                 }
                 case "shot" -> {
                     if (team != null) team.shots++;
@@ -287,6 +323,21 @@ public class SoccerLiveStateService {
         );
     }
 
+    private SoccerLiveDTO.GoalScorer goalScorer(Match match, MatchEvent event, Map<Long, Player> playerById, boolean ownGoal) {
+        Team team = null;
+        if (Objects.equals(event.getTeamId(), match.getHomeTeam().getTeamId())) team = match.getHomeTeam();
+        if (Objects.equals(event.getTeamId(), match.getAwayTeam().getTeamId())) team = match.getAwayTeam();
+        Player player = playerById.get(event.getPlayerId());
+        return new SoccerLiveDTO.GoalScorer(
+                event.getTeamId(),
+                team != null ? team.getName() : null,
+                event.getPlayerId(),
+                playerName(player, event.getPlayerId()),
+                minuteText(minute(event)),
+                ownGoal
+        );
+    }
+
     private MatchLineup findLineup(List<MatchLineup> lineups, Long playerId) {
         if (playerId == null) return null;
         return lineups.stream().filter(lineup -> Objects.equals(lineup.getPlayerId(), playerId)).findFirst().orElse(null);
@@ -328,7 +379,7 @@ public class SoccerLiveStateService {
             case "first_half_end" -> "전반 종료";
             case "second_half_start" -> "후반 시작";
             case "match_end" -> "경기 종료";
-            case "goal" -> "골";
+            case "goal", "one_goal" -> "골";
             case "own_goal" -> "자책골";
             case "penalty_goal" -> "PK 골";
             case "penalty_miss" -> "PK 실축";
@@ -347,7 +398,7 @@ public class SoccerLiveStateService {
 
     private String icon(String type) {
         return switch (type) {
-            case "goal", "penalty_goal" -> "G";
+            case "goal", "one_goal", "penalty_goal" -> "G";
             case "own_goal" -> "OG";
             case "penalty_miss" -> "PK";
             case "shot", "shot_on_target" -> "S";
@@ -450,12 +501,13 @@ public class SoccerLiveStateService {
         private final Map<Long, TeamStatBuilder> teams = new HashMap<>();
         private final Map<Long, PlayerStatBuilder> players = new HashMap<>();
         private final List<SoccerLiveDTO.TimelineEvent> events = new ArrayList<>();
+        private final List<SoccerLiveDTO.GoalScorer> goalScorers = new ArrayList<>();
         private final Match match;
 
-        private State(Match match) {
+        private State(Match match, boolean useMatchScoreFallback) {
             this.match = match;
-            this.homeScore = 0;
-            this.awayScore = 0;
+            this.homeScore = useMatchScoreFallback ? match.getHomeScore() : 0;
+            this.awayScore = useMatchScoreFallback ? match.getAwayScore() : 0;
             teams.put(match.getHomeTeam().getTeamId(), new TeamStatBuilder(match.getHomeTeam()));
             teams.put(match.getAwayTeam().getTeamId(), new TeamStatBuilder(match.getAwayTeam()));
         }
