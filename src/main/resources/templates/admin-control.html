@@ -279,7 +279,7 @@
         .state-box strong { color: #fff; font-size: 16px; }
         .control-pad { display: flex; gap: 7px; flex-wrap: wrap; }
         .control-pad .btn { min-height: 34px; padding: 0 10px; }
-        .control-actions { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+        .control-actions { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
         .control-actions .btn { width: 100%; }
         .control-panel { display: none; gap: 12px; }
         .control-panel.active { display: grid; }
@@ -3797,6 +3797,130 @@
         openLineup
     };
     document.addEventListener('DOMContentLoaded', initSoccerEnhancement);
+})();
+</script>
+
+<script>
+(() => {
+    const $ = selector => document.querySelector(selector);
+
+    function token() {
+        return localStorage.getItem('accessToken')
+            || localStorage.getItem('token')
+            || sessionStorage.getItem('accessToken')
+            || sessionStorage.getItem('token')
+            || '';
+    }
+
+    function headers() {
+        const result = { 'Accept': 'application/json' };
+        const value = token();
+        if (value) result.Authorization = `Bearer ${value}`;
+        return result;
+    }
+
+    function currentMatchId() {
+        return Number($('#adminBaseballMatchSelect')?.value || 0);
+    }
+
+    function setBroadcastNormal() {
+        const box = document.querySelector('.state-boxes .state-box:nth-child(6) strong');
+        if (box) box.textContent = '정상';
+    }
+
+    function ensureDemoButton() {
+        let button = $('#demoAutoToggleBtn');
+        if (button) return button;
+        const actions = $('.control-actions');
+        if (!actions) return null;
+        button = document.createElement('button');
+        button.className = 'btn primary';
+        button.id = 'demoAutoToggleBtn';
+        button.type = 'button';
+        button.disabled = true;
+        button.textContent = '자동 시연 시작';
+        actions.appendChild(button);
+        return button;
+    }
+
+    async function requestStatus(matchId) {
+        const response = await fetch(`/api/admin/demo/games/${encodeURIComponent(matchId)}/auto/status`, {
+            headers: headers()
+        });
+        if (!response.ok) throw new Error(`demo status failed: ${response.status}`);
+        return response.json();
+    }
+
+    async function postAuto(matchId, action) {
+        const response = await fetch(`/api/admin/demo/games/${encodeURIComponent(matchId)}/auto/${action}`, {
+            method: 'POST',
+            headers: headers()
+        });
+        if (!response.ok) throw new Error(`demo ${action} failed: ${response.status}`);
+        return response.json();
+    }
+
+    function renderButton(status) {
+        const button = ensureDemoButton();
+        if (!button) return;
+        const hasMatch = !!currentMatchId();
+        const total = Number(status?.totalSeeds || 0);
+        const running = !!status?.running;
+        button.disabled = !hasMatch || total === 0;
+        button.dataset.running = running ? 'true' : 'false';
+        if (!hasMatch) {
+            button.textContent = '자동 시연 시작';
+            return;
+        }
+        if (total === 0) {
+            button.textContent = '자동 seed 없음';
+            return;
+        }
+        button.textContent = running
+            ? `자동 시연 중지 (${status.publishedSeeds}/${status.totalSeeds})`
+            : `자동 시연 시작 (${status.publishedSeeds}/${status.totalSeeds})`;
+    }
+
+    async function refreshDemoStatus() {
+        setBroadcastNormal();
+        const matchId = currentMatchId();
+        if (!matchId) {
+            renderButton(null);
+            return;
+        }
+        try {
+            renderButton(await requestStatus(matchId));
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function toggleDemoAuto(event) {
+        event.preventDefault();
+        const button = ensureDemoButton();
+        const matchId = currentMatchId();
+        if (!button || !matchId) return;
+        const nextAction = button.dataset.running === 'true' ? 'stop' : 'start';
+        button.disabled = true;
+        try {
+            renderButton(await postAuto(matchId, nextAction));
+        } catch (error) {
+            console.error(error);
+            button.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const button = ensureDemoButton();
+        button?.addEventListener('click', toggleDemoAuto);
+        $('#adminBaseballMatchSelect')?.addEventListener('change', () => setTimeout(refreshDemoStatus, 250), true);
+        $('#controlSport')?.addEventListener('change', () => setTimeout(refreshDemoStatus, 250), true);
+        document.querySelectorAll('[data-view="control"]').forEach(button => {
+            button.addEventListener('click', () => setTimeout(refreshDemoStatus, 250), true);
+        });
+        refreshDemoStatus();
+        setInterval(refreshDemoStatus, 3000);
+    });
 })();
 </script>
 
