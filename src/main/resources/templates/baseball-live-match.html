@@ -1369,10 +1369,160 @@
            10. Record / Lineup
         ========================================================= */
         .record-table,
+        .power-content,
         .lineup-grid {
             display: grid;
             gap: 12px;
             padding: 14px;
+        }
+
+        .power-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .power-banner {
+            min-height: 72px;
+            display: grid;
+            place-items: center;
+            padding: 14px;
+            background: linear-gradient(135deg, #173b7a 0%, #0f2a58 100%);
+            color: #dbeafe;
+            text-align: center;
+            font-weight: 950;
+        }
+
+        .power-banner strong {
+            color: #ffffff;
+        }
+
+        .power-matchup {
+            padding: 18px 18px 20px;
+        }
+
+        .power-teams {
+            display: grid;
+            grid-template-columns: 1fr 44px 1fr;
+            align-items: start;
+            gap: 10px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .power-team {
+            min-width: 0;
+        }
+
+        .power-name {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 950;
+        }
+
+        .power-name img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .power-rank {
+            margin-top: 4px;
+            color: var(--red);
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .power-vs {
+            align-self: center;
+            color: #b6beca;
+            font-size: 24px;
+            font-weight: 950;
+        }
+
+        .power-form {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 9px;
+            padding-top: 8px; /* 최근 경기 주황 점 들어갈 공간 */
+        }
+
+        .form-badge {
+            position: relative;
+            min-width: 22px;
+            height: 22px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 950;
+        }
+
+        .form-badge.win { background: #16a34a; }
+        .form-badge.loss { background: #dc2626; }
+        .form-badge.draw { background: #2563eb; }
+        .form-badge.empty { background: #cbd5e1; }
+
+        /* 가장 최근 경기 표시 점 */
+        .form-badge.latest::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: -7px;
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--orange);
+            transform: translateX(-50%);
+            box-shadow: 0 0 0 2px rgba(255, 155, 69, .18);
+        }
+
+        .power-row {
+            display: grid;
+            grid-template-columns: 1fr 74px 1fr;
+            align-items: center;
+            gap: 10px;
+            margin: 11px 0;
+        }
+
+        .power-value {
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 950;
+            text-align: center;
+        }
+
+        .power-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 900;
+            text-align: center;
+        }
+
+        .power-meter {
+            height: 7px;
+            border-radius: 999px;
+            background: #eef2f7;
+            overflow: hidden;
+        }
+
+        .power-meter-fill {
+            height: 100%;
+            margin-left: auto;
+            border-radius: inherit;
+            background: #b3262e;
+        }
+
+        .power-meter-fill.away {
+            margin-left: 0;
+            background: #17133a;
         }
 
         .lineup-grid {
@@ -2242,13 +2392,23 @@
 
             <!-- ================= Main Tabs ================= -->
             <div class="tabs" role="tablist">
-                <button class="tab active" type="button" data-tab="relay">중계</button>
+                <button class="tab active" type="button" data-tab="power">전력</button>
+                <button class="tab" type="button" data-tab="relay">중계</button>
                 <button class="tab" type="button" data-tab="record">기록</button>
                 <button class="tab" type="button" data-tab="lineup">라인업</button>
             </div>
 
+            <!-- ================= Power Tab ================= -->
+            <section id="power" class="tab-view">
+                <section class="panel">
+                    <div class="power-content" id="powerContent">
+                        <div class="empty-state">팀 전력 데이터를 불러오는 중입니다.</div>
+                    </div>
+                </section>
+            </section>
+
             <!-- ================= Relay Tab ================= -->
-            <section id="relay" class="tab-view relay-card">
+            <section id="relay" class="tab-view relay-card hidden">
                 <div class="relay-toolbar">
                     <div class="live-toolbar-actions">
                         <label class="auto-refresh-toggle">
@@ -2473,7 +2633,7 @@
         third: 'br-runner-3'
     };
 
-    const INNINGS = Array.from({ length: 9 }, (_, index) => index + 1);
+    const MIN_INNINGS = 9;
 
     const AUTO_REFRESH_MS = 10000;
 
@@ -2483,6 +2643,7 @@
     let commentSubscription = null;
     let loadedCommentIds = new Set();
     let selectedSupportTeamId = null;
+    let initialTabApplied = false;
 
     function $(selector) {
         return document.querySelector(selector);
@@ -2617,6 +2778,21 @@
         const inning = Number(match[1]);
         const half = match[2];
         return { inning, half, order: inning * 2 + (half === '말' ? 1 : 0), label: `${inning}회${half}` };
+    }
+
+    function collectMaxInning(data) {
+        const innings = [MIN_INNINGS, parsePeriod(data?.currentPeriod).inning || 0];
+        const scoreboardInnings = data?.scoreboard?.inningScores;
+        if (Array.isArray(scoreboardInnings)) {
+            scoreboardInnings.forEach(row => innings.push(Number(row?.inning) || 0));
+        }
+        (data?.events || []).forEach(event => innings.push(parsePeriod(eventPeriodOf(event)).inning || 0));
+        (data?.timeline || []).forEach(card => innings.push(parsePeriod(card?.period).inning || 0));
+        return Math.max(...innings);
+    }
+
+    function getDisplayInnings(data) {
+        return Array.from({ length: collectMaxInning(data) }, (_, index) => index + 1);
     }
 
     function offenseTeamNameByPeriod(data, period) {
@@ -2898,6 +3074,8 @@
             events: data.events || [],
             lineup: data.lineup || [],
             comments: data.comments || [],
+            homeSeasonStat: data.homeSeasonStat || null,
+            awaySeasonStat: data.awaySeasonStat || null,
             prediction: data.prediction || null
         };
     }
@@ -2955,10 +3133,15 @@
         window.__liveData = data;
         renderScoreboard(data);
         renderOtherGames(data);
+        renderPower(data);
         renderPrediction(data);
         renderChatTeams(data);
         if (Array.isArray(data.comments) && data.comments.length > 0) {
             renderComments(data.comments);
+        }
+        if (!initialTabApplied) {
+            activateTab(isScheduledStatus(data) ? 'power' : 'relay');
+            initialTabApplied = true;
         }
 
         if (isScheduledStatus(data)) {
@@ -2970,6 +3153,14 @@
         renderTimeline(data);
         renderRecord(data);
         renderLineup(data);
+    }
+
+    function activateTab(tabId) {
+        const targetView = document.getElementById(tabId);
+        if (!targetView) return;
+
+        $all('.tab').forEach(item => item.classList.toggle('active', item.dataset.tab === tabId));
+        $all('.tab-view').forEach(view => view.classList.toggle('hidden', view.id !== tabId));
     }
 
     function renderEmptyPage(message) {
@@ -3120,13 +3311,14 @@
         const body = $('#inningScoreBody');
         if (!head || !body) return;
 
-        head.innerHTML = `<tr><th>팀</th>${INNINGS.map(i => `<th>${i}</th>`).join('')}<th>R</th><th>H</th><th>E</th><th>B</th></tr>`;
+        const innings = getDisplayInnings(data);
+        head.innerHTML = `<tr><th>팀</th>${innings.map(i => `<th>${i}</th>`).join('')}<th>R</th><th>H</th><th>E</th><th>B</th></tr>`;
 
         const rows = normalizeInningScores(data);
         body.innerHTML = rows.map(row => `
             <tr>
                 <td>${escapeHtml(row.teamName)}</td>
-                ${INNINGS.map((_, index) => `<td>${escapeHtml(row.innings[index] ?? '-')}</td>`).join('')}
+                ${innings.map((_, index) => `<td>${escapeHtml(row.innings[index] ?? '-')}</td>`).join('')}
                 <td class="total">${escapeHtml(row.runs ?? 0)}</td>
                 <td>${escapeHtml(row.hits ?? '-')}</td>
                 <td>${escapeHtml(row.errors ?? '-')}</td>
@@ -3138,6 +3330,8 @@
     function normalizeInningScores(data) {
         const board = data.scoreboard || {};
         const inningScores = Array.isArray(board.inningScores) ? board.inningScores : [];
+        const displayInnings = getDisplayInnings(data);
+        const inningCount = displayInnings.length;
         const current = parsePeriod(data.currentPeriod);
         const inningStarted = (inning, half) => {
             if (!current.inning) return false;
@@ -3148,11 +3342,11 @@
         };
 
         if (inningScores.length > 0) {
-            const awayInnings = Array(9).fill('-');
-            const homeInnings = Array(9).fill('-');
+            const awayInnings = Array(inningCount).fill('-');
+            const homeInnings = Array(inningCount).fill('-');
             inningScores.forEach(row => {
                 const index = Number(row.inning) - 1;
-                if (index < 0 || index > 8) return;
+                if (index < 0 || index >= inningCount) return;
                 awayInnings[index] = inningStarted(Number(row.inning), 'away') ? (row.away ?? 0) : '-';
                 homeInnings[index] = inningStarted(Number(row.inning), 'home') ? (row.home ?? 0) : '-';
             });
@@ -3182,7 +3376,7 @@
             {
                 teamId: data.awayTeam.teamId,
                 teamName: data.awayTeam.name,
-                innings: Array(9).fill('-'),
+                innings: Array(inningCount).fill('-'),
                 runs: 0,
                 hits: 0,
                 errors: 0,
@@ -3191,7 +3385,7 @@
             {
                 teamId: data.homeTeam.teamId,
                 teamName: data.homeTeam.name,
-                innings: Array(9).fill('-'),
+                innings: Array(inningCount).fill('-'),
                 runs: 0,
                 hits: 0,
                 errors: 0,
@@ -3206,7 +3400,7 @@
 
             const type = eventTypeOf(event);
             const period = parsePeriod(eventPeriodOf(event));
-            const inningIndex = period.inning >= 1 && period.inning <= 9 ? period.inning - 1 : null;
+            const inningIndex = period.inning >= 1 && period.inning <= inningCount ? period.inning - 1 : null;
 
             if (type === 'score' && inningIndex != null) {
                 row.innings[inningIndex] = numberOrZero(row.innings[inningIndex]) + 1;
@@ -3346,7 +3540,7 @@
         if (!tabs) return;
 
         const currentInning = parsePeriod(data.currentPeriod).inning || 1;
-        tabs.innerHTML = INNINGS.map(inning => {
+        tabs.innerHTML = getDisplayInnings(data).map(inning => {
             const disabled = inning > currentInning;
             return `<button type="button" class="${inning === currentInning ? 'active' : ''}" data-inning="${inning}" ${disabled ? 'disabled aria-disabled="true"' : ''}>${inning}회</button>`;
         }).join('');
@@ -3523,8 +3717,107 @@
     }
 
     /* =========================================================
-       07. Render: Record / Lineup
+       07. Render: Power / Record / Lineup
     ========================================================= */
+    function renderPower(data) {
+        const target = $('#powerContent');
+        if (!target) return;
+
+        const home = data.homeSeasonStat || {};
+        const away = data.awaySeasonStat || {};
+        const homeRate = numberOrZero(home.winRate);
+        const awayRate = numberOrZero(away.winRate);
+        const maxRate = Math.max(homeRate, awayRate, 0.001);
+
+        target.innerHTML = `
+            <article class="power-card">
+                <div class="power-banner">
+                    <div>팀 전력 비교</div>
+                </div>
+                <div class="power-matchup">
+                    <div class="power-teams">
+                        ${renderPowerTeam(data.homeTeam, home)}
+                        <div class="power-vs">VS</div>
+                        ${renderPowerTeam(data.awayTeam, away)}
+                    </div>
+
+                    ${renderPowerRow(
+                        formatWinRate(home.winRate),
+                        '승률',
+                        formatWinRate(away.winRate),
+                        Math.round((homeRate / maxRate) * 100),
+                        Math.round((awayRate / maxRate) * 100)
+                    )}
+
+                </div>
+            </article>
+        `;
+    }
+
+    function renderPowerTeam(team, stat) {
+        const emblem = team?.emblemUrl
+            ? `<img src="${escapeHtml(team.emblemUrl)}" alt="${escapeHtml(team.name || '')}">`
+            : '';
+        return `
+            <div class="power-team">
+                <div class="power-name">${emblem}<span>${escapeHtml(team?.name || '-')}</span></div>
+                <div class="power-rank">${escapeHtml(rankText(stat))}</div>
+                <div class="power-form">${renderRecentForm(stat?.recentForm)}</div>
+            </div>
+        `;
+    }
+
+    function renderPowerRow(homeValue, label, awayValue, homeWidth, awayWidth) {
+        return `
+            <div class="power-row">
+                <div>
+                    <div class="power-meter"><div class="power-meter-fill" style="width:${Math.max(8, homeWidth)}%"></div></div>
+                    <div class="power-value">${escapeHtml(homeValue)}</div>
+                </div>
+                <div class="power-label">${escapeHtml(label)}</div>
+                <div>
+                    <div class="power-meter"><div class="power-meter-fill away" style="width:${Math.max(8, awayWidth)}%"></div></div>
+                    <div class="power-value">${escapeHtml(awayValue)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderRecentForm(value) {
+        const chars = String(value || '').trim().slice(0, 5).split('');
+        const padded = [...chars, ...Array(Math.max(0, 5 - chars.length)).fill('-')];
+
+        return padded.map((char, index) => {
+            const normalized = char.toUpperCase();
+
+            const className =
+                normalized === 'W' ? 'win' :
+                    normalized === 'L' ? 'loss' :
+                        normalized === 'D' ? 'draw' :
+                            'empty';
+
+            const label = normalized === '-' ? '-' : normalized;
+
+            // index 0 = 가장 최근 경기
+            const latestClass = index === 0 && normalized !== '-' ? ' latest' : '';
+            const title = index === 0 && normalized !== '-' ? ' title="가장 최근 경기"' : '';
+
+            return `<span class="form-badge ${className}${latestClass}"${title}>${escapeHtml(label)}</span>`;
+        }).join('');
+    }
+
+    function rankText(stat) {
+        if (!stat || stat.rank == null) return '순위 정보 없음';
+        return `${stat.rank}위 · ${stat.wins ?? 0}승 ${stat.draws ?? 0}무 ${stat.losses ?? 0}패`;
+    }
+
+    function formatWinRate(value) {
+        if (value == null || value === '') return '-';
+        const numeric = Number(value);
+        if (Number.isNaN(numeric)) return String(value);
+        return numeric.toFixed(3);
+    }
+
     function renderRecord(data) {
         const target = $('#recordContent');
         if (!target) return;
@@ -4087,13 +4380,7 @@
 
         const tab = event.target.closest('.tab[data-tab]');
         if (tab) {
-            const targetView = document.getElementById(tab.dataset.tab);
-            if (!targetView) return;
-
-            $all('.tab').forEach(item => item.classList.remove('active'));
-            $all('.tab-view').forEach(view => view.classList.add('hidden'));
-            tab.classList.add('active');
-            targetView.classList.remove('hidden');
+            activateTab(tab.dataset.tab);
             return;
         }
 

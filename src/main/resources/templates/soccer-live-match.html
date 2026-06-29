@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -116,6 +116,17 @@
         .tabs { display:flex; gap:6px; padding:8px; }
         .tab { flex:1; height:42px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:950; }
         .tab.active { background:var(--blue); color:#fff; }
+        .same-date-games { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:10px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadow); }
+        .same-game-card { min-height:78px; display:grid; gap:5px; align-content:center; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; color:inherit; text-decoration:none; }
+        .same-game-card.active { border-color:var(--blue); }
+        .same-game-status { color:#475569; font-size:12px; font-weight:900; }
+        .same-game-status.live { color:var(--green); }
+        .same-game-status.scheduled { color:var(--blue); }
+        .same-game-team { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; color:var(--text); font-size:14px; font-weight:850; }
+        .same-game-name { min-width:0; display:flex; align-items:center; gap:6px; overflow:hidden; }
+        .same-game-name span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .same-game-score { color:var(--text); font-size:15px; font-weight:950; }
+        .same-game-team img { width:18px; height:18px; object-fit:contain; }
         .relay-toolbar { min-height:54px; display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line-soft); background:#fff; }
         .refresh-label { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-size:12px; font-weight:900; }
         .refresh-icon { font-size:15px; line-height:1; }
@@ -239,8 +250,8 @@
         .chat-user span:last-child { color:var(--muted); white-space:nowrap; }
         .chat-report,.chat-delete { border:0; background:transparent; color:var(--muted); font-size:12px; font-weight:800; cursor:pointer; }
         .chat-text { color:#475569; font-size:13px; line-height:1.32; }
-        @media (max-width:980px) { .layout { grid-template-columns:1fr; } .side-stack { position:static; } }
-        @media (max-width:720px) { .page { width:min(100% - 24px,1180px); } .score-head,.lineup-columns { grid-template-columns:1fr; } .team.away { justify-content:flex-start; text-align:left; } .lineup-grid { display:none; } .pitch { min-height:210px; } }
+        @media (max-width:980px) { .layout { grid-template-columns:1fr; } .side-stack { position:static; } .same-date-games { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width:720px) { .page { width:min(100% - 24px,1180px); } .score-head,.lineup-columns { grid-template-columns:1fr; } .team.away { justify-content:flex-start; text-align:left; } .lineup-grid { display:none; } .pitch { min-height:210px; } .same-date-games { grid-template-columns:1fr; } }
     </style>
 </head>
 <body class="front-broadcast-light">
@@ -270,6 +281,8 @@
                     </div>
                 </div>
             </section>
+
+            <section class="same-date-games hidden" id="sameDateGames"></section>
 
             <nav class="tabs" role="tablist">
                 <button class="tab active" type="button" data-tab="timelineView">중계</button>
@@ -523,6 +536,7 @@
         const scoreboard = data?.scoreboard || {};
         const status = normalizeStatus(data?.status || scoreboard.status);
         renderScoreboard(scoreboard, status);
+        renderSameDateGames(data?.sameDateGames || [], data?.matchId);
         renderPrediction(data?.prediction, scoreboard, status);
         renderChatTeams(data);
 
@@ -576,6 +590,33 @@
         $('#timeline').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">해당 경기의 중계는 추후 업데이트 됩니다.</div></section>`;
         $('#records').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">데이터 수신 시 팀/선수 기록이 업데이트 됩니다.</div></section>`;
         $('#lineupContent').innerHTML = `<section class="scheduled-tab-panel"><div class="scheduled-tab-message">출전 선수 명단이 확정되면 업데이트 됩니다.</div></section>`;
+    }
+
+    function renderSameDateGames(games, currentMatchId) {
+        const target = $('#sameDateGames');
+        if (!target) return;
+        const rows = Array.isArray(games) ? games : [];
+        if (!rows.length) {
+            target.classList.add('hidden');
+            target.innerHTML = '';
+            return;
+        }
+        target.classList.remove('hidden');
+        target.innerHTML = rows.slice(0, 4).map(game => {
+            const href = `/games/${encodeURIComponent(game.matchId)}/soccer/live`;
+            const status = normalizeStatus(game.status);
+            const statusText = status === 'live' ? '\uACBD\uAE30\uC911' : status === 'finished' ? '\uACBD\uAE30\uC885\uB8CC' : status === 'cancelled' ? '\uCDE8\uC18C' : String(game.matchTime || '-') + ' \uC608\uC815';
+            const showScore = status !== 'scheduled' && status !== 'cancelled';
+            const awayLogo = emblemFor(game.awayTeamName, game.awayTeamEmblem);
+            const homeLogo = emblemFor(game.homeTeamName, game.homeTeamEmblem);
+            return `
+                <a class="same-game-card ${sameId(game.matchId, currentMatchId) ? 'active' : ''}" href="${escapeHtml(href)}">
+                    <div class="same-game-status ${escapeHtml(status)}">${escapeHtml(statusText)}</div>
+                    <div class="same-game-team"><div class="same-game-name">${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="">` : ''}<span>${escapeHtml(game.awayTeamName || '-')}</span></div>${showScore ? `<b class="same-game-score">${escapeHtml(game.awayScore ?? 0)}</b>` : ''}</div>
+                    <div class="same-game-team"><div class="same-game-name">${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="">` : ''}<span>${escapeHtml(game.homeTeamName || '-')}</span></div>${showScore ? `<b class="same-game-score">${escapeHtml(game.homeScore ?? 0)}</b>` : ''}</div>
+                </a>
+            `;
+        }).join('');
     }
 
     function hasLineup(lineup) {

@@ -13,8 +13,10 @@ import com.example.edu.sports_predict_live.player.entity.PlayerSeasonStatBasebal
 import com.example.edu.sports_predict_live.player.repository.PlayerRepository;
 import com.example.edu.sports_predict_live.player.repository.PlayerSeasonStatBaseballRepository;
 import com.example.edu.sports_predict_live.prediction.service.PredictionService;
+import com.example.edu.sports_predict_live.team.dto.response.StandingsResponseDTO;
 import com.example.edu.sports_predict_live.team.entity.Team;
 import com.example.edu.sports_predict_live.team.repository.TeamRepository;
+import com.example.edu.sports_predict_live.team.repository.TeamSeasonStatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +90,7 @@ public class BaseballLiveStateService {
     private final PlayerRepository playerRepository;
     private final PlayerSeasonStatBaseballRepository playerSeasonStatBaseballRepository;
     private final TeamRepository teamRepository;
+    private final TeamSeasonStatRepository teamSeasonStatRepository;
     private final PredictionService predictionService;
 
     public BaseballLiveDTO getBaseballLive(Long matchId) {
@@ -102,6 +105,7 @@ public class BaseballLiveStateService {
         List<MatchLineupDTO> lineupDtos = lineups.stream()
                 .map(lineup -> MatchLineupDTO.from(lineup, teamById.get(lineup.getTeamId()), playerById.get(lineup.getPlayerId())))
                 .toList();
+        String targetSeason = match.getSeason() == null || match.getSeason().isBlank() ? "2026" : match.getSeason();
 
         State state = buildState(match, events, lineups, playerById, teamById, seasonStatByPlayerId);
         Long fieldingTeamId = fieldingTeamId(match, state.currentPeriod);
@@ -129,14 +133,25 @@ public class BaseballLiveStateService {
                 state.playerStats.values().stream().map(PlayerStatBuilder::toDto).toList(),
                 state.pitcherStats.values().stream().map(PitcherStatBuilder::toDto).toList(),
                 lineupDtos,
+                teamSeasonStat(match.getHomeTeam().getTeamId(), targetSeason),
+                teamSeasonStat(match.getAwayTeam().getTeamId(), targetSeason),
                 predictionService.getMatchSummary(matchId)
         );
+    }
+
+    private StandingsResponseDTO teamSeasonStat(Long teamId, String season) {
+        if (teamId == null) {
+            return null;
+        }
+        return teamSeasonStatRepository.findByTeam_TeamIdAndSeason(teamId, season)
+                .map(StandingsResponseDTO::new)
+                .orElse(null);
     }
 
     private State buildState(Match match, List<MatchEvent> events, List<MatchLineup> lineups,
                              Map<Long, Player> playerById, Map<Long, Team> teamById,
                              Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId) {
-        State state = new State(match, playerById, teamById, seasonStatByPlayerId);
+        State state = new State(match, playerById, teamById, seasonStatByPlayerId, events.isEmpty());
         String lastPeriod = events.isEmpty() ? "PRE_GAME" : null;
 
         for (MatchEvent event : events) {
@@ -149,6 +164,10 @@ public class BaseballLiveStateService {
             Long battingTeamId = battingTeamId(match, period);
             state.ensurePitcher(defenseTeamId, starterPitcher(lineups, playerById, teamById, defenseTeamId, seasonStatByPlayerId));
 
+            if ("game_end".equals(type)) {
+                state.restoreFinishedDisplayStateIfPresent();
+                continue;
+            }
             if ("inning_start".equals(type)) {
                 state.resetCount();
             }
@@ -197,12 +216,16 @@ public class BaseballLiveStateService {
 
             if ("inning_end".equals(type)) {
                 state.finalizeCurrentAtBatRbi();
+                state.captureFinishedDisplayState();
                 state.resetCount();
                 state.clearBases();
             }
         }
 
         state.finalizeCurrentAtBatRbi();
+        if ("finished".equalsIgnoreCase(blankToDefault(match.getStatus(), ""))) {
+            state.restoreFinishedDisplayStateIfPresent();
+        }
         state.currentPitcherStat = Optional.ofNullable(state.currentPitcher(fieldingTeamId(match, state.currentPeriod)))
                 .map(PitcherStatBuilder::toDto)
                 .orElse(null);
@@ -506,6 +529,7 @@ public class BaseballLiveStateService {
         private final Map<Long, PitcherStatBuilder> currentPitcherByTeam = new HashMap<>();
         private final Map<Long, Integer> battingCursorByTeam = new HashMap<>();
         private final List<AtBatBuilder> atBats = new ArrayList<>();
+        private final boolean useMatchScoreFallback;
         private String currentPeriod = "경기 전";
         private int balls = 0;
         private int strikes = 0;
@@ -518,13 +542,15 @@ public class BaseballLiveStateService {
         private AtBatBuilder currentAtBat;
         private Long lastBatterId;
         private BaseballLiveDTO.PitcherGameStat currentPitcherStat;
+        private FinishedDisplayState finishedDisplayState;
 
         private State(Match match, Map<Long, Player> playerById, Map<Long, Team> teamById,
-                      Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId) {
+                      Map<Long, PlayerSeasonStatBaseball> seasonStatByPlayerId, boolean useMatchScoreFallback) {
             this.match = match;
             this.playerById = playerById;
             this.teamById = teamById;
             this.seasonStatByPlayerId = seasonStatByPlayerId;
+            this.useMatchScoreFallback = useMatchScoreFallback;
             teamTotals.put(match.getHomeTeam().getTeamId(), new TeamTotals());
             teamTotals.put(match.getAwayTeam().getTeamId(), new TeamTotals());
             inningRunsByTeam.put(match.getHomeTeam().getTeamId(), new int[9]);
@@ -764,6 +790,39 @@ public class BaseballLiveStateService {
             return new BaseballLiveDTO.BaseState(first, second, third);
         }
 
+        private void captureFinishedDisplayState() {
+            finishedDisplayState = new FinishedDisplayState(
+                    currentPeriod,
+                    balls,
+                    strikes,
+                    Math.max(outs, 3),
+                    first,
+                    second,
+                    third,
+                    pendingBatterRunner,
+                    pendingBatterTargetBase,
+                    currentAtBat,
+                    lastBatterId
+            );
+        }
+
+        private void restoreFinishedDisplayStateIfPresent() {
+            if (finishedDisplayState == null) {
+                return;
+            }
+            currentPeriod = finishedDisplayState.currentPeriod;
+            balls = finishedDisplayState.balls;
+            strikes = finishedDisplayState.strikes;
+            outs = finishedDisplayState.outs;
+            first = finishedDisplayState.first;
+            second = finishedDisplayState.second;
+            third = finishedDisplayState.third;
+            pendingBatterRunner = finishedDisplayState.pendingBatterRunner;
+            pendingBatterTargetBase = finishedDisplayState.pendingBatterTargetBase;
+            currentAtBat = finishedDisplayState.currentAtBat;
+            lastBatterId = finishedDisplayState.lastBatterId;
+        }
+
         private void applyPlayerStats(MatchEvent event, List<MatchLineup> lineups, String type, Map<Long, Player> playerById, Long battingTeamId) {
             Long actorId = event.getPlayerId();
             if ("score".equals(type) && currentAtBat != null) {
@@ -951,13 +1010,15 @@ public class BaseballLiveStateService {
             TeamTotals away = teamTotals.getOrDefault(match.getAwayTeam().getTeamId(), new TeamTotals());
             int[] homeInnings = inningRunsByTeam.getOrDefault(match.getHomeTeam().getTeamId(), new int[9]);
             int[] awayInnings = inningRunsByTeam.getOrDefault(match.getAwayTeam().getTeamId(), new int[9]);
+            int homeRuns = useMatchScoreFallback ? match.getHomeScore() : home.runs;
+            int awayRuns = useMatchScoreFallback ? match.getAwayScore() : away.runs;
             List<BaseballLiveDTO.InningScore> inningScores = new ArrayList<>();
             for (int i = 0; i < 9; i++) {
                 inningScores.add(new BaseballLiveDTO.InningScore(i + 1, homeInnings[i], awayInnings[i]));
             }
             return new BaseballLiveDTO.Scoreboard(
-                    home.runs,
-                    away.runs,
+                    homeRuns,
+                    awayRuns,
                     inningScores,
                     home.hits,
                     away.hits,
@@ -966,6 +1027,44 @@ public class BaseballLiveStateService {
                     home.walks,
                     away.walks
             );
+        }
+
+        private class FinishedDisplayState {
+            private final String currentPeriod;
+            private final int balls;
+            private final int strikes;
+            private final int outs;
+            private final BaseballLiveDTO.BaseRunner first;
+            private final BaseballLiveDTO.BaseRunner second;
+            private final BaseballLiveDTO.BaseRunner third;
+            private final BaseballLiveDTO.BaseRunner pendingBatterRunner;
+            private final int pendingBatterTargetBase;
+            private final AtBatBuilder currentAtBat;
+            private final Long lastBatterId;
+
+            private FinishedDisplayState(String currentPeriod,
+                                         int balls,
+                                         int strikes,
+                                         int outs,
+                                         BaseballLiveDTO.BaseRunner first,
+                                         BaseballLiveDTO.BaseRunner second,
+                                         BaseballLiveDTO.BaseRunner third,
+                                         BaseballLiveDTO.BaseRunner pendingBatterRunner,
+                                         int pendingBatterTargetBase,
+                                         AtBatBuilder currentAtBat,
+                                         Long lastBatterId) {
+                this.currentPeriod = currentPeriod;
+                this.balls = balls;
+                this.strikes = strikes;
+                this.outs = outs;
+                this.first = first;
+                this.second = second;
+                this.third = third;
+                this.pendingBatterRunner = pendingBatterRunner;
+                this.pendingBatterTargetBase = pendingBatterTargetBase;
+                this.currentAtBat = currentAtBat;
+                this.lastBatterId = lastBatterId;
+            }
         }
     }
 

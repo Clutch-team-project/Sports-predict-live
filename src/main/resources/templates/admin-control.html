@@ -279,8 +279,12 @@
         .state-box strong { color: #fff; font-size: 16px; }
         .control-pad { display: flex; gap: 7px; flex-wrap: wrap; }
         .control-pad .btn { min-height: 34px; padding: 0 10px; }
+        .control-actions { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+        .control-actions .btn { width: 100%; }
         .control-panel { display: none; gap: 12px; }
         .control-panel.active { display: grid; }
+        #control.control-unselected .control-layout { display: none; }
+        #control.control-unselected .control-actions { display: none; }
         .baseball-board { display: grid; gap: 12px; }
         .control-cluster {
             border: 1px solid var(--soft);
@@ -706,19 +710,19 @@
             </section>
         </section>
 
-        <section class="view" id="control">
+        <section class="view control-unselected" id="control">
             <section class="panel">
-                <div class="panel-head"><div><div class="panel-title">경기 진행 제어</div><div class="panel-sub">경기 상태, 스코어, 이벤트를 사용자 중계 화면에 반영합니다.</div></div><select id="controlSport"><option value="baseball">야구</option><option value="soccer">축구</option><option value="lol">LoL</option></select></div>
+                <div class="panel-head"><div><div class="panel-title">경기 진행 제어</div><div class="panel-sub">경기 상태, 스코어, 이벤트를 사용자 중계 화면에 반영합니다.</div></div><select id="controlSport"><option value="baseball">야구</option><option value="soccer">축구</option></select></div>
                 <div class="panel-body">
                     <div class="state-boxes">
-                        <div class="state-box"><b>현재 선택 경기</b><strong id="selectedMatchName">한화 vs 삼성</strong></div><div class="state-box"><b>종목</b><strong id="selectedSportLabel">야구</strong></div>
-                        <div class="state-box"><b>경기 상태</b><strong id="statusLabel">진행중</strong></div><div class="state-box"><b>현재 진행 구간</b><strong id="phaseLabel">6회말</strong></div>
-                        <div class="state-box"><b>현재 스코어</b><strong><span id="awayScore">3</span> : <span id="homeScore">4</span></strong></div><div class="state-box"><b>중계 화면 반영</b><strong>정상</strong></div>
-                        <div class="state-box"><b>마지막 갱신</b><strong id="lastUpdated">19:25:11</strong></div><div class="state-box"><b>match_event 수</b><strong id="eventCount">42</strong></div>
+                        <div class="state-box"><b>현재 선택 경기</b><strong id="selectedMatchName">- vs -</strong></div><div class="state-box"><b>종목</b><strong id="selectedSportLabel">-</strong></div>
+                        <div class="state-box"><b>경기 상태</b><strong id="statusLabel">-</strong></div><div class="state-box"><b>현재 진행 구간</b><strong id="phaseLabel">-</strong></div>
+                        <div class="state-box"><b>현재 스코어</b><strong><span id="awayScore">-</span> : <span id="homeScore">-</span></strong></div><div class="state-box"><b>중계 화면 반영</b><strong>-</strong></div>
+                        <div class="state-box"><b>마지막 갱신</b><strong id="lastUpdated">-</strong></div><div class="state-box"><b>경기 이벤트 수</b><strong id="eventCount">-</strong></div>
                     </div>
-                    <div class="btn-group">
+                    <div class="btn-group control-actions">
                         <button class="btn green" data-status="진행중">경기 시작</button><button class="btn yellow" data-status="일시정지">일시정지</button><button class="btn green" data-status="진행중">재개</button><button class="btn red" data-status="종료" id="endMatchBtn">경기 종료</button>
-                        <button class="btn">현재 상태 다시 반영</button><button class="btn red" id="undoEventBtn">마지막 이벤트 취소</button>
+                        <button class="btn red" id="undoEventBtn">마지막 이벤트 취소</button><button class="btn red" id="clearEventsBtn">해당경기 경기내용 초기화</button>
                     </div>
                 </div>
             </section>
@@ -1456,7 +1460,6 @@
               <option value="" selected>전체 종목</option>
               <option value="baseball">야구</option>
               <option value="soccer">축구</option>
-              <option value="lol">LoL</option>
             </select>
             <select id="adminScheduleStatusFilter">
               <option value="">${text.all}</option>
@@ -1466,7 +1469,6 @@
               <option value="cancelled">${text.cancelled}</option>
             </select>
             <input id="adminScheduleKeyword" placeholder="${text.searchPlaceholder}" />
-            <button class="btn primary" id="adminScheduleControlBtn">${text.controlTitle}</button>
           </div>
           <div class="admin-schedule-summary" id="adminScheduleSummary">${text.loading}</div>
           <div class="admin-schedule-sections" id="adminScheduleList"></div>
@@ -1477,7 +1479,6 @@
             document.getElementById('adminScheduleSportFilter')?.addEventListener('change', renderSchedule);
             document.getElementById('adminScheduleStatusFilter')?.addEventListener('change', renderSchedule);
             document.getElementById('adminScheduleKeyword')?.addEventListener('input', renderSchedule);
-            document.getElementById('adminScheduleControlBtn')?.addEventListener('click', () => showAdminView('control'));
         }
 
         function ensureControlSelect() {
@@ -1775,8 +1776,8 @@
 
             list.innerHTML = filtered.length
                 ? [
-                    renderScheduleBlock('오늘 경기', '오늘 날짜에 등록된 경기를 우선 표시합니다.', todayGames, 'asc'),
-                    renderScheduleBlock('이후 경기', '오늘 이후 등록된 모든 경기를 날짜별로 표시합니다.', futureGames, 'asc'),
+                    renderScheduleBlock('오늘의 경기', '', todayGames, 'asc'),
+                    renderScheduleBlock('예정된 경기', '', futureGames, 'asc'),
                     renderScheduleBlock('지난 경기', '이미 지난 경기도 삭제하지 않고 날짜별로 확인할 수 있습니다.', pastGames, 'desc'),
                     renderScheduleBlock('날짜 미등록 경기', 'match_date가 비어 있거나 파싱되지 않은 경기입니다.', noDateGames, 'asc')
                 ].filter(Boolean).join('')
@@ -1805,6 +1806,7 @@
 
         async function loadState(matchId) {
             try {
+                document.getElementById('control')?.classList.remove('control-unselected');
                 const live = await fetchJson(`${API}/games/${matchId}/state`);
                 window.__lastBaseballLive = live;
                 const board = live.scoreboard || {};
@@ -2456,6 +2458,29 @@
             return true;
         }
 
+        async function sendSoccerTopCommand(action) {
+            if (!state.matchId) {
+                window.alert('먼저 경기를 선택하세요.');
+                return;
+            }
+            const res = await requestWithAuth(`/api/admin/soccer/games/${state.matchId}/command`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action,
+                    minute: 0,
+                    addedMinute: 0,
+                    period: action === 'START_SECOND_HALF' ? 'second_half' : 'first_half',
+                    description: null
+                })
+            });
+            if (!res.ok) {
+                window.alert(await res.text() || 'command failed');
+                return;
+            }
+            document.getElementById('adminBaseballMatchSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
         function bindCommandButtons() {
             document.getElementById('controlSport')?.addEventListener('change', () => {
                 setTimeout(() => {
@@ -2475,7 +2500,17 @@
                             : label.includes('\uc885\ub8cc') ? 'FINISH_GAME'
                                 : null;
                 if (!action) return;
-                button.addEventListener('click', event => stopAndRun(event, () => {
+                button.addEventListener('click', event => stopAndRun(event, async () => {
+                    if (document.getElementById('controlSport')?.value === 'soccer') {
+                        const soccerAction = {
+                            START_GAME: 'START_MATCH',
+                            PAUSE_GAME: 'END_FIRST_HALF',
+                            RESUME_GAME: 'START_SECOND_HALF',
+                            FINISH_GAME: 'END_MATCH'
+                        }[action];
+                        if (soccerAction) await sendSoccerTopCommand(soccerAction);
+                        return;
+                    }
                     sendBaseballCommand(action, { playerId: null, description: null });
                 }), true);
             });
@@ -2505,7 +2540,33 @@
                 sendBaseballCommand('START_AT_BAT', { description: null });
             }), true);
             document.getElementById('undoEventBtn')?.addEventListener('click', event => stopAndRun(event, () => {
+                if (document.getElementById('controlSport')?.value === 'soccer') {
+                    sendSoccerTopCommand('UNDO_LAST_EVENT');
+                    return;
+                }
                 sendBaseballCommand('UNDO_LAST_EVENT', { playerId: null, description: null });
+            }), true);
+            document.getElementById('clearEventsBtn')?.addEventListener('click', event => stopAndRun(event, async () => {
+                if (!state.matchId) {
+                    window.alert('먼저 경기를 선택하세요.');
+                    return;
+                }
+                if (!window.confirm('해당 경기의 모든 경기 이벤트를 초기화하시겠습니까?')) return;
+                if (document.getElementById('controlSport')?.value === 'soccer') {
+                    const res = await requestWithAuth(`/api/admin/soccer/games/${state.matchId}/events`, { method: 'DELETE' });
+                    if (!res.ok) {
+                        window.alert(await res.text() || '경기내용 초기화 실패');
+                        return;
+                    }
+                    document.getElementById('adminBaseballMatchSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
+                    return;
+                }
+                const res = await requestWithAuth(`${API}/games/${state.matchId}/events`, { method: 'DELETE' });
+                if (!res.ok) {
+                    window.alert(await res.text() || '경기내용 초기화 실패');
+                    return;
+                }
+                applyLoadedState(await res.json());
             }), true);
             document.getElementById('pitcherChangeBtn')?.addEventListener('click', event => stopAndRun(event, () => {
                 const select = document.getElementById('pitcherChangeSelect');
@@ -2649,7 +2710,10 @@
             document.getElementById('lineupSaveBtn')?.addEventListener('click', saveLineupEditor);
             document.getElementById('lineupMatchSelect')?.addEventListener('change', event => {
                 const matchId = Number(event.target.value || 0);
-                if (matchId) loadLineupEditor(matchId);
+                if (matchId) {
+                    state.matchId = matchId;
+                    loadLineupEditor(matchId);
+                }
             });
             document.getElementById('lineupTeamGrid')?.addEventListener('change', handleLineupChange);
         }
@@ -2657,8 +2721,10 @@
         function renderLineupMatchOptions() {
             const select = document.getElementById('lineupMatchSelect');
             if (!select) return;
-            const orderedGames = [...state.games].sort(compareAdminGames);
-            select.innerHTML = orderedGames.map(game => `<option value="${game.matchId}">${gameLabel(game)} · ${game.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
+            const sport = document.getElementById('lineupSportSelect')?.value || 'baseball';
+            const source = window.__adminSoccerState?.games?.length ? window.__adminSoccerState.games : state.games;
+            const orderedGames = [...source].filter(game => !sport || game.sportCode === sport).sort(compareAdminGames);
+            select.innerHTML = orderedGames.map(game => `<option value="${game.matchId}">match ${game.matchId} | ${game.date || ''} ${game.time || game.scheduledAt || ''} | ${game.awayTeamName || '-'} vs ${game.homeTeamName || '-'} | ${game.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
             if (state.matchId) select.value = String(state.matchId);
         }
 
@@ -2672,6 +2738,7 @@
         }
 
         async function loadLineupEditor(matchId) {
+            state.matchId = Number(matchId);
             const summary = document.getElementById('lineupSummary');
             const grid = document.getElementById('lineupTeamGrid');
             if (summary) summary.textContent = '라인업 데이터를 불러오는 중입니다.';
@@ -2803,10 +2870,20 @@
                 }));
             try {
                 lineupEditor = await putJson(`${API}/games/${lineupEditor.matchId}/lineup`, { entries });
+                const savedMatchId = Number(lineupEditor.matchId);
                 await attachLineupStatuses();
+                await window.__adminEnhancement?.loadCombinedGames?.();
                 renderSchedule();
                 renderLineupMatchOptions();
                 renderLineupEditor();
+                if (lineupEditor.lineupStatus?.ready) {
+                    const game = window.__adminSoccerState?.games?.find(row => Number(row.matchId) === savedMatchId && row.sportCode === 'baseball')
+                        || findGame(savedMatchId);
+                    if (game) {
+                        await window.__adminEnhancement?.openControl?.(game);
+                        return;
+                    }
+                }
                 notify('라인업이 저장되었습니다.');
             } catch (error) {
                 window.alert(error.message || '라인업 저장 실패');
@@ -2895,12 +2972,20 @@
             ensureControlSelect();
             bindCommandButtons();
         });
+
+        window.__adminControl = {
+            state,
+            compareAdminGames,
+            findGame,
+            loadState,
+            renderSchedule,
+            showAdminView
+        };
     })();
 </script>
 
 <!-- soccer-admin-enhancement: 현재 야구 안정본 위에 축구 관리자 UI만 추가하는 보조 스크립트 -->
 <style id="soccerAdminEnhancementStyle">
-    #control.soccer-control-mode > .panel > .panel-head,
     #control.soccer-control-mode > .panel .panel-body > .btn-group { display:none; }
     #control.soccer-control-mode .control-layout { grid-template-columns:1fr; }
     #control.soccer-control-mode .side-stack { display:none; }
@@ -2959,11 +3044,49 @@
         '4-2-3-1': ['GK','LB','CB','CB','RB','DM','DM','AM','LW','RW','ST']
     };
     const POS_LABEL = {GK:'GK',LB:'LB',CB:'CB',RB:'RB',DM:'DM',CM:'CM',AM:'AM',LM:'LM',RM:'RM',LW:'LW',RW:'RW',ST:'ST',FW:'FW',DF:'DF',MF:'MF'};
+    const adminControl = window.__adminControl || {};
+    const state = adminControl.state || { games: [], matchId: null };
+    const compareAdminGames = adminControl.compareAdminGames || compareGame;
+    const findGame = adminControl.findGame || (matchId => state.games.find(game => Number(game.matchId) === Number(matchId)) || null);
+    const loadState = adminControl.loadState || (() => Promise.resolve());
+    const renderSchedule = adminControl.renderSchedule || (() => {});
+    const showAdminView = adminControl.showAdminView || view;
     const soccerState = { games: [], selectedMatchId: null, editor: null, lineups: {}, dragging: null, currentLive: null };
+    window.__adminSoccerState = soccerState;
+    const CONTROL_EMPTY_LABELS = {
+        selectedMatchName: '- vs -',
+        selectedSportLabel: '-',
+        statusLabel: '-',
+        phaseLabel: '-',
+        awayScore: '-',
+        homeScore: '-',
+        lastUpdated: '-',
+        eventCount: '-'
+    };
 
     function $(selector, root = document) { return root.querySelector(selector); }
     function $all(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
     function notifySafe(text) { if (typeof window.notify === 'function') window.notify(text); else alert(text); }
+    function prepareControlEmptyState() {
+        Object.entries(CONTROL_EMPTY_LABELS).forEach(([id, value]) => setText(id, value));
+        const boxes = $all('.state-box');
+        boxes.forEach(box => {
+            const label = box.querySelector('b')?.textContent || '';
+            if (label.includes('match_event')) box.querySelector('b').textContent = '경기 이벤트 수';
+            if (label.includes('반영')) box.querySelector('strong').textContent = '-';
+        });
+        $('#control')?.classList.add('control-unselected');
+        if ($('#adminBaseballMatchSelect')) $('#adminBaseballMatchSelect').value = '';
+        $all('.control-actions .btn').forEach(button => {
+            if (button.textContent.replace(/\s+/g, '').includes('현재상태다시반영')) button.remove();
+        });
+        if (!$('#clearEventsBtn') && $('#undoEventBtn')) {
+            $('#undoEventBtn').insertAdjacentHTML('afterend', '<button class="btn red" id="clearEventsBtn" type="button">해당경기 경기내용 초기화</button>');
+        }
+    }
+    function setControlSelected() {
+        $('#control')?.classList.remove('control-unselected');
+    }
 
     function token() {
         return localStorage.getItem('accessToken') || localStorage.getItem('token') || sessionStorage.getItem('accessToken') || sessionStorage.getItem('token') || '';
@@ -3049,6 +3172,7 @@
         soccerState.games = list.sort(compareGame);
         renderCombinedSchedule();
         renderControlSelect();
+        prepareControlEmptyState();
         renderLineupMatchSelect();
     }
     function todayKey() {
@@ -3101,8 +3225,8 @@
         const pastRows = rows.filter(g => g.date && g.date !== '날짜 미등록' && g.date < today);
         const noDateRows = rows.filter(g => !g.date || g.date === '날짜 미등록');
         list.innerHTML = rows.length ? [
-            scheduleBlock('오늘 경기', '오늘 등록된 경기를 먼저 표시합니다.', todayRows),
-            scheduleBlock('이후 경기', '오늘 이후 경기를 날짜별로 표시합니다.', futureRows),
+            scheduleBlock('오늘의 경기', '', todayRows),
+            scheduleBlock('예정된 경기', '', futureRows),
             scheduleBlock('지난 경기', '이미 지난 경기도 날짜별로 확인할 수 있습니다.', pastRows, 'desc'),
             scheduleBlock('날짜 미등록 경기', '날짜가 비어 있거나 파싱되지 않은 경기입니다.', noDateRows)
         ].filter(Boolean).join('') : '<div class="admin-empty-block">등록된 경기가 없습니다.</div>';
@@ -3128,7 +3252,7 @@
         if (!select) return;
         const sport = $('#controlSport')?.value || 'baseball';
         const rows = soccerState.games.filter(g => g.sportCode === sport);
-        select.innerHTML = rows.map(g => `<option value="${g.matchId}" data-sport="${g.sportCode}">match ${g.matchId} | ${g.date} ${g.time} | ${g.awayTeamName} vs ${g.homeTeamName} | ${g.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('') || '<option value="">경기 없음</option>';
+        select.innerHTML = `<option value="">경기를 선택하세요</option>` + rows.map(g => `<option value="${g.matchId}" data-sport="${g.sportCode}">match ${g.matchId} | ${g.date} ${g.time} | ${g.awayTeamName} vs ${g.homeTeamName} | ${g.lineupReady ? '라인업 완료' : '라인업 필요'}</option>`).join('');
     }
     function showControlPanel(sport) {
         $('#control')?.classList.toggle('soccer-control-mode', sport === 'soccer');
@@ -3138,12 +3262,14 @@
     }
     async function openControl(game) {
         soccerState.selectedMatchId = game.matchId;
+        state.matchId = Number(game.matchId);
         const sportSelect = $('#controlSport');
         if (sportSelect) sportSelect.value = game.sportCode;
         renderControlSelect();
         const matchSelect = $('#adminBaseballMatchSelect');
         if (matchSelect) matchSelect.value = String(game.matchId);
         view('control');
+        setControlSelected();
         showControlPanel(game.sportCode);
         if (game.sportCode === 'soccer') {
             await loadSoccerState(game.matchId);
@@ -3153,6 +3279,7 @@
     }
     async function openLineup(game) {
         soccerState.selectedMatchId = game.matchId;
+        state.matchId = Number(game.matchId);
         view('lineup');
         ensureLineupSportOptions();
         $('#lineupTeamGrid')?.classList.toggle('soccer-mode', game.sportCode === 'soccer');
@@ -3331,8 +3458,17 @@
             team.players.forEach(p => entries.push({ teamId:p.teamId, playerId:p.playerId, included:!p.removed, starter:!p.removed && Boolean(p.slot), orderNum:(!p.removed && p.slot) ? Number(p.slot) : null, position:p.position || p.playerPosition || 'MF' }));
         });
         await putJson(`${SOCCER_API}/games/${soccerState.editor.matchId}/lineup`, { entries });
-        notifySafe('축구 라인업이 저장되었습니다.');
+        const savedMatchId = Number(soccerState.editor.matchId);
+        const ready = ['home','away'].every(side => soccerState.lineups[side]?.players.filter(p => !p.removed && p.slot).length === 11);
         await loadCombinedGames();
+        if (ready) {
+            const game = soccerState.games.find(row => Number(row.matchId) === savedMatchId && row.sportCode === 'soccer');
+            if (game) {
+                await openControl(game);
+                return;
+            }
+        }
+        notifySafe('축구 라인업이 저장되었습니다.');
         await loadSoccerLineup(soccerState.editor.matchId);
     }
 
@@ -3439,7 +3575,7 @@
         panel.innerHTML = `<div class="soccer-admin-board">
             <div class="soccer-admin-score"><div class="team-block"><b>${s.awayTeamName || '-'}</b><span>원정</span></div><div class="score-mid">${s.awayScore ?? 0} : ${s.homeScore ?? 0}<small>${s.phase || '경기전'} · ${s.currentMinute || '0'}'</small></div><div class="team-block right"><b>${s.homeTeamName || '-'}</b><span>홈</span></div></div>
             <div class="soccer-admin-card"><div class="cluster-title">이벤트 공통 입력</div><div class="soccer-admin-row"><label class="field">팀<select id="soccerEventTeam"></select></label><label class="field">선수<select id="soccerEventPlayer"></select></label><label class="field">이벤트<select id="soccerActionSelect"></select></label><label class="field">분<input id="soccerMinute" type="number" min="0" max="130" value="${parseInt(s.currentMinute,10) || 0}"></label><label class="field">추가시간<input id="soccerAddedMinute" type="number" min="0" max="30" value="0"></label><label class="field full">문구 템플릿<select id="soccerTemplate"></select></label><label class="field full">최종 송출 문구<textarea id="soccerDescription" placeholder="예: 제르소가 페널티 박스 안에서 슈팅을 시도합니다."></textarea></label><button class="btn" type="button" data-soccer-template-apply="1">선택 문구 적용</button><button class="btn primary" type="button" data-soccer-send-selected="1">선택 이벤트 송출</button></div></div>
-            <div class="soccer-admin-card"><div class="cluster-title">경기 진행</div><div class="soccer-action-grid"><button class="btn green" data-soccer-action="START_MATCH" data-clock-start="1">경기 시작</button><button class="btn yellow" data-soccer-action="END_FIRST_HALF" data-clock-stop="1">전반 종료</button><button class="btn green" data-soccer-action="START_SECOND_HALF" data-clock-start="46">후반 시작</button><button class="btn red" data-soccer-action="END_MATCH" data-clock-stop="1">경기 종료</button><button class="btn" data-soccer-refresh="1">현재 상태 다시 반영</button><button class="btn red" data-soccer-action="UNDO_LAST_EVENT">마지막 이벤트 취소</button></div></div>
+            <div class="soccer-admin-card"><div class="cluster-title">경기 진행</div><div class="soccer-action-grid"><button class="btn green" data-soccer-action="START_MATCH" data-clock-start="1">경기 시작</button><button class="btn yellow" data-soccer-action="END_FIRST_HALF" data-clock-stop="1">전반 종료</button><button class="btn green" data-soccer-action="START_SECOND_HALF" data-clock-start="46">후반 시작</button><button class="btn red" data-soccer-action="END_MATCH" data-clock-stop="1">경기 종료</button><button class="btn red" data-soccer-action="UNDO_LAST_EVENT">마지막 이벤트 취소</button><button class="btn red" data-soccer-clear-events="1">해당경기 경기내용 초기화</button></div></div>
             <div class="soccer-admin-card"><div class="cluster-title">득점 · 슈팅</div><div class="soccer-action-grid"><button class="btn primary" data-soccer-action="GOAL">골</button><button class="btn" data-soccer-action="OWN_GOAL">자책골</button><button class="btn primary" data-soccer-action="PENALTY_GOAL">PK 골</button><button class="btn yellow" data-soccer-action="PENALTY_MISS">PK 실축</button><button class="btn" data-soccer-action="SHOT">슈팅</button><button class="btn" data-soccer-action="SHOT_ON_TARGET">유효슈팅</button></div></div>
             <div class="soccer-admin-card"><div class="cluster-title">경기 이벤트</div><div class="soccer-action-grid"><button class="btn" data-soccer-action="CORNER_KICK">코너킥</button><button class="btn" data-soccer-action="FOUL">파울</button><button class="btn" data-soccer-action="OFFSIDE">오프사이드</button><button class="btn" data-soccer-action="SAVE">세이브</button><button class="btn yellow" data-soccer-action="YELLOW_CARD">경고</button><button class="btn red" data-soccer-action="RED_CARD">퇴장</button></div></div>
             <div class="soccer-admin-card"><div class="cluster-title">선수 교체</div><div class="soccer-admin-row three"><label class="field">교체 팀<select id="soccerSubTeam"></select></label><label class="field">나가는 선수<select id="soccerOutPlayer"></select></label><label class="field">들어오는 선수<select id="soccerInPlayer"></select></label></div><button class="btn primary" data-soccer-sub="1">선수 교체 등록</button></div>
@@ -3555,7 +3691,11 @@
             $('#soccerDescription').value = '';
             await loadSoccerState(matchId);
         }));
-        $('[data-soccer-refresh]')?.addEventListener('click', () => loadSoccerState(matchId));
+        $('[data-soccer-clear-events]')?.addEventListener('click', async () => {
+            if (!window.confirm('해당 경기의 모든 경기 이벤트를 초기화하시겠습니까?')) return;
+            await json(`${SOCCER_API}/games/${matchId}/events`, { method:'DELETE' });
+            await loadSoccerState(matchId);
+        });
         $('[data-soccer-sub]')?.addEventListener('click', async () => {
             const teamId = Number($('#soccerSubTeam')?.value || 0);
             const inId = Number($('#soccerInPlayer')?.value || 0);
@@ -3592,24 +3732,26 @@
         scheduleKeyword?.addEventListener('input', renderCombinedSchedule);
         controlSportSelect?.addEventListener('change', async (e) => {
             const sport = controlSportSelect.value || 'baseball';
-            if (sport !== 'soccer') return;
             e.preventDefault();
             e.stopImmediatePropagation();
             renderControlSelect();
             showControlPanel(sport);
-            const id = Number($('#adminBaseballMatchSelect')?.value || 0);
-            if (sport === 'soccer' && id) await loadSoccerState(id);
+            prepareControlEmptyState();
         }, true);
         controlMatchSelect?.addEventListener('change', async (e) => {
             const sport = $('#controlSport')?.value || $('#adminBaseballMatchSelect')?.selectedOptions?.[0]?.dataset?.sport || 'baseball';
-            if (sport !== 'soccer') return;
             e.preventDefault();
             e.stopImmediatePropagation();
-            showControlPanel(sport);
-            if (sport === 'soccer') {
-                const id = Number($('#adminBaseballMatchSelect')?.value || 0);
-                if (id) await loadSoccerState(id);
+            const id = Number($('#adminBaseballMatchSelect')?.value || 0);
+            if (!id) {
+                prepareControlEmptyState();
+                return;
             }
+            state.matchId = id;
+            setControlSelected();
+            showControlPanel(sport);
+            if (sport === 'soccer') await loadSoccerState(id);
+            else await loadState(id);
         }, true);
         const lineupSportSelect = $('#lineupSportSelect');
         const lineupMatchSelect = $('#lineupMatchSelect');
@@ -3639,15 +3781,146 @@
         lineupMatchSelect?.addEventListener('change', async (e) => {
             const isSoccer = $('#lineupSportSelect')?.value === 'soccer';
             $('#lineupTeamGrid')?.classList.toggle('soccer-mode', isSoccer);
+            const selectedId = Number($('#lineupMatchSelect')?.value || 0);
+            if (selectedId) state.matchId = selectedId;
             if (!isSoccer) return;
             e.preventDefault();
             e.stopImmediatePropagation();
-            if (isSoccer) await loadSoccerLineup(Number($('#lineupMatchSelect').value));
+            if (isSoccer) await loadSoccerLineup(selectedId);
         }, true);
         lineupSaveBtn?.addEventListener('click', e => { if ($('#lineupSportSelect')?.value === 'soccer') { e.preventDefault(); e.stopImmediatePropagation(); saveSoccerLineup(); } }, true);
         loadCombinedGames();
     }
+    window.__adminEnhancement = {
+        loadCombinedGames,
+        openControl,
+        openLineup
+    };
     document.addEventListener('DOMContentLoaded', initSoccerEnhancement);
+})();
+</script>
+
+<script>
+(() => {
+    const $ = selector => document.querySelector(selector);
+
+    function token() {
+        return localStorage.getItem('accessToken')
+            || localStorage.getItem('token')
+            || sessionStorage.getItem('accessToken')
+            || sessionStorage.getItem('token')
+            || '';
+    }
+
+    function headers() {
+        const result = { 'Accept': 'application/json' };
+        const value = token();
+        if (value) result.Authorization = `Bearer ${value}`;
+        return result;
+    }
+
+    function currentMatchId() {
+        return Number($('#adminBaseballMatchSelect')?.value || 0);
+    }
+
+    function setBroadcastNormal() {
+        const box = document.querySelector('.state-boxes .state-box:nth-child(6) strong');
+        if (box) box.textContent = '정상';
+    }
+
+    function ensureDemoButton() {
+        let button = $('#demoAutoToggleBtn');
+        if (button) return button;
+        const actions = $('.control-actions');
+        if (!actions) return null;
+        button = document.createElement('button');
+        button.className = 'btn primary';
+        button.id = 'demoAutoToggleBtn';
+        button.type = 'button';
+        button.disabled = true;
+        button.textContent = '자동 시연 시작';
+        actions.appendChild(button);
+        return button;
+    }
+
+    async function requestStatus(matchId) {
+        const response = await fetch(`/api/admin/demo/games/${encodeURIComponent(matchId)}/auto/status`, {
+            headers: headers()
+        });
+        if (!response.ok) throw new Error(`demo status failed: ${response.status}`);
+        return response.json();
+    }
+
+    async function postAuto(matchId, action) {
+        const response = await fetch(`/api/admin/demo/games/${encodeURIComponent(matchId)}/auto/${action}`, {
+            method: 'POST',
+            headers: headers()
+        });
+        if (!response.ok) throw new Error(`demo ${action} failed: ${response.status}`);
+        return response.json();
+    }
+
+    function renderButton(status) {
+        const button = ensureDemoButton();
+        if (!button) return;
+        const hasMatch = !!currentMatchId();
+        const total = Number(status?.totalSeeds || 0);
+        const running = !!status?.running;
+        button.disabled = !hasMatch || total === 0;
+        button.dataset.running = running ? 'true' : 'false';
+        if (!hasMatch) {
+            button.textContent = '자동 시연 시작';
+            return;
+        }
+        if (total === 0) {
+            button.textContent = '자동 seed 없음';
+            return;
+        }
+        button.textContent = running
+            ? `자동 시연 중지 (${status.publishedSeeds}/${status.totalSeeds})`
+            : `자동 시연 시작 (${status.publishedSeeds}/${status.totalSeeds})`;
+    }
+
+    async function refreshDemoStatus() {
+        setBroadcastNormal();
+        const matchId = currentMatchId();
+        if (!matchId) {
+            renderButton(null);
+            return;
+        }
+        try {
+            renderButton(await requestStatus(matchId));
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function toggleDemoAuto(event) {
+        event.preventDefault();
+        const button = ensureDemoButton();
+        const matchId = currentMatchId();
+        if (!button || !matchId) return;
+        const nextAction = button.dataset.running === 'true' ? 'stop' : 'start';
+        button.disabled = true;
+        try {
+            renderButton(await postAuto(matchId, nextAction));
+        } catch (error) {
+            console.error(error);
+            button.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const button = ensureDemoButton();
+        button?.addEventListener('click', toggleDemoAuto);
+        $('#adminBaseballMatchSelect')?.addEventListener('change', () => setTimeout(refreshDemoStatus, 250), true);
+        $('#controlSport')?.addEventListener('change', () => setTimeout(refreshDemoStatus, 250), true);
+        document.querySelectorAll('[data-view="control"]').forEach(button => {
+            button.addEventListener('click', () => setTimeout(refreshDemoStatus, 250), true);
+        });
+        refreshDemoStatus();
+        setInterval(refreshDemoStatus, 3000);
+    });
 })();
 </script>
 

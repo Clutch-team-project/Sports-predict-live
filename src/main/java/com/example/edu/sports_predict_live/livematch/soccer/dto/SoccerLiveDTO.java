@@ -1,6 +1,7 @@
 package com.example.edu.sports_predict_live.livematch.soccer.dto;
 
 import com.example.edu.sports_predict_live.prediction.dto.response.PredictionSummaryDTO;
+import com.example.edu.sports_predict_live.team.dto.response.StandingsResponseDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +15,10 @@ public record SoccerLiveDTO(
         Timeline timeline,
         Records records,
         Lineup lineup,
+        StandingsResponseDTO homeSeasonStat,
+        StandingsResponseDTO awaySeasonStat,
+        List<SameDateGame> sameDateGames,
+        List<GoalScorer> goalScorers,
         PredictionSummaryDTO prediction,
         List<Object> comments
 ) {
@@ -37,6 +42,29 @@ public record SoccerLiveDTO(
     }
 
     public record Timeline(List<TimelineSection> sections) {
+    }
+
+    public record SameDateGame(
+            Long matchId,
+            String status,
+            String matchTime,
+            String homeTeamName,
+            String awayTeamName,
+            String homeTeamEmblem,
+            String awayTeamEmblem,
+            int homeScore,
+            int awayScore
+    ) {
+    }
+
+    public record GoalScorer(
+            Long teamId,
+            String teamName,
+            Long playerId,
+            String playerName,
+            String minute,
+            boolean ownGoal
+    ) {
     }
 
     public record TimelineSection(
