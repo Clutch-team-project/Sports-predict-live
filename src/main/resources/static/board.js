@@ -553,8 +553,14 @@
                 input.value = '';
                 printReplies(currentReplyPage);
             } else {
-                const msg = await res.text();
-                alert(msg || '답글 등록에 실패했습니다.');
+                try {
+                    const data = await res.json();
+                    if (data.devMessage) console.error("서버 상세 에러:", data.devMessage);
+                    alert(data.message || '답글 등록에 실패했습니다.');
+                } catch(e) {
+                    const msg = await res.text();
+                    alert(msg || '답글 등록에 실패했습니다.');
+                }
             }
         }).catch(err => console.error('답글 등록 에러:', err));
     }

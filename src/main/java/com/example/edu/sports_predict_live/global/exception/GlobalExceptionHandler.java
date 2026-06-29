@@ -59,6 +59,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception e) {
         log.error("Unhandled exception", e);
         return ResponseEntity.internalServerError()
-                .body(Map.of("status", 500, "message", "서버 오류가 발생했습니다."));
+                .body(Map.of(
+                        "status", 500,
+                        "message", "서버 오류가 발생했습니다.",
+                        "devMessage", e.getClass().getSimpleName() + ": " + e.getMessage()
+                ));
     }
 }
