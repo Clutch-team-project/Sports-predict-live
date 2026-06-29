@@ -8,10 +8,10 @@ import com.example.edu.sports_predict_live.user.dto.response.UserResponseDTO;
 import com.example.edu.sports_predict_live.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -29,7 +29,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getMe(userId));
     }
 
-    @PutMapping(value = "/me", consumes = {"multipart/form-data", "application/x-www-form-urlencoded", "application/json"})
+    @PutMapping(value = "/me", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE})
     public ResponseEntity<UserResponseDTO> updateMe(
             @AuthenticationPrincipal Long userId,
             @ModelAttribute UserUpdateDTO dto) {
