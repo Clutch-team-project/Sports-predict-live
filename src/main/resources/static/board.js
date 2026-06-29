@@ -242,7 +242,7 @@
             fetchFunc(`/replies/list/${boardId}?page=1&size=1&sort=${currentReplySort}`)
                 .then(res => res.json())
                 .then(data => {
-                    const totalCount = data.total || 0;
+                    const totalCount = (data.totalCount !== undefined && data.totalCount !== null) ? data.totalCount : (data.total || 0);
                     if (document.getElementById('replyCountMain')) document.getElementById('replyCountMain').innerText = totalCount;
                     if (document.getElementById('replyCountSide')) document.getElementById('replyCountSide').innerText = totalCount;
                 }).catch(err => console.error(err));
@@ -255,7 +255,7 @@
                 return res.json();
             })
             .then(data => {
-                const totalCount = data.total || 0;
+                const totalCount = (data.totalCount !== undefined && data.totalCount !== null) ? data.totalCount : (data.total || 0);
                 const countMain = document.getElementById('replyCountMain');
                 const countSide = document.getElementById('replyCountSide');
 

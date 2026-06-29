@@ -13,6 +13,7 @@ public class PageResponseDTO <E>{
     private int page;
     private int size;
     private int total;
+    private int totalCount;
 
     private int start;
     private int end;
@@ -22,14 +23,16 @@ public class PageResponseDTO <E>{
     private List<E> dtoList;
 
     @Builder(builderMethodName = "withAll")
-    public PageResponseDTO(PageRequestDTO pageRequestDTO, List<E> dtoList, int total) {
+    public PageResponseDTO(PageRequestDTO pageRequestDTO, List<E> dtoList, int total, Integer totalCount) {
         if(total <= 0) {
+            this.totalCount = (totalCount != null) ? totalCount : 0;
             return;
         }
 
         this.page = pageRequestDTO.getPage();
         this.size = pageRequestDTO.getSize();
         this.total = total;
+        this.totalCount = (totalCount != null) ? totalCount : total;
         this.dtoList = dtoList;
 
         this.end = (int)(Math.ceil(this.page/10.0)) * 10;
@@ -43,5 +46,4 @@ public class PageResponseDTO <E>{
         this.prev = this.start > 1;
         this.next = total> this.end * this.size;
     }
-
 }

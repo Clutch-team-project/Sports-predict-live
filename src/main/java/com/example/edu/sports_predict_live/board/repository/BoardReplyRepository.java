@@ -10,4 +10,5 @@ import java.util.List;
 public interface BoardReplyRepository extends JpaRepository<BoardReply, Long> {
     Page<BoardReply> findByBoard_BoardIdAndParentIsNullAndDeletedAtIsNull(Long boardId, Pageable pageable);
     List<BoardReply> findByParent_ReplyIdInAndDeletedAtIsNull(List<Long> parentIds);
+    int countByBoard_BoardIdAndDeletedAtIsNull(Long boardId);
 }

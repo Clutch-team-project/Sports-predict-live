@@ -209,10 +209,13 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 })
                 .collect(Collectors.toList());
 
+        int totalCount = boardReplyRepository.countByBoard_BoardIdAndDeletedAtIsNull(boardId);
+
         return PageResponseDTO.<BoardReplyDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
                 .dtoList(dtoList)
                 .total((int) result.getTotalElements())
+                .totalCount(totalCount)
                 .build();
     }
 
