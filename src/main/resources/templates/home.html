@@ -586,9 +586,8 @@ public BoardResponseDto(Board board) {
             return;
         }
 
-        // 축구/LOL 중계 화면이 완성되면 각 종목 live-match URL로 교체
         if (sport === 'soccer') {
-            location.href = '/soccer/schedule';
+            location.href = `/games/${encodeURIComponent(matchId)}/soccer/live`;
             return;
         }
 
